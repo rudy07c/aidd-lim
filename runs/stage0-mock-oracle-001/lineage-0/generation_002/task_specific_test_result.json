@@ -2,7 +2,20 @@
   "passed": true,
   "numPassed": 3,
   "numFailed": 0,
-  "testCases": [],
+  "testCases": [
+    {
+      "testName": "T-delayed-1: resetZef resetZef: Zef pex→nim",
+      "passed": true
+    },
+    {
+      "testName": "T-delayed-1: resetZef resetZef: fails when Zef=nim",
+      "passed": true
+    },
+    {
+      "testName": "T-delayed-1: resetZef resetZef: Tal state is unchanged after reset",
+      "passed": true
+    }
+  ],
   "rawJestOutput": {
     "numFailedTestSuites": 0,
     "numFailedTests": 0,
@@ -31,7 +44,7 @@
       "unmatched": 0,
       "updated": 0
     },
-    "startTime": 1788010685624,
+    "startTime": 1788011595590,
     "success": true,
     "testResults": [
       {
@@ -82,10 +95,10 @@
             "title": "resetZef: Tal state is unchanged after reset"
           }
         ],
-        "endTime": 1788010686643,
+        "endTime": 1788011596878,
         "message": "",
-        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-pf4Pur/task_specific_tests/task.test.ts",
-        "startTime": 1788010685727,
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-0uO4xt/task_specific_tests/task.test.ts",
+        "startTime": 1788011595699,
         "status": "passed",
         "summary": ""
       }

@@ -2,7 +2,20 @@
   "passed": true,
   "numPassed": 3,
   "numFailed": 0,
-  "testCases": [],
+  "testCases": [
+    {
+      "testName": "T-local-1: forceAdvanceVok forceAdvanceVok: Vok nim→dor when Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-local-1: forceAdvanceVok forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-local-1: forceAdvanceVok forceAdvanceVok: is registered as a known operation",
+      "passed": true
+    }
+  ],
   "rawJestOutput": {
     "numFailedTestSuites": 0,
     "numFailedTests": 0,
@@ -31,7 +44,7 @@
       "unmatched": 0,
       "updated": 0
     },
-    "startTime": 1788010677313,
+    "startTime": 1788011586332,
     "success": true,
     "testResults": [
       {
@@ -55,7 +68,7 @@
             "ancestorTitles": [
               "T-local-1: forceAdvanceVok"
             ],
-            "duration": 1,
+            "duration": 0,
             "failureDetails": [],
             "failureMessages": [],
             "fullName": "T-local-1: forceAdvanceVok forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)",
@@ -82,10 +95,10 @@
             "title": "forceAdvanceVok: is registered as a known operation"
           }
         ],
-        "endTime": 1788010678393,
+        "endTime": 1788011587357,
         "message": "",
-        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-gMosEe/task_specific_tests/task.test.ts",
-        "startTime": 1788010677414,
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-fVqUId/task_specific_tests/task.test.ts",
+        "startTime": 1788011586433,
         "status": "passed",
         "summary": ""
       }

@@ -13,7 +13,7 @@
     "numPassed": 3,
     "numFailed": 0
   },
-  "latency_ms": 61,
+  "latency_ms": 74,
   "token_usage": {
     "input": 0,
     "output": 0

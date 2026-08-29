@@ -2,7 +2,20 @@
   "passed": true,
   "numPassed": 3,
   "numFailed": 0,
-  "testCases": [],
+  "testCases": [
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Zef and Tal both advance nim→pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Vok is unchanged",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: is registered as a known operation",
+      "passed": true
+    }
+  ],
   "rawJestOutput": {
     "numFailedTestSuites": 0,
     "numFailedTests": 0,
@@ -31,7 +44,7 @@
       "unmatched": 0,
       "updated": 0
     },
-    "startTime": 1788010681494,
+    "startTime": 1788011590509,
     "success": true,
     "testResults": [
       {
@@ -82,10 +95,10 @@
             "title": "kindleBoth: is registered as a known operation"
           }
         ],
-        "endTime": 1788010682515,
+        "endTime": 1788011591514,
         "message": "",
-        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-dDuwdb/task_specific_tests/task.test.ts",
-        "startTime": 1788010681593,
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-YXtvBr/task_specific_tests/task.test.ts",
+        "startTime": 1788011590612,
         "status": "passed",
         "summary": ""
       }

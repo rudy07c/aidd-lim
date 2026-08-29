@@ -2,7 +2,36 @@
   "passed": true,
   "numPassed": 7,
   "numFailed": 0,
-  "testCases": [],
+  "testCases": [
+    {
+      "testName": "advanceVok1: nim -> pex succeeds from initial state",
+      "passed": true
+    },
+    {
+      "testName": "advanceVok2: fails if Zef is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef1: fails if Tal is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceVok2: succeeds once Zef is 'pex' (which itself requires Tal 'pex')",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: fails if Tal is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: succeeds once Tal is 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex",
+      "passed": true
+    }
+  ],
   "rawJestOutput": {
     "numFailedTestSuites": 0,
     "numFailedTests": 0,
@@ -31,7 +60,7 @@
       "unmatched": 0,
       "updated": 0
     },
-    "startTime": 1788010626048,
+    "startTime": 1788011554183,
     "success": true,
     "testResults": [
       {
@@ -64,7 +93,7 @@
           },
           {
             "ancestorTitles": [],
-            "duration": 0,
+            "duration": 1,
             "failureDetails": [],
             "failureMessages": [],
             "fullName": "advanceZef1: fails if Tal is not 'pex'",
@@ -128,10 +157,10 @@
             "title": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex"
           }
         ],
-        "endTime": 1788010627181,
+        "endTime": 1788011555358,
         "message": "",
-        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-yAxSRE/repository/tests/rules.visible.test.ts",
-        "startTime": 1788010626152,
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-ar4NY2/repository/tests/rules.visible.test.ts",
+        "startTime": 1788011554286,
         "status": "passed",
         "summary": ""
       }

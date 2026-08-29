@@ -179,7 +179,7 @@ function parseJestResults(raw: unknown): TestSuiteResult {
     numPassedTests: number;
     numFailedTests: number;
     testResults: Array<{
-      testResults: Array<{
+      assertionResults: Array<{
         fullName: string;
         status: "passed" | "failed" | "pending";
         failureMessages: string[];
@@ -191,7 +191,7 @@ function parseJestResults(raw: unknown): TestSuiteResult {
 
   const testCases: TestCaseResult[] = [];
   for (const suite of j.testResults ?? []) {
-    for (const tc of suite.testResults ?? []) {
+    for (const tc of suite.assertionResults ?? []) {
       testCases.push({
         testName: tc.fullName,
         passed: tc.status === "passed",

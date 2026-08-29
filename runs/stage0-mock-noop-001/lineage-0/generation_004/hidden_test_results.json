@@ -2,7 +2,48 @@
   "passed": true,
   "numPassed": 10,
   "numFailed": 0,
-  "testCases": [],
+  "testCases": [
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O1 (advanceVok1): E1 q1->q2, no precondition",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O2 (advanceVok2): E1 q2->q3, requires E2=q2",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O3 (advanceZef1): E2 q1->q2, requires E3=q2",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O4 (advanceZef2): E2 q2->q3, requires E3=q2",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O5 (advanceTal1): E3 q1->q2, no precondition",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I1, encoding=distributed] Vok=dor implies Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I2, encoding=explicit] Zef=dor implies Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D1] O2 fails without E2 dependency satisfied",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D2] O3 fails without E3 dependency satisfied",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D3] O4 fails without E3 dependency satisfied",
+      "passed": true
+    }
+  ],
   "rawJestOutput": {
     "numFailedTestSuites": 0,
     "numFailedTests": 0,
@@ -31,7 +72,7 @@
       "unmatched": 0,
       "updated": 0
     },
-    "startTime": 1788010639259,
+    "startTime": 1788011569099,
     "success": true,
     "testResults": [
       {
@@ -40,7 +81,7 @@
             "ancestorTitles": [
               "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
             ],
-            "duration": 1,
+            "duration": 2,
             "failureDetails": [],
             "failureMessages": [],
             "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O1 (advanceVok1): E1 q1->q2, no precondition",
@@ -85,7 +126,7 @@
             "ancestorTitles": [
               "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
             ],
-            "duration": 1,
+            "duration": 0,
             "failureDetails": [],
             "failureMessages": [],
             "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O4 (advanceZef2): E2 q2->q3, requires E3=q2",
@@ -187,10 +228,10 @@
             "title": "[element: D3] O4 fails without E3 dependency satisfied"
           }
         ],
-        "endTime": 1788010640422,
+        "endTime": 1788011570389,
         "message": "",
-        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-obyGQo/hidden_regression_tests/H_G.test.ts",
-        "startTime": 1788010639357,
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7J3Zd8/hidden_regression_tests/H_G.test.ts",
+        "startTime": 1788011569198,
         "status": "passed",
         "summary": ""
       }
