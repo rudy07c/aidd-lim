@@ -1,0 +1,70 @@
+{
+  "worldId": "world-v0-minimal",
+  "entities": [
+    { "id": "E1", "states": ["q1", "q2", "q3"], "initialState": "q1" },
+    { "id": "E2", "states": ["q1", "q2", "q3"], "initialState": "q1" },
+    { "id": "E3", "states": ["q1", "q2"],       "initialState": "q1" }
+  ],
+  "operations": [
+    { "id": "O1", "parameters": [] },
+    { "id": "O2", "parameters": [] },
+    { "id": "O3", "parameters": [] },
+    { "id": "O4", "parameters": [] },
+    { "id": "O5", "parameters": [] }
+  ],
+  "transitions": [
+    {
+      "operationId": "O1",
+      "effects": [{ "entity": "E1", "fromState": "q1", "toState": "q2" }],
+      "preconditions": []
+    },
+    {
+      "operationId": "O2",
+      "effects": [{ "entity": "E1", "fromState": "q2", "toState": "q3" }],
+      "preconditions": [
+        { "entity": "E2", "state": "q2" }
+      ]
+    },
+    {
+      "operationId": "O3",
+      "effects": [{ "entity": "E2", "fromState": "q1", "toState": "q2" }],
+      "preconditions": [
+        { "entity": "E3", "state": "q2" }
+      ]
+    },
+    {
+      "operationId": "O4",
+      "effects": [{ "entity": "E2", "fromState": "q2", "toState": "q3" }],
+      "preconditions": [
+        { "entity": "E3", "state": "q2" }
+      ]
+    },
+    {
+      "operationId": "O5",
+      "effects": [{ "entity": "E3", "fromState": "q1", "toState": "q2" }],
+      "preconditions": []
+    }
+  ],
+  "dependencies": [
+    { "id": "D1", "from": "O2", "on": "E2", "note": "E1をq3にするにはE2がq2である必要がある" },
+    { "id": "D2", "from": "O3", "on": "E3", "note": "E2をq2にするにはE3がq2である必要がある（O3のprecondition）" },
+    { "id": "D3", "from": "O4", "on": "E3", "note": "E2をq3にするにはE3がq2である必要がある" }
+  ],
+  "invariants": [
+    {
+      "id": "I1",
+      "description": "E1がq3ならE3はq2でなければならない（distributed: どのtransitionもE1とE3を直接結びつけていないが、E1=q3はE2=q2を経由してのみ到達可能であり、E2=q2はE3=q2を経由してのみ到達可能であり、かつE3はq2から後退しないため、結果として常に成立する）",
+      "encoding": "distributed",
+      "condition": { "entity": "E1", "state": "q3" },
+      "requires": { "entity": "E3", "state": "q2" }
+    },
+    {
+      "id": "I2",
+      "description": "E2がq3ならE3はq2でなければならない（explicit: O4のpreconditionが直接この関係を強制している）",
+      "encoding": "explicit",
+      "condition": { "entity": "E2", "state": "q3" },
+      "requires": { "entity": "E3", "state": "q2" }
+    }
+  ]
+}
+

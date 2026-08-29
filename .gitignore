@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Experiment run data (large, generated) — track structure via runs/README.md instead
+runs/*
+!runs/README.md
+
+# OS / editor
+.DS_Store
+.vscode/
+*.log

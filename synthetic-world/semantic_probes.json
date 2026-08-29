@@ -1,0 +1,56 @@
+[
+  {
+    "probeId": "P1-mc",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Vok が状態 'pex' のとき、Vok に対して実行可能な operation はどれか？",
+    "options": ["advanceVok1", "advanceVok2", "advanceZef1", "advanceTal1"],
+    "correctOptionId": "advanceVok2",
+    "derivedFrom": { "kind": "transition_from_state", "entity": "E1", "state": "q2" }
+  },
+  {
+    "probeId": "P2-bool",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Vokが'dor'でTalが'nim'である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": { "kind": "invariant_check", "invariantId": "I1" },
+    "note": "I1はdistributed encoding。どの単一関数にも直接現れないため、このprobeはEncodingがdistributedなinvariantに対する再構成可能性を試す。"
+  },
+  {
+    "probeId": "P3-set",
+    "type": "set_selection",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceZef1 の実行に影響を与えうる entity をすべて選べ。",
+    "options": ["Vok", "Zef", "Tal"],
+    "correctSet": ["Zef", "Tal"],
+    "derivedFrom": { "kind": "dependency_lookup", "dependencyId": "D2" }
+  },
+  {
+    "probeId": "P4-edge",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceVok2 が依存している entity はどれか（precondition節を根拠に選べ）。",
+    "options": ["Vok", "Zef", "Tal"],
+    "correctAnswer": "Zef",
+    "derivedFrom": { "kind": "dependency_lookup", "dependencyId": "D1" }
+  },
+  {
+    "probeId": "P5-transition",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Zefが'pex'、Talが'pex'の状態で advanceZef2 を実行すると、Zefの状態はどうなるか？",
+    "options": ["nim", "pex", "dor", "operation fails"],
+    "correctAnswer": "dor",
+    "derivedFrom": { "kind": "transition_lookup", "operationId": "O4" }
+  },
+  {
+    "probeId": "P6-bool-invariant-violation",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Zef を 'nim' から 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": { "kind": "invariant_stress_reasoning", "invariantId": "I2" },
+    "note": "このprobeはinvariant-stressing task（held-out task参照）の理解度チェックに相当する。正答には I2（explicit encoding）の存在を認識していることが必要で、O4のprecondition実装を読むだけでは不十分（別経路の可能性を推論する必要がある）。"
+  }
+]

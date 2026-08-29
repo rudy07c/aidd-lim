@@ -1,0 +1,79 @@
+[
+  {
+    "taskId": "T-local-1",
+    "type": "local",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "Vok が 'nim' の状態から一度の操作で強制的に 'dor' まで進める新しい operation 'forceAdvanceVok' を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O6", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O6",
+          "effects": [{ "entity": "E1", "fromState": "q1", "toState": "q3" }],
+          "preconditions": [
+            { "entity": "E3", "state": "q2" }
+          ]
+        }
+      ]
+    },
+    "note": "初版のgroundTruthDelta（preconditionなし）はvalidate_task_deltas.tsでI1違反が検出されたため修正した（発見5）。O6にE3=q2のpreconditionを追加することでI1を保つ。「visibleInstructionには一見関係なさそうな制約が、実は正解実装には必要」という設計はinvariant_stressingに近づくため、type分類の見直し余地がある（NOTES参照）。"
+  },
+  {
+    "taskId": "T-crosscut-1",
+    "type": "cross_cutting",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "Zef と Tal を同時に 'pex' へ進める新しい operation 'kindleBoth' を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O7", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O7",
+          "effects": [
+            { "entity": "E2", "fromState": "q1", "toState": "q2" },
+            { "entity": "E3", "fromState": "q1", "toState": "q2" }
+          ],
+          "preconditions": []
+        }
+      ]
+    },
+    "note": "v0.2でTransitionRuleをeffects: Effect[]形式に拡張したことで、1 operationが複数entity（E2, E3）を同時に変更する複合operationを正確に表現できるようになった（発見6の解決）。旧版ではDependencyへの注記に頼る不完全な表現だった。"
+  },
+  {
+    "taskId": "T-delayed-1",
+    "type": "delayed_dependency",
+    "introducedAtGeneration": 3,
+    "activatesAtGeneration": 16,
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "（世代16で提示）Zef に対して、'pex' から 'nim' へ戻す operation 'resetZef' を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O8", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O8",
+          "effects": [{ "entity": "E2", "fromState": "q2", "toState": "q1" }],
+          "preconditions": []
+        }
+      ]
+    },
+    "note": "resetZefはTalに触れないため、Talの単調性という前提は壊さない。ただし導入後は状態空間が広がるため、model_checker.tsでG_{g+1}を再検証すべきケース。"
+  },
+  {
+    "taskId": "T-invariant-stress-1",
+    "type": "invariant_stressing",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "パフォーマンス改善のため、Zef を 'nim' から 'dor' へ一気に進める 'fastTrackZef' operation を追加せよ。中間状態の 'pex' を経由する必要はない。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O9", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O9",
+          "effects": [{ "entity": "E2", "fromState": "q1", "toState": "q3" }],
+          "preconditions": [
+            { "entity": "E3", "state": "q2" }
+          ]
+        }
+      ]
+    },
+    "note": "このgroundTruthDelta自体は、O9のpreconditionにE3=q2を含めることでI2（Zef=dorならTal=pex）を壊さない正解として設計してある。worker agentがこのpreconditionチェックを実装しなければ、I2に対応するH(G)のmicro-testが（O9経路について）追加された時点でfailする。"
+  }
+]

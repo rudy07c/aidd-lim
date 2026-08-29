@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node", "jest"]
+  },
+  "include": ["schema.ts", "model_checker.ts", "validate_task_deltas.ts", "validate_sequence.ts", "demo_order_dependency.ts", "demo_interaction_only_bug.ts", "semantic_locality.ts", "repository/**/*.ts", "hidden_regression_tests/**/*.ts"]
+}
