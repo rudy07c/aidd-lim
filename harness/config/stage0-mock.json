@@ -1,0 +1,16 @@
+{
+  "_comment": "Phase 1-2用: mock-noop で5世代を通し、機構の動作確認をする設定。",
+  "experimentId": "stage0-mock-noop-001",
+  "lineageId": "lineage-0",
+  "backend": "mock-noop",
+  "condition": "full",
+  "contextBudget": "full",
+  "generations": 5,
+  "tasks": [
+    "T-local-1",
+    "T-crosscut-1",
+    "T-delayed-1",
+    "T-invariant-stress-1",
+    "T-local-1"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "aidd-ilm-harness",
+  "version": "0.1.0",
+  "description": "Stage 0 harness for AIDD-ILM generation loop experiments.",
+  "private": true,
+  "scripts": {
+    "run": "ts-node run.ts",
+    "verify": "ts-node verify-logs.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "ts-node": "^10.9.2",
+    "typescript": "5.6.3"
+  }
+}
