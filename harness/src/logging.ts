@@ -13,19 +13,20 @@ import { GenerationLog } from "./types";
  * 以下の構造で保存する：
  *
  * runs/<experiment_id>/<lineage_id>/generation_NNN/
- *   meta.json                 experiment_id, lineage_id, generation, condition, model, task_id,
- *                             context_budget, actual_context_tokens,
- *                             functional_task_result, latency_ms, token_usage, cost,
- *                             protocol_contract_violated,
- *                             semantic_probe_results, semantic_element_trace
- *   context_contents.json     workerに渡されたファイル群
- *   agent_prompt.json         { prompt: string }
- *   agent_response.json       { response: string, tool_calls: [] }
+ *   meta.json                      experiment_id, lineage_id, generation, condition, model, task_id,
+ *                                  context_budget, actual_context_tokens,
+ *                                  functional_task_result, latency_ms, token_usage, cost,
+ *                                  protocol_contract_violated,
+ *                                  semantic_probe_results, semantic_element_trace
+ *   context_contents.json          workerに渡されたファイル群
+ *   agent_prompt.json              { prompt: string }
+ *   agent_response.json            { response: string, tool_calls: [] }
  *   visible_test_results.json
  *   hidden_test_results.json
+ *   task_specific_test_result.json タスク固有テスト結果（新operationの動作確認）
  *   git_diff.patch
- *   repository_before/        前世代のリポジトリファイル群
- *   repository_after/         今世代のリポジトリファイル群（エージェント適用後）
+ *   repository_before/             前世代のリポジトリファイル群
+ *   repository_after/              今世代のリポジトリファイル群（エージェント適用後）
  */
 export function writeGenerationLog(log: GenerationLog, runsDir: string): string {
   const generationDir = path.join(
@@ -48,6 +49,13 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
     context_budget: log.context_budget,
     actual_context_tokens: log.actual_context_tokens,
     functional_task_result: log.functional_task_result,
+    task_specific_test_result: log.task_specific_test_result
+      ? {
+          passed: log.task_specific_test_result.passed,
+          numPassed: log.task_specific_test_result.numPassed,
+          numFailed: log.task_specific_test_result.numFailed,
+        }
+      : null,
     latency_ms: log.latency_ms,
     token_usage: log.token_usage,
     cost: log.cost,
@@ -76,6 +84,9 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
 
   // hidden_test_results.json
   writeJson(generationDir, "hidden_test_results.json", log.hidden_test_results);
+
+  // task_specific_test_result.json
+  writeJson(generationDir, "task_specific_test_result.json", log.task_specific_test_result);
 
   // git_diff.patch
   fs.writeFileSync(path.join(generationDir, "git_diff.patch"), log.git_diff, "utf8");

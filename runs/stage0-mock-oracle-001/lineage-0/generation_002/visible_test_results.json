@@ -1,0 +1,141 @@
+{
+  "passed": true,
+  "numPassed": 7,
+  "numFailed": 0,
+  "testCases": [],
+  "rawJestOutput": {
+    "numFailedTestSuites": 0,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 1,
+    "numPassedTests": 7,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 7,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788010682843,
+    "success": true,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceVok1: nim -> pex succeeds from initial state",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceVok1: nim -> pex succeeds from initial state"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 5,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceVok2: fails if Zef is not 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceVok2: fails if Zef is not 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 2,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceZef1: fails if Tal is not 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceZef1: fails if Tal is not 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceVok2: succeeds once Zef is 'pex' (which itself requires Tal 'pex')",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceVok2: succeeds once Zef is 'pex' (which itself requires Tal 'pex')"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceZef2: fails if Tal is not 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceZef2: fails if Tal is not 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceZef2: succeeds once Tal is 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceZef2: succeeds once Tal is 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 3,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex"
+          }
+        ],
+        "endTime": 1788010684057,
+        "message": "",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-pf4Pur/repository/tests/rules.visible.test.ts",
+        "startTime": 1788010682951,
+        "status": "passed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

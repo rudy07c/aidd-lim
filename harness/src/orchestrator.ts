@@ -30,12 +30,13 @@ export interface OrchestratorResult {
 }
 
 /**
- * heldout_tasks.json から visibleInstruction を取得するためのミニマルな型。
+ * heldout_tasks.json から必要なフィールドを取得するためのミニマルな型。
  * worker agentには visibleInstruction のみを渡す（groundTruthDelta は非公開）。
  */
 interface HeldOutTask {
   taskId: string;
   visibleInstruction: string;
+  taskSpecificTestCode?: string;
 }
 
 /**
@@ -81,6 +82,7 @@ export async function runGenerationLoop(config: RunConfig): Promise<Orchestrator
         gen,
         taskId,
         task.visibleInstruction,
+        task.taskSpecificTestCode,
         currentFiles
       );
 
@@ -115,6 +117,7 @@ async function runOneGeneration(
   generation: number,
   taskId: string,
   visibleInstruction: string,
+  taskSpecificTestCode: string | undefined,
   currentFiles: Record<string, string>
 ): Promise<{ logDir: string; repositoryAfter: Record<string, string> }> {
   const repositoryBefore = { ...currentFiles };
@@ -144,16 +147,24 @@ async function runOneGeneration(
 
   // 5. スコアリング
   console.log(`  [scoring] Running tests...`);
-  const scoring = await runScoring(repositoryAfter, config.syntheticWorldDir);
+  const scoring = await runScoring(repositoryAfter, config.syntheticWorldDir, taskSpecificTestCode);
   console.log(
-    `  [scoring] Visible: ${scoring.visibleTests.numPassed}/${scoring.visibleTests.numPassed + scoring.visibleTests.numFailed} passed`
+    `  [scoring] Visible:       ${scoring.visibleTests.numPassed}/${scoring.visibleTests.numPassed + scoring.visibleTests.numFailed} passed`
   );
   console.log(
-    `  [scoring] Hidden:  ${scoring.hiddenTests.numPassed}/${scoring.hiddenTests.numPassed + scoring.hiddenTests.numFailed} passed`
+    `  [scoring] Hidden:        ${scoring.hiddenTests.numPassed}/${scoring.hiddenTests.numPassed + scoring.hiddenTests.numFailed} passed`
   );
+  if (scoring.taskSpecificTests) {
+    console.log(
+      `  [scoring] Task-specific: ${scoring.taskSpecificTests.numPassed}/${scoring.taskSpecificTests.numPassed + scoring.taskSpecificTests.numFailed} passed`
+    );
+  }
   if (scoring.protocolContractViolated) {
     console.warn(`  [scoring] WARNING: protocol_adapter.ts contract violation detected!`);
   }
+
+  const taskSpecificPassed =
+    scoring.taskSpecificTests === null || scoring.taskSpecificTests.passed;
 
   // 6. ログ書き出し
   const log: GenerationLog = {
@@ -179,8 +190,9 @@ async function runOneGeneration(
 
     visible_test_results: scoring.visibleTests,
     hidden_test_results: scoring.hiddenTests,
+    task_specific_test_result: scoring.taskSpecificTests,
     functional_task_result:
-      scoring.visibleTests.passed && scoring.hiddenTests.passed,
+      scoring.visibleTests.passed && scoring.hiddenTests.passed && taskSpecificPassed,
 
     semantic_probe_results: null,
     semantic_element_trace: null,

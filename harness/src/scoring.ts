@@ -1,6 +1,6 @@
 // harness/src/scoring.ts
 //
-// visible tests + H(G) を実行し、結果を集計する。
+// visible tests + H(G) + task-specific tests を実行し、結果を集計する。
 //
 // アーキテクチャ:
 // - 各世代で「修正後リポジトリ」を一時ディレクトリへコピーし、
@@ -23,18 +23,21 @@ import { TestSuiteResult, TestCaseResult } from "./types";
 export interface ScoringResult {
   visibleTests: TestSuiteResult;
   hiddenTests: TestSuiteResult;
+  taskSpecificTests: TestSuiteResult | null;
   protocolContractViolated: boolean;
 }
 
 /**
- * 修正後リポジトリに対して visible tests と H(G) を実行する。
+ * 修正後リポジトリに対して visible tests と H(G)、task-specific tests を実行する。
  *
  * @param repositoryFiles 完全なリポジトリファイル群（path relative to repository/）
  * @param syntheticWorldDir synthetic-world ディレクトリへの絶対パス
+ * @param taskSpecificTestCode タスク固有テストコード文字列（省略可）
  */
 export async function runScoring(
   repositoryFiles: Record<string, string>,
-  syntheticWorldDir: string
+  syntheticWorldDir: string,
+  taskSpecificTestCode?: string
 ): Promise<ScoringResult> {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ilm-scoring-"));
 
@@ -44,10 +47,19 @@ export async function runScoring(
     const visibleTests = runJest(tmpDir, syntheticWorldDir, "visible", "repository/tests");
     const hiddenTests = runJest(tmpDir, syntheticWorldDir, "hidden", "hidden_regression_tests");
 
+    // task-specific テスト: テストコードを一時ファイルに書き出して実行
+    let taskSpecificTests: TestSuiteResult | null = null;
+    if (taskSpecificTestCode) {
+      const testDir = path.join(tmpDir, "task_specific_tests");
+      fs.mkdirSync(testDir, { recursive: true });
+      fs.writeFileSync(path.join(testDir, "task.test.ts"), taskSpecificTestCode, "utf8");
+      taskSpecificTests = runJest(tmpDir, syntheticWorldDir, "task-specific", "task_specific_tests");
+    }
+
     // 契約違反: H(G) が import エラーで全滅した場合を検出
     const protocolContractViolated = detectProtocolViolation(hiddenTests);
 
-    return { visibleTests, hiddenTests, protocolContractViolated };
+    return { visibleTests, hiddenTests, taskSpecificTests, protocolContractViolated };
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }

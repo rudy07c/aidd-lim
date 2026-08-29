@@ -31,7 +31,7 @@
       "unmatched": 0,
       "updated": 0
     },
-    "startTime": 1788009116002,
+    "startTime": 1788010627407,
     "success": true,
     "testResults": [
       {
@@ -85,7 +85,7 @@
             "ancestorTitles": [
               "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
             ],
-            "duration": 1,
+            "duration": 0,
             "failureDetails": [],
             "failureMessages": [],
             "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O4 (advanceZef2): E2 q2->q3, requires E3=q2",
@@ -100,7 +100,7 @@
             "ancestorTitles": [
               "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
             ],
-            "duration": 0,
+            "duration": 1,
             "failureDetails": [],
             "failureMessages": [],
             "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O5 (advanceTal1): E3 q1->q2, no precondition",
@@ -187,10 +187,10 @@
             "title": "[element: D3] O4 fails without E3 dependency satisfied"
           }
         ],
-        "endTime": 1788009117028,
+        "endTime": 1788010628516,
         "message": "",
-        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-NG2DyB/hidden_regression_tests/H_G.test.ts",
-        "startTime": 1788009116103,
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-yAxSRE/hidden_regression_tests/H_G.test.ts",
+        "startTime": 1788010627508,
         "status": "passed",
         "summary": ""
       }

@@ -1,0 +1,95 @@
+{
+  "passed": true,
+  "numPassed": 3,
+  "numFailed": 0,
+  "testCases": [],
+  "rawJestOutput": {
+    "numFailedTestSuites": 0,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 1,
+    "numPassedTests": 3,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 3,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788010677313,
+    "success": true,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "T-local-1: forceAdvanceVok"
+            ],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-local-1: forceAdvanceVok forceAdvanceVok: Vok nim→dor when Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 3,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "forceAdvanceVok: Vok nim→dor when Tal=pex"
+          },
+          {
+            "ancestorTitles": [
+              "T-local-1: forceAdvanceVok"
+            ],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-local-1: forceAdvanceVok forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)"
+          },
+          {
+            "ancestorTitles": [
+              "T-local-1: forceAdvanceVok"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-local-1: forceAdvanceVok forceAdvanceVok: is registered as a known operation",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "forceAdvanceVok: is registered as a known operation"
+          }
+        ],
+        "endTime": 1788010678393,
+        "message": "",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-gMosEe/task_specific_tests/task.test.ts",
+        "startTime": 1788010677414,
+        "status": "passed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

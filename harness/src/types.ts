@@ -85,7 +85,9 @@ export interface GenerationLog {
   // --- スコアリング ---
   visible_test_results: TestSuiteResult;
   hidden_test_results: TestSuiteResult;
-  /** タスク固有テストの成功可否（visible + hidden両方が通ったか） */
+  /** タスク固有テスト結果（新operationが実際に動作するかを検証） */
+  task_specific_test_result: TestSuiteResult | null;
+  /** visible + hidden + task_specific すべてが通ったか */
   functional_task_result: boolean;
 
   // --- Stage 0.5以降で追加 ---
