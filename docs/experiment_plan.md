@@ -1,8 +1,21 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v1.6
-**関連文書**: `aidd_ilm_paper_v4.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）
+**版**: v1.8
+**関連文書**: `aidd_ilm_paper_v4.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v1.8での変更点（Stage 0 Phase 4再実行結果を受けた修正）**：
+- 新設1.5.1節：invariant-stressing taskは「研究対象そのもの」ではなく「構造的変化を診断するための道具」であることを明確化。task bank構成A（暗黙ルールなし、主指標）と構成B（構成A+invariant-stressing task、診断用）の2構成を導入
+- Stage 2に、構成A・構成Bを並行運用する設計を追記
+- Stage 3の対立仮説に「task bank構成」を追加（構成Aだけでも現象が再現するかの頑健性チェック）。既存の「要求の質」の頑健性チェックと並列の位置づけ
+- Stage 4に、構成Bの局所的失敗イベントと構成Aの構造的副次指標を突き合わせる分析方針を追記
+- F5（visible testのカバレッジがFull/Limitedの差を消してしまった発見）を`docs/findings/stage0_findings.md`に追加し、1.5.1節から参照
+- 未決事項#7を「構成比」から「構成A/Bの並行運用」へ位置づけ変更、#14（構成Bのvisible testが答えを漏らしていないかの自動検証方法）を新規追加
+
+**v1.7での変更点（Stage 0 Phase 4実行結果を受けた修正）**：
+- 新設1.9節：「要求の質の統制」。本研究がcontext bottleneckとして操作するのは過去に継承されるartifactの情報量であり、各世代の新規要求（visibleInstruction）の詳細度は独立変数として操作しないことを明記。Stage 0 Phase 4でdistributed invariantの見落としが観測された際、この交絡因子の存在が明確になったことを踏まえる（`docs/findings/stage0_findings.md` F1, F2参照）
+- Stage 3（対立仮説の排除）に、要求文の詳細度に関する頑健性チェックを追加変数として明記
+- 理論的位置づけは`aidd_ilm_paper_v4.md`5.3節・8.5節にも対応する形で追記済み
 
 **v1.6での変更点（Synthetic World v0.3実装から得た修正）**：
 - 累積validatorの位置づけを「task順序による科学的現象の発見」から「単体検証では見つからない相互作用上の設計ミスを確認する品質保証」に修正。単体では両方安全なdeltaが組み合わせでのみ矛盾を生む例をSynthetic World v0.3で実際に構成・実証した（Stage 3節）
@@ -179,6 +192,25 @@ generated_worlds: 3
 - **Invariantのencoding区別**：invariantは「守られているか否か」ではなく「どう符号化されているか」で少なくとも2種に分かれる。**explicit**（単一のtransition preconditionが直接この関係を強制する）と、**distributed**（どの単一preconditionも直接この関係を述べていないが、複数preconditionの合成と状態の単調性により結果として常に成立する）である。両者ともground truth自身の上で常に成立していなければならない（「破ってよいencoding」は存在しない。model checker等で事前に検証する）。ただし後者はLimited Contextの下でAIが復元困難と予想され、invariant-stressing taskの下位分類として、explicit-guard taskとdistributed-invariant taskを意図的に配分することを推奨する。
 - **task typeの分類は表面的な要求と実際に必要な知識の広さが乖離しうる**：「見た目はlocal（単一entity操作の追加）だが、正解実装には他entityへの依存が必要」というtaskが実際に構築時に発生した（Synthetic World v0.1 NOTES「発見5」）。したがってtask typeのラベルは目安であり、実際の必要知識の広さは別途検証する必要がある。
 
+#### 1.5.1 Invariant-stressing taskの位置づけ：診断のための道具であり、研究対象そのものではない（Stage 0 Phase 4を経て明確化）
+
+Stage 0 Phase 4の実行観察から、invariant-stressing taskの位置づけを明確にしておく必要が生じた。本研究が最終的に検証したいのは、
+
+> 世代を重ねた結果、artifactの**構造そのもの**（モジュール性、冗長性、変更の局所性、依存関係の広がり等、3.2節の副次指標）がcontext条件によってどう変化するか
+
+であり、「特定の暗黙のルールを守れたか」という局所的な合否判定（invariant-stressing taskのtask-specific test）は、この構造的変化を**分かりやすく切り出すための診断的な道具**に過ぎない。暗黙ルールを一切含まない、ごく普通の機能追加taskだけを反復させても、ILM(Iterated Learning Model)の知見からは、冗長性の増加・命名の一貫性の崩れ・局所的で自己完結したコードへの偏り等の構造的変化が自然に観測されうると予想され、研究として十分に成立する。
+
+一方で、invariant-stressing taskには「意味の再構成に失敗した瞬間」を明示的なイベントとして検出できるという実務的な利点がある。したがって、両者を排他的に選ぶのではなく、**目的の異なる2種類のtask bank構成**として並行運用する。
+
+| 構成 | 内容 | 目的 |
+|---|---|---|
+| **構成A（primary）** | 暗黙ルールを含まない、通常の機能追加taskのみ | 3.2節の構造的副次指標の推移を、交絡なしで観察する。研究の本題 |
+| **構成B（diagnostic）** | 構成Aに、explicit-guard task・distributed-invariant taskを混在させる（現行のheldout_tasks.json相当） | 「意味の再構成に失敗した」という局所的イベントを検出する。構成Aの結果を解釈する補助 |
+
+構成Bを使う際の注意点として、**visible testの記述が、暗黙ルールの答えを直接漏らしていないかを事前に確認する必要がある**。Stage 0 Phase 4では、visible testが特定entityのinvariantを直接assertしていたため（例：`advanceZef2: fails if Tal is not 'pex'`）、AIがソースコードを読まずにテストの記述だけから正解を再構成できてしまい、Full/Limited間の差が消失する事例が観測された（`docs/findings/stage0_findings.md` F5参照）。構成Bのtask bankを設計する際は、この種の「答えの漏洩」がないかをタスクごとに確認する。
+
+Stage 2・Stage 3・Stage 4での両構成の使い分けは、それぞれの節を参照。
+
 ### 1.6 Semantic element traceの一般化（旧：Delayed-dependency taskの二重失敗モード）
 
 \(T_3\) で invariant \(I_7\) を導入し、\(T_4 \ldots T_{15}\) では触れず、\(T_{16}\) で初めて必要になる設計を考えると、失敗には少なくとも2つの異なる原因がありうる。
@@ -241,6 +273,23 @@ H(G) = \{\text{hidden regression tests}\}
 3. 生成された合法なsequence間でcounterbalanceする
 
 Stage 5では、task sequenceを独立変数として明示的にモデルへ含める（3.2節参照）。
+
+### 1.9 要求の質の統制（本研究が操作しない変数）
+
+本研究がcontext bottleneckとして操作するのは、**過去に継承されるartifact（コード・テスト・型・コメント等）をどれだけ渡すか**である。これに対し、各世代でAIへ提示される新規要求（held-out taskの`visibleInstruction`）そのものの詳細度・明確さは、本研究が操作する変数ではない。
+
+この区別は、Stage 0のPhase 4実行観察から必要性が明確になった。AIが新しいoperationを実装する際、既存のdistributed invariant（複数のtransitionにまたがる暗黙の制約）を壊さないという条件を、`visibleInstruction`が明示していない場合に見落とす事例が複数回観測された（`docs/findings/stage0_findings.md` F1, F2参照）。この観測結果は、有限context下での意味的再構成可能性を検証する上で重要な交絡因子を示唆する：観測される失敗が
+
+> (a) 過去のartifactから間接的な制約を読み取れなかったことに起因するのか
+> (b) 単に今回の要求文が、守るべき制約について何も述べていなかったことに起因するのか
+
+を区別できなければ、本研究の中心的主張（有限context下でのartifact adaptation）を誤って強める、あるいは弱める可能性がある。
+
+**方針**：
+
+- 全held-out taskの`visibleInstruction`は、**統一されたスタイル**（簡潔な1〜2文、既存の制約への言及を含まない）に統制し、独立変数として操作しない。現在の`heldout_tasks.json`の記述は既にこのスタイルに従っているが、今後task bankを拡張する際もこのスタイルを維持する。
+- ただし、この統制が本研究の主張を歪めていないかを確認するため、Stage 3（対立仮説の排除）に、要求文の詳細度に関する頑健性チェックを追加する（4節 Stage 3参照）。
+- 要求文の詳細度そのものを独立変数として体系的に操作する研究（要求工学・prompt設計としての研究）は、本研究の範囲外とする。理論的位置づけは`aidd_ilm_paper_v4.md`5.3節・8.5節を参照。
 
 ---
 
@@ -441,6 +490,7 @@ state transition prediction （例：この operation 実行後の状態はど�
 - 目的：trajectoryそのものに現象（特にcrossover）の兆候が現れるか
 - 規模：30〜50世代、各条件2〜3 lineageのみ（探索目的、統計検定はしない）
 - 手順：Stage 1の結果に基づき条件数を確定した上で世代数を伸ばす
+- **task bank構成（1.5.1節参照）**：構成A（暗黙ルールなし、通常taskのみ）と構成B（構成A + invariant-stressing task）を並行して走らせる。構成Aの結果が主指標（構造的副次指標の推移）、構成Bの結果は診断的な補助情報として扱う。両者を同数のlineageで走らせる必要はなく、構成Aに多めのlineageを割り当ててよい
 - 併せて \(R^{sem}_B(S)\) の簡易フルスケール版（Stage 0.5の較正済みprobeセット）をtrajectory全体に適用する
 - 判定：形状（単調・非単調・交差の兆候）が観察できればStage 3へ。完全にフラットでノイズのみの場合、対応はStage 0.5の結果次第で分岐する：
   - Stage 0.5で測定感度（4.3節のdose-response curve）が確認済みであれば、「有限contextはtrajectoryに系統的差を生じさせない」という**null resultの候補**として保持し、Stage 3（対立仮説の排除）へ進める。差が出ないこと自体を実験失敗として扱わない。
@@ -454,6 +504,8 @@ state transition prediction （例：この operation 実行後の状態はど�
   - seed architecture（1.4節の複数構造）
   - prior baseline（Zhu & Griffiths型のiterated in-context elicitationによるゼロ世代測定）
   - **task sequence**（1.8節のcounterbalanced topological order、複数パターン）
+  - **要求の質（requirement wording）**：1.9節で述べた通り、本研究は`visibleInstruction`の詳細度を独立変数として操作しないが、この統制が結果を歪めていないかを確認する頑健性チェックを行う。具体的には、observed trajectoryに現れた主要な現象（例：Stage 0のPhase 4で観測されたdistributed invariantの見落とし）に関与したtaskのうち1〜2件について、既存制約への明示的な言及を含む**詳細版のvisibleInstruction**を用意し、同一条件下で結果の方向性が反転しないか（見落としが解消される、または頻度が大きく変わるか）を確認する。反転する場合、observed trajectoryの解釈を「有限context下での意味的再構成の困難さ」ではなく「要求文の曖昧さ」に修正する必要がある。反転しない場合、要求の質は交絡要因として排除でき、有限context自体の効果として主張を維持できる。
+  - **task bank構成**（1.5.1節の構成A/B）：Stage 2で観察された現象（構造的副次指標の推移）が、invariant-stressing taskを含まない構成Aだけでも同様に観察できるかを確認する。構成Bでのみ現れる現象は、「暗黙ルールという道具立てが引き起こした artifact」である可能性があり、構成Aで再現する現象こそが、より頑健な主張の根拠になる
 - **前提条件（必須、v1.6で位置づけ修正）**：使用するtask sequenceの各順列について、\(G_0 \xrightarrow{\Delta_1} G_1 \xrightarrow{\Delta_2} \cdots\) を累積的に適用しながら各世代でmodel checkerを通す（**累積validator**）。この検証の位置づけは「task順序による科学的現象の発見」ではなく、**「task同士を組み合わせたときに、単体検証（各taskを独立に\(G_0 + \Delta_i\)として検証）では見つからない相互作用上の設計ミスがないかを確認する品質保証」**である。単体では両方安全なdeltaが組み合わせでのみ矛盾を生むケースが実際にSynthetic World v0.3で構成・実証されている（`demo_interaction_only_bug.ts`：単体では両方OKの2 taskが、両方適用すると矛盾を生む）。
 
   なお、GroundTruthDeltaが加算のみ（既存ruleの変更・削除を含まない）で構成される現在の設計では、ある世代\(G_g\)が一度矛盾を持てば、以降の世代\(G_{g+1}, G_{g+2}, \ldots\)も加算だけでは矛盾を解消できず、矛盾を持ち続ける。したがって「中間世代だけ一時的に壊れて後で直る」という現象は原理的に起こらない。将来GroundTruthDeltaに既存ruleの変更・削除を含める場合は、この限りではない。
@@ -466,6 +518,7 @@ state transition prediction （例：この operation 実行後の状態はど�
 - 目的：\(R^{sem}, M\) を左右している構造的形質の候補を探索する
 - 手順：Stage 0〜3で保存済みのraw trajectoryから、副次指標（3.2節）を事後的に抽出する
 - 分析の枠組みは \(\text{StructuralTrait} \rightarrow R^{sem}, M\) の関係を探索することであり、「Limitedだからmodularになるはずだ」という規範を先に埋め込まない
+- **構成Bとの突き合わせ**：構成B（invariant-stressing taskを含む）で観測された局所的な失敗イベント（特定世代でのdistributed invariant見落とし等）が、同時期の構造的副次指標（冗長性、局所化の進行等、構成Aの結果）と相関しているかを確認する。局所的な意味理解の失敗が、より広い構造的劣化の**予兆**として機能するのであれば、両者を橋渡しする形質（例：コメント密度、依存関係の可視性）を機序候補として優先的に検討する
 - 出力：Stage 6で操作対象とする有力な媒体候補（例：Spec、テスト、ADR、コメント）のリスト
 
 ### Stage 5：Confirmatory Experiment
@@ -503,13 +556,14 @@ Y_{i,g} = f(\text{Context}_i,\ \text{Generation}_g,\ \text{Context}_i \times \te
 | 4 | Semantic probeの自動生成テンプレートと採点方式 | 3.3 | 次アクション④で確定 |
 | 5 | equivalence testing用の \(\Delta_M, \Delta_R\) | 4.1(Stage1) | 未定 |
 | 6 | Delayed-dependency taskの遅延世代数 \(k\) の具体値 | 1.5 | 仮置き：13〜16世代 |
-| 7 | Task bankにおけるLocal/Cross-cutting/Delayed/Invariant-stressingの構成比 | 1.5 | 未定 |
+| 7 | ~~Task bankにおけるLocal/Cross-cutting/Delayed/Invariant-stressingの構成比~~ | 1.5 | **v1.7で位置づけ変更**。「構成比」ではなく、1.5.1節の構成A（暗黙ルールなし、主指標）と構成B（構成A+invariant-stressing、診断用）という2系統のtask bankを並行運用する方針に変更 |
 | 8 | Stage 5でのtask sequence設計（Latin square vs covariate化）の最終選択 | 4.1(Stage5) | Stage 3の結果を見て決定 |
 | 9 | held-out modification task set \(\mathcal{T}_{\text{heldout}}\) の規模（\(k\)）と、同一taskの反復試行回数 | 4.1(Stage0.5) | 仮置き：\(k=5\text{〜}10\) |
 | 10 | Present の syntactic/behavioral判定に使う micro-test（\(H(G)\) の一部）をどう自動生成するか | 1.6 | 未定。GroundTruthDeltaが新invariantのcondition節に触れるentityへの書き込みを含む場合、対応するrequires節を検査するmicro-testを自動追加する、というルールが候補（Synthetic World v0.1で手動実装は確認済み） |
 | 11 | task typeの分類（local/cross_cutting/...）と実際に必要な知識の広さの乖離をどう扱うか（ラベルの再定義かtask bank設計への反映か） | 1.5 | 未定 |
 | 12 | ~~複合operation（1 operationが複数entityの状態を同時に変更する）をTransitionRule schemaでどう表現するか~~ | 1.2 | **解決済み（v1.5）**。`TransitionRule`を`effects: Effect[]`形式に拡張し、1 operationが複数entityへ同時に作用するケースを正確に表現できるようになった |
 | 13 | task sequenceの累積検証（`validate_sequence`相当）を、本番のtask bank生成パイプラインへどう組み込むか（自動実行のタイミング・失敗時のtask再設計フロー） | 4節 Stage 3 | 未定 |
+| 14 | 構成B（invariant-stressing task）のvisible testが、暗黙ルールの答えを漏らしていないかを、生成パイプラインでどう自動検証するか（F5参照） | 1.5.1, 4節 Stage 2/3/4 | 未定。task delta（GroundTruthDelta）と既存visible testの静的解析で、該当entityへの直接的なassertion有無をチェックする仕組みが候補 |
 
 ---
 
