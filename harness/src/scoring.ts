@@ -259,7 +259,12 @@ function detectProtocolViolation(hiddenTests: TestSuiteResult): boolean {
       allErrors.includes("SyntaxError") ||
       allErrors.includes("TypeError: Cannot read") ||
       allErrors.includes("is not a function") ||
-      allErrors.includes("has no exported member"))
+      allErrors.includes("has no exported member") ||
+      // TypeScriptコンパイルエラーが protocol_adapter.ts に起因する場合
+      // （戻り値型の不一致 TS2322 等、契約シグネチャの再実装で発生）
+      // 注: jest出力にはANSIエスケープコードが含まれるため "error TS" は連続しない。
+      //     TSエラーコード（TS\d{4}）で直接検出する。
+      (allErrors.includes("protocol_adapter.ts") && /TS\d{4}/.test(allErrors)))
   );
 }
 

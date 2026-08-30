@@ -16,11 +16,12 @@
 import { ContextCondition } from "../types";
 
 // simple-limited での実装ファイル1ファイルあたりの最大文字数（rough: 約300 tokens相当）
-// testsファイルはこの制限の対象外（常に全文を含める）
+// priorityFiles（tests・型定義・固定契約ファイル）はこの制限の対象外
 const SIMPLE_LIMITED_MAX_CHARS_PER_FILE = 1200;
-// simple-limited での最大総文字数（rough: 約1000 tokens相当）
-// Synthetic World の実装ファイル合計（約5900文字）に対して実際に発動する水準に設定
-const SIMPLE_LIMITED_MAX_TOTAL_CHARS = 4000;
+// simple-limited での最大総文字数
+// priorityFiles 合計（tests≈2171 + world.ts≈456 + vok/state.ts≈46 + protocol_adapter.ts≈2365 ≈ 5038）
+// を確実に収容し、残り枠（≈962）で実装ロジックファイルを部分的に含める水準に設定
+const SIMPLE_LIMITED_MAX_TOTAL_CHARS = 6000;
 
 export function assembleContext(
   repositoryFiles: Record<string, string>,
@@ -55,13 +56,19 @@ function assembleFull(repositoryFiles: Record<string, string>): Record<string, s
  * 現象であり、条件設計として分離しておく必要がある（F3参照）。
  * testsは総文字数枠に含めることで、fullと実質的に同一になるのを防いでいる。
  *
- * tests・型定義を per-file cap の対象外とする理由:
+ * tests・型定義・固定契約ファイルを per-file cap の対象外とする理由:
  * - テストが中途半端に切り詰められると、AIが不完全なテストを見て誤った判断を
  *   する可能性があり、「テストという安全網をきちんと見せる」という意図が損なわれる。
  * - 型定義ファイル（WorldState等）が見えないと、AIは基礎的な型情報のないまま
  *   コードを書くことになり、「意味の理解に失敗する」という研究したい現象とは
  *   別種の失敗（型エラー、型の当て推量）を引き起こす意図しない交絡になる。
  *   型定義ファイルの判定は isTypeDefinitionFile() を参照。
+ * - protocol_adapter.ts（固定契約ファイル）が切り詰められると、AIはWorldProtocol
+ *   の戻り値型（OperationResult<WorldState>）を一度も見ないまま独自に再実装し、
+ *   TypeScriptコンパイルエラーが発生して以降の全世代のH(G)・task-specific testが
+ *   起動不能になる。研究したい現象（意味理解の失敗）以前の問題でtrajectory全体が
+ *   無効化されるため、この固定契約ファイルは常に全文を含める。
+ *   判定は isFixedContractFile() を参照。
  */
 function assembleSimpleLimited(
   repositoryFiles: Record<string, string>
@@ -69,11 +76,11 @@ function assembleSimpleLimited(
   const result: Record<string, string> = {};
   let totalChars = 0;
 
-  const priorityFiles: [string, string][] = []; // tests + 型定義: per-file cap なし
+  const priorityFiles: [string, string][] = []; // tests + 型定義 + 固定契約: per-file cap なし
   const implFiles: [string, string][] = [];
 
   for (const [filePath, content] of Object.entries(repositoryFiles)) {
-    if (isTestFile(filePath) || isTypeDefinitionFile(content)) {
+    if (isTestFile(filePath) || isTypeDefinitionFile(content) || isFixedContractFile(filePath)) {
       priorityFiles.push([filePath, content]);
     } else {
       implFiles.push([filePath, content]);
@@ -110,6 +117,14 @@ function isTestFile(filePath: string): boolean {
     normalized.endsWith(".test.ts") ||
     normalized.endsWith(".spec.ts")
   );
+}
+
+/**
+ * protocol_adapter.ts（WorldProtocol固定契約ファイル）かどうかを判定する。
+ * ファイルパスの末尾で判定する（Synthetic Worldでは1ファイルのみ）。
+ */
+function isFixedContractFile(filePath: string): boolean {
+  return filePath.replace(/\\/g, "/").endsWith("protocol_adapter.ts");
 }
 
 /**
