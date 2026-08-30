@@ -14,10 +14,12 @@
 
 import { ContextCondition } from "../types";
 
-// simple-limited での1ファイルあたりの最大文字数（rough: 約2000 tokens相当）
-const SIMPLE_LIMITED_MAX_CHARS_PER_FILE = 8000;
-// simple-limited での最大総文字数（rough: 約8000 tokens相当）
-const SIMPLE_LIMITED_MAX_TOTAL_CHARS = 32000;
+// simple-limited での実装ファイル1ファイルあたりの最大文字数（rough: 約300 tokens相当）
+// testsファイルはこの制限の対象外（常に全文を含める）
+const SIMPLE_LIMITED_MAX_CHARS_PER_FILE = 1200;
+// simple-limited での最大総文字数（rough: 約1000 tokens相当）
+// Synthetic World の実装ファイル合計（約5900文字）に対して実際に発動する水準に設定
+const SIMPLE_LIMITED_MAX_TOTAL_CHARS = 4000;
 
 export function assembleContext(
   repositoryFiles: Record<string, string>,
@@ -40,8 +42,8 @@ function assembleFull(repositoryFiles: Record<string, string>): Record<string, s
 
 /**
  * 単純Limited条件:
- * 1. testsファイルを優先して総枠に収める（per-file打ち切りあり）
- * 2. 残り枠で実装ファイルを追加する（per-file打ち切りあり）
+ * 1. testsファイルを優先して総枠に収める（per-file cap なし: 全文を渡す）
+ * 2. 残り枠で実装ファイルを追加する（per-file cap あり: SIMPLE_LIMITED_MAX_CHARS_PER_FILE）
  * 3. 総文字数は SIMPLE_LIMITED_MAX_TOTAL_CHARS で打ち切る
  *
  * tests/ を除外しない理由:
@@ -51,6 +53,10 @@ function assembleFull(repositoryFiles: Record<string, string>): Record<string, s
  * 妨げる」という研究の問いとは別の、安全網を取り除いた結果として自明に近い
  * 現象であり、条件設計として分離しておく必要がある（F3参照）。
  * testsは総文字数枠に含めることで、fullと実質的に同一になるのを防いでいる。
+ *
+ * testsを per-file cap の対象外とする理由:
+ * テストが中途半端に切り詰められると、AIが不完全なテストを見て誤った判断を
+ * する可能性があり、「テストという安全網をきちんと見せる」という意図が損なわれる。
  */
 function assembleSimpleLimited(
   repositoryFiles: Record<string, string>
@@ -69,17 +75,16 @@ function assembleSimpleLimited(
     }
   }
 
-  // tests ファイルを優先して枠に収める
+  // tests ファイルを優先して枠に収める（per-file cap なし: 全文を渡す）
   for (const [filePath, content] of testFiles) {
     if (totalChars >= SIMPLE_LIMITED_MAX_TOTAL_CHARS) break;
-    const truncated = content.slice(0, SIMPLE_LIMITED_MAX_CHARS_PER_FILE);
     const remaining = SIMPLE_LIMITED_MAX_TOTAL_CHARS - totalChars;
-    const fileContent = truncated.slice(0, remaining);
+    const fileContent = content.slice(0, remaining);
     result[filePath] = fileContent;
     totalChars += fileContent.length;
   }
 
-  // 残り枠で実装ファイルを追加
+  // 残り枠で実装ファイルを追加（per-file cap あり）
   for (const [filePath, content] of implFiles) {
     if (totalChars >= SIMPLE_LIMITED_MAX_TOTAL_CHARS) break;
     const truncated = content.slice(0, SIMPLE_LIMITED_MAX_CHARS_PER_FILE);
