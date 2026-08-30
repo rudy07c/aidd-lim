@@ -8,7 +8,8 @@
     "verify": "ts-node verify-logs.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "latest"
+    "@anthropic-ai/sdk": "latest",
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

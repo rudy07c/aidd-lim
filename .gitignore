@@ -10,3 +10,6 @@ dist/
 .DS_Store
 .vscode/
 *.log
+
+# API keys — NEVER commit actual credentials
+harness/.env

@@ -7,7 +7,11 @@
 //
 // 設定ファイル（JSON）のスキーマは RunConfig に準拠。
 // syntheticWorldDir / runsDir は省略時はこのファイルを基準に自動解決する。
+//
+// APIキーは harness/.env に ANTHROPIC_API_KEY=sk-ant-... として設定する。
+// dotenv が自動的に読み込む（.env は .gitignore されているため誤push不可）。
 
+import "dotenv/config";
 import * as fs from "fs";
 import * as path from "path";
 import { RunConfig } from "./src/types";

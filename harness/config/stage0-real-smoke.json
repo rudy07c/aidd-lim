@@ -1,0 +1,11 @@
+{
+  "_comment": "Phase 3スモークテスト用: 実APIで1世代だけ動かし、プロンプト/パース周りを確認する。",
+  "experimentId": "stage0-real-smoke-001",
+  "lineageId": "lineage-0",
+  "backend": "anthropic",
+  "condition": "full",
+  "contextBudget": "full",
+  "generations": 1,
+  "model": "claude-haiku-4-5-20251001",
+  "tasks": ["T-local-1"]
+}
