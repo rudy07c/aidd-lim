@@ -1,0 +1,121 @@
+{
+  "passed": false,
+  "numPassed": 2,
+  "numFailed": 1,
+  "testCases": [
+    {
+      "testName": "T-local-1: forceAdvanceVok forceAdvanceVok: Vok nim→dor when Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-local-1: forceAdvanceVok forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)",
+      "passed": false,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-tJ4SIp/task_specific_tests/task.test.ts:17:23)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "T-local-1: forceAdvanceVok forceAdvanceVok: is registered as a known operation",
+      "passed": true
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 1,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 2,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 3,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788089481196,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "T-local-1: forceAdvanceVok"
+            ],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-local-1: forceAdvanceVok forceAdvanceVok: Vok nim→dor when Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 3,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "forceAdvanceVok: Vok nim→dor when Tal=pex"
+          },
+          {
+            "ancestorTitles": [
+              "T-local-1: forceAdvanceVok"
+            ],
+            "duration": 1,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "actual": true,
+                  "expected": false,
+                  "message": "expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true",
+                  "name": "toBe",
+                  "pass": false
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-tJ4SIp/task_specific_tests/task.test.ts:17:23)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "T-local-1: forceAdvanceVok forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)"
+          },
+          {
+            "ancestorTitles": [
+              "T-local-1: forceAdvanceVok"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-local-1: forceAdvanceVok forceAdvanceVok: is registered as a known operation",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "forceAdvanceVok: is registered as a known operation"
+          }
+        ],
+        "endTime": 1788089482252,
+        "message": "  ● T-local-1: forceAdvanceVok › forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: false\n    Received: true\n\n      15 |     const world = protocol.reset();\n      16 |     const r = protocol.applyOperation(world, \"forceAdvanceVok\");\n    > 17 |     expect(r.success).toBe(false);\n         |                       ^\n      18 |   });\n      19 |\n      20 |   test(\"forceAdvanceVok: is registered as a known operation\", () => {\n\n      at Object.<anonymous> (task_specific_tests/task.test.ts:17:23)\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-tJ4SIp/task_specific_tests/task.test.ts",
+        "startTime": 1788089481299,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}
