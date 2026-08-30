@@ -57,6 +57,17 @@ async function main(): Promise<void> {
     runsDir: rawConfig.runsDir ?? DEFAULT_RUNS_DIR,
   };
 
+  // 同じ experimentId のディレクトリが既に存在する場合、タイムスタンプ付きの別 ID に退避する。
+  // 気づかないうちに過去の実行結果が上書きされることを防ぐ。
+  const existingDir = path.join(config.runsDir, config.experimentId);
+  if (fs.existsSync(existingDir)) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").replace("T", "_").slice(0, 19);
+    const newExperimentId = `${config.experimentId}__${timestamp}`;
+    console.warn(`[run] WARNING: runs/${config.experimentId}/ already exists.`);
+    console.warn(`[run] Auto-renaming to avoid overwrite: ${newExperimentId}`);
+    config.experimentId = newExperimentId;
+  }
+
   console.log(`[run] Config: ${absConfigPath}`);
   console.log(`[run] Experiment: ${config.experimentId}`);
   console.log(`[run] Synthetic World: ${config.syntheticWorldDir}`);
