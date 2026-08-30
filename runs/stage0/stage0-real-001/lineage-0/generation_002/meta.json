@@ -1,0 +1,25 @@
+{
+  "experiment_id": "stage0-real-001",
+  "lineage_id": "lineage-0",
+  "generation": 2,
+  "condition": "full",
+  "model": "claude-haiku-4-5-20251001",
+  "task_id": "T-delayed-1",
+  "context_budget": "full",
+  "actual_context_tokens": 2006,
+  "functional_task_result": true,
+  "task_specific_test_result": {
+    "passed": true,
+    "numPassed": 3,
+    "numFailed": 0
+  },
+  "latency_ms": 16461,
+  "token_usage": {
+    "input": 3876,
+    "output": 1944
+  },
+  "cost": null,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

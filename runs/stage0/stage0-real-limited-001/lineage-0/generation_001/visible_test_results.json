@@ -1,0 +1,196 @@
+{
+  "passed": false,
+  "numPassed": 5,
+  "numFailed": 2,
+  "testCases": [
+    {
+      "testName": "advanceVok1: nim -> pex succeeds from initial state",
+      "passed": true
+    },
+    {
+      "testName": "advanceVok2: fails if Zef is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef1: fails if Tal is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceVok2: succeeds once Zef is 'pex' (which itself requires Tal 'pex')",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: fails if Tal is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: succeeds once Tal is 'pex'",
+      "passed": false,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: \"dor\"\nReceived: \"pex\"\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-vWOyzo/repository/tests/rules.visible.test.ts:46:18)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex",
+      "passed": false,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: \"dor\"\nReceived: \"pex\"\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-vWOyzo/repository/tests/rules.visible.test.ts:60:17)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 2,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 5,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 7,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788092727618,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceVok1: nim -> pex succeeds from initial state",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceVok1: nim -> pex succeeds from initial state"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 4,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceVok2: fails if Zef is not 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceVok2: fails if Zef is not 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceZef1: fails if Tal is not 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceZef1: fails if Tal is not 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceVok2: succeeds once Zef is 'pex' (which itself requires Tal 'pex')",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceVok2: succeeds once Zef is 'pex' (which itself requires Tal 'pex')"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "advanceZef2: fails if Tal is not 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "advanceZef2: fails if Tal is not 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 2,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "actual": "pex",
+                  "expected": "dor",
+                  "message": "expect(received).toBe(expected) // Object.is equality\n\nExpected: \"dor\"\nReceived: \"pex\"",
+                  "name": "toBe",
+                  "pass": false
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: \"dor\"\nReceived: \"pex\"\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-vWOyzo/repository/tests/rules.visible.test.ts:46:18)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "advanceZef2: succeeds once Tal is 'pex'",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "advanceZef2: succeeds once Tal is 'pex'"
+          },
+          {
+            "ancestorTitles": [],
+            "duration": 0,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "actual": "pex",
+                  "expected": "dor",
+                  "message": "expect(received).toBe(expected) // Object.is equality\n\nExpected: \"dor\"\nReceived: \"pex\"",
+                  "name": "toBe",
+                  "pass": false
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: \"dor\"\nReceived: \"pex\"\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-vWOyzo/repository/tests/rules.visible.test.ts:60:17)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex"
+          }
+        ],
+        "endTime": 1788092728741,
+        "message": "  ● advanceZef2: succeeds once Tal is 'pex'\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: \"dor\"\n    Received: \"pex\"\n\n      44 |   w = advanceZef1(w); // zef: pex (tal=pexなので成功)\n      45 |   const w2 = advanceZef2(w);\n    > 46 |   expect(w2.zef).toBe(\"dor\");\n         |                  ^\n      47 | });\n      48 |\n      49 | test(\"full valid sequence reaches Vok=dor, Zef=dor, Tal=pex\", () => {\n\n      at Object.<anonymous> (repository/tests/rules.visible.test.ts:46:18)\n\n  ● full valid sequence reaches Vok=dor, Zef=dor, Tal=pex\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: \"dor\"\n    Received: \"pex\"\n\n      58 |   w = advanceZef2(w);       // zef: dor  (tal=\"pex\"なので成功)\n      59 |   expect(w.vok).toBe(\"dor\");\n    > 60 |   expect(w.zef).toBe(\"dor\");\n         |                 ^\n      61 |   expect(w.tal).toBe(\"pex\");\n      62 | });\n      63 |\n\n      at Object.<anonymous> (repository/tests/rules.visible.test.ts:60:17)\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-vWOyzo/repository/tests/rules.visible.test.ts",
+        "startTime": 1788092727736,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

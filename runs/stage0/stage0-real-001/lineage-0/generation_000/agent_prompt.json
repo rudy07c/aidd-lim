@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/protocol_adapter.ts, src/tal/rules.ts, src/vok/rules.ts, src/vok/state.ts, src/world.ts, src/zef/rules.ts, tests/rules.visible.test.ts]\n\nTask:\nVok が 'nim' の状態から一度の操作で強制的に 'dor' まで進める新しい operation 'forceAdvanceVok' を追加せよ。"
+}
