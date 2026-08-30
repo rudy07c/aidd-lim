@@ -1,0 +1,56 @@
+{
+  "passed": false,
+  "numPassed": 0,
+  "numFailed": 1,
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m43\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '(w: WorldState, operationName: string) => WorldState' is not assignable to type '(state: WorldState, operationDisplayName: string) => OperationResult<WorldState>'.\n      Property 'success' is missing in type 'WorldState' but required in type 'OperationResult<WorldState>'.\n\n    \u001b[7m43\u001b[0m   applyOperation(w: WorldState, operationName: string): WorldState {\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mschema.ts\u001b[0m:\u001b[93m155\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m155\u001b[0m   success: boolean;\n        \u001b[7m   \u001b[0m \u001b[96m  ~~~~~~~\u001b[0m\n        'success' is declared here.\n      \u001b[96mschema.ts\u001b[0m:\u001b[93m162\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m162\u001b[0m   applyOperation(state: WorldStateHandle, operationDisplayName: string): OperationResult<WorldStateHandle>;\n        \u001b[7m   \u001b[0m \u001b[96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n        The expected type comes from property 'applyOperation' which is declared here on type 'WorldProtocol<WorldState>'\n"
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 0,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 1,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 0,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788096643725,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [],
+        "coverage": {},
+        "endTime": 1788096644796,
+        "message": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m43\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '(w: WorldState, operationName: string) => WorldState' is not assignable to type '(state: WorldState, operationDisplayName: string) => OperationResult<WorldState>'.\n      Property 'success' is missing in type 'WorldState' but required in type 'OperationResult<WorldState>'.\n\n    \u001b[7m43\u001b[0m   applyOperation(w: WorldState, operationName: string): WorldState {\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mschema.ts\u001b[0m:\u001b[93m155\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m155\u001b[0m   success: boolean;\n        \u001b[7m   \u001b[0m \u001b[96m  ~~~~~~~\u001b[0m\n        'success' is declared here.\n      \u001b[96mschema.ts\u001b[0m:\u001b[93m162\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m162\u001b[0m   applyOperation(state: WorldStateHandle, operationDisplayName: string): OperationResult<WorldStateHandle>;\n        \u001b[7m   \u001b[0m \u001b[96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n        The expected type comes from property 'applyOperation' which is declared here on type 'WorldProtocol<WorldState>'\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-afKmOm/hidden_regression_tests/H_G.test.ts",
+        "startTime": 1788096644796,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

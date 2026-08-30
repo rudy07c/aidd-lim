@@ -1,0 +1,257 @@
+--- a/src/protocol_adapter.ts
++++ b/src/protocol_adapter.ts
+@@ -1,70 +1,96 @@
+-// protocol_adapter.ts
+-//
+-// これは「文化的に継承されるartifact」ではなく、実験世界の固定された
+-// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。
+-// H(G) は internal な rules.ts / entity module 構造を一切知らず、
+-// このファイルがexportする関数だけを呼ぶ。
+-//
+-// worker AIは、内部構造（vok/zef/tal ディレクトリ、rules.ts の分割方法等）を
+-// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する
+-// エクスポート名・振る舞いだけは保持しなければならない
+-// （Generation 0で確定した固定契約）。
+-
+-import { WorldProtocol, OperationResult } from "../../schema";
+-import { WorldState, createInitialWorld } from "./world";
+-import { advanceVok1, advanceVok2, forceAdvanceVok } from "./vok/rules";
+-import { advanceZef1, advanceZef2, resetZef } from "./zef/rules";
+-import { advanceTal1 } from "./tal/rules";
+-import { kindleBoth } from "./kindleBoth/rules";
+-
+-// displayName -> 内部操作の対応表。この対応表自体は世代を経て
+-// リファクタされてよい（新operationの追加や、内部関数の再編を含む）。
+-// ただし各displayNameのキー文字列（"advanceVok1"等）はcontractの一部として固定。
+-const operationTable: Record<string, (w: WorldState) => WorldState> = {
+-  advanceVok1,
+-  advanceVok2,
+-  forceAdvanceVok,
+-  advanceZef1,
+-  advanceZef2,
+-  resetZef,
+-  advanceTal1,
+-  kindleBoth,
+-};
+-
+-// entity display name -> WorldStateのプロパティ名
+-const entityFieldTable: Record<string, keyof WorldState> = {
+-  Vok: "vok",
+-  Zef: "zef",
+-  Tal: "tal",
+-};
+-
+-export const protocol: WorldProtocol = {
+-  reset: (): WorldState => createInitialWorld(),
+-  applyOperation: (w: WorldState, displayName: string): OperationResult => {
+-    const op = operationTable[displayName];
+-    if (!op) {
+-      throw new Error(`Unknown operation: ${displayName}`);
+-    }
+-    try {
+-      const w2 = op(w);
+-      return { ok: true, world: w2 };
+-    } catch (e) {
+-      return { ok: false, reason: String(e) };
+-    }
+-  },
+-  getEntityState: (w: WorldState, displayName: string): string => {
+-    const field = entityFieldTable[displayName];
+-    if (!field) {
+-      throw new Error(`Unknown entity: ${displayName}`);
+-    }
+-    return w[field];
+-  },
+-  toAbstractSnapshot: (w: WorldState): Record<string, string> => {
+-    return {
+-      Vok: w.vok,
+-      Zef: w.zef,
+-      Tal: w.tal,
+-    };
+-  },
+-};
+-
++// protocol_adapter.ts
++//
++// これは「文化的に継承されるartifact」ではなく、実験世界の固定された
++// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。
++// H(G) は internal な rules.ts / entity module 構造を一切知らず、
++// このファイルがexportする関数だけを呼ぶ。
++//
++// worker AIは、内部構造（vok/zef/tal ディレクトリ、rules.ts の分割方法等）を
++// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する
++// エクスポート名・振る舞いだけは保持しなければならない
++// （Generation 0で確定した固定契約）。
++
++import { WorldProtocol, OperationResult } from "../../schema";
++import { WorldState, createInitialWorld } from "./world";
++import { advanceVok1, advanceVok2, forceAdvanceVok } from "./vok/rules";
++import { advanceZef1, advanceZef2, resetZef, fastTrackZef } from "./zef/rules";
++import { advanceTal1 } from "./tal/rules";
++import { kindleBoth } from "./kindleBoth/rules";
++
++// displayName -> 内部操作の対応表。この対応表自体は世代を経て
++// リファクタされてよい（新operationの追加や、内部関数の再編を含む）。
++// ただし各displayNameのキー文字列（"advanceVok1"等）はcontractの一部として固定。
++const operationTable: Record<string, (w: WorldState) => WorldState> = {
++  advanceVok1,
++  advanceVok2,
++  forceAdvanceVok,
++  advanceZef1,
++  advanceZef2,
++  fastTrackZef,
++  resetZef,
++  advanceTal1,
++  kindleBoth,
++};
++
++// entity display name -> WorldStateのプロパティ名
++const entityFieldTable: Record<string, keyof WorldState> = {
++  Vok: "vok",
++  Zef: "zef",
++  Tal: "tal",
++};
++
++// 内部用のWorldState保持
++let world: WorldState = createInitialWorld();
++
++/**
++ * reset: WorldStateを初期状態にリセット
++ */
++export function reset(): void {
++  world = createInitialWorld();
++}
++
++/**
++ * applyOperation: displayNameで指定されたoperationを適用
++ */
++export function applyOperation(displayName: string): OperationResult {
++  const fn = operationTable[displayName];
++  if (!fn) {
++    return { success: false, error: `Unknown operation: ${displayName}` };
++  }
++  try {
++    world = fn(world);
++    return { success: true };
++  } catch (e: unknown) {
++    const message = e instanceof Error ? e.message : String(e);
++    return { success: false, error: message };
++  }
++}
++
++/**
++ * getEntityState: entityのcurrent stateを返す
++ */
++export function getEntityState(entityName: string): string | null {
++  const field = entityFieldTable[entityName];
++  if (!field) return null;
++  return world[field];
++}
++
++/**
++ * toAbstractSnapshot: internal WorldStateを外部formatに変換
++ */
++export function toAbstractSnapshot(): Record<string, string> {
++  return {
++    vok: world.vok,
++    zef: world.zef,
++    tal: world.tal,
++  };
++}
++
++// WorldProtocol contract
++export const protocol: WorldProtocol = {
++  reset,
++  applyOperation,
++  getEntityState,
++  toAbstractSnapshot,
++};
++
+
+--- a/src/zef/rules.ts
++++ b/src/zef/rules.ts
+@@ -1,41 +1,43 @@
+-import { WorldState } from "../world";
+-
+-/**
+- * advanceZef1 (= O2): Zef: nim -> pex
+- * Precondition: Tal must be 'pex'
+- */
+-export function advanceZef1(w: WorldState): WorldState {
+-  if (w.tal !== "pex") {
+-    throw new Error("advanceZef1 requires Tal to be 'pex'");
+-  }
+-  if (w.zef !== "nim") {
+-    throw new Error("advanceZef1 requires Zef to be 'nim'");
+-  }
+-  return { ...w, zef: "pex" };
+-}
+-
+-/**
+- * advanceZef2 (= O4): Zef: pex -> dor
+- * Precondition: Tal must be 'pex'
+- */
+-export function advanceZef2(w: WorldState): WorldState {
+-  if (w.tal !== "pex") {
+-    throw new Error("advanceZef2 requires Tal to be 'pex'");
+-  }
+-  if (w.zef !== "pex") {
+-    throw new Error("advanceZef2 requires Zef to be 'pex'");
+-  }
+-  return { ...w, zef: "dor" };
+-}
+-
+-/**
+- * resetZef: Zef: pex -> nim
+- * Precondition: Zef must be 'pex'
+- */
+-export function resetZef(w: WorldState): WorldState {
+-  if (w.zef !== "pex") {
+-    throw new Error("resetZef requires Zef to be 'pex'");
+-  }
+-  return { ...w, zef: "nim" };
+-}
+-
++import { WorldState } from "../world";
++
++/**
++ * advanceZef1 (= O2): Zef: nim -> pex, requires Tal='pex'
++ */
++export function advanceZef1(w: WorldState): WorldState {
++  if (w.tal !== "pex") {
++    throw new Error(`advanceZef1 requires tal='pex', but got tal='${w.tal}'`);
++  }
++  return { ...w, zef: "pex" };
++}
++
++/**
++ * advanceZef2 (= O4): Zef: pex -> dor, requires Tal='pex'
++ */
++export function advanceZef2(w: WorldState): WorldState {
++  if (w.tal !== "pex") {
++    throw new Error(`advanceZef2 requires tal='pex', but got tal='${w.tal}'`);
++  }
++  return { ...w, zef: "dor" };
++}
++
++/**
++ * fastTrackZef: Zef: nim -> dor (skip pex), requires Tal='pex'
++ * Performance optimization: advances Zef directly to 'dor' without intermediate state
++ */
++export function fastTrackZef(w: WorldState): WorldState {
++  if (w.tal !== "pex") {
++    throw new Error(`fastTrackZef requires tal='pex', but got tal='${w.tal}'`);
++  }
++  if (w.zef !== "nim") {
++    throw new Error(`fastTrackZef requires zef='nim', but got zef='${w.zef}'`);
++  }
++  return { ...w, zef: "dor" };
++}
++
++/**
++ * resetZef (= reset operation for Zef): Zef: any -> nim
++ */
++export function resetZef(w: WorldState): WorldState {
++  return { ...w, zef: "nim" };
++}
++

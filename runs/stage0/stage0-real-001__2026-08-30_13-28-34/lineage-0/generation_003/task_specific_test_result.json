@@ -1,0 +1,108 @@
+{
+  "passed": true,
+  "numPassed": 3,
+  "numFailed": 0,
+  "testCases": [
+    {
+      "testName": "T-invariant-stress-1: fastTrackZef fastTrackZef: Zef nim→dor when Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-1: fastTrackZef fastTrackZef: fails when Tal=nim (Invariant I2 guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-1: fastTrackZef fastTrackZef: Tal remains pex after operation",
+      "passed": true
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 0,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 1,
+    "numPassedTests": 3,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 3,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788096610839,
+    "success": true,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "T-invariant-stress-1: fastTrackZef"
+            ],
+            "duration": 2,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-invariant-stress-1: fastTrackZef fastTrackZef: Zef nim→dor when Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 3,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "fastTrackZef: Zef nim→dor when Tal=pex"
+          },
+          {
+            "ancestorTitles": [
+              "T-invariant-stress-1: fastTrackZef"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-invariant-stress-1: fastTrackZef fastTrackZef: fails when Tal=nim (Invariant I2 guard)",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "fastTrackZef: fails when Tal=nim (Invariant I2 guard)"
+          },
+          {
+            "ancestorTitles": [
+              "T-invariant-stress-1: fastTrackZef"
+            ],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-invariant-stress-1: fastTrackZef fastTrackZef: Tal remains pex after operation",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 3,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "fastTrackZef: Tal remains pex after operation"
+          }
+        ],
+        "endTime": 1788096611867,
+        "message": "",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-Cy9kdU/task_specific_tests/task.test.ts",
+        "startTime": 1788096610941,
+        "status": "passed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

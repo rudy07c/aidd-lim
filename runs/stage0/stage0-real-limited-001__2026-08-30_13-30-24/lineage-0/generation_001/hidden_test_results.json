@@ -1,0 +1,56 @@
+{
+  "passed": false,
+  "numPassed": 0,
+  "numFailed": 1,
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m55\u001b[0m:\u001b[93m31\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2353: \u001b[0mObject literal may only specify known properties, and 'state' does not exist in type 'OperationResult<WorldState>'.\n\n    \u001b[7m55\u001b[0m       return { success: true, state: nextState };\n    \u001b[7m  \u001b[0m \u001b[91m                              ~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '(w: WorldState, entityName: string) => string | undefined' is not assignable to type '(state: WorldState, entityDisplayName: string) => string'.\n      Type 'string | undefined' is not assignable to type 'string'.\n        Type 'undefined' is not assignable to type 'string'.\n\n    \u001b[7m64\u001b[0m   getEntityState(w: WorldState, entityName: string): string | undefined {\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mschema.ts\u001b[0m:\u001b[93m163\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m163\u001b[0m   getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\n        \u001b[7m   \u001b[0m \u001b[96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n        The expected type comes from property 'getEntityState' which is declared here on type 'WorldProtocol<WorldState>'\n"
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 0,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 1,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 0,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788096662137,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [],
+        "coverage": {},
+        "endTime": 1788096663321,
+        "message": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m55\u001b[0m:\u001b[93m31\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2353: \u001b[0mObject literal may only specify known properties, and 'state' does not exist in type 'OperationResult<WorldState>'.\n\n    \u001b[7m55\u001b[0m       return { success: true, state: nextState };\n    \u001b[7m  \u001b[0m \u001b[91m                              ~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '(w: WorldState, entityName: string) => string | undefined' is not assignable to type '(state: WorldState, entityDisplayName: string) => string'.\n      Type 'string | undefined' is not assignable to type 'string'.\n        Type 'undefined' is not assignable to type 'string'.\n\n    \u001b[7m64\u001b[0m   getEntityState(w: WorldState, entityName: string): string | undefined {\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mschema.ts\u001b[0m:\u001b[93m163\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m163\u001b[0m   getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\n        \u001b[7m   \u001b[0m \u001b[96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n        The expected type comes from property 'getEntityState' which is declared here on type 'WorldProtocol<WorldState>'\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-5wdMBu/hidden_regression_tests/H_G.test.ts",
+        "startTime": 1788096663321,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

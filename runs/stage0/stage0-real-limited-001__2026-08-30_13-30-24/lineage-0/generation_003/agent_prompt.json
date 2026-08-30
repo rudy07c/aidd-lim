@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/protocol_adapter.ts, src/tal/rules.ts, src/vok/state.ts, src/world.ts, tests/rules.visible.test.ts]\n\nTask:\nパフォーマンス改善のため、Zef を 'nim' から 'dor' へ一気に進める 'fastTrackZef' operation を追加せよ。中間状態の 'pex' を経由する必要はない。"
+}

@@ -1,0 +1,56 @@
+{
+  "passed": false,
+  "numPassed": 0,
+  "numFailed": 1,
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m16\u001b[0m:\u001b[93m42\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m16\u001b[0m   const result = protocol.applyOperation(world, op);\n    \u001b[7m  \u001b[0m \u001b[91m                                         ~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m24\u001b[0m:\u001b[93m42\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m24\u001b[0m   const result = protocol.applyOperation(world, op);\n    \u001b[7m  \u001b[0m \u001b[91m                                         ~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m32\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m32\u001b[0m     expect(protocol.getEntityState(w2, \"Vok\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m41\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m41\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceVok2\"), \"Vok\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m48\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m48\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceZef1\"), \"Zef\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m55\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m55\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceZef2\"), \"Zef\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m60\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m60\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceTal1\"), \"Tal\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m77\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m77\u001b[0m     expect(protocol.getEntityState(w, \"Vok\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m78\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m78\u001b[0m     expect(protocol.getEntityState(w, \"Tal\")).toBe(\"pex\"); // I1: 常にpexであるはず\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m86\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m86\u001b[0m     expect(protocol.getEntityState(w, \"Zef\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m87\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m87\u001b[0m     expect(protocol.getEntityState(w, \"Tal\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n"
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 0,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 1,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 0,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788096718632,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [],
+        "coverage": {},
+        "endTime": 1788096719635,
+        "message": "  ● Test suite failed to run\n\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m16\u001b[0m:\u001b[93m42\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m16\u001b[0m   const result = protocol.applyOperation(world, op);\n    \u001b[7m  \u001b[0m \u001b[91m                                         ~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m24\u001b[0m:\u001b[93m42\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m24\u001b[0m   const result = protocol.applyOperation(world, op);\n    \u001b[7m  \u001b[0m \u001b[91m                                         ~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m32\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m32\u001b[0m     expect(protocol.getEntityState(w2, \"Vok\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m41\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m41\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceVok2\"), \"Vok\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m48\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m48\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceZef1\"), \"Zef\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m55\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m55\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceZef2\"), \"Zef\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m60\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m60\u001b[0m     expect(protocol.getEntityState(apply(w, \"advanceTal1\"), \"Tal\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m77\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m77\u001b[0m     expect(protocol.getEntityState(w, \"Vok\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m78\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m78\u001b[0m     expect(protocol.getEntityState(w, \"Tal\")).toBe(\"pex\"); // I1: 常にpexであるはず\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m86\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m86\u001b[0m     expect(protocol.getEntityState(w, \"Zef\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m87\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m87\u001b[0m     expect(protocol.getEntityState(w, \"Tal\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                   ~\u001b[0m\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-dtHRBt/hidden_regression_tests/H_G.test.ts",
+        "startTime": 1788096719635,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

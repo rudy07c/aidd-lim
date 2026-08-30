@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/protocol_adapter.ts, src/tal/rules.ts, src/vok/state.ts, src/world.ts, tests/rules.visible.test.ts]\n\nTask:\nZef と Tal を同時に 'pex' へ進める新しい operation 'kindleBoth' を追加せよ。"
+}
