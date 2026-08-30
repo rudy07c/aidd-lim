@@ -179,6 +179,9 @@ function parseJestResults(raw: unknown): TestSuiteResult {
     numPassedTests: number;
     numFailedTests: number;
     testResults: Array<{
+      testFilePath: string;
+      status: "passed" | "failed" | "pending";
+      message: string;
       assertionResults: Array<{
         fullName: string;
         status: "passed" | "failed" | "pending";
@@ -190,7 +193,19 @@ function parseJestResults(raw: unknown): TestSuiteResult {
   const j = raw as JestOutput;
 
   const testCases: TestCaseResult[] = [];
+  let suiteLevelFailures = 0;
+
   for (const suite of j.testResults ?? []) {
+    // suite-levelの失敗（TypeScriptコンパイルエラー等でテスト自体が実行されなかった場合）
+    // assertionResultsが空でstatus=failedのとき、suite.messageにエラー内容が入っている
+    if (suite.status === "failed" && (suite.assertionResults ?? []).length === 0) {
+      suiteLevelFailures++;
+      testCases.push({
+        testName: `[suite] ${suite.testFilePath}`,
+        passed: false,
+        error: suite.message || "Test suite failed to run",
+      });
+    }
     for (const tc of suite.assertionResults ?? []) {
       testCases.push({
         testName: tc.fullName,
@@ -203,7 +218,7 @@ function parseJestResults(raw: unknown): TestSuiteResult {
   return {
     passed: j.success,
     numPassed: j.numPassedTests ?? 0,
-    numFailed: j.numFailedTests ?? 0,
+    numFailed: (j.numFailedTests ?? 0) + suiteLevelFailures,
     testCases,
     rawJestOutput: raw,
   };

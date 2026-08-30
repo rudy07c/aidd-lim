@@ -1,0 +1,15 @@
+{
+  "_comment": "Phase 2用: mock-oracle + simple-limited条件で4世代を通す設定。",
+  "experimentId": "stage0-mock-oracle-limited-001",
+  "lineageId": "lineage-0",
+  "backend": "mock-oracle",
+  "condition": "simple-limited",
+  "contextBudget": "full",
+  "generations": 4,
+  "tasks": [
+    "T-local-1",
+    "T-crosscut-1",
+    "T-delayed-1",
+    "T-invariant-stress-1"
+  ]
+}

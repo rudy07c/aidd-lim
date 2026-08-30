@@ -1,0 +1,144 @@
+{
+  "passed": false,
+  "numPassed": 0,
+  "numFailed": 3,
+  "testCases": [
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Zef and Tal both advance nim→pex",
+      "passed": false,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7hkxi1/task_specific_tests/task.test.ts:7:23)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Vok is unchanged",
+      "passed": false,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7hkxi1/task_specific_tests/task.test.ts:15:23)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: is registered as a known operation",
+      "passed": false,
+      "error": "Error: expect(received).not.toMatch(expected)\n\nExpected pattern: not /unknown operation/\nReceived string:      \"unknown operation: kindleBoth\"\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7hkxi1/task_specific_tests/task.test.ts:23:27)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 3,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 0,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 3,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788088359472,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "T-crosscut-1: kindleBoth"
+            ],
+            "duration": 2,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "actual": false,
+                  "expected": true,
+                  "message": "expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false",
+                  "name": "toBe",
+                  "pass": false
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7hkxi1/task_specific_tests/task.test.ts:7:23)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "T-crosscut-1: kindleBoth kindleBoth: Zef and Tal both advance nim→pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "kindleBoth: Zef and Tal both advance nim→pex"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-1: kindleBoth"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "actual": false,
+                  "expected": true,
+                  "message": "expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false",
+                  "name": "toBe",
+                  "pass": false
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7hkxi1/task_specific_tests/task.test.ts:15:23)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "T-crosscut-1: kindleBoth kindleBoth: Vok is unchanged",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "kindleBoth: Vok is unchanged"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-1: kindleBoth"
+            ],
+            "duration": 1,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "message": "expect(received).not.toMatch(expected)\n\nExpected pattern: not /unknown operation/\nReceived string:      \"unknown operation: kindleBoth\"",
+                  "pass": true
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).not.toMatch(expected)\n\nExpected pattern: not /unknown operation/\nReceived string:      \"unknown operation: kindleBoth\"\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7hkxi1/task_specific_tests/task.test.ts:23:27)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "T-crosscut-1: kindleBoth kindleBoth: is registered as a known operation",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "kindleBoth: is registered as a known operation"
+          }
+        ],
+        "endTime": 1788088360513,
+        "message": "  ● T-crosscut-1: kindleBoth › kindleBoth: Zef and Tal both advance nim→pex\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: true\n    Received: false\n\n       5 |     const world = protocol.reset();\n       6 |     const r = protocol.applyOperation(world, \"kindleBoth\");\n    >  7 |     expect(r.success).toBe(true);\n         |                       ^\n       8 |     expect(protocol.getEntityState(r.newState!, \"Zef\")).toBe(\"pex\");\n       9 |     expect(protocol.getEntityState(r.newState!, \"Tal\")).toBe(\"pex\");\n      10 |   });\n\n      at Object.<anonymous> (task_specific_tests/task.test.ts:7:23)\n\n  ● T-crosscut-1: kindleBoth › kindleBoth: Vok is unchanged\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: true\n    Received: false\n\n      13 |     const world = protocol.reset();\n      14 |     const r = protocol.applyOperation(world, \"kindleBoth\");\n    > 15 |     expect(r.success).toBe(true);\n         |                       ^\n      16 |     expect(protocol.getEntityState(r.newState!, \"Vok\")).toBe(\"nim\");\n      17 |   });\n      18 |\n\n      at Object.<anonymous> (task_specific_tests/task.test.ts:15:23)\n\n  ● T-crosscut-1: kindleBoth › kindleBoth: is registered as a known operation\n\n    expect(received).not.toMatch(expected)\n\n    Expected pattern: not /unknown operation/\n    Received string:      \"unknown operation: kindleBoth\"\n\n      21 |     const r = protocol.applyOperation(world, \"kindleBoth\");\n      22 |     if (!r.success) {\n    > 23 |       expect(r.error).not.toMatch(/unknown operation/);\n         |                           ^\n      24 |     }\n      25 |   });\n      26 | });\n\n      at Object.<anonymous> (task_specific_tests/task.test.ts:23:27)\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-7hkxi1/task_specific_tests/task.test.ts",
+        "startTime": 1788088359574,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}
