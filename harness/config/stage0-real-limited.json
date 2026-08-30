@@ -1,0 +1,18 @@
+{
+  "_comment": "Phase 4用: 実Anthropic APIを使ったsimple-limited条件での5世代実行。APIキーは環境変数 ANTHROPIC_API_KEY から読む。",
+  "stage": "stage0",
+  "experimentId": "stage0-real-limited-001",
+  "lineageId": "lineage-0",
+  "backend": "anthropic",
+  "condition": "simple-limited",
+  "contextBudget": "full",
+  "generations": 5,
+  "model": "claude-haiku-4-5-20251001",
+  "tasks": [
+    "T-local-1",
+    "T-crosscut-1",
+    "T-delayed-1",
+    "T-invariant-stress-1",
+    "T-local-1"
+  ]
+}
