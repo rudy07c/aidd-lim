@@ -196,6 +196,12 @@ generation_002以降のAI（fresh sessionで、前世代の意図やこのミス
   採用している。`docs/harness_stage0_plan.md`5節「未決事項」参照）。
   出力形式（フルファイル vs diff）が回帰率に影響するかも、将来的な比較軸になりうる。
 
+### この発見を受けた設計変更
+
+この発見を受けて、simple-limited条件のルールを修正した。testsファイルは除外せず常に
+全文を含める（また型定義ファイルも同様）ことを確定した。詳細は
+`docs/harness_stage0_plan.md` 2.3節「単純Limited条件の最終ルール」を参照。
+
 ---
 
 ## エントリの追加方法

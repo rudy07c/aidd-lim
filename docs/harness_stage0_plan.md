@@ -110,9 +110,38 @@ Stage 0での扱い：
 Stage 1で導入するFull / Privileged-Selection Limited / Agent-Retrieved Limitedの3条件は**まだ実装しない**。Stage 0では計画書の記述通り「Full vs 単純Limited」の2条件で機構だけを確認する。
 
 - **Full**：`repository/`配下の全ファイルをそのままcontextへ含める
-- **単純Limited**：ナイーブな固定ルールで一部ファイルを省略する（例：`repository/tests/`を除外する、または各ファイルの先頭Nトークンで打ち切る）。**このルールの巧拙は問わない**。Stage 1で導入するPrivileged Selector / Agent-Retrievedの複雑な設計はここでは不要。
+- **単純Limited**：ナイーブな固定ルールで一部ファイルを省略する。**このルールの巧拙は問わない**。Stage 1で導入するPrivileged Selector / Agent-Retrievedの複雑な設計はここでは不要。
 
 目的はあくまで「context条件によって挙動を変えられる構造になっているか」の確認であり、Limited条件の質を測ることではない。
+
+#### 単純Limited条件の最終ルール（Stage 0実行を経て確定）
+
+初期設計では「`tests/`を除外し、残りを先頭Nトークンで打ち切る」を想定していたが、
+Phase 4の実行（`docs/findings/stage0_findings.md` F3参照）を経て、以下のルールに改訂した。
+
+**優先順位**：
+
+1. **testsファイル**（`tests/`配下、`*.test.ts`）: per-file cap なし、常に全文を含める
+   - 理由：testsを除外すると、後続世代のAI（fresh session）は前世代で発生した回帰に
+     気づく手段がなく、回帰が世代を超えて自己修復されずに蓄積し続けた（F3）。
+     「有限contextが意味理解を妨げる」という研究の問いとは別種の失敗であり、
+     条件設計として分離しておく必要がある。
+2. **型定義ファイル**（`export type` / `export interface` を含むファイル）: per-file cap なし、常に全文を含める
+   - 理由：`WorldState`等の基礎型が見えないと、AIは型情報のないままコードを書く
+     ことになり、研究したい「意味理解の失敗」とは別種の失敗（型エラー・型の当て推量）
+     が混入する意図しない交絡になる。
+3. **実装ロジックファイル**（上記以外）: per-file cap あり（削られうる）
+
+**定数**（`harness/src/context/assembler.ts`、Stage 0時点）：
+- `SIMPLE_LIMITED_MAX_CHARS_PER_FILE = 1200`（実装ファイルのper-file上限）
+- `SIMPLE_LIMITED_MAX_TOTAL_CHARS = 4000`（全ファイル合計の上限）
+
+これらの値は、Synthetic World全体（約7200文字）に対して**実際に発動する水準**に
+設定してある（旧設定の 8000/32000 は発動しておらず、事実上 full と同一だった。F3参照）。
+
+**「ただしtests/型定義という土台情報は必ず残す」という最低限のルールは、
+Stage 0の実行で発生した失敗を受けてStage 0時点で確定した**。
+Stage 1で導入する Privileged Selector 等の設計においても、この原則は継承する。
 
 ### 2.4 世代の独立性（fresh session）の実装
 

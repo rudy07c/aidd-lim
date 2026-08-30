@@ -6,7 +6,8 @@
 // - full: repository/ 配下の全ファイルをそのまま contextへ含める
 // - simple-limited: ナイーブな固定ルールで一部ファイルを省略する
 //                  （実装ファイルを先頭 N 文字で打ち切り、総文字数も制限する）
-//                  ※ tests/ ファイルは除外しない（理由は assembleSimpleLimited のコメント参照）
+//                  ※ tests/・型定義ファイルは除外せず全文を含める
+//                    （理由は assembleSimpleLimited のコメント参照）
 //
 // このLimited条件の「巧拙は問わない」（計画書2.3節）。
 // Stage 1で導入する Privileged Selector / Agent-Retrieved の設計はここでは不要。
@@ -42,7 +43,7 @@ function assembleFull(repositoryFiles: Record<string, string>): Record<string, s
 
 /**
  * 単純Limited条件:
- * 1. testsファイルを優先して総枠に収める（per-file cap なし: 全文を渡す）
+ * 1. testsファイル・型定義ファイルを優先して総枠に収める（per-file cap なし: 全文を渡す）
  * 2. 残り枠で実装ファイルを追加する（per-file cap あり: SIMPLE_LIMITED_MAX_CHARS_PER_FILE）
  * 3. 総文字数は SIMPLE_LIMITED_MAX_TOTAL_CHARS で打ち切る
  *
@@ -54,9 +55,13 @@ function assembleFull(repositoryFiles: Record<string, string>): Record<string, s
  * 現象であり、条件設計として分離しておく必要がある（F3参照）。
  * testsは総文字数枠に含めることで、fullと実質的に同一になるのを防いでいる。
  *
- * testsを per-file cap の対象外とする理由:
- * テストが中途半端に切り詰められると、AIが不完全なテストを見て誤った判断を
- * する可能性があり、「テストという安全網をきちんと見せる」という意図が損なわれる。
+ * tests・型定義を per-file cap の対象外とする理由:
+ * - テストが中途半端に切り詰められると、AIが不完全なテストを見て誤った判断を
+ *   する可能性があり、「テストという安全網をきちんと見せる」という意図が損なわれる。
+ * - 型定義ファイル（WorldState等）が見えないと、AIは基礎的な型情報のないまま
+ *   コードを書くことになり、「意味の理解に失敗する」という研究したい現象とは
+ *   別種の失敗（型エラー、型の当て推量）を引き起こす意図しない交絡になる。
+ *   型定義ファイルの判定は isTypeDefinitionFile() を参照。
  */
 function assembleSimpleLimited(
   repositoryFiles: Record<string, string>
@@ -64,19 +69,19 @@ function assembleSimpleLimited(
   const result: Record<string, string> = {};
   let totalChars = 0;
 
-  const testFiles: [string, string][] = [];
+  const priorityFiles: [string, string][] = []; // tests + 型定義: per-file cap なし
   const implFiles: [string, string][] = [];
 
   for (const [filePath, content] of Object.entries(repositoryFiles)) {
-    if (isTestFile(filePath)) {
-      testFiles.push([filePath, content]);
+    if (isTestFile(filePath) || isTypeDefinitionFile(content)) {
+      priorityFiles.push([filePath, content]);
     } else {
       implFiles.push([filePath, content]);
     }
   }
 
-  // tests ファイルを優先して枠に収める（per-file cap なし: 全文を渡す）
-  for (const [filePath, content] of testFiles) {
+  // tests・型定義ファイルを優先して枠に収める（per-file cap なし: 全文を渡す）
+  for (const [filePath, content] of priorityFiles) {
     if (totalChars >= SIMPLE_LIMITED_MAX_TOTAL_CHARS) break;
     const remaining = SIMPLE_LIMITED_MAX_TOTAL_CHARS - totalChars;
     const fileContent = content.slice(0, remaining);
@@ -105,6 +110,16 @@ function isTestFile(filePath: string): boolean {
     normalized.endsWith(".test.ts") ||
     normalized.endsWith(".spec.ts")
   );
+}
+
+/**
+ * ファイル内容から、型定義ファイルかどうかを判定する。
+ * `export type` または `export interface` の行を含む場合に true を返す。
+ * ファイル名ではなく内容で判定することで、型定義が別ファイルに移動・追加された
+ * 場合にも自動的に対応する。
+ */
+function isTypeDefinitionFile(content: string): boolean {
+  return /^export\s+(type|interface)\s/m.test(content);
 }
 
 /**
