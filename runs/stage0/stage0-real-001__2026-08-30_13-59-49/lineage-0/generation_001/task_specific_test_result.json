@@ -1,0 +1,108 @@
+{
+  "passed": true,
+  "numPassed": 3,
+  "numFailed": 0,
+  "testCases": [
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Zef and Tal both advance nim→pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Vok is unchanged",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: is registered as a known operation",
+      "passed": true
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 0,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 1,
+    "numPassedTests": 3,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 3,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788098434148,
+    "success": true,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "T-crosscut-1: kindleBoth"
+            ],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-1: kindleBoth kindleBoth: Zef and Tal both advance nim→pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 3,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "kindleBoth: Zef and Tal both advance nim→pex"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-1: kindleBoth"
+            ],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-1: kindleBoth kindleBoth: Vok is unchanged",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 2,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "kindleBoth: Vok is unchanged"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-1: kindleBoth"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-1: kindleBoth kindleBoth: is registered as a known operation",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "kindleBoth: is registered as a known operation"
+          }
+        ],
+        "endTime": 1788098435197,
+        "message": "",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-DHHhjd/task_specific_tests/task.test.ts",
+        "startTime": 1788098434246,
+        "status": "passed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}
