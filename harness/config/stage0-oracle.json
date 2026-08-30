@@ -1,5 +1,6 @@
 {
   "_comment": "Phase 1-2用: mock-oracle で4世代を通し、成功が正しく記録されるか確認する設定。",
+  "stage": "stage0",
   "experimentId": "stage0-mock-oracle-001",
   "lineageId": "lineage-0",
   "backend": "mock-oracle",

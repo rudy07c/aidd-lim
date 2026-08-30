@@ -1,5 +1,6 @@
 {
   "_comment": "Phase 1-2用: mock-noop で5世代を通し、機構の動作確認をする設定。",
+  "stage": "stage0",
   "experimentId": "stage0-mock-noop-001",
   "lineageId": "lineage-0",
   "backend": "mock-noop",

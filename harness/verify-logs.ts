@@ -160,6 +160,14 @@ function verifyExperiment(experimentDir: string): VerificationResult[] {
   return results;
 }
 
+/** ディレクトリが experiment dir かどうかを判定する（lineage-* サブディレクトリを持つか）。 */
+function isExperimentDir(dir: string): boolean {
+  return fs.readdirSync(dir).some((name) => {
+    const child = path.join(dir, name);
+    return name.startsWith("lineage-") && fs.statSync(child).isDirectory();
+  });
+}
+
 function getAllFiles(dir: string): string[] {
   const files: string[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -201,10 +209,20 @@ function main(): void {
   const results: VerificationResult[] = [];
 
   if (all) {
-    for (const expName of fs.readdirSync(runsDir)) {
-      const expDir = path.join(runsDir, expName);
-      if (fs.statSync(expDir).isDirectory()) {
-        results.push(...verifyExperiment(expDir));
+    for (const name of fs.readdirSync(runsDir)) {
+      const dir = path.join(runsDir, name);
+      if (!fs.statSync(dir).isDirectory()) continue;
+      if (isExperimentDir(dir)) {
+        // 旧フラット構造 or 直接 experiment dir を指定した場合
+        results.push(...verifyExperiment(dir));
+      } else {
+        // stage ディレクトリ（runs/stage0/, runs/_smoke/ 等）: 1段深くして experiment dirs を探す
+        for (const expName of fs.readdirSync(dir)) {
+          const expDir = path.join(dir, expName);
+          if (fs.statSync(expDir).isDirectory() && isExperimentDir(expDir)) {
+            results.push(...verifyExperiment(expDir));
+          }
+        }
       }
     }
   } else if (experimentId) {

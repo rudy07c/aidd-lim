@@ -18,6 +18,8 @@ export interface RunConfig {
   tasks: string[];
   /** 使用するモデル名（anthropic backendのみ使用） */
   model?: string;
+  /** Stageディレクトリ名（例: "stage0"）。runs/<stage>/ 配下に出力する */
+  stage?: string;
   /** synthetic-world ディレクトリへの絶対パス */
   syntheticWorldDir: string;
   /** runs/ ディレクトリへの絶対パス */

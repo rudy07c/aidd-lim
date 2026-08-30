@@ -1,5 +1,6 @@
 {
   "_comment": "Phase 2用: mock-oracle + simple-limited条件で4世代を通す設定。",
+  "stage": "stage0",
   "experimentId": "stage0-mock-oracle-limited-001",
   "lineageId": "lineage-0",
   "backend": "mock-oracle",

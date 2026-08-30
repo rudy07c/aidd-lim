@@ -1,5 +1,6 @@
 {
   "_comment": "Phase 3-4用: 実Anthropic APIを使った5世代実行。APIキーは環境変数 ANTHROPIC_API_KEY から読む。",
+  "stage": "stage0",
   "experimentId": "stage0-real-001",
   "lineageId": "lineage-0",
   "backend": "anthropic",

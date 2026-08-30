@@ -1,5 +1,6 @@
 {
   "_comment": "Phase 2用: mock-noop + simple-limited条件で5世代を通す設定。",
+  "stage": "stage0",
   "experimentId": "stage0-mock-noop-limited-001",
   "lineageId": "lineage-0",
   "backend": "mock-noop",

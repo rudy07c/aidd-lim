@@ -1,0 +1,25 @@
+{
+  "experiment_id": "stage0-mock-noop-001__2026-08-30_12-10-02",
+  "lineage_id": "lineage-0",
+  "generation": 2,
+  "condition": "full",
+  "model": null,
+  "task_id": "T-delayed-1",
+  "context_budget": "full",
+  "actual_context_tokens": 1791,
+  "functional_task_result": false,
+  "task_specific_test_result": {
+    "passed": false,
+    "numPassed": 1,
+    "numFailed": 2
+  },
+  "latency_ms": 0,
+  "token_usage": {
+    "input": 0,
+    "output": 0
+  },
+  "cost": null,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}
