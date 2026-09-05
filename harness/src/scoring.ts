@@ -138,12 +138,14 @@ function runJest(
   const jestBin = path.join(syntheticWorldDir, "node_modules", ".bin", "jest");
   const resultsFile = path.join(tmpDir, `jest-results-${label}.json`);
 
+  const cacheDir = path.join(syntheticWorldDir, ".jest-cache");
   const args = [
     "--json",
     `--outputFile=${resultsFile}`,
     `--testPathPattern=${testPathPattern}`,
     "--passWithNoTests",
     "--forceExit",
+    `--cacheDirectory=${cacheDir}`,
   ];
 
   const result = spawnSync(jestBin, args, {
