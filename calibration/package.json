@@ -7,6 +7,10 @@
     "typecheck": "tsc --noEmit",
     "generate-probes": "ts-node src/probe-generator.ts"
   },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "dotenv": "^17.4.2"
+  },
   "devDependencies": {
     "@types/node": "^22.7.5",
     "ts-node": "^10.9.2",

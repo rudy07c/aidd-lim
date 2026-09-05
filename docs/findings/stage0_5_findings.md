@@ -125,6 +125,47 @@ B=2K以上（2K/4K/8K/Full）の4段階が完全に同一内容になった。6�
 
 ---
 
+## F3: runScoring() のjest起動コストにより1 budget × 6 tasks ≈ 70秒かかる
+
+**日付**：2026-09-05
+**Phase**：Phase 3（mock-noop/mock-oracle 全budget実行）
+**元コード**：`calibration/src/calibration-runner.ts`（`runScoringForTask()`）
+
+### 実行条件
+
+- backend=mock-oracle, 6 budget (0/1K/2K/4K/8K/Full) × 6 tasks
+- 各 task に対して `runScoring()` を呼び出す（harness/src/scoring.ts）
+- `runScoring()` は内部でjestを3回起動（visible test / hidden test / task-specific test）
+
+### 何が起きたか
+
+```
+1 budget × 6 tasks ≈ 66〜70秒
+6 budget × 6 tasks ≈ 7分（mock-oracle全体）
+```
+
+jestプロセス起動コスト（node起動+tsconfig解析+モジュールロード）が
+タスクごとに3回×6タスク=18回発生する。実際の計算時間はほぼゼロだが、
+オーバーヘッドが支配的になる。
+
+### なぜ注目すべきか
+
+- Phase 4（real API較正）では、1 API呼び出し ≈ 数秒〜十数秒の推論時間が加わるため、
+  6 budget × 6 tasks × 1 gen で **7分+API待機** ≈ 10〜20分以上になる見込み。
+- 複数generationを実施する場合（gen=3など）、総実行時間は30〜60分規模になりうる。
+- **単一実験としては許容範囲**だが、Phase 5（規模拡大）後は task数増加とともに
+  線形にスケールするため、jest起動を1タスクあたり1回にまとめる等の最適化が将来必要になる可能性がある。
+
+### 今後への示唆
+
+- Phase 4では gen=1（1回のAPI呼び出しのみ）でまず動作確認を行う。
+  実行時間の長さは既知であるため、タイムアウト設定（現状120秒）には余裕がある。
+- 将来的には `runScoring()` を可視・隠し・task-specific の3テストを1jestプロセスで
+  まとめて実行するよう書き換えることで、起動コストを1/3に削減できる。
+  ただしPhase 4の実験結果が出るまでは最適化を行わない（過早最適化の回避）。
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・
