@@ -1,0 +1,25 @@
+{
+  "experiment_id": "stage0-real-limited-001__2026-09-05_06-27-32",
+  "lineage_id": "lineage-0",
+  "generation": 3,
+  "condition": "simple-limited",
+  "model": "claude-haiku-4-5-20251001",
+  "task_id": "T-invariant-stress-1",
+  "context_budget": "full",
+  "actual_context_tokens": 1500,
+  "functional_task_result": true,
+  "task_specific_test_result": {
+    "passed": true,
+    "numPassed": 3,
+    "numFailed": 0
+  },
+  "latency_ms": 21330,
+  "token_usage": {
+    "input": 2993,
+    "output": 2153
+  },
+  "cost": null,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

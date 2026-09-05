@@ -1,0 +1,25 @@
+{
+  "experiment_id": "stage0-mock-oracle-001__2026-09-05_06-25-00",
+  "lineage_id": "lineage-0",
+  "generation": 2,
+  "condition": "full",
+  "model": null,
+  "task_id": "T-delayed-1",
+  "context_budget": "full",
+  "actual_context_tokens": 2005,
+  "functional_task_result": true,
+  "task_specific_test_result": {
+    "passed": true,
+    "numPassed": 3,
+    "numFailed": 0
+  },
+  "latency_ms": 69,
+  "token_usage": {
+    "input": 0,
+    "output": 0
+  },
+  "cost": null,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

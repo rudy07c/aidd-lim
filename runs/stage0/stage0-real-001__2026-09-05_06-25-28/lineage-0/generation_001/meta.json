@@ -1,0 +1,25 @@
+{
+  "experiment_id": "stage0-real-001__2026-09-05_06-25-28",
+  "lineage_id": "lineage-0",
+  "generation": 1,
+  "condition": "full",
+  "model": "claude-haiku-4-5-20251001",
+  "task_id": "T-crosscut-1",
+  "context_budget": "full",
+  "actual_context_tokens": 1883,
+  "functional_task_result": true,
+  "task_specific_test_result": {
+    "passed": true,
+    "numPassed": 3,
+    "numFailed": 0
+  },
+  "latency_ms": 23337,
+  "token_usage": {
+    "input": 3680,
+    "output": 2206
+  },
+  "cost": null,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

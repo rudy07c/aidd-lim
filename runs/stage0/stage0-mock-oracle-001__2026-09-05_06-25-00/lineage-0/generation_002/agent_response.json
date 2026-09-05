@@ -1,0 +1,4 @@
+{
+  "response": "[mock-oracle] Applied oracle patch for task \"T-delayed-1\".",
+  "tool_calls": []
+}
