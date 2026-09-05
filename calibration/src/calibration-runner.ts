@@ -553,21 +553,38 @@ if (require.main === module) {
   }
 
   const args = process.argv.slice(2);
-  const backendArg = args.find((a) => a.startsWith("--backend="))?.split("=")[1]
-    ?? args[args.indexOf("--backend") + 1];
-  const modelArg = args.find((a) => a.startsWith("--model="))?.split("=")[1]
-    ?? args[args.indexOf("--model") + 1];
+  const getArg = (name: string): string | undefined =>
+    args.find((a) => a.startsWith(`--${name}=`))?.split("=").slice(1).join("=")
+    ?? (args.indexOf(`--${name}`) !== -1 ? args[args.indexOf(`--${name}`) + 1] : undefined);
+
+  const backendArg = getArg("backend");
+  const modelArg = getArg("model");
+  const budgetsArg = getArg("budgets");
+
   const backend: CalibrationBackend =
     backendArg === "mock-oracle" ? "mock-oracle"
     : backendArg === "anthropic" ? "anthropic"
     : "mock-noop";
   const model = modelArg ?? "claude-haiku-4-5-20251001";
 
+  // --budgets=0,1000,full など。省略時は ALL_BUDGETS
+  let budgets: BudgetValue[] = ALL_BUDGETS;
+  if (budgetsArg) {
+    budgets = budgetsArg.split(",").map((s) => {
+      const t = s.trim();
+      if (t === "full") return "full" as const;
+      const n = Number(t);
+      if (isNaN(n)) throw new Error(`Invalid budget value: ${t}`);
+      return n as BudgetValue;
+    });
+  }
+
   console.log(`\n====================================================`);
   console.log(`  Calibration Runner: backend=${backend}${backend === "anthropic" ? ` model=${model}` : ""}`);
+  console.log(`  budgets: ${budgets.join(", ")}`);
   console.log(`====================================================\n`);
 
-  runCalibration({ backend, model }).then((result) => {
+  runCalibration({ backend, model, budgets }).then((result) => {
     // ── 系統2 ──
     console.log("┌─ 系統2 (M̂_B): 機能的継続テスト\n│");
     for (const s2 of result.system2) {
