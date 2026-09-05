@@ -55,6 +55,28 @@ export interface AgentOutput {
   latencyMs: number;
 }
 
+// ---- Stage 0.5 測定結果型 ----
+
+/** 1つのsemantic probeに対するagentの回答結果 */
+export interface SemanticProbeResult {
+  probeId: string;
+  correct: boolean;
+  agentAnswer: string;
+  /** 正解を文字列に正規化したもの（boolean は "true"/"false"、set は ソート済みJSON） */
+  correctAnswer: string;
+}
+
+/**
+ * semantic elementの存在トレース（Present^syn / Present^beh の両軸）。
+ * elementId は invariant/dependency/operation の ID（例: "I1", "D2", "O3"）。
+ */
+export interface SemanticElementTrace {
+  /** syntactic presence: コード上にsemantic elementのsyntactic markerが存在するか */
+  syntactic: Record<string, boolean>;
+  /** behavioral presence: H(G)のmicro-testがそのelementのbehaviorを確認済みか */
+  behavioral: Record<string, boolean>;
+}
+
 // ---- 1世代分のログ（3.1節スキーマ） ----
 
 export interface GenerationLog {
@@ -93,8 +115,8 @@ export interface GenerationLog {
   functional_task_result: boolean;
 
   // --- Stage 0.5以降で追加 ---
-  semantic_probe_results: null;
-  semantic_element_trace: null;
+  semantic_probe_results: SemanticProbeResult[] | null;
+  semantic_element_trace: SemanticElementTrace | null;
 
   // --- パフォーマンス ---
   latency_ms: number;

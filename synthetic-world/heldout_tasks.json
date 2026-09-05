@@ -79,5 +79,54 @@
     },
     "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-invariant-stress-1: fastTrackZef\", () => {\n  test(\"fastTrackZef: Zef nim→dor when Tal=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"fastTrackZef: fails when Tal=nim (Invariant I2 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"fastTrackZef: Tal remains pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
     "note": "このgroundTruthDelta自体は、O9のpreconditionにE3=q2を含めることでI2（Zef=dorならTal=pex）を壊さない正解として設計してある。worker agentがこのpreconditionチェックを実装しなければ、I2に対応するH(G)のmicro-testが（O9経路について）追加された時点でfailする。"
+  },
+  {
+    "taskId": "T-local-2",
+    "type": "local",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "Vok が 'pex' の状態から 'nim' へ戻す operation 'resetVok' を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O10", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O10",
+          "effects": [{ "entity": "E1", "fromState": "q2", "toState": "q1" }],
+          "preconditions": []
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-local-2: resetVok\", () => {\n  test(\"resetVok: Vok pex→nim\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    expect(protocol.getEntityState(world, \"Vok\")).toBe(\"pex\");\n    const r2 = protocol.applyOperation(world, \"resetVok\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Vok\")).toBe(\"nim\");\n  });\n\n  test(\"resetVok: fails when Vok=nim (fromState guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"resetVok\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"resetVok: Tal and Zef states are unchanged\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"resetVok\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Tal\")).toBe(\"nim\");\n    expect(protocol.getEntityState(r2.newState, \"Zef\")).toBe(\"nim\");\n  });\n});\n",
+    "note": "Vokの単純な逆進操作。preconditionなし・invariant違反リスクなし（Vokがdorでなくpexからnimへ戻すだけ）。construction A: task_specific_testにinvariantのguardテストは含まれない。I1はVok=dor（q3）を条件とするため、q2→q1の遷移ではトリガーされない。"
+  },
+  {
+    "taskId": "T-crosscut-2",
+    "type": "cross_cutting",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "パフォーマンス改善のため、Vok と Zef を同時に 'nim' から 'dor' へ一気に進める 'jumpVokZef' operation を追加せよ。中間状態の 'pex' を経由する必要はない。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O11", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O11",
+          "effects": [
+            { "entity": "E1", "fromState": "q1", "toState": "q3" },
+            { "entity": "E2", "fromState": "q1", "toState": "q3" }
+          ],
+          "preconditions": [
+            { "entity": "E3", "state": "q2" }
+          ]
+        }
+      ],
+      "addDependencies": [
+        {
+          "id": "D4",
+          "from": "O11",
+          "on": "E3",
+          "note": "jumpVokZefはE3=q2をpreconditionとする（I1: E1=dor→Tal=pex, I2: E2=dor→Tal=pex の両方を同時に保証するため）"
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-crosscut-2: jumpVokZef\", () => {\n  test(\"jumpVokZef: Vok and Zef nim→dor when Tal=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Vok\")).toBe(\"dor\");\n    expect(protocol.getEntityState(r2.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"jumpVokZef: fails when Tal=nim (Invariant I1+I2 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"jumpVokZef: Tal remains pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "VokとZefを同時にdorへ一気に進める複合operation。E1=dor→E3=pex（I1）とE2=dor→E3=pex（I2）の両方を同時に起こすため、preconditionにE3=q2が必須。construction B: task_specific_testにI1+I2のguardテストが含まれる（test 2）。worker agentがpreconditionを省略するとH(G)のI1・I2両micro-testがfailする。"
   }
 ]

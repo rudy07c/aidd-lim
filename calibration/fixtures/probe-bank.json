@@ -1,0 +1,892 @@
+[
+  {
+    "probeId": "A-obfuscated-mc-1",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Vok が状態 'nim' のとき、Vok を次の状態 'pex' へ遷移させる operation はどれか？",
+    "options": [
+      "advanceVok1",
+      "advanceVok2",
+      "advanceZef1",
+      "advanceZef2",
+      "advanceTal1"
+    ],
+    "correctOptionId": "advanceVok1",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O1",
+      "entity": "E1",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-mc-2",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Vok が状態 'pex' のとき、Vok を次の状態 'dor' へ遷移させる operation はどれか？",
+    "options": [
+      "advanceVok1",
+      "advanceVok2",
+      "advanceZef1",
+      "advanceZef2",
+      "advanceTal1"
+    ],
+    "correctOptionId": "advanceVok2",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O2",
+      "entity": "E1",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-mc-3",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Zef が状態 'nim' のとき、Zef を次の状態 'pex' へ遷移させる operation はどれか？",
+    "options": [
+      "advanceVok1",
+      "advanceVok2",
+      "advanceZef1",
+      "advanceZef2",
+      "advanceTal1"
+    ],
+    "correctOptionId": "advanceZef1",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O3",
+      "entity": "E2",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-mc-4",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Zef が状態 'pex' のとき、Zef を次の状態 'dor' へ遷移させる operation はどれか？",
+    "options": [
+      "advanceVok1",
+      "advanceVok2",
+      "advanceZef1",
+      "advanceZef2",
+      "advanceTal1"
+    ],
+    "correctOptionId": "advanceZef2",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O4",
+      "entity": "E2",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-mc-5",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Tal が状態 'nim' のとき、Tal を次の状態 'pex' へ遷移させる operation はどれか？",
+    "options": [
+      "advanceVok1",
+      "advanceVok2",
+      "advanceZef1",
+      "advanceZef2",
+      "advanceTal1"
+    ],
+    "correctOptionId": "advanceTal1",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O5",
+      "entity": "E3",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-bool-6",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Vok が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I1",
+      "encoding": "distributed"
+    },
+    "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
+  },
+  {
+    "probeId": "A-obfuscated-bool-7",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Zef が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I2",
+      "encoding": "explicit"
+    },
+    "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
+  },
+  {
+    "probeId": "A-obfuscated-bool-8",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Vok を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I1",
+      "encoding": "distributed"
+    },
+    "note": "正答には I1 (distributed) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "A-obfuscated-bool-9",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Zef を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I2",
+      "encoding": "explicit"
+    },
+    "note": "正答には I2 (explicit) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "A-obfuscated-set-10",
+    "type": "set_selection",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceVok2 の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal"
+    ],
+    "correctSet": [
+      "Zef",
+      "Vok"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D1",
+      "operationId": "O2",
+      "onEntity": "E2"
+    },
+    "f5Warning": true
+  },
+  {
+    "probeId": "A-obfuscated-set-11",
+    "type": "set_selection",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceZef1 の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal"
+    ],
+    "correctSet": [
+      "Tal",
+      "Zef"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D2",
+      "operationId": "O3",
+      "onEntity": "E3"
+    },
+    "f5Warning": true
+  },
+  {
+    "probeId": "A-obfuscated-set-12",
+    "type": "set_selection",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceZef2 の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal"
+    ],
+    "correctSet": [
+      "Tal",
+      "Zef"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D3",
+      "operationId": "O4",
+      "onEntity": "E3"
+    },
+    "f5Warning": true
+  },
+  {
+    "probeId": "A-obfuscated-edge-13",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceVok2 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal"
+    ],
+    "correctAnswer": "Zef",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D1",
+      "operationId": "O2",
+      "onEntity": "E2"
+    },
+    "f5Warning": true
+  },
+  {
+    "probeId": "A-obfuscated-edge-14",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceZef1 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal"
+    ],
+    "correctAnswer": "Tal",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D2",
+      "operationId": "O3",
+      "onEntity": "E3"
+    },
+    "f5Warning": true
+  },
+  {
+    "probeId": "A-obfuscated-edge-15",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceZef2 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal"
+    ],
+    "correctAnswer": "Tal",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D3",
+      "operationId": "O4",
+      "onEntity": "E3"
+    },
+    "f5Warning": true
+  },
+  {
+    "probeId": "A-obfuscated-stp-16",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Vok が 'nim' の状態で advanceVok1 を実行すると、Vok の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "dor",
+      "operation fails"
+    ],
+    "correctAnswer": "pex",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O1",
+      "entity": "E1",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-17",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Zef が 'pex'、Vok が 'pex' の状態で advanceVok2 を実行すると、Vok の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "dor",
+      "operation fails"
+    ],
+    "correctAnswer": "dor",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O2",
+      "entity": "E1",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-18",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Zef が 'nim'（preconditionを満たさない）、Vok が 'pex' の状態で advanceVok2 を実行すると、Vok の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "dor",
+      "operation fails"
+    ],
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O2",
+      "entity": "E1",
+      "failedPrecondition": {
+        "entity": "E2",
+        "state": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-19",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Tal が 'pex'、Zef が 'nim' の状態で advanceZef1 を実行すると、Zef の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "dor",
+      "operation fails"
+    ],
+    "correctAnswer": "pex",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O3",
+      "entity": "E2",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-20",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Tal が 'nim'（preconditionを満たさない）、Zef が 'nim' の状態で advanceZef1 を実行すると、Zef の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "dor",
+      "operation fails"
+    ],
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O3",
+      "entity": "E2",
+      "failedPrecondition": {
+        "entity": "E3",
+        "state": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-21",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Tal が 'pex'、Zef が 'pex' の状態で advanceZef2 を実行すると、Zef の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "dor",
+      "operation fails"
+    ],
+    "correctAnswer": "dor",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O4",
+      "entity": "E2",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-22",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Tal が 'nim'（preconditionを満たさない）、Zef が 'pex' の状態で advanceZef2 を実行すると、Zef の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "dor",
+      "operation fails"
+    ],
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O4",
+      "entity": "E2",
+      "failedPrecondition": {
+        "entity": "E3",
+        "state": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-23",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Tal が 'nim' の状態で advanceTal1 を実行すると、Tal の状態はどうなるか？",
+    "options": [
+      "nim",
+      "pex",
+      "operation fails"
+    ],
+    "correctAnswer": "pex",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O5",
+      "entity": "E3",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "B-fictional-mc-1",
+    "type": "multiple_choice",
+    "namingScheme": "B-fictional",
+    "prompt": "Kelvan が状態 'latent' のとき、Kelvan を次の状態 'kindled' へ遷移させる operation はどれか？",
+    "options": [
+      "kindleKelvan",
+      "settleKelvan",
+      "kindleOssuary",
+      "settleOssuary",
+      "kindleBrindle"
+    ],
+    "correctOptionId": "kindleKelvan",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O1",
+      "entity": "E1",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "B-fictional-mc-2",
+    "type": "multiple_choice",
+    "namingScheme": "B-fictional",
+    "prompt": "Kelvan が状態 'kindled' のとき、Kelvan を次の状態 'settled' へ遷移させる operation はどれか？",
+    "options": [
+      "kindleKelvan",
+      "settleKelvan",
+      "kindleOssuary",
+      "settleOssuary",
+      "kindleBrindle"
+    ],
+    "correctOptionId": "settleKelvan",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O2",
+      "entity": "E1",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "B-fictional-mc-3",
+    "type": "multiple_choice",
+    "namingScheme": "B-fictional",
+    "prompt": "Ossuary が状態 'latent' のとき、Ossuary を次の状態 'kindled' へ遷移させる operation はどれか？",
+    "options": [
+      "kindleKelvan",
+      "settleKelvan",
+      "kindleOssuary",
+      "settleOssuary",
+      "kindleBrindle"
+    ],
+    "correctOptionId": "kindleOssuary",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O3",
+      "entity": "E2",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "B-fictional-mc-4",
+    "type": "multiple_choice",
+    "namingScheme": "B-fictional",
+    "prompt": "Ossuary が状態 'kindled' のとき、Ossuary を次の状態 'settled' へ遷移させる operation はどれか？",
+    "options": [
+      "kindleKelvan",
+      "settleKelvan",
+      "kindleOssuary",
+      "settleOssuary",
+      "kindleBrindle"
+    ],
+    "correctOptionId": "settleOssuary",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O4",
+      "entity": "E2",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "B-fictional-mc-5",
+    "type": "multiple_choice",
+    "namingScheme": "B-fictional",
+    "prompt": "Brindle が状態 'latent' のとき、Brindle を次の状態 'kindled' へ遷移させる operation はどれか？",
+    "options": [
+      "kindleKelvan",
+      "settleKelvan",
+      "kindleOssuary",
+      "settleOssuary",
+      "kindleBrindle"
+    ],
+    "correctOptionId": "kindleBrindle",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O5",
+      "entity": "E3",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "B-fictional-bool-6",
+    "type": "boolean",
+    "namingScheme": "B-fictional",
+    "prompt": "Kelvan が 'settled' で、Brindle が 'latent' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I1",
+      "encoding": "distributed"
+    },
+    "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
+  },
+  {
+    "probeId": "B-fictional-bool-7",
+    "type": "boolean",
+    "namingScheme": "B-fictional",
+    "prompt": "Ossuary が 'settled' で、Brindle が 'latent' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I2",
+      "encoding": "explicit"
+    },
+    "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
+  },
+  {
+    "probeId": "B-fictional-bool-8",
+    "type": "boolean",
+    "namingScheme": "B-fictional",
+    "prompt": "もし新しいoperationが追加され、Brindle の状態を確認せずに直接 Kelvan を 'settled' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I1",
+      "encoding": "distributed"
+    },
+    "note": "正答には I1 (distributed) の存在を認識していることが必要。Brindle=kindled チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "B-fictional-bool-9",
+    "type": "boolean",
+    "namingScheme": "B-fictional",
+    "prompt": "もし新しいoperationが追加され、Brindle の状態を確認せずに直接 Ossuary を 'settled' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I2",
+      "encoding": "explicit"
+    },
+    "note": "正答には I2 (explicit) の存在を認識していることが必要。Brindle=kindled チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "B-fictional-set-10",
+    "type": "set_selection",
+    "namingScheme": "B-fictional",
+    "prompt": "settleKelvan の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Kelvan",
+      "Ossuary",
+      "Brindle"
+    ],
+    "correctSet": [
+      "Ossuary",
+      "Kelvan"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D1",
+      "operationId": "O2",
+      "onEntity": "E2"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "B-fictional-set-11",
+    "type": "set_selection",
+    "namingScheme": "B-fictional",
+    "prompt": "kindleOssuary の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Kelvan",
+      "Ossuary",
+      "Brindle"
+    ],
+    "correctSet": [
+      "Brindle",
+      "Ossuary"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D2",
+      "operationId": "O3",
+      "onEntity": "E3"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "B-fictional-set-12",
+    "type": "set_selection",
+    "namingScheme": "B-fictional",
+    "prompt": "settleOssuary の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Kelvan",
+      "Ossuary",
+      "Brindle"
+    ],
+    "correctSet": [
+      "Brindle",
+      "Ossuary"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D3",
+      "operationId": "O4",
+      "onEntity": "E3"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "B-fictional-edge-13",
+    "type": "graph_edge_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "settleKelvan が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Kelvan",
+      "Ossuary",
+      "Brindle"
+    ],
+    "correctAnswer": "Ossuary",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D1",
+      "operationId": "O2",
+      "onEntity": "E2"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "B-fictional-edge-14",
+    "type": "graph_edge_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "kindleOssuary が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Kelvan",
+      "Ossuary",
+      "Brindle"
+    ],
+    "correctAnswer": "Brindle",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D2",
+      "operationId": "O3",
+      "onEntity": "E3"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "B-fictional-edge-15",
+    "type": "graph_edge_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "settleOssuary が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Kelvan",
+      "Ossuary",
+      "Brindle"
+    ],
+    "correctAnswer": "Brindle",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D3",
+      "operationId": "O4",
+      "onEntity": "E3"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "B-fictional-stp-16",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Kelvan が 'latent' の状態で kindleKelvan を実行すると、Kelvan の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "settled",
+      "operation fails"
+    ],
+    "correctAnswer": "kindled",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O1",
+      "entity": "E1",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "B-fictional-stp-17",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Ossuary が 'kindled'、Kelvan が 'kindled' の状態で settleKelvan を実行すると、Kelvan の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "settled",
+      "operation fails"
+    ],
+    "correctAnswer": "settled",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O2",
+      "entity": "E1",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "B-fictional-stp-18",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Ossuary が 'latent'（preconditionを満たさない）、Kelvan が 'kindled' の状態で settleKelvan を実行すると、Kelvan の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "settled",
+      "operation fails"
+    ],
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O2",
+      "entity": "E1",
+      "failedPrecondition": {
+        "entity": "E2",
+        "state": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "B-fictional-stp-19",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Brindle が 'kindled'、Ossuary が 'latent' の状態で kindleOssuary を実行すると、Ossuary の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "settled",
+      "operation fails"
+    ],
+    "correctAnswer": "kindled",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O3",
+      "entity": "E2",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "B-fictional-stp-20",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Brindle が 'latent'（preconditionを満たさない）、Ossuary が 'latent' の状態で kindleOssuary を実行すると、Ossuary の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "settled",
+      "operation fails"
+    ],
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O3",
+      "entity": "E2",
+      "failedPrecondition": {
+        "entity": "E3",
+        "state": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "B-fictional-stp-21",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Brindle が 'kindled'、Ossuary が 'kindled' の状態で settleOssuary を実行すると、Ossuary の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "settled",
+      "operation fails"
+    ],
+    "correctAnswer": "settled",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O4",
+      "entity": "E2",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "B-fictional-stp-22",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Brindle が 'latent'（preconditionを満たさない）、Ossuary が 'kindled' の状態で settleOssuary を実行すると、Ossuary の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "settled",
+      "operation fails"
+    ],
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O4",
+      "entity": "E2",
+      "failedPrecondition": {
+        "entity": "E3",
+        "state": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "B-fictional-stp-23",
+    "type": "state_transition_prediction",
+    "namingScheme": "B-fictional",
+    "prompt": "Brindle が 'latent' の状態で kindleBrindle を実行すると、Brindle の状態はどうなるか？",
+    "options": [
+      "latent",
+      "kindled",
+      "operation fails"
+    ],
+    "correctAnswer": "kindled",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O5",
+      "entity": "E3",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  }
+]
