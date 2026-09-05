@@ -113,7 +113,7 @@ calibration/
               → M̂_B(S) = 成功数 / k
 
 すべてのB値について上記を繰り返し、dose-response curveを描く。
-命名方式A/Bについても同様に繰り返す（2倍の実行）。
+命名方式はB-fictionalに確定済み（3.7節参照）。
 ```
 
 ---
@@ -171,15 +171,21 @@ Stage 0の`assembleContext(files, condition)`は`"full" | "simple-limited"`と�
 
 系統2（held-out task実装）でも、Stage 0と同じくWorldProtocol契約違反のリスクが存在する（agentが`protocol_adapter.ts`のexportを壊す等）。実装確認の結果、`harness/src/scoring.ts`の契約違反判定（`detectProtocolViolation`）は非公開関数だが、これを内包する**`runScoring(repositoryFiles, syntheticWorldDir, taskSpecificTestCode)`は公開関数**であり、visible/hidden/task-specific test実行と契約違反判定を1回の呼び出しで全て行う。`calibration-runner.ts`はこの`runScoring()`をそのまま呼び出し、重複実装を避ける。
 
-### 3.7 命名方式A/Bの比較は、全パイプラインを通して二重に実行する
+### 3.7 命名方式：B-fictionalに確定（Phase 1で決定済み）
 
-計画書の指示通り、命名方式A（難読化）・B（虚構語彙）は独立変数として両方実施する。実装上は、`naming_schemes.json`の2エントリを使い、`budget-assembler`と`probe-generator`の両方に命名方式を渡せるようにする（既存の`semantic_probes.json`は命名方式Aのみで書かれているため、方式B版も生成する必要がある）。
+~~計画書の指示通り、命名方式A（難読化）・B（虚構語彙）は独立変数として両方実施する。~~
+
+**Phase 1完了時点で、命名方式はB-fictional（虚構語彙）に確定した。** 理由：`probe-generator.ts`のF5静的チェックにより、A-obfuscated（難読化シンボル）は23問中6問（26%）でvisible test内への答え漏洩が検出された（詳細は`docs/findings/stage0_5_findings.md` F1参照）。B-fictional（Kelvan/Ossuary/Brindle/latent/kindled/settled）は23問中0問で漏洩なし。
+
+以降のPhase 2〜4はB-fictionalのみで進める。Phase 6で予定していた「命名方式Bとの比較」は不要になり、計画を変更する（下記Phase 6参照）。未決事項#2はここで解決済み。
+
+実装上の影響：`probe-generator.ts`のCLIはB-fictionalのみ出力するよう変更済み。`probe-bank.json`もB-fictionalの23問のみを含む形に更新済み。
 
 ### 3.8 コスト規模の見積もり
 
-\(k=6\)（3.5節の目安：既存4 task(構成A/Bへ再分類後、想定2:2) + 新規2 task(各構成1つずつ) = 3:3、計6）、\(B\)が6段階、命名方式2種とすると、系統2だけで \(6 \times 6 \times 2 = 72\) 回のagent呼び出しになる。系統1は1回の呼び出しで全probeをまとめて聞く設計（3.2節）のため \(6 \times 1 \times 2 = 12\) 回で済む。合計で約85回程度のagent呼び出しが、命名方式A・B両方・全\(B\)値をフル実行した場合の規模になる。実際の追加task数はPhase 1実装時に確定してよく（3.5節参照）、\(k\)が変われば呼び出し回数も比例して変わる。
+\(k=6\)（3.5節の目安：既存4 task(構成A/Bへ再分類後、3:3) + 新規2 task = 3:3、計6）、\(B\)が6段階、**命名方式は1種（B-fictional）** とすると、系統2だけで \(6 \times 6 \times 1 = 36\) 回のagent呼び出しになる。系統1は1回の呼び出しで全probeをまとめて聞く設計（3.2節）のため \(6 \times 1 \times 1 = 6\) 回で済む。合計で約45回程度のagent呼び出しが、全\(B\)値をフル実行した場合の規模になる（命名方式A/B比較を廃止したことで、当初見積もりの約半分に削減）。実際の追加task数はPhase 1実装時に確定してよく（3.5節参照）、\(k\)が変われば呼び出し回数も比例して変わる。
 
-これを一度に実行せず、Phase 4では命名方式Aのみ・各\(B\)値1試行（\(6 \times (1+6)=42\)回）から始め、Phase 6で命名方式Bを追加する、という段階的な実行にする（既にPhase構成に反映済み）。加えて、\(\Delta_M\)の目安を得るための反復試行（1〜2 task × 2〜3回、Phase 4 step14）を、上記42回に上乗せする（+数回〜十数回程度、大きな増分ではない）。
+加えて、\(\Delta_M\)の目安を得るための反復試行（1〜2 task × 2〜3回、Phase 4 step14）を、上記36回に上乗せする（+数回〜十数回程度、大きな増分ではない）。
 
 **使用モデル**：Stage 0で使用した`claude-haiku-4-5-20251001`をそのまま踏襲する。Stage 1以降で異なるモデルを使う計画がある場合、較正結果がそのモデルに転用できない可能性があるため、Phase 4着手前にStage 1で使うモデルを確認しておく。
 
@@ -220,13 +226,13 @@ Stage 0のPhase 1と同じ発想で、まずmock-noop/mock-oracleで機構を検
 10. 系統1（\(R^{sem}_B\)）はmockでは意味のある値が出ないため、パイプラインが最後まで実行されクラッシュしないことだけ確認する
 11. `runScoring()`経由の契約違反判定（3.6節）が系統2から正しく機能し、契約違反が検出されることを、意図的に壊したfixture（`harness/verify-broken-contract.ts`のパターンを流用）で確認する
 
-**この時点でのゲート**：mockで両系統・全\(B\)値・両命名方式が、クラッシュなく実行され、ログが欠損なく残ること。
+**この時点でのゲート**：mockで両系統・全\(B\)値がクラッシュなく実行され、ログが欠損なく残ること。
 
 ### Phase 4：実agentで小規模worldの較正を実行
 
 12. `dose-response.ts`を実装する。判定は**task set全体の一括判定ではなく、held-out task単位でも行う**（後述の理由）。系統1・系統2それぞれの結果を\(B\)ごとに集計し、4.3節の4パターンに分類するロジックを実装
 13. **fail-fastの事前チェック**：6段階すべてを実行する前に、まず\(B=0\)と\(B=\text{Full}\)の2点だけを実行し、そもそも差が出そうか（Fullで極端に低得点、または\(B=0\)で既に高得点、といった致命的な兆候がないか）を確認する。ここで明らかな異常が出た場合、6段階フル実行に進む前にprobe/task側を見直す
-14. 実APIで、現在の小規模world・命名方式Aのみ、全\(B\)値（6通り）× 系統1（1 agent呼び出し）+ 系統2（\(k\)個のagent呼び出し）を実行する。**このとき、held-out taskのうち1〜2件について、同一\(B\)値で2〜3回の反復試行を追加する**（3.8節参照）。目的は主にdose-response curveの精度向上ではなく、**Stage 1のequivalence testingで使う\(\Delta_M\)（未決事項#5）の目安を得るための、条件内ばらつきの粗い推定**である
+14. 実APIで、現在の小規模world・命名方式B-fictional、全\(B\)値（6通り）× 系統1（1 agent呼び出し）+ 系統2（\(k\)個のagent呼び出し）を実行する。**このとき、held-out taskのうち1〜2件について、同一\(B\)値で2〜3回の反復試行を追加する**（3.8節参照）。目的は主にdose-response curveの精度向上ではなく、**Stage 1のequivalence testingで使う\(\Delta_M\)（未決事項#5）の目安を得るための、条件内ばらつきの粗い推定**である
 15. 結果をdose-response curveとして可視化し、**task set全体の集計**と**task単位**の両方で、4.3節のどのパターンに該当するか判定する。一部のtaskだけが天井効果等を示す場合、そのtaskをheld-out task setから除外する候補として記録する（全体を棄却してPhase 5へ進む前に、task単位の選別で解決できないか確認する）
 
 **この時点でのゲート**：4.3節の判定結果が出ること（どのパターンであっても構わない。判定自体ができることがゲート）。task単位での取捨選択を経て、Stage 1へ引き継ぐheld-out task setが確定していること。
@@ -241,12 +247,17 @@ Phase 4の結果が天井効果・床効果を示した場合（1.2節で予見�
 17. 拡大後のworldに対し、model checker・累積validator・semantic locality計算等、Stage 0時点で構築済みの検証ツール一式を再実行し、拡大後のworldが自己無矛盾であることを確認する
 18. Phase 1〜4を拡大後のworldに対して再実行する
 
-### Phase 6：命名方式Bとの比較、較正の正式完了
+### Phase 6：較正の正式完了（命名方式比較はスキップ済み）
 
-19. 命名方式B（虚構語彙）でも同様にPhase 4（または5経由の再実行）を行う
-20. 命名方式A・Bのdose-response curveを比較し、より感度の高い方式を採用する（未決事項#2の解決）
-21. 較正結果を`docs/findings/stage0_5_findings.md`として記録し、`docs/experiment_plan.md`のStage 0.5ゲート判定を更新する
-22. **Stage 1への引き継ぎ資産を確定する**（8節参照）：確定したprobe bank、選別後のheld-out task set、勝った命名方式を固定資産としてfreeze。Stage 1ではこれらを再導出せず、そのまま使う
+~~命名方式B（虚構語彙）でも同様にPhase 4（または5経由の再実行）を行う~~
+~~命名方式A・Bのdose-response curveを比較し、より感度の高い方式を採用する（未決事項#2の解決）~~
+
+命名方式はPhase 1時点でB-fictionalに確定済み（3.7節・`docs/findings/stage0_5_findings.md` F1）のため、A/B比較の実行（旧step 19・20）はスキップする。
+
+19. （スキップ済み：命名方式A/B比較はPhase 1で解決）
+20. （スキップ済み：命名方式はB-fictionalに確定済み）
+21. Phase 4（または5経由の再実行）結果と命名方式確定の経緯を`docs/findings/stage0_5_findings.md`に追記し、`docs/experiment_plan.md`のStage 0.5ゲート判定を更新する
+22. **Stage 1への引き継ぎ資産を確定する**（8節参照）：確定したprobe bank（B-fictional、23問）、選別後のheld-out task set（k=6）、命名方式B-fictionalを固定資産としてfreeze。Stage 1ではこれらを再導出せず、そのまま使う
 
 ---
 
@@ -267,6 +278,9 @@ Stage 0で繰り返し発生した「一部だけ修正して、依存箇所の�
 - \(B\)の刻み幅（\(0, 1K, 2K, 4K, 8K, \text{Full}\)固定でよいか、小規模worldでは\(1K\)刻みが粗すぎないか）は、Phase 2でFullのトークン数を実測してから調整してよい
 - Phase 5（規模拡大）に進む場合のgenerator実装方針（完全自動生成 vs テンプレートからの半自動生成）は、その時点で改めて設計相談する
 
+**解決済みの未決事項：**
+- ~~未決事項#2（命名方式A/Bのどちらを採用するか）~~：**Phase 1のF5静的チェックにより解決。B-fictionalを採用（A-obfuscatedは26%のprobeで答え漏洩が検出された）。** 詳細は`docs/findings/stage0_5_findings.md` F1参照。
+
 ---
 
 ## 7. Stage 0.5完了の定義
@@ -285,7 +299,7 @@ Stage 0.5で確定した以下の資産は、Stage 1で**再導出せず、固�
 
 - `probe-bank.json`（F5対策済み、答えの漏洩がないことを確認済みのprobe集合）
 - `heldout-task-set.json`（Phase 4のtask単位判定で選別済み、\(k\)件の構成）
-- 採用された命名方式（A or B、Phase 6で決定）
+- 採用された命名方式（B-fictional、Phase 1のF5チェックで決定済み）
 - 較正済みの`budget-assembler.ts`（file inclusion orderのロジック自体は、Stage 1のPrivileged Selector設計のベースラインとしても参照できる）
 - 反復試行から得た条件内ばらつきの粗い推定値（未決事項#5 \(\Delta_M, \Delta_R\) の初期値の参考として、Stage 1着手時に正式決定する材料に使う）
 

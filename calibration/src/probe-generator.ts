@@ -353,8 +353,17 @@ if (require.main === module) {
 
   const outputPath = path.join(__dirname, "../fixtures/probe-bank.json");
 
+  // B-fictionalのみ使用（Phase 1のF5チェックでA-obfuscatedは26%のprobeで答え漏洩が
+  // 検出されたため、B-fictionalに一本化。docs/findings/stage0_5_findings.md F1参照）。
+  const targetSchemeId = "B-fictional";
+  const targetSchemes = schemes.filter((s) => s.schemeId === targetSchemeId);
+  if (targetSchemes.length === 0) {
+    console.error(`Error: scheme "${targetSchemeId}" not found in naming_schemes.json`);
+    process.exit(1);
+  }
+
   const allProbes: GeneratedProbe[] = [];
-  for (const scheme of schemes) {
+  for (const scheme of targetSchemes) {
     const probes = generateProbes(g, scheme, visibleTestPath);
     allProbes.push(...probes);
     console.log(`\nScheme: ${scheme.schemeId} → ${probes.length} probes generated`);
