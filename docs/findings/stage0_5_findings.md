@@ -179,6 +179,71 @@ jestプロセス起動コスト（node起動+tsconfig解析+モジュールロ�
 
 ---
 
+## F4: B=0 でのSystem1フロアが88%（15/17）と高く、mc/stp型プローブはbudget感度ゼロ
+
+**日付**：2026-09-05
+**Phase**：Phase 4（fail-fastチェック → A-obfuscated再実行）
+**元データ**：`calibration/fixtures/probe-bank.json`（A-obfuscated 17問）
+**元コード**：`calibration/src/calibration-runner.ts`（`runSystem1()`、`answerProbesWithAnthropicAPI()`）
+**実行条件**：backend=anthropic, model=claude-haiku-4-5-20251001, budgets=[0, full]
+
+### 実行結果
+
+```
+B=0:    15/17 (88.2%)  — mc: 5/5 (100%), bool: 2/4 (50%), stp: 8/8 (100%)
+B=Full: 17/17 (100.0%) — mc: 5/5 (100%), bool: 4/4 (100%), stp: 8/8 (100%)
+```
+
+B=0でもmc・stpは満点。budgetが増加して感度を示したのはbooleanのみ（50% → 100%）。
+
+### 根本原因：A-obfuscated命名慣習の透明性
+
+**multiple_choice（mc×5）：コードなしで回答可能**
+
+mc probeの設問は「Vok を次の状態 'pex' へ遷移させる operation はどれか？」という形式で、
+ターゲット（Vok）と遷移先（pex）を明示する。選択肢は `advanceVok1 / advanceVok2 / advanceZef1 / advanceZef2 / advanceTal1` というように、operation名に entity名と序数が直接エンコードされている。
+
+モデルは「advanceVok = Vokを進める操作」「1 = 最初の遷移」という命名慣習から、
+repositoryコードを一切読まずに正答を導出できる。
+
+**state_transition_prediction（stp×8）：operation名が答えを直接エンコード**
+
+stpの設問は「advanceVok1 を実行すると、Vok の状態はどうなるか？」という形式で、
+operation名が設問中に明示される。`advanceVok1` = "Vokを前進させる1番目の操作" という
+命名から、次の状態を推定できる。`nim → pex → dor` という順序も設問中の状態名から
+順序の自然な推定が可能（操作1=最初の遷移）。
+
+さらにstp-18は「Zef が 'nim'（preconditionを満たさない）…advanceVok2 を実行すると？」という設問で、
+precondition未充足という情報を設問中に明示しているため、正答 `operation fails` もコードなしで分かる。
+
+**boolean（bool×4）：不変条件はコードを読まなければわからない**
+
+bool probeは「Vok が 'dor' で、Tal が 'nim' である状態は invariantに違反するか？」という形式。
+不変条件（例：Vok=dor → Tal=pex でなければならない）は命名慣習から推定できず、
+repositoryコード（`rules.ts` 等）を読んで初めて確認できる。
+B=0では部分正解（2/4）、B=Full では全問正解（4/4）となり、唯一budget感度を持つプローブ型。
+
+### なぜ注目すべきか
+
+- **System1全体の感度がboolean型4問に依存している**。17問中4問（24%）のみがbudget感度を持ち、
+  B=0→Full での全体向上幅は 2/17 ≠ ≈ 12%pt に過ぎない（88% → 100%）。
+- mc/stp 13問はB=0でも100%であり、これらはrepositoryコードの読解能力を測っていない。
+  現状のSystem1は「命名慣習の推測力」を主に測定しており、「コンテキスト内の意味理解」の
+  測定器としては感度が低い。
+- B=0のフロア88%という数値は、実験計画書（4.3節）の判定基準「パターン1：B=0でも高得点（天井効果）」
+  に該当する可能性があるが、原因が「budgetを与えても情報が入らない」ではなく
+  「コードなしでも推定できてしまうプローブ設計」にある点で、意味が異なる。
+
+### 今後への示唆
+
+- System1を「意味理解の測定器」として機能させるには、boolean型の比率を増やすか、
+  mc/stp型のプローブをcodingtransparentでない形式に再設計する必要がある。
+  具体的な選択肢はStep 2着手前に別途検討する（A/B/C案参照）。
+- 現状のSystem1は「B≥Full条件下での100%正答率」を確認する用途（較正の上限チェック）には
+  機能している。問題はB=0のフロアが高すぎて、dose-responseの勾配を正確に測定できない点。
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・
