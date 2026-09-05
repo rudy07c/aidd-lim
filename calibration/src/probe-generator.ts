@@ -353,9 +353,13 @@ if (require.main === module) {
 
   const outputPath = path.join(__dirname, "../fixtures/probe-bank.json");
 
-  // B-fictionalのみ使用（Phase 1のF5チェックでA-obfuscatedは26%のprobeで答え漏洩が
-  // 検出されたため、B-fictionalに一本化。docs/findings/stage0_5_findings.md F1参照）。
-  const targetSchemeId = "B-fictional";
+  // A-obfuscatedのみ使用。repositoryコードはA-obfuscated名（Vok/Zef/Tal等）で
+  // 実装されており、probeとrepositoryの語彙が一致する必要があるため。
+  // B-fictionalはF5漏洩0件だったが、repositoryコードとの語彙断絶があり
+  // モデルがcobeを読んでもprobeに答えられないという致命的問題があった。
+  // F5漏洩あり（set_selection×3 + graph_edge_prediction×3）の6問は除外し
+  // 17問で運用する。（docs/findings/stage0_5_findings.md F1改訂参照）
+  const targetSchemeId = "A-obfuscated";
   const targetSchemes = schemes.filter((s) => s.schemeId === targetSchemeId);
   if (targetSchemes.length === 0) {
     console.error(`Error: scheme "${targetSchemeId}" not found in naming_schemes.json`);
@@ -365,24 +369,27 @@ if (require.main === module) {
   const allProbes: GeneratedProbe[] = [];
   for (const scheme of targetSchemes) {
     const probes = generateProbes(g, scheme, visibleTestPath);
-    allProbes.push(...probes);
     console.log(`\nScheme: ${scheme.schemeId} → ${probes.length} probes generated`);
 
-    const f5Count = probes.filter((p) => p.f5Warning).length;
-    if (f5Count > 0) {
-      console.log(`  F5 warning: ${f5Count} probe(s) may have answers leaked in visible tests:`);
-      for (const p of probes.filter((p) => p.f5Warning)) {
-        console.log(`    ${p.probeId} [${p.type}] derivedFrom=${JSON.stringify(p.derivedFrom)}`);
+    const f5Probes = probes.filter((p) => p.f5Warning);
+    if (f5Probes.length > 0) {
+      console.log(`  F5 warning: ${f5Probes.length} probe(s) excluded (answer visible in test file):`);
+      for (const p of f5Probes) {
+        console.log(`    EXCLUDED: ${p.probeId} [${p.type}] derivedFrom=${JSON.stringify(p.derivedFrom)}`);
       }
     } else {
       console.log(`  F5 check: no leakage detected`);
     }
 
-    // 各タイプの集計
+    // F5漏洩probeを除外して追加
+    const safeProbes = probes.filter((p) => !p.f5Warning);
+    allProbes.push(...safeProbes);
+
+    // 各タイプの集計（除外後）
     const byType = new Map<string, number>();
-    for (const p of probes) byType.set(p.type, (byType.get(p.type) ?? 0) + 1);
+    for (const p of safeProbes) byType.set(p.type, (byType.get(p.type) ?? 0) + 1);
     for (const [type, count] of byType) {
-      console.log(`  ${type}: ${count} probe(s)`);
+      console.log(`  ${type}: ${count} probe(s) (after F5 exclusion)`);
     }
   }
 

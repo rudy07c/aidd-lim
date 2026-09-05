@@ -9,66 +9,79 @@ Stage 0.5（Measurement Calibration）の実装・実行から得られた解釈
 
 ---
 
-## F1: 命名方式によってF5漏洩率に大きな差がある（A=26%、B=0%）
+## F1: 命名方式の選択誤りによる語彙断絶と、A-obfuscatedへの確定（改訂版）
 
-**日付**：2026-09-05
-**Phase**：Phase 1（probe-generator実装・F5静的チェック実行）
+**日付**：2026-09-05（初版）／2026-09-05（改訂）
+**Phase**：Phase 1（probe-generator実装・F5静的チェック実行）→ Phase 4（実API実行で語彙断絶を発見）
 **元コード**：`calibration/src/probe-generator.ts`（`buildF5Checker()`）
-**元データ**：`calibration/fixtures/probe-bank.json`（旧版、A/B両方含む46問）
+**元データ**：`calibration/fixtures/probe-bank.json`（現行版：A-obfuscated 17問）
 
-### 実行条件
-
-- probe-generator.tsを2命名方式（A-obfuscated、B-fictional）それぞれで実行
-- F5チェック：visible testファイル（`synthetic-world/repository/tests/rules.visible.test.ts`）内で、
-  operationの表示名とentityの表示名が5行以内で共起するかを静的解析
-
-### 何が起きたか
+### 初版の観察（2026-09-05 Phase 1時点）
 
 ```
 Scheme: A-obfuscated → 23 probes generated
-  F5 warning: 6 probe(s) may have answers leaked in visible tests:
-    A-obfuscated-set-10  [set_selection]          derivedFrom: D1 (O2→E2)
-    A-obfuscated-set-11  [set_selection]          derivedFrom: D2 (O3→E3)
-    A-obfuscated-set-12  [set_selection]          derivedFrom: D3 (O4→E3)
-    A-obfuscated-edge-13 [graph_edge_prediction]  derivedFrom: D1 (O2→E2)
-    A-obfuscated-edge-14 [graph_edge_prediction]  derivedFrom: D2 (O3→E3)
-    A-obfuscated-edge-15 [graph_edge_prediction]  derivedFrom: D3 (O4→E3)
+  F5 warning: 6 probe(s) may have answers leaked in visible tests
+    [set_selection×3, graph_edge_prediction×3]
 
 Scheme: B-fictional → 23 probes generated
   F5 check: no leakage detected
 ```
 
-A-obfuscated（Vok/Zef/Tal/nim/pex/dor等の難読化シンボル）はvisible testでも直接使われているため、
-`advanceVok2`（O2の表示名）と`Zef`（E2の表示名）が同一test block内で共起し、F5チェックに引っかかった。
-B-fictional（Kelvan/Ossuary/Brindle/latent/kindled/settled等の虚構語彙）はvisible testでは一切
-使われておらず、共起は検出されなかった。
+A-obfuscatedは可視テストとの語彙共起でF5判定6件（26%）。
+B-fictionalは語彙共起ゼロで「F5漏洩なし」と判定された。
 
-### なぜ注目すべきか
+### 初版の結論（誤り）
 
-- dose-response curveの前提は「B=0（情報ゼロ）のベースラインから始まり、Bの増加とともに
-  単調に得点が上がる」ことにある。F5が指摘する問題は、**visible testが常にcontextに含まれる
-  設計（3.1節でStage 0から引き継いだルール）と、A-obfuscatedの命名がvisible testで直接
-  出現することの組み合わせにより、B=0の時点でも答えが「常時見えている状態」になりうる**
-  という点である。
-- B-fictionalにはそもそも可視テストとの語彙の重なりが存在しないため、この問題が構造的に
-  回避されている。言い換えると、F5漏洩は命名方式の選択で制御できる問題であり、B-fictional
-  への一本化によって較正実験の前提条件（情報量の段階的制御）を守れる。
-- 漏洩した6問は全て「dependency関連」（set_selection と graph_edge_prediction）であり、
-  「preconditionが可視テスト内で直接テストされている」という性質を持つ。これは
-  stage0_5_plan.md 1.2節（F5への言及）で予見されていた通りの結果である。
+~~命名方式はB-fictionalに確定する。~~ ← **この判断は誤りであった。**
+
+### 改訂理由（Phase 4で発見）
+
+Phase 4（実API実行、`--backend anthropic`）の fail-fast チェックで、
+B=Full でも system1 accuracy ≈ 0% という異常が観測された。
+デバッグの結果、モデルは以下のように回答していた：
+
+```
+"B-fictional-mc-1": "Cannot determine - Kelvan not defined in repository"
+"B-fictional-mc-2": "Cannot determine - Kelvan not defined in repository"
+"B-fictional-mc-3": "Cannot determine - Ossuary not defined in repository"
+```
+
+**根本原因：** probe-generator.tsは `ground_truth.json` + `naming_schemes.json` だけを参照し、
+repositoryのTypeScriptファイルを一切読まない。そのため：
+
+- B-fictional probeは「Kelvan/Ossuary/Brindle/kindleKelvan…」という語彙で生成される
+- repositoryコード（`synthetic-world/repository/`）は A-obfuscated 名（Vok/Zef/Tal/advanceVok1…）で実装されている
+- B-fictional名はrepositoryのどのファイルにも出現しない → モデルはコードを読んでもprobeに答えられない
+
+**F5チェックが「機能している条件」が成立していなかった：**
+B-fictionalでF5漏洩が検出されなかった理由は「probeの答えがvisible testに隠れていないから」ではなく、
+「B-fictional語彙とvisible test語彙が完全に別物であるため、F5チェックの前提（同一語彙の共起を見る）
+自体が成立していなかったから」である。
+B-fictionalはそもそもrepositoryとも可視テストとも語彙が完全に断絶していた。
+
+### 改訂後の正しい結論
+
+- **命名方式はA-obfuscatedに確定し直す。**
+  repositoryコードがA-obfuscated名（Vok/Zef/Tal/nim/pex/dor/advanceVok1…）で実装されているため、
+  probeも同一スキームを使う必要がある。
+- **F5漏洩6問（set_selection×3 + graph_edge_prediction×3）はprobe-bankから除外。**
+  残り17問で運用する（multiple_choice×5、boolean×4、state_transition_prediction×8）。
+- F5漏洩によるB=0のフロア非ゼロは「dose-responseの絶対値」を下げるが、
+  「budgetが増えると得点が上がるか（勾配の有無）」の測定は妨げない。
+- 命名スキーム不一致の再発防止として、`calibration-runner.ts` の実行開始時に
+  probe-bank の entity/operation 名がrepositoryに出現するか（≥50%）を自動チェックする
+  (`checkNamingSchemeAlignment()`)。A-obfuscated: 8/8 (100%)、B-fictional: 0/8 (0%)。
 
 ### 今後への示唆
 
-- **命名方式はB-fictionalに確定する。** Phase 2以降のbudget-assemblerおよびcalibration-runner
-  はB-fictionalのみで設計する。A-obfuscatedは`probe-bank.json`から除外し、probe-generatorの
-  CLIもB-fictionalのみを出力するよう変更する（`docs/stage0_5_plan.md` 3.7節に反映済み）。
-- 「visible testに含まれる語彙がF5漏洩を引き起こす」という観察は、将来Synthetic World
-  generator化（Phase 5）の際の命名設計指針にもなる。visible testとsemantic probeで語彙が
-  共有されないよう、命名スキームを独立して設計することが重要。
-- B-fictionalでも、visible testの構造的な情報（どのoperationがどのentityを前提とするか
-  という構造的パターン）は依然として読み取れる可能性がある。F5チェックは
-  「表面的な語彙共起」を検出するheuristicに過ぎず、意味的な情報漏洩の完全な排除を
-  保証するものではない。Phase 4で実際にB=0での正答率を測定し、真の漏洩を確認する。
+- 「visible testに含まれる語彙がF5漏洩を引き起こす」という観察自体は正しい。
+  ただしF5を回避するために語彙を変えると、repositoryとの断絶が生じる。
+  真の解決策は「repositoryの実装名をF5に干渉しない別の名前にする」か
+  「F5漏洩をB=0のフロアとして許容する」かのどちらかである。
+  現段階ではF5漏洩6問を除外して17問とする後者を採用。
+- Phase 5の規模拡大後も、probe-generatorはrepositoryコードを直接読まない設計のまま維持する。
+  その代わり、repositoryに実装する際に「naming_schemes.jsonのA-obfuscatedスキームと語彙を一致させる」
+  という運用ルールを守り、`checkNamingSchemeAlignment()` で機械的に検証する。
 
 ---
 

@@ -501,6 +501,57 @@ async function runSystem2(
   };
 }
 
+// ---- 命名スキーム整合チェック ----
+
+/**
+ * probe-bank が使っている命名スキームの entityNames / operationNames の値が、
+ * 実際の repository ファイル群に出現するかをチェックする。
+ *
+ * 半数未満しか出現しない場合、probe の語彙と repository の実装名が
+ * 断絶している可能性が高いため、エラーを出して実行を停止する。
+ * （B-fictional ↔ A-obfuscated 語彙断絶問題の再発を機械的に防ぐ。
+ *  docs/findings/stage0_5_findings.md F1改訂参照）
+ */
+function checkNamingSchemeAlignment(
+  probes: GeneratedProbe[],
+  repositoryFiles: Record<string, string>,
+  namingSchemesPath: string
+): void {
+  if (probes.length === 0) return;
+
+  const schemeId = probes[0].namingScheme;
+
+  interface SchemeEntry {
+    schemeId: string;
+    entityNames: Record<string, string>;
+    operationNames: Record<string, string>;
+  }
+  const schemes: SchemeEntry[] = JSON.parse(fs.readFileSync(namingSchemesPath, "utf8"));
+  const scheme = schemes.find((s) => s.schemeId === schemeId);
+  if (!scheme) {
+    console.warn(`[alignment-check] scheme "${schemeId}" not found in naming_schemes.json. Skipping.`);
+    return;
+  }
+
+  const terms = [
+    ...Object.values(scheme.entityNames),
+    ...Object.values(scheme.operationNames),
+  ];
+  const repoContent = Object.values(repositoryFiles).join("\n");
+  const matched = terms.filter((t) => repoContent.includes(t));
+  const rate = terms.length > 0 ? matched.length / terms.length : 1;
+
+  if (rate < 0.5) {
+    console.error(`\n[alignment-check] FATAL: probe scheme "${schemeId}" は repository と語彙が断絶しています。`);
+    console.error(`  一致: ${matched.length}/${terms.length} (${(rate * 100).toFixed(0)}%) — 一致: [${matched.join(", ")}]`);
+    console.error(`  不一致: [${terms.filter((t) => !repoContent.includes(t)).join(", ")}]`);
+    console.error(`  → probe-bank.json を repository と同じ命名スキームで再生成してください。`);
+    process.exit(1);
+  }
+
+  console.log(`[alignment-check] OK: probe scheme "${schemeId}" — ${matched.length}/${terms.length} terms in repository (${(rate * 100).toFixed(0)}%)`);
+}
+
 // ---- メイン実行 ----
 
 export async function runCalibration(
@@ -521,6 +572,13 @@ export async function runCalibration(
   );
   const tasks: HeldOutTask[] = JSON.parse(
     fs.readFileSync(path.join(swDir, "heldout_tasks.json"), "utf8")
+  );
+
+  // 命名スキーム整合チェック（語彙断絶を機械的に検知）
+  checkNamingSchemeAlignment(
+    probes,
+    repositoryFiles,
+    path.join(swDir, "naming_schemes.json")
   );
 
   const fixturesDir = path.join(harnessDir, "fixtures");
