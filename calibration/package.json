@@ -1,0 +1,15 @@
+{
+  "name": "aidd-ilm-calibration",
+  "version": "0.1.0",
+  "description": "Calibration tooling for AIDD-ILM: semantic probe generation and scoring.",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "generate-probes": "ts-node src/probe-generator.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "ts-node": "^10.9.2",
+    "typescript": "5.6.3"
+  }
+}
