@@ -72,6 +72,59 @@ B-fictional（Kelvan/Ossuary/Brindle/latent/kindled/settled等の虚構語彙）
 
 ---
 
+## F2: リポジトリ全体が1791トークンしかなく、B≥2Kは全て同一内容になる（budget段階の実質的縮退）
+
+**日付**：2026-09-05
+**Phase**：Phase 2（budget-assembler実装・検証）
+**元コード**：`calibration/src/budget-assembler.ts`（CLI実行結果）
+
+### 実行条件
+
+- リポジトリ：`synthetic-world/repository/`（7ファイル）
+- 6段階のB値（0, 1K, 2K, 4K, 8K, Full）それぞれでcalibration/src/budget-assembler.tsを実行
+
+### 何が起きたか
+
+```
+Repository: 7 files, Full=1791 tokens (~7164 chars)
+
+B=0:    0/7 files, 0 tokens
+B=1K:   4/7 files, 1000 tokens  (型定義full + protocol_adapter full + test 52%切り詰め)
+B=2K:   7/7 files, 1791 tokens  （全ファイル全文）
+B=4K:   7/7 files, 1791 tokens  （全ファイル全文 = B=2Kと同一）
+B=8K:   7/7 files, 1791 tokens  （全ファイル全文 = B=2Kと同一）
+B=Full: 7/7 files, 1791 tokens  （全ファイル全文 = B=2Kと同一）
+```
+
+B=2K以上（2K/4K/8K/Full）の4段階が完全に同一内容になった。6段階のbudgetのうち、実質的に
+意味を持つ（情報量が異なる）のは **{0, 1K, 2K(≡Full)}** の3段階のみである。
+
+### なぜ注目すべきか
+
+- Phase 4でdose-response curveを描く際、B=2K〜Fullは全て同一点になり、実質的に
+  **3点しかないカーブ**しか描けない。これでは「budgetに応じた滑らかな改善」
+  （判定基準パターン4）と「B=0でも高得点（天井効果）」（パターン1）の区別が難しくなる。
+- Stage 0.5の1.2節で予見していた通り、**現在の小規模worldでは規模そのものがbottleneckになっている**
+  という最初の明確な証拠が得られた。
+- B=1Kでtest fileが52%切り詰められることも注目すべき点である。切り詰められたvisible testは
+  agentに不完全な安全網を見せることになる。real agent実行時には、このpartial testがどう
+  影響するかを観察する価値がある。
+
+### 今後への示唆
+
+- **Phase 4のdose-response curveは実質3点分のデータしか持たない**。これは4.3節の判定基準を
+  適用するには不十分な可能性が高く、Phase 5（規模拡大）へ進む蓋然性が高い。ただし、3点のうち
+  B=0とB=Full/2K+の間に差があれば「測定器として機能している（budgetが影響する）」という
+  定性的な判定自体は可能である。
+- Phase 5の規模拡大目標（1.1節の目標規模：5 entity・8 operation）に達した場合、
+  Fullトークン数は現在の1791から大幅に増加する（目標規模では5〜10倍程度と推定）。
+  拡大後にPhase 2のbudget-assemblerを再実行し、6段階が再び意味を持つことを確認する。
+- B値の刻み幅設計（6節の未決事項）について：現在の小規模worldでは {0, 500, 1K, Full} の
+  4段階が実質的な最大分解能であり、B=2K以上の刻みは意味がない。拡大後のworld規模に
+  合わせて刻みを再設計することを検討する。
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・
