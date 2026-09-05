@@ -1,0 +1,56 @@
+{
+  "passed": false,
+  "numPassed": 0,
+  "numFailed": 1,
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m8\u001b[0m:\u001b[93m16\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m8\u001b[0m     world = r1.newState!;\n    \u001b[7m \u001b[0m \u001b[91m               ~~~~~~~~\u001b[0m\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m11\u001b[0m:\u001b[93m39\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m11\u001b[0m     expect(protocol.getEntityState(r2.newState!, \"Zef\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                      ~~~~~~~~\u001b[0m\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m24\u001b[0m:\u001b[93m16\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m24\u001b[0m     world = r1.newState!;\n    \u001b[7m  \u001b[0m \u001b[91m               ~~~~~~~~\u001b[0m\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m27\u001b[0m:\u001b[93m39\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m27\u001b[0m     expect(protocol.getEntityState(r2.newState!, \"Tal\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                      ~~~~~~~~\u001b[0m\n"
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 0,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 1,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 0,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788588645967,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [],
+        "coverage": {},
+        "endTime": 1788588647008,
+        "message": "  ● Test suite failed to run\n\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m8\u001b[0m:\u001b[93m16\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m8\u001b[0m     world = r1.newState!;\n    \u001b[7m \u001b[0m \u001b[91m               ~~~~~~~~\u001b[0m\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m11\u001b[0m:\u001b[93m39\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m11\u001b[0m     expect(protocol.getEntityState(r2.newState!, \"Zef\")).toBe(\"dor\");\n    \u001b[7m  \u001b[0m \u001b[91m                                      ~~~~~~~~\u001b[0m\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m24\u001b[0m:\u001b[93m16\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m24\u001b[0m     world = r1.newState!;\n    \u001b[7m  \u001b[0m \u001b[91m               ~~~~~~~~\u001b[0m\n    \u001b[96mtask_specific_tests/task.test.ts\u001b[0m:\u001b[93m27\u001b[0m:\u001b[93m39\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2339: \u001b[0mProperty 'newState' does not exist on type 'OperationResult<WorldState>'.\n      Property 'newState' does not exist on type '{ success: false; error: string; }'.\n\n    \u001b[7m27\u001b[0m     expect(protocol.getEntityState(r2.newState!, \"Tal\")).toBe(\"pex\");\n    \u001b[7m  \u001b[0m \u001b[91m                                      ~~~~~~~~\u001b[0m\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-ZW9tvn/task_specific_tests/task.test.ts",
+        "startTime": 1788588647008,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

@@ -151,11 +151,9 @@ export function stateNameKey(entity: EntityId, state: StateId): string {
  * そして各世代で S_{g+1} ⊨ G_{g+1} を外部評価する。「S_gだけが進化し
  * Gは固定」という単純化ではなく、Gも要求ごとに進化する点が本質である。
  */
-export interface OperationResult<WorldStateHandle = unknown> {
-  success: boolean;
-  newState?: WorldStateHandle; // successの場合のみ設定。immutableな新state
-  error?: string;
-}
+export type OperationResult<WorldStateHandle = unknown> =
+  | { success: true; newState: WorldStateHandle }
+  | { success: false; error: string };
 
 export interface WorldProtocol<WorldStateHandle = unknown> {
   reset(): WorldStateHandle;

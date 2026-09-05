@@ -426,6 +426,8 @@ state transition prediction （例：この operation 実行後の状態はど�
 - 規模：5〜10世代、1モデル、1 toy repo（合成domainである必要はまだない）
 - 判定：クラッシュなく完走し、3.1節のログが欠損なく取得できること。研究上の結論は出さない。
 
+**ゲート達成（2026-09-05）**：Full・simple-limited 両条件とも5世代クラッシュなく完走し、verify-logs --all で全64世代のログが欠損なくOKを確認。visible 7/7・hidden 10/10が全世代で維持（明らかな異常なし）。参照ログ: `stage0-real-001__2026-09-05_06-09-02`（full）、`stage0-real-limited-001__2026-09-05_06-11-20`（simple-limited）。
+
 ### Stage 0.5：Measurement Calibration
 
 - 目的：\(R^{sem}_B\) と \(M_B\) が測定器として機能するかを確認する

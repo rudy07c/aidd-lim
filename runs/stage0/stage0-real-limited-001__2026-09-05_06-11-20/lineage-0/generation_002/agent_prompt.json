@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/protocol_adapter.ts, src/tal/rules.ts, src/vok/rules.ts, src/vok/state.ts, src/world.ts, tests/rules.visible.test.ts]\n\nTask:\n（世代16で提示）Zef に対して、'pex' から 'nim' へ戻す operation 'resetZef' を追加せよ。"
+}

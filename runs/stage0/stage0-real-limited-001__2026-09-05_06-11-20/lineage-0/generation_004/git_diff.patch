@@ -1,0 +1,216 @@
+--- a/src/vok/rules.ts
++++ b/src/vok/rules.ts
+@@ -1,50 +1,56 @@
+-import { WorldState } from "../world";
+-
+-/**
+- * advanceVok1 (= O1): Vok: nim -> pex, no preconditions
+- */
+-export function advanceVok1(world: WorldState): WorldState {
+-  if (world.vok !== "nim") {
+-    throw new Error("advanceVok1: Vok must be in state 'nim'");
+-  }
+-  return { ...world, vok: "pex" };
+-}
+-
+-/**
+- * advanceVok2 (= O2): Vok: pex -> dor, requires Zef === "pex"
+- * (D1: O2 depends on E2)
+- */
+-export function advanceVok2(world: WorldState): WorldState {
+-  if (world.vok !== "pex") {
+-    throw new Error("advanceVok2: Vok must be in state 'pex'");
+-  }
+-  if (world.zef !== "pex") {
+-    throw new Error("advanceVok2: requires Zef === 'pex'");
+-  }
+-  return { ...world, vok: "dor" };
+-}
+-
+-/**
+- * forceAdvanceVok: Vok: nim -> dor (bypass intermediate state)
+- */
+-export function forceAdvanceVok(world: WorldState): WorldState {
+-  if (world.vok !== "nim") {
+-    throw new Error("forceAdvanceVok: Vok must be in state 'nim'");
+-  }
+-  return { ...world, vok: "dor" };
+-}
+-
+-/**
+- * kindleBoth: Advance both Zef and Tal from nim to pex simultaneously
+- * Precondition: both Zef and Tal must be in state 'nim'
+- */
+-export function kindleBoth(world: WorldState): WorldState {
+-  if (world.zef !== "nim") {
+-    throw new Error("kindleBoth: Zef must be in state 'nim'");
+-  }
+-  if (world.tal !== "nim") {
+-    throw new Error("kindleBoth: Tal must be in state 'nim'");
+-  }
+-  return { ...world, zef: "pex", tal: "pex" };
+-}
+-
++import { WorldState } from "../world";
++
++/**
++ * advanceVok1 (= O1): Vok: nim -> pex, no preconditions
++ */
++export function advanceVok1(world: WorldState): WorldState {
++  if (world.vok !== "nim") {
++    throw new Error("advanceVok1: Vok must be in state 'nim'");
++  }
++  return { ...world, vok: "pex" };
++}
++
++/**
++ * advanceVok2 (= O2): Vok: pex -> dor, requires Zef === "pex"
++ * (D1: O2 depends on E2)
++ */
++export function advanceVok2(world: WorldState): WorldState {
++  if (world.vok !== "pex") {
++    throw new Error("advanceVok2: Vok must be in state 'pex'");
++  }
++  if (world.zef !== "pex") {
++    throw new Error("advanceVok2: Zef must be in state 'pex'");
++  }
++  return { ...world, vok: "dor" };
++}
++
++/**
++ * forceAdvanceVok: Vok: nim -> dor, bypassing intermediate pex state
++ * Requires Zef === "pex" (same dependency as advanceVok2)
++ */
++export function forceAdvanceVok(world: WorldState): WorldState {
++  if (world.vok !== "nim") {
++    throw new Error("forceAdvanceVok: Vok must be in state 'nim'");
++  }
++  if (world.zef !== "pex") {
++    throw new Error("forceAdvanceVok: Zef must be in state 'pex'");
++  }
++  return { ...world, vok: "dor" };
++}
++
++/**
++ * kindleBoth: A combined operation that advances both Vok and Zef if conditions are met
++ */
++export function kindleBoth(world: WorldState): WorldState {
++  if (world.vok !== "pex") {
++    throw new Error("kindleBoth: Vok must be in state 'pex'");
++  }
++  if (world.zef !== "pex") {
++    throw new Error("kindleBoth: Zef must be in state 'pex'");
++  }
++  if (world.tal !== "pex") {
++    throw new Error("kindleBoth: Tal must be in state 'pex'");
++  }
++  return { ...world, vok: "dor", zef: "dor" };
++}
++
+
+--- a/src/zef/rules.ts
++++ b/src/zef/rules.ts
+@@ -1,50 +1,53 @@
+-import { WorldState } from "../world";
+-
+-/**
+- * advanceZef1 (= O3): Zef: nim -> pex, requires Tal === "pex"
+- * (D2: O3 depends on E3)
+- */
+-export function advanceZef1(world: WorldState): WorldState {
+-  if (world.zef !== "nim") {
+-    throw new Error("advanceZef1: Zef must be in state 'nim'");
+-  }
+-  if (world.tal !== "pex") {
+-    throw new Error("advanceZef1: Tal must be in state 'pex'");
+-  }
+-  return { ...world, zef: "pex" };
+-}
+-
+-/**
+- * advanceZef2 (= O4): Zef: pex -> dor, requires Tal === "pex"
+- */
+-export function advanceZef2(world: WorldState): WorldState {
+-  if (world.zef !== "pex") {
+-    throw new Error("advanceZef2: Zef must be in state 'pex'");
+-  }
+-  if (world.tal !== "pex") {
+-    throw new Error("advanceZef2: Tal must be in state 'pex'");
+-  }
+-  return { ...world, zef: "dor" };
+-}
+-
+-/**
+- * resetZef: Zef: any -> nim
+- */
+-export function resetZef(world: WorldState): WorldState {
+-  return { ...world, zef: "nim" };
+-}
+-
+-/**
+- * fastTrackZef: Zef: nim -> dor (direct), requires Tal === "pex"
+- * Performance optimization to skip intermediate 'pex' state
+- */
+-export function fastTrackZef(world: WorldState): WorldState {
+-  if (world.zef !== "nim") {
+-    throw new Error("fastTrackZef: Zef must be in state 'nim'");
+-  }
+-  if (world.tal !== "pex") {
+-    throw new Error("fastTrackZef: Tal must be in state 'pex'");
+-  }
+-  return { ...world, zef: "dor" };
+-}
+-
++import { WorldState } from "../world";
++
++/**
++ * advanceZef1 (= O3): Zef: nim -> pex, requires Tal === "pex"
++ * (D2: O3 depends on E3)
++ */
++export function advanceZef1(world: WorldState): WorldState {
++  if (world.zef !== "nim") {
++    throw new Error("advanceZef1: Zef must be in state 'nim'");
++  }
++  if (world.tal !== "pex") {
++    throw new Error("advanceZef1: Tal must be in state 'pex'");
++  }
++  return { ...world, zef: "pex" };
++}
++
++/**
++ * advanceZef2 (= O4): Zef: pex -> dor, requires Tal === "pex"
++ */
++export function advanceZef2(world: WorldState): WorldState {
++  if (world.zef !== "pex") {
++    throw new Error("advanceZef2: Zef must be in state 'pex'");
++  }
++  if (world.tal !== "pex") {
++    throw new Error("advanceZef2: Tal must be in state 'pex'");
++  }
++  return { ...world, zef: "dor" };
++}
++
++/**
++ * resetZef: Zef: dor -> nim, reset operation
++ */
++export function resetZef(world: WorldState): WorldState {
++  if (world.zef !== "dor") {
++    throw new Error("resetZef: Zef must be in state 'dor'");
++  }
++  return { ...world, zef: "nim" };
++}
++
++/**
++ * fastTrackZef: Zef: nim -> dor, bypassing intermediate pex state
++ * Requires Tal === "pex"
++ */
++export function fastTrackZef(world: WorldState): WorldState {
++  if (world.zef !== "nim") {
++    throw new Error("fastTrackZef: Zef must be in state 'nim'");
++  }
++  if (world.tal !== "pex") {
++    throw new Error("fastTrackZef: Tal must be in state 'pex'");
++  }
++  return { ...world, zef: "dor" };
++}
++

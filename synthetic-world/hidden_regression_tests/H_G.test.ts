@@ -17,12 +17,12 @@ function apply(world: WorldState, op: string): WorldState {
   if (!result.success) {
     throw new Error(result.error ?? `operation failed: ${op}`);
   }
-  return result.newState!;
+  return result.newState;
 }
 
 function tryApply(world: WorldState, op: string): { ok: boolean; error?: string } {
   const result = protocol.applyOperation(world, op);
-  return { ok: result.success, error: result.error };
+  return { ok: result.success, error: result.success ? undefined : result.error };
 }
 
 describe("H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)", () => {
