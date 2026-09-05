@@ -26,6 +26,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
+import Anthropic from "@anthropic-ai/sdk";
 import { assembleContext, ALL_BUDGETS, BudgetValue } from "./budget-assembler";
 import { scoreProbes, summarizeScores } from "./probe-scorer";
 import type { GeneratedProbe } from "./probe-generator";
@@ -115,9 +116,134 @@ function loadDirRecursive(
 
 // ---- 系統1: セマンティックプローブ採点 ----
 
+const PROBE_SYSTEM_PROMPT = `You are answering questions about a TypeScript software system.
+Study the provided repository files carefully and answer every question using only what you can infer from the code.
+Do not guess or use outside knowledge. If the answer cannot be determined from the code, pick the most plausible option.`;
+
+/**
+ * 全probeを1つのユーザーメッセージに整形する。
+ * 選択肢形式のタイプ（multiple_choice / set_selection / graph_edge_prediction /
+ * state_transition_prediction）はoptionsを列挙する。
+ * booleanは "true" or "false" のみ。
+ */
+function buildProbePrompt(
+  contextSection: string,
+  probes: GeneratedProbe[]
+): string {
+  const questionLines: string[] = [];
+
+  for (let i = 0; i < probes.length; i++) {
+    const p = probes[i];
+    const lines: string[] = [`[Q${i + 1}] ${p.probeId} (${p.type})`];
+    lines.push(p.prompt);
+
+    if (p.type === "boolean") {
+      lines.push(`Answer format: "true" or "false"`);
+    } else if (p.type === "set_selection") {
+      lines.push(`Options: ${(p.options ?? []).join(", ")}`);
+      lines.push(`Answer format: JSON array of selected options, e.g. ["A","B"]`);
+    } else {
+      // multiple_choice / graph_edge_prediction / state_transition_prediction
+      lines.push(`Options: ${(p.options ?? []).join(", ")}`);
+      lines.push(`Answer format: one of the option strings exactly as listed`);
+    }
+
+    questionLines.push(lines.join("\n"));
+  }
+
+  const exampleId = probes[0]?.probeId ?? "probe-id";
+  return `${contextSection}
+
+QUESTIONS:
+${questionLines.join("\n\n")}
+
+OUTPUT FORMAT:
+Respond with a JSON object inside <probe_answers> tags. Keys are probe IDs (exactly as shown), values are answers.
+- multiple_choice / graph_edge_prediction / state_transition_prediction: answer is a string (exact option)
+- boolean: answer is "true" or "false"
+- set_selection: answer is a JSON array of selected option strings
+
+Example:
+<probe_answers>
+{
+  "${exampleId}": "someOption"
+}
+</probe_answers>
+
+Now answer all ${probes.length} questions:`;
+}
+
+/**
+ * Anthropic APIを直接呼び出してprobeに回答する。
+ * 回答を probeId → answer string のマップとして返す。
+ * set_selection の値は JSON 配列を文字列化して返す（probe-scorer が JSON.parse する）。
+ */
+async function answerProbesWithAnthropicAPI(
+  contextFiles: Record<string, string>,
+  probes: GeneratedProbe[],
+  model: string
+): Promise<Record<string, string>> {
+  const client = new Anthropic();
+
+  // REPOSITORY FILES セクションを構築（anthropic.ts の formatContextFiles と同じフォーマット）
+  const fileLines: string[] = ["REPOSITORY FILES:"];
+  for (const [filePath, content] of Object.entries(contextFiles)) {
+    fileLines.push(`\n--- ${filePath} ---\n${content}`);
+  }
+  const contextSection = fileLines.join("");
+
+  const userMessage = buildProbePrompt(contextSection, probes);
+
+  const response = await client.messages.create({
+    model,
+    max_tokens: 4096,
+    system: PROBE_SYSTEM_PROMPT,
+    messages: [{ role: "user", content: userMessage }],
+  });
+
+  const rawText = response.content
+    .filter((b): b is Anthropic.TextBlock => b.type === "text")
+    .map((b) => b.text)
+    .join("");
+
+  // <probe_answers>...</probe_answers> を抽出してパース
+  const match = rawText.match(/<probe_answers>([\s\S]*?)<\/probe_answers>/);
+  if (!match) {
+    console.warn("[system1] <probe_answers> tag not found in response. Returning empty answers.");
+    const empty: Record<string, string> = {};
+    for (const p of probes) empty[p.probeId] = "";
+    return empty;
+  }
+
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(match[1].trim());
+  } catch (e) {
+    console.error("[system1] Failed to parse probe_answers JSON:", e);
+    const empty: Record<string, string> = {};
+    for (const p of probes) empty[p.probeId] = "";
+    return empty;
+  }
+
+  // 各値を文字列に変換（set_selection では配列が返ることがある）
+  const answers: Record<string, string> = {};
+  for (const p of probes) {
+    const raw = parsed[p.probeId];
+    if (raw === undefined || raw === null) {
+      answers[p.probeId] = "";
+    } else if (Array.isArray(raw)) {
+      // set_selection: 配列 → JSON 文字列（probe-scorer が JSON.parse する）
+      answers[p.probeId] = JSON.stringify(raw);
+    } else {
+      answers[p.probeId] = String(raw);
+    }
+  }
+  return answers;
+}
+
 /**
  * mock probe answerer: returns empty string for all probes (all wrong).
- * Phase 3ではクラッシュしないことのみ確認。Phase 4で real agent に差し替える。
+ * mock-noop / mock-oracle バックエンドで使用。
  */
 function mockAnswerProbes(probes: GeneratedProbe[]): Record<string, string> {
   const answers: Record<string, string> = {};
@@ -131,12 +257,18 @@ async function runSystem1(
   repositoryFiles: Record<string, string>,
   probes: GeneratedProbe[],
   budget: BudgetValue,
-  _backend: CalibrationBackend
+  backend: CalibrationBackend,
+  model: string
 ): Promise<System1BudgetResult> {
   const ctx = assembleContext(repositoryFiles, budget);
 
-  // Phase 3/4: mock probe answerer（Phase 4で real agent に差し替え予定）
-  const answers = mockAnswerProbes(probes);
+  let answers: Record<string, string>;
+  if (backend === "anthropic") {
+    answers = await answerProbesWithAnthropicAPI(ctx.files, probes, model);
+  } else {
+    answers = mockAnswerProbes(probes);
+  }
+
   const scoringResults = scoreProbes(probes, answers);
   const summary = summarizeScores(scoringResults, probes);
 
@@ -376,7 +508,7 @@ export async function runCalibration(
 
   for (const budget of budgets) {
     const [s1, s2] = await Promise.all([
-      runSystem1(repositoryFiles, probes, budget, backend),
+      runSystem1(repositoryFiles, probes, budget, backend, model),
       runSystem2(repositoryFiles, tasks, budget, backend, runOptions),
     ]);
     system1.push(s1);
