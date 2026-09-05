@@ -64,6 +64,10 @@ export interface System1BudgetResult {
   accuracy: number;
   byType: Record<string, { total: number;  correct: number; accuracy: number }>;
   probeDetails: System1TaskResult[];
+  /** anthropic backend のみ。API呼び出し1回分の所要時間（ms） */
+  latencyMs?: number;
+  /** anthropic backend のみ。API呼び出し1回分のトークン使用量 */
+  tokenUsage?: { input: number; output: number };
 }
 
 export interface System2TaskResult {
@@ -173,16 +177,22 @@ Example:
 Now answer all ${probes.length} questions:`;
 }
 
+interface ProbeAPIResult {
+  answers: Record<string, string>;
+  latencyMs: number;
+  tokenUsage: { input: number; output: number };
+}
+
 /**
  * Anthropic APIを直接呼び出してprobeに回答する。
- * 回答を probeId → answer string のマップとして返す。
+ * 回答（probeId → answer string）、latency、tokenUsageをまとめて返す。
  * set_selection の値は JSON 配列を文字列化して返す（probe-scorer が JSON.parse する）。
  */
 async function answerProbesWithAnthropicAPI(
   contextFiles: Record<string, string>,
   probes: GeneratedProbe[],
   model: string
-): Promise<Record<string, string>> {
+): Promise<ProbeAPIResult> {
   const client = new Anthropic();
 
   // REPOSITORY FILES セクションを構築（anthropic.ts の formatContextFiles と同じフォーマット）
@@ -194,25 +204,32 @@ async function answerProbesWithAnthropicAPI(
 
   const userMessage = buildProbePrompt(contextSection, probes);
 
+  const start = Date.now();
   const response = await client.messages.create({
     model,
     max_tokens: 4096,
     system: PROBE_SYSTEM_PROMPT,
     messages: [{ role: "user", content: userMessage }],
   });
+  const latencyMs = Date.now() - start;
+  const tokenUsage = { input: response.usage.input_tokens, output: response.usage.output_tokens };
 
   const rawText = response.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)
     .join("");
 
+  const emptyAnswers = (): Record<string, string> => {
+    const m: Record<string, string> = {};
+    for (const p of probes) m[p.probeId] = "";
+    return m;
+  };
+
   // <probe_answers>...</probe_answers> を抽出してパース
   const match = rawText.match(/<probe_answers>([\s\S]*?)<\/probe_answers>/);
   if (!match) {
     console.warn("[system1] <probe_answers> tag not found in response. Returning empty answers.");
-    const empty: Record<string, string> = {};
-    for (const p of probes) empty[p.probeId] = "";
-    return empty;
+    return { answers: emptyAnswers(), latencyMs, tokenUsage };
   }
 
   let parsed: Record<string, unknown>;
@@ -220,9 +237,7 @@ async function answerProbesWithAnthropicAPI(
     parsed = JSON.parse(match[1].trim());
   } catch (e) {
     console.error("[system1] Failed to parse probe_answers JSON:", e);
-    const empty: Record<string, string> = {};
-    for (const p of probes) empty[p.probeId] = "";
-    return empty;
+    return { answers: emptyAnswers(), latencyMs, tokenUsage };
   }
 
   // 各値を文字列に変換（set_selection では配列が返ることがある）
@@ -238,7 +253,7 @@ async function answerProbesWithAnthropicAPI(
       answers[p.probeId] = String(raw);
     }
   }
-  return answers;
+  return { answers, latencyMs, tokenUsage };
 }
 
 /**
@@ -263,8 +278,14 @@ async function runSystem1(
   const ctx = assembleContext(repositoryFiles, budget);
 
   let answers: Record<string, string>;
+  let latencyMs: number | undefined;
+  let tokenUsage: { input: number; output: number } | undefined;
+
   if (backend === "anthropic") {
-    answers = await answerProbesWithAnthropicAPI(ctx.files, probes, model);
+    const apiResult = await answerProbesWithAnthropicAPI(ctx.files, probes, model);
+    answers = apiResult.answers;
+    latencyMs = apiResult.latencyMs;
+    tokenUsage = apiResult.tokenUsage;
   } else {
     answers = mockAnswerProbes(probes);
   }
@@ -292,6 +313,8 @@ async function runSystem1(
     accuracy: summary.accuracy,
     byType: summary.byType,
     probeDetails,
+    latencyMs,
+    tokenUsage,
   };
 }
 
@@ -569,7 +592,11 @@ if (require.main === module) {
     console.log("\n├─ 系統1 (R^sem_B): セマンティックプローブ\n│");
     for (const s1 of result.system1) {
       const label = s1.budget === "full" ? "Full" : `${(s1.budget as number) / 1000}K`;
-      console.log(`│  B=${label} (ctx=${s1.contextTokens}t): ${s1.numCorrect}/${s1.numTotal} correct (acc=${s1.accuracy.toFixed(2)})`);
+      const extras = [
+        s1.latencyMs ? `${s1.latencyMs}ms` : "",
+        s1.tokenUsage ? `in=${s1.tokenUsage.input} out=${s1.tokenUsage.output}` : "",
+      ].filter(Boolean).join(" ");
+      console.log(`│  B=${label} (ctx=${s1.contextTokens}t): ${s1.numCorrect}/${s1.numTotal} correct (acc=${s1.accuracy.toFixed(2)})${extras ? " " + extras : ""}`);
       for (const [type, stat] of Object.entries(s1.byType)) {
         console.log(`│    ${type}: ${stat.correct}/${stat.total}`);
       }
