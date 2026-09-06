@@ -280,5 +280,243 @@
     },
     "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-crosscut-4: lockFenZef\", () => {\n  test(\"lockFenZef: Fen and Zef pex→dor when Osk=pex and Tal=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"advanceFen1\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    world = r3.newState;\n    const r4 = protocol.applyOperation(world, \"advanceZef1\");\n    expect(r4.success).toBe(true);\n    if (!r4.success) throw new Error(r4.error);\n    world = r4.newState;\n    const r5 = protocol.applyOperation(world, \"lockFenZef\");\n    expect(r5.success).toBe(true);\n    if (!r5.success) throw new Error(r5.error);\n    expect(protocol.getEntityState(r5.newState, \"Fen\")).toBe(\"dor\");\n    expect(protocol.getEntityState(r5.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"lockFenZef: fails when Fen=nim (fromState guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"lockFenZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"lockFenZef: fails when Zef=nim (fromState guard)\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceFen1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"lockFenZef\");\n    expect(r3.success).toBe(false);\n  });\n});\n",
     "note": "FenとZefを同時にpex→dorへ進める複合operation（Construction B: invariant guardは命令文に明示されない）。I3（E4=dor→Osk=pex）・I5（E2=dor→Osk=pex）→ E5=q2が必要。I6（E4=dor→Tal=pex）・I2（E2=dor→Tal=pex）→ E3=q2が必要。worker agentがguardを省略するとH(G)のI2/I3/I5/I6 micro-testがfailする。"
+  },
+  {
+    "taskId": "T-invariant-stress-2",
+    "type": "invariant_stressing",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "パフォーマンス改善のため、Fen を 'nim' から 'dor' へ一気に進める 'jumpFen' operation を追加せよ。中間状態の 'pex' を経由する必要はない。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O22", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O22",
+          "effects": [{ "entity": "E4", "fromState": "q1", "toState": "q3" }],
+          "preconditions": [
+            { "entity": "E5", "state": "q2" },
+            { "entity": "E3", "state": "q2" }
+          ]
+        }
+      ],
+      "addDependencies": [
+        {
+          "id": "D12",
+          "from": "O22",
+          "on": "E5",
+          "note": "jumpFenはE5=q2をpreconditionとする（I3: E4=dor→Osk=pex, explicit）"
+        },
+        {
+          "id": "D13",
+          "from": "O22",
+          "on": "E3",
+          "note": "jumpFenはE3=q2をpreconditionとする（I6: E4=dor→Tal=pex, distributed cross-chain）"
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-invariant-stress-2: jumpFen\", () => {\n  test(\"jumpFen: Fen nim→dor when Osk=pex and Tal=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"jumpFen\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Fen\")).toBe(\"dor\");\n  });\n\n  test(\"jumpFen: fails when Osk=nim (Invariant I3 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"jumpFen\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"jumpFen: Osk and Tal remain unchanged after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"jumpFen\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Osk\")).toBe(\"pex\");\n    expect(protocol.getEntityState(r3.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "jumpFenはFenをnim→dorに一気に進める（Construction B）。I3（E4=dor→Osk=pex、explicit）→E5=q2必要。I6（E4=dor→Tal=pex、distributed: O8がE2=q2を要求→O3がE3=q2を要求という連鎖）→E3=q2必要。fastTrackZef（T-invariant-stress-1）がI2+I5をターゲットにしたのに対し本taskはI3+I6をターゲット（対称設計）。worker agentがE5=q2のみでE3=q2を省略するとI6が破れる。"
+  },
+  {
+    "taskId": "T-invariant-stress-3",
+    "type": "invariant_stressing",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "パフォーマンス改善のため、Zef と Fen を同時に 'nim' から 'dor' へ一気に進める 'rushZefFen' operation を追加せよ。中間状態の 'pex' を経由する必要はない。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O23", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O23",
+          "effects": [
+            { "entity": "E2", "fromState": "q1", "toState": "q3" },
+            { "entity": "E4", "fromState": "q1", "toState": "q3" }
+          ],
+          "preconditions": [
+            { "entity": "E3", "state": "q2" },
+            { "entity": "E5", "state": "q2" }
+          ]
+        }
+      ],
+      "addDependencies": [
+        {
+          "id": "D14",
+          "from": "O23",
+          "on": "E3",
+          "note": "rushZefFenはE3=q2をpreconditionとする（I2: E2=dor→Tal=pex, explicit; I6: E4=dor→Tal=pex, distributed）"
+        },
+        {
+          "id": "D15",
+          "from": "O23",
+          "on": "E5",
+          "note": "rushZefFenはE5=q2をpreconditionとする（I3: E4=dor→Osk=pex, explicit; I5: E2=dor→Osk=pex, distributed）"
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-invariant-stress-3: rushZefFen\", () => {\n  test(\"rushZefFen: Zef and Fen nim→dor when Tal=pex and Osk=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"rushZefFen\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Zef\")).toBe(\"dor\");\n    expect(protocol.getEntityState(r3.newState, \"Fen\")).toBe(\"dor\");\n  });\n\n  test(\"rushZefFen: fails when Tal=nim (Invariants I2+I6 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"rushZefFen\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"rushZefFen: Tal and Osk remain unchanged after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"rushZefFen\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Tal\")).toBe(\"pex\");\n    expect(protocol.getEntityState(r3.newState, \"Osk\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "ZefとFenを同時にnim→dorへ（Construction B）。I2（explicit）・I6（distributed）→E3=q2必要。I3（explicit）・I5（distributed）→E5=q2必要。4つの不変条件を同時にストレステストする複合パターン。I5/I6はdistributedのためworker agentがfastTrackZef等をコピーしてE4=q2のみを使う場合、I3/I6のdirectガードが欠落する危険がある。"
+  },
+  {
+    "taskId": "T-invariant-stress-4",
+    "type": "invariant_stressing",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "パフォーマンス改善のため、Vok と Zef を同時に 'pex' から 'dor' へ一気に進める 'turboVokZef' operation を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O24", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O24",
+          "effects": [
+            { "entity": "E1", "fromState": "q2", "toState": "q3" },
+            { "entity": "E2", "fromState": "q2", "toState": "q3" }
+          ],
+          "preconditions": [
+            { "entity": "E3", "state": "q2" },
+            { "entity": "E5", "state": "q2" }
+          ]
+        }
+      ],
+      "addDependencies": [
+        {
+          "id": "D16",
+          "from": "O24",
+          "on": "E3",
+          "note": "turboVokZefはE3=q2をpreconditionとする（I1: E1=dor→Tal=pex, distributed; I2: E2=dor→Tal=pex, explicit）"
+        },
+        {
+          "id": "D17",
+          "from": "O24",
+          "on": "E5",
+          "note": "turboVokZefはE5=q2をpreconditionとする（I4: E1=dor→Osk=pex, explicit; I5: E2=dor→Osk=pex, distributed）"
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-invariant-stress-4: turboVokZef\", () => {\n  test(\"turboVokZef: Vok and Zef pex→dor when Tal=pex and Osk=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    world = r3.newState;\n    const r4 = protocol.applyOperation(world, \"advanceZef1\");\n    expect(r4.success).toBe(true);\n    if (!r4.success) throw new Error(r4.error);\n    world = r4.newState;\n    const r5 = protocol.applyOperation(world, \"turboVokZef\");\n    expect(r5.success).toBe(true);\n    if (!r5.success) throw new Error(r5.error);\n    expect(protocol.getEntityState(r5.newState, \"Vok\")).toBe(\"dor\");\n    expect(protocol.getEntityState(r5.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"turboVokZef: fails when Vok=nim (fromState guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"turboVokZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"turboVokZef: Tal and Osk remain pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    world = r3.newState;\n    const r4 = protocol.applyOperation(world, \"advanceZef1\");\n    expect(r4.success).toBe(true);\n    if (!r4.success) throw new Error(r4.error);\n    world = r4.newState;\n    const r5 = protocol.applyOperation(world, \"turboVokZef\");\n    expect(r5.success).toBe(true);\n    if (!r5.success) throw new Error(r5.error);\n    expect(protocol.getEntityState(r5.newState, \"Tal\")).toBe(\"pex\");\n    expect(protocol.getEntityState(r5.newState, \"Osk\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "VokとZefを同時にpex→dorへ（Construction B）。I1（distributed）・I2（explicit）→E3=q2必要。I4（explicit）・I5（distributed）→E5=q2必要。worker agentがadvanceVok2（E2=q2+E5=q2）をコピーするとE2はfromStateガードで確認済みのため冗長になりE3=q2のチェックが欠落するF1/F2パターン再現の機会。"
+  },
+  {
+    "taskId": "T-invariant-stress-5",
+    "type": "invariant_stressing",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "Vok が 'pex' の状態から直接 'dor' へ進む高速 operation 'advanceVokSkip' を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O25", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O25",
+          "effects": [{ "entity": "E1", "fromState": "q2", "toState": "q3" }],
+          "preconditions": [
+            { "entity": "E3", "state": "q2" },
+            { "entity": "E5", "state": "q2" }
+          ]
+        }
+      ],
+      "addDependencies": [
+        {
+          "id": "D18",
+          "from": "O25",
+          "on": "E3",
+          "note": "advanceVokSkipはE3=q2をpreconditionとする（I1: E1=dor→Tal=pex, distributed cross-chain）"
+        },
+        {
+          "id": "D19",
+          "from": "O25",
+          "on": "E5",
+          "note": "advanceVokSkipはE5=q2をpreconditionとする（I4: E1=dor→Osk=pex, explicit cross-chain）"
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-invariant-stress-5: advanceVokSkip\", () => {\n  test(\"advanceVokSkip: Vok pex→dor when Tal=pex and Osk=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    world = r3.newState;\n    const r4 = protocol.applyOperation(world, \"advanceVokSkip\");\n    expect(r4.success).toBe(true);\n    if (!r4.success) throw new Error(r4.error);\n    expect(protocol.getEntityState(r4.newState, \"Vok\")).toBe(\"dor\");\n  });\n\n  test(\"advanceVokSkip: fails when Tal=nim (Invariant I1 guard)\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceVokSkip\");\n    expect(r2.success).toBe(false);\n  });\n\n  test(\"advanceVokSkip: Tal remains pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    world = r3.newState;\n    const r4 = protocol.applyOperation(world, \"advanceVokSkip\");\n    expect(r4.success).toBe(true);\n    if (!r4.success) throw new Error(r4.error);\n    expect(protocol.getEntityState(r4.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "Vokをpexからdorへスキップ（Construction B）。advanceVok2（E2=q2+E5=q2 precond）をコピーしてZef依存を除去したAIはE3=q2ガード（I1: distributed）を欠落させやすい—F1/F2（T-local-1失敗パターン）の直接再現。正解はE3=q2+E5=q2。I4（explicit: E1=dor→Osk=pex）→E5=q2。I1（distributed: E1=dor→Tal=pex via E2→E3連鎖）→E3=q2を直接要求。"
+  },
+  {
+    "taskId": "T-crosscut-5",
+    "type": "cross_cutting",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "Tal と Fen を同時に 'nim' から 'pex' へ進める新しい operation 'boostTalFen' を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O26", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O26",
+          "effects": [
+            { "entity": "E3", "fromState": "q1", "toState": "q2" },
+            { "entity": "E4", "fromState": "q1", "toState": "q2" }
+          ],
+          "preconditions": [
+            { "entity": "E5", "state": "q2" }
+          ]
+        }
+      ],
+      "addDependencies": [
+        {
+          "id": "D20",
+          "from": "O26",
+          "on": "E5",
+          "note": "boostTalFenはE5=q2をpreconditionとする（Fenの前進にはOsk=pexが必要—advanceFen1の依存を複合operationに引き継ぐ）"
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-crosscut-5: boostTalFen\", () => {\n  test(\"boostTalFen: Tal and Fen both advance nim→pex when Osk=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"boostTalFen\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Tal\")).toBe(\"pex\");\n    expect(protocol.getEntityState(r2.newState, \"Fen\")).toBe(\"pex\");\n  });\n\n  test(\"boostTalFen: fails when Osk=nim\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"boostTalFen\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"boostTalFen: Vok and Zef are unchanged\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"boostTalFen\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Vok\")).toBe(\"nim\");\n    expect(protocol.getEntityState(r2.newState, \"Zef\")).toBe(\"nim\");\n  });\n});\n",
+    "note": "TalとFenを同時にnim→pexへ進める複合operation（Construction A: Fen前進のためにOsk=pexが必要であることはadvanceFen1から推論可能）。precondition E5=q2はO7（advanceFen1）から引き継がれる。E3/E4ともにq2止まりなのでinvariant違反なし。"
+  },
+  {
+    "taskId": "T-crosscut-6",
+    "type": "cross_cutting",
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "パフォーマンス改善のため、Vok と Fen を同時に 'nim' から 'dor' へ一気に進める 'jumpVokFen' operation を追加せよ。中間状態の 'pex' を経由する必要はない。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O27", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O27",
+          "effects": [
+            { "entity": "E1", "fromState": "q1", "toState": "q3" },
+            { "entity": "E4", "fromState": "q1", "toState": "q3" }
+          ],
+          "preconditions": [
+            { "entity": "E3", "state": "q2" },
+            { "entity": "E5", "state": "q2" }
+          ]
+        }
+      ],
+      "addDependencies": [
+        {
+          "id": "D21",
+          "from": "O27",
+          "on": "E3",
+          "note": "jumpVokFenはE3=q2をpreconditionとする（I1: E1=dor→Tal=pex, distributed; I6: E4=dor→Tal=pex, distributed）"
+        },
+        {
+          "id": "D22",
+          "from": "O27",
+          "on": "E5",
+          "note": "jumpVokFenはE5=q2をpreconditionとする（I3: E4=dor→Osk=pex, explicit; I4: E1=dor→Osk=pex, explicit）"
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-crosscut-6: jumpVokFen\", () => {\n  test(\"jumpVokFen: Vok and Fen nim→dor when Tal=pex and Osk=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"jumpVokFen\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Vok\")).toBe(\"dor\");\n    expect(protocol.getEntityState(r3.newState, \"Fen\")).toBe(\"dor\");\n  });\n\n  test(\"jumpVokFen: fails when Tal=nim (Invariants I1+I6 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"jumpVokFen\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"jumpVokFen: Tal and Osk remain pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"jumpVokFen\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Tal\")).toBe(\"pex\");\n    expect(protocol.getEntityState(r3.newState, \"Osk\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "VokとFenを同時にnim→dorへ進める複合operation（Construction B）。I1（distributed）・I6（distributed）→E3=q2必要。I3（explicit）・I4（explicit）→E5=q2必要。jumpVokZef（T-crosscut-2）がVok+Zef対象なのに対して本taskはVok+Fen対象の対称設計。2つのdistributed invariant（I1,I6）と2つのexplicit invariant（I3,I4）を同時にカバー。"
+  },
+  {
+    "taskId": "T-delayed-2",
+    "type": "delayed_dependency",
+    "introducedAtGeneration": 5,
+    "activatesAtGeneration": 20,
+    "namingScheme": "A-obfuscated",
+    "visibleInstruction": "（世代20で提示）Tal と Osk を同時に 'nim' から 'pex' へ進める 'advanceTalOsk' operation を追加せよ。",
+    "groundTruthDelta": {
+      "addOperations": [{ "id": "O28", "parameters": [] }],
+      "addTransitions": [
+        {
+          "operationId": "O28",
+          "effects": [
+            { "entity": "E3", "fromState": "q1", "toState": "q2" },
+            { "entity": "E5", "fromState": "q1", "toState": "q2" }
+          ],
+          "preconditions": []
+        }
+      ]
+    },
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-delayed-2: advanceTalOsk\", () => {\n  test(\"advanceTalOsk: Tal and Osk both advance nim→pex\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"advanceTalOsk\");\n    expect(r.success).toBe(true);\n    if (!r.success) throw new Error(r.error);\n    expect(protocol.getEntityState(r.newState, \"Tal\")).toBe(\"pex\");\n    expect(protocol.getEntityState(r.newState, \"Osk\")).toBe(\"pex\");\n  });\n\n  test(\"advanceTalOsk: fails when Tal is already pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceTalOsk\");\n    expect(r2.success).toBe(false);\n  });\n\n  test(\"advanceTalOsk: Vok, Zef, Fen are unchanged\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"advanceTalOsk\");\n    expect(r.success).toBe(true);\n    if (!r.success) throw new Error(r.error);\n    expect(protocol.getEntityState(r.newState, \"Vok\")).toBe(\"nim\");\n    expect(protocol.getEntityState(r.newState, \"Zef\")).toBe(\"nim\");\n    expect(protocol.getEntityState(r.newState, \"Fen\")).toBe(\"nim\");\n  });\n});\n",
+    "note": "TalとOskを同時にnim→pexへ進める複合operation（delayed_dependency: 世代5で設計概念として導入、世代20で実装指示）。preconditionなし（advanceTal1/advanceOsk1は共にprecondなし）。E3/E5はq2までしか進まないためinvariant違反なし。T-delayed-1（resetZef: 後退操作）と対をなす前進操作として、後半世代でTal+Oskのセットアップを一括で行う際に有用。"
   }
 ]

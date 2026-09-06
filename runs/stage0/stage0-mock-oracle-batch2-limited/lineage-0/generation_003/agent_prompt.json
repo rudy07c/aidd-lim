@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/fen/state.ts, src/osk/state.ts, src/protocol_adapter.ts, src/vok/state.ts, src/world.ts, tests/rules.visible.test.ts]\n\nTask:\nVok が 'pex' の状態から直接 'dor' へ進む高速 operation 'advanceVokSkip' を追加せよ。"
+}

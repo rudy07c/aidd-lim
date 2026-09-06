@@ -1,0 +1,108 @@
+{
+  "passed": true,
+  "numPassed": 3,
+  "numFailed": 0,
+  "testCases": [
+    {
+      "testName": "T-crosscut-5: boostTalFen boostTalFen: Tal and Fen both advance nim→pex when Osk=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-5: boostTalFen boostTalFen: fails when Osk=nim",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-5: boostTalFen boostTalFen: Vok and Zef are unchanged",
+      "passed": true
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 0,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 1,
+    "numPassedTests": 3,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 3,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788699328715,
+    "success": true,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "T-crosscut-5: boostTalFen"
+            ],
+            "duration": 2,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-5: boostTalFen boostTalFen: Tal and Fen both advance nim→pex when Osk=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 4,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "boostTalFen: Tal and Fen both advance nim→pex when Osk=pex"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-5: boostTalFen"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-5: boostTalFen boostTalFen: fails when Osk=nim",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "boostTalFen: fails when Osk=nim"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-5: boostTalFen"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-5: boostTalFen boostTalFen: Vok and Zef are unchanged",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 4,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "boostTalFen: Vok and Zef are unchanged"
+          }
+        ],
+        "endTime": 1788699331198,
+        "message": "",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-1HOQRF/task_specific_tests/task.test.ts",
+        "startTime": 1788699328850,
+        "status": "passed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

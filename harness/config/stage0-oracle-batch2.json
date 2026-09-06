@@ -1,0 +1,19 @@
+{
+  "_comment": "Batch 2 validation: mock-oracle で新規7タスク（T-invariant-stress-2〜5, T-crosscut-5〜6, T-delayed-2）をテスト。",
+  "stage": "stage0",
+  "experimentId": "stage0-mock-oracle-batch2",
+  "lineageId": "lineage-0",
+  "backend": "mock-oracle",
+  "condition": "full",
+  "contextBudget": "full",
+  "generations": 7,
+  "tasks": [
+    "T-invariant-stress-2",
+    "T-invariant-stress-3",
+    "T-invariant-stress-4",
+    "T-invariant-stress-5",
+    "T-crosscut-5",
+    "T-crosscut-6",
+    "T-delayed-2"
+  ]
+}

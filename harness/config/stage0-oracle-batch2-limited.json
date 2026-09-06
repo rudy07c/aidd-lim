@@ -1,0 +1,19 @@
+{
+  "_comment": "Batch 2 limited validation: mock-oracle + simple-limited で新規7タスクをテスト。",
+  "stage": "stage0",
+  "experimentId": "stage0-mock-oracle-batch2-limited",
+  "lineageId": "lineage-0",
+  "backend": "mock-oracle",
+  "condition": "simple-limited",
+  "contextBudget": "simple-limited",
+  "generations": 7,
+  "tasks": [
+    "T-invariant-stress-2",
+    "T-invariant-stress-3",
+    "T-invariant-stress-4",
+    "T-invariant-stress-5",
+    "T-crosscut-5",
+    "T-crosscut-6",
+    "T-delayed-2"
+  ]
+}

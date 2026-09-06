@@ -1,0 +1,19 @@
+{
+  "_comment": "Batch 2 noop validation: mock-noop で新規7タスクが task-specific 失敗することを確認。",
+  "stage": "stage0",
+  "experimentId": "stage0-mock-noop-batch2",
+  "lineageId": "lineage-0",
+  "backend": "mock-noop",
+  "condition": "full",
+  "contextBudget": "full",
+  "generations": 7,
+  "tasks": [
+    "T-invariant-stress-2",
+    "T-invariant-stress-3",
+    "T-invariant-stress-4",
+    "T-invariant-stress-5",
+    "T-crosscut-5",
+    "T-crosscut-6",
+    "T-delayed-2"
+  ]
+}

@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/fen/jumpFen.ts, src/fen/rules.ts, src/fen/state.ts, src/osk/rules.ts, src/osk/state.ts, src/protocol_adapter.ts, src/tal/boostTalFen.ts, src/tal/rules.ts, src/vok/advanceVokSkip.ts, src/vok/jumpVokFen.ts, src/vok/rules.ts, src/vok/state.ts, src/vok/turboVokZef.ts, src/world.ts, src/zef/rules.ts, src/zef/rushZefFen.ts, tests/rules.visible.test.ts]\n\nTask:\n（世代20で提示）Tal と Osk を同時に 'nim' から 'pex' へ進める 'advanceTalOsk' operation を追加せよ。"
+}
