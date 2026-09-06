@@ -326,6 +326,87 @@ B=Full: 17/17 (100%) — mc: 5/5, bool: 4/4, stp: 8/8
 
 ---
 
+## F6: Phase 4 Step 2（6段階フル実行）結果 — 両系統でbudget感度を確認、T-local-1のみ全budgetで失敗
+
+**日付**：2026-09-06
+**Phase**：Phase 4 Step 2（6段階フル実行）
+**実行条件**：backend=anthropic, model=claude-haiku-4-5-20251001, budgets=[0, 1K, 2K, 4K, 8K, Full]
+
+### 実行結果
+
+**系統2 (M̂_B):**
+```
+B=0K:   0/6 (0.00)
+B=1K:   3/6 (0.50)  T-local-1❌ T-invariant-stress-1❌ T-crosscut-2❌
+B=2K:   5/6 (0.83)  T-local-1❌
+B=4K:   5/6 (0.83)  T-local-1❌ （ctx=1791t、2Kと同一内容）
+B=8K:   5/6 (0.83)  T-local-1❌ （ctx=1791t、2Kと同一内容）
+B=Full: 5/6 (0.83)  T-local-1❌ （ctx=1791t、2Kと同一内容）
+```
+
+**系統1 (R^sem_B):**
+```
+B=0K:   0/17  (0.00)  — mc:0/5  bool:0/4  stp:0/8
+B=1K:  16/17  (0.94)  — mc:5/5  bool:3/4  stp:8/8
+B=2K:  17/17  (1.00)  — mc:5/5  bool:4/4  stp:8/8
+B=4K:  17/17  (1.00)  （2Kと同一）
+B=8K:  17/17  (1.00)  （2Kと同一）
+B=Full: 17/17 (1.00)  （2Kと同一）
+```
+
+### 観察1：dose-responseパターン
+
+両系統とも `{B=0: 最低, B=1K: 中間, B=2K+: 上限}` という3段階の形を示した。
+B=2K以降の横ばいはF2で既知のbudget degeneracy（repo=1791t）による。
+
+System1は B=0→1K で大きく跳ね上がり（0%→94%）、B=1K→2K で追加改善（94%→100%）。
+B=0で完全拒否→B=1Kで急上昇という「階段状」ではあるが、これはB=0が「コードなし」という
+特殊状態であるため。中間のB=1K→B=2Kにも差があり（94%→100%）、完全なステップ関数ではない。
+
+System2の曲線: 0.00 → 0.50 → 0.83 → 0.83 → 0.83 → 0.83
+
+### 観察2：System1 × System2の同形性
+
+両系統が同じ3段階パターンを示した。これは「contextが増えると両方が改善する」という
+hypothesis と整合する。ただし相関係数の計算には実質3点（B=0, 1K, 2K+）しかなく、
+定量的な相関分析の前にPhase 5（規模拡大）が必要。
+
+### 観察3：T-local-1の全budget失敗（Stage 0 F1との一致）
+
+T-local-1はB=Full でも task-spec=2/3 で失敗し続けた。
+Stage 0 F1（Haiku 4.5が `advanceVok2` のTalガードを実装しない）と完全に一致。
+この失敗パターンはcontextの量ではなく、agentの意味理解の欠如によるものと考えられる。
+
+System1: B=1Kでbool=3/4（1問失敗）。I1（distributed encoding）に関連するbool probeの
+失敗可能性があり、T-local-1のタスク的失敗と対応している可能性がある（確認には詳細ログが必要）。
+
+### 観察4：B=1Kでのタスク部分失敗（T-invariant-stress-1、T-crosscut-2）
+
+B=1Kでは T-invariant-stress-1（task-spec=2/3）と T-crosscut-2（task-spec=2/3）も失敗。
+B=2Kでは両方が回復（3/3）。これはB=1Kで可視テストが52%切り詰められる（F2観察）ことと
+対応している。完全なテスト情報があればagentが正解できるが、不完全なテストでは
+task-specificの要件を見落とす。
+
+### なぜ注目すべきか
+
+- **Phase 4の較正目標（System1とSystem2がともにbudget感度を持つ）が達成された。**
+  両系統が独立して同じ方向の変化を示しており、測定器として機能している。
+- T-local-1の全budget失敗は、「budgetを増やしてもHaiku 4.5が解決できない問題がある」
+  という質的な限界を示している。これはPhase 5の実験設計（agent選択・タスク難易度）
+  に向けた重要なデータ点。
+- 実質3点（F2のbag degeneracy）という分解能の制約は確認済み。Phase 5での規模拡大が
+  より滑らかなdose-response curveを得るために必要。
+
+### 今後への示唆
+
+- Phase 4の目的（System1/System2の較正確認）は達成。Phase 5（規模拡大）への移行判断が可能。
+- T-local-1の継続失敗はPhase 5での難易度分類に活用できる
+  （このタスクは「Haiku 4.5 at B=Full で解けない」という難易度ラベルが付いた）。
+- System1 B=1Kのbool 3/4（1問失敗）の原因特定は、必要であれば詳細ログから確認可能。
+  Phase 5の設計変更前に確認することが望ましい。
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・
