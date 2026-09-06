@@ -45,6 +45,8 @@ export interface CalibrationOptions {
   budgets?: BudgetValue[];
   /** anthropic backend でのみ使用するモデル名 */
   model?: string;
+  /** 実行するtaskIdのリスト。省略時は全タスク */
+  taskFilter?: string[];
 }
 
 export interface System1TaskResult {
@@ -589,7 +591,7 @@ function checkNamingSchemeAlignment(
 export async function runCalibration(
   options: CalibrationOptions
 ): Promise<CalibrationRunResult> {
-  const { backend, budgets = ALL_BUDGETS, model = "claude-haiku-4-5-20251001" } = options;
+  const { backend, budgets = ALL_BUDGETS, model = "claude-haiku-4-5-20251001", taskFilter } = options;
 
   const calibrationDir = path.join(__dirname, "..");
   const swDir = path.join(calibrationDir, "../synthetic-world");
@@ -602,9 +604,13 @@ export async function runCalibration(
   const probes: GeneratedProbe[] = JSON.parse(
     fs.readFileSync(path.join(calibrationDir, "fixtures/probe-bank.json"), "utf8")
   );
-  const tasks: HeldOutTask[] = JSON.parse(
+  let tasks: HeldOutTask[] = JSON.parse(
     fs.readFileSync(path.join(swDir, "heldout_tasks.json"), "utf8")
   );
+  if (taskFilter && taskFilter.length > 0) {
+    tasks = tasks.filter((t) => taskFilter.includes(t.taskId));
+    console.log(`[task-filter] ${tasks.length} tasks selected: ${tasks.map((t) => t.taskId).join(", ")}`);
+  }
 
   // 命名スキーム整合チェック（語彙断絶を機械的に検知）
   checkNamingSchemeAlignment(
@@ -650,6 +656,7 @@ if (require.main === module) {
   const backendArg = getArg("backend");
   const modelArg = getArg("model");
   const budgetsArg = getArg("budgets");
+  const tasksArg = getArg("tasks");
 
   const backend: CalibrationBackend =
     backendArg === "mock-oracle" ? "mock-oracle"
@@ -669,12 +676,18 @@ if (require.main === module) {
     });
   }
 
+  // --tasks=T-local-1,T-crosscut-3 など。省略時は全タスク
+  const taskFilter: string[] | null = tasksArg
+    ? tasksArg.split(",").map((s) => s.trim()).filter(Boolean)
+    : null;
+
   console.log(`\n====================================================`);
   console.log(`  Calibration Runner: backend=${backend}${backend === "anthropic" ? ` model=${model}` : ""}`);
   console.log(`  budgets: ${budgets.join(", ")}`);
+  if (taskFilter) console.log(`  tasks (filtered): ${taskFilter.join(", ")}`);
   console.log(`====================================================\n`);
 
-  runCalibration({ backend, model, budgets }).then((result) => {
+  runCalibration({ backend, model, budgets, taskFilter: taskFilter ?? undefined }).then((result) => {
     // ── 系統2 ──
     console.log("┌─ 系統2 (M̂_B): 機能的継続テスト\n│");
     for (const s2 of result.system2) {
