@@ -5,19 +5,20 @@
     "namingScheme": "A-obfuscated",
     "visibleInstruction": "Vok が 'nim' の状態から一度の操作で強制的に 'dor' まで進める新しい operation 'forceAdvanceVok' を追加せよ。",
     "groundTruthDelta": {
-      "addOperations": [{ "id": "O6", "parameters": [] }],
+      "addOperations": [{ "id": "O12", "parameters": [] }],
       "addTransitions": [
         {
-          "operationId": "O6",
+          "operationId": "O12",
           "effects": [{ "entity": "E1", "fromState": "q1", "toState": "q3" }],
           "preconditions": [
-            { "entity": "E3", "state": "q2" }
+            { "entity": "E3", "state": "q2" },
+            { "entity": "E5", "state": "q2" }
           ]
         }
       ]
     },
-    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-local-1: forceAdvanceVok\", () => {\n  test(\"forceAdvanceVok: Vok nim→dor when Tal=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"forceAdvanceVok\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Vok\")).toBe(\"dor\");\n  });\n\n  test(\"forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"forceAdvanceVok\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"forceAdvanceVok: is registered as a known operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"forceAdvanceVok\");\n    if (!r2.success) {\n      expect(r2.error).not.toMatch(/unknown operation/);\n    }\n  });\n});\n",
-    "note": "初版のgroundTruthDelta（preconditionなし）はvalidate_task_deltas.tsでI1違反が検出されたため修正した（発見5）。O6にE3=q2のpreconditionを追加することでI1を保つ。「visibleInstructionには一見関係なさそうな制約が、実は正解実装には必要」という設計はinvariant_stressingに近づくため、type分類の見直し余地がある（NOTES参照）。"
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-local-1: forceAdvanceVok\", () => {\n  test(\"forceAdvanceVok: Vok nim→dor when Tal=pex and Osk=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"forceAdvanceVok\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Vok\")).toBe(\"dor\");\n  });\n\n  test(\"forceAdvanceVok: fails when Tal=nim (Invariant I1 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"forceAdvanceVok\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"forceAdvanceVok: is registered as a known operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"forceAdvanceVok\");\n    if (!r3.success) {\n      expect(r3.error).not.toMatch(/unknown operation/);\n    }\n  });\n});\n",
+    "note": "world-v1対応修正: O6はadvanceOsk1（E5:q1→q2）として base world に追加されたため、O12に renumber。またI4（E1=q3→E5=q2）を保つため precondition に E5=q2 を追加（I1用の E3=q2 と合わせて2条件）。taskSpecificTestCodeも advanceOsk1 のセットアップを追加した。「visibleInstructionには一見関係なさそうな制約が、実は正解実装には必要」という設計はinvariant_stressingに近い。"
   },
   {
     "taskId": "T-crosscut-1",
@@ -25,10 +26,10 @@
     "namingScheme": "A-obfuscated",
     "visibleInstruction": "Zef と Tal を同時に 'pex' へ進める新しい operation 'kindleBoth' を追加せよ。",
     "groundTruthDelta": {
-      "addOperations": [{ "id": "O7", "parameters": [] }],
+      "addOperations": [{ "id": "O13", "parameters": [] }],
       "addTransitions": [
         {
-          "operationId": "O7",
+          "operationId": "O13",
           "effects": [
             { "entity": "E2", "fromState": "q1", "toState": "q2" },
             { "entity": "E3", "fromState": "q1", "toState": "q2" }
@@ -38,7 +39,7 @@
       ]
     },
     "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-crosscut-1: kindleBoth\", () => {\n  test(\"kindleBoth: Zef and Tal both advance nim→pex\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"kindleBoth\");\n    expect(r.success).toBe(true);\n    if (!r.success) throw new Error(r.error);\n    expect(protocol.getEntityState(r.newState, \"Zef\")).toBe(\"pex\");\n    expect(protocol.getEntityState(r.newState, \"Tal\")).toBe(\"pex\");\n  });\n\n  test(\"kindleBoth: Vok is unchanged\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"kindleBoth\");\n    expect(r.success).toBe(true);\n    if (!r.success) throw new Error(r.error);\n    expect(protocol.getEntityState(r.newState, \"Vok\")).toBe(\"nim\");\n  });\n\n  test(\"kindleBoth: is registered as a known operation\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"kindleBoth\");\n    if (!r.success) {\n      expect(r.error).not.toMatch(/unknown operation/);\n    }\n  });\n});\n",
-    "note": "v0.2でTransitionRuleをeffects: Effect[]形式に拡張したことで、1 operationが複数entity（E2, E3）を同時に変更する複合operationを正確に表現できるようになった（発見6の解決）。旧版ではDependencyへの注記に頼る不完全な表現だった。"
+    "note": "world-v1対応修正: O7はadvanceFen1（E4:q1→q2）として base world に追加されたため、O13に renumber。kindleBothはZef/Talをpex（q2）止まりにするためinvariant違反なし。TransitionRuleをeffects: Effect[]形式に拡張したことで複合operationを正確に表現できる。"
   },
   {
     "taskId": "T-delayed-1",
@@ -48,17 +49,17 @@
     "namingScheme": "A-obfuscated",
     "visibleInstruction": "（世代16で提示）Zef に対して、'pex' から 'nim' へ戻す operation 'resetZef' を追加せよ。",
     "groundTruthDelta": {
-      "addOperations": [{ "id": "O8", "parameters": [] }],
+      "addOperations": [{ "id": "O14", "parameters": [] }],
       "addTransitions": [
         {
-          "operationId": "O8",
+          "operationId": "O14",
           "effects": [{ "entity": "E2", "fromState": "q2", "toState": "q1" }],
           "preconditions": []
         }
       ]
     },
     "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-delayed-1: resetZef\", () => {\n  test(\"resetZef: Zef pex→nim\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceZef1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    expect(protocol.getEntityState(world, \"Zef\")).toBe(\"pex\");\n    const r3 = protocol.applyOperation(world, \"resetZef\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Zef\")).toBe(\"nim\");\n  });\n\n  test(\"resetZef: fails when Zef=nim\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"resetZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"resetZef: Tal state is unchanged after reset\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceZef1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"resetZef\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
-    "note": "resetZefはTalに触れないため、Talの単調性という前提は壊さない。ただし導入後は状態空間が広がるため、model_checker.tsでG_{g+1}を再検証すべきケース。"
+    "note": "world-v1対応修正: O8はadvanceFen2（E4:q2→q3）として base world に追加されたため、O14に renumber。resetZefはE2をq2→q1に戻すのみでinvariant（I2/I5）への違反なし（q2→q1はq3に到達しない）。"
   },
   {
     "taskId": "T-invariant-stress-1",
@@ -72,13 +73,14 @@
           "operationId": "O9",
           "effects": [{ "entity": "E2", "fromState": "q1", "toState": "q3" }],
           "preconditions": [
-            { "entity": "E3", "state": "q2" }
+            { "entity": "E3", "state": "q2" },
+            { "entity": "E4", "state": "q2" }
           ]
         }
       ]
     },
-    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-invariant-stress-1: fastTrackZef\", () => {\n  test(\"fastTrackZef: Zef nim→dor when Tal=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"fastTrackZef: fails when Tal=nim (Invariant I2 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"fastTrackZef: Tal remains pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
-    "note": "このgroundTruthDelta自体は、O9のpreconditionにE3=q2を含めることでI2（Zef=dorならTal=pex）を壊さない正解として設計してある。worker agentがこのpreconditionチェックを実装しなければ、I2に対応するH(G)のmicro-testが（O9経路について）追加された時点でfailする。"
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-invariant-stress-1: fastTrackZef\", () => {\n  test(\"fastTrackZef: Zef nim→dor when Tal=pex and Fen=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"advanceFen1\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    world = r3.newState;\n    const r4 = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r4.success).toBe(true);\n    if (!r4.success) throw new Error(r4.error);\n    expect(protocol.getEntityState(r4.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"fastTrackZef: fails when Tal=nim (Invariant I2 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"fastTrackZef: Tal remains pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"advanceFen1\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    world = r3.newState;\n    const r4 = protocol.applyOperation(world, \"fastTrackZef\");\n    expect(r4.success).toBe(true);\n    if (!r4.success) throw new Error(r4.error);\n    expect(protocol.getEntityState(r4.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "world-v1対応修正: I5（E2=q3→E5=q2、distributed cross-chain）を保つため、precondition に E4=q2（Fen=pex）を追加。E4=q2はO7がE5=q2を要求し、E5は単調なので E2=q3→E4=q2→E5=q2 が成立する。このgroundTruthDelta自体は、O9のpreconditionにE3=q2+E4=q2を含めることでI2・I5を壊さない正解として設計してある。worker agentがpreconditionチェックを省略するとH(G)のI2・I5 micro-testがfailする。"
   },
   {
     "taskId": "T-local-2",
@@ -96,7 +98,7 @@
       ]
     },
     "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-local-2: resetVok\", () => {\n  test(\"resetVok: Vok pex→nim\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    expect(protocol.getEntityState(world, \"Vok\")).toBe(\"pex\");\n    const r2 = protocol.applyOperation(world, \"resetVok\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Vok\")).toBe(\"nim\");\n  });\n\n  test(\"resetVok: fails when Vok=nim (fromState guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"resetVok\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"resetVok: Tal and Zef states are unchanged\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceVok1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"resetVok\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Tal\")).toBe(\"nim\");\n    expect(protocol.getEntityState(r2.newState, \"Zef\")).toBe(\"nim\");\n  });\n});\n",
-    "note": "Vokの単純な逆進操作。preconditionなし・invariant違反リスクなし（Vokがdorでなくpexからnimへ戻すだけ）。construction A: task_specific_testにinvariantのguardテストは含まれない。I1はVok=dor（q3）を条件とするため、q2→q1の遷移ではトリガーされない。"
+    "note": "Vokの単純な逆進操作。preconditionなし・invariant違反リスクなし（Vokがdorでなくpexからnimへ戻すだけ）。I1はVok=dor（q3）を条件とするため、q2→q1の遷移ではトリガーされない。world-v1でも変更不要。"
   },
   {
     "taskId": "T-crosscut-2",
@@ -113,20 +115,21 @@
             { "entity": "E2", "fromState": "q1", "toState": "q3" }
           ],
           "preconditions": [
-            { "entity": "E3", "state": "q2" }
+            { "entity": "E3", "state": "q2" },
+            { "entity": "E5", "state": "q2" }
           ]
         }
       ],
       "addDependencies": [
         {
-          "id": "D4",
+          "id": "D9",
           "from": "O11",
           "on": "E3",
           "note": "jumpVokZefはE3=q2をpreconditionとする（I1: E1=dor→Tal=pex, I2: E2=dor→Tal=pex の両方を同時に保証するため）"
         }
       ]
     },
-    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-crosscut-2: jumpVokZef\", () => {\n  test(\"jumpVokZef: Vok and Zef nim→dor when Tal=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Vok\")).toBe(\"dor\");\n    expect(protocol.getEntityState(r2.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"jumpVokZef: fails when Tal=nim (Invariant I1+I2 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"jumpVokZef: Tal remains pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    expect(protocol.getEntityState(r2.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
-    "note": "VokとZefを同時にdorへ一気に進める複合operation。E1=dor→E3=pex（I1）とE2=dor→E3=pex（I2）の両方を同時に起こすため、preconditionにE3=q2が必須。construction B: task_specific_testにI1+I2のguardテストが含まれる（test 2）。worker agentがpreconditionを省略するとH(G)のI1・I2両micro-testがfailする。"
+    "taskSpecificTestCode": "import { protocol } from \"../repository/src/protocol_adapter\";\n\ndescribe(\"T-crosscut-2: jumpVokZef\", () => {\n  test(\"jumpVokZef: Vok and Zef nim→dor when Tal=pex and Osk=pex\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Vok\")).toBe(\"dor\");\n    expect(protocol.getEntityState(r3.newState, \"Zef\")).toBe(\"dor\");\n  });\n\n  test(\"jumpVokZef: fails when Tal=nim (Invariant I1+I2 guard)\", () => {\n    const world = protocol.reset();\n    const r = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r.success).toBe(false);\n  });\n\n  test(\"jumpVokZef: Tal remains pex after operation\", () => {\n    let world = protocol.reset();\n    const r1 = protocol.applyOperation(world, \"advanceTal1\");\n    expect(r1.success).toBe(true);\n    if (!r1.success) throw new Error(r1.error);\n    world = r1.newState;\n    const r2 = protocol.applyOperation(world, \"advanceOsk1\");\n    expect(r2.success).toBe(true);\n    if (!r2.success) throw new Error(r2.error);\n    world = r2.newState;\n    const r3 = protocol.applyOperation(world, \"jumpVokZef\");\n    expect(r3.success).toBe(true);\n    if (!r3.success) throw new Error(r3.error);\n    expect(protocol.getEntityState(r3.newState, \"Tal\")).toBe(\"pex\");\n  });\n});\n",
+    "note": "world-v1対応修正: I4（E1=q3→E5=q2、explicit）とI5（E2=q3→E5=q2、distributed）を同時に保つため、precondition に E5=q2（Osk=pex）を追加。E5=q2 の単一条件でI4（直接）とI5（E5=q2→I5の requires を直接満たす）の両方が成立する。D4は base world にD4として存在するためD9に renumber。taskSpecificTestCodeも advanceOsk1 のセットアップを追加。"
   }
 ]
