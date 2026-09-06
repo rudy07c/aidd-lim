@@ -1,0 +1,129 @@
+{
+  "worldId": "world-v1-candidate",
+  "entities": [
+    { "id": "E1", "states": ["q1", "q2", "q3"], "initialState": "q1" },
+    { "id": "E2", "states": ["q1", "q2", "q3"], "initialState": "q1" },
+    { "id": "E3", "states": ["q1", "q2"],       "initialState": "q1" },
+    { "id": "E4", "states": ["q1", "q2", "q3"], "initialState": "q1" },
+    { "id": "E5", "states": ["q1", "q2"],       "initialState": "q1" }
+  ],
+  "operations": [
+    { "id": "O1", "parameters": [] },
+    { "id": "O2", "parameters": [] },
+    { "id": "O3", "parameters": [] },
+    { "id": "O4", "parameters": [] },
+    { "id": "O5", "parameters": [] },
+    { "id": "O6", "parameters": [] },
+    { "id": "O7", "parameters": [] },
+    { "id": "O8", "parameters": [] }
+  ],
+  "transitions": [
+    {
+      "operationId": "O1",
+      "effects": [{ "entity": "E1", "fromState": "q1", "toState": "q2" }],
+      "preconditions": []
+    },
+    {
+      "operationId": "O2",
+      "effects": [{ "entity": "E1", "fromState": "q2", "toState": "q3" }],
+      "preconditions": [
+        { "entity": "E2", "state": "q2" },
+        { "entity": "E5", "state": "q2" }
+      ]
+    },
+    {
+      "operationId": "O3",
+      "effects": [{ "entity": "E2", "fromState": "q1", "toState": "q2" }],
+      "preconditions": [
+        { "entity": "E3", "state": "q2" }
+      ]
+    },
+    {
+      "operationId": "O4",
+      "effects": [{ "entity": "E2", "fromState": "q2", "toState": "q3" }],
+      "preconditions": [
+        { "entity": "E3", "state": "q2" },
+        { "entity": "E4", "state": "q2" }
+      ]
+    },
+    {
+      "operationId": "O5",
+      "effects": [{ "entity": "E3", "fromState": "q1", "toState": "q2" }],
+      "preconditions": []
+    },
+    {
+      "operationId": "O6",
+      "effects": [{ "entity": "E5", "fromState": "q1", "toState": "q2" }],
+      "preconditions": []
+    },
+    {
+      "operationId": "O7",
+      "effects": [{ "entity": "E4", "fromState": "q1", "toState": "q2" }],
+      "preconditions": [
+        { "entity": "E5", "state": "q2" }
+      ]
+    },
+    {
+      "operationId": "O8",
+      "effects": [{ "entity": "E4", "fromState": "q2", "toState": "q3" }],
+      "preconditions": [
+        { "entity": "E5", "state": "q2" },
+        { "entity": "E2", "state": "q2" }
+      ]
+    }
+  ],
+  "dependencies": [
+    { "id": "D1", "from": "O2", "on": "E2", "note": "E1=q3にはE2=q2が必要" },
+    { "id": "D2", "from": "O2", "on": "E5", "note": "E1=q3にはE5=q2が必要（I4: explicit cross-chain）" },
+    { "id": "D3", "from": "O3", "on": "E3", "note": "E2=q2にはE3=q2が必要" },
+    { "id": "D4", "from": "O4", "on": "E3", "note": "E2=q3にはE3=q2が必要（I2: explicit）" },
+    { "id": "D5", "from": "O4", "on": "E4", "note": "E2=q3にはE4=q2が必要（I5: distributed via E4→E5 chain）" },
+    { "id": "D6", "from": "O7", "on": "E5", "note": "E4=q2にはE5=q2が必要" },
+    { "id": "D7", "from": "O8", "on": "E5", "note": "E4=q3にはE5=q2が必要（I3: explicit）" },
+    { "id": "D8", "from": "O8", "on": "E2", "note": "E4=q3にはE2=q2が必要（I6: distributed via E2→E3 chain）" }
+  ],
+  "invariants": [
+    {
+      "id": "I1",
+      "description": "E1=q3ならE3=q2（distributed: O2がE2=q2を要求、O3がE3=q2を要求、E3は単調なので E1=q3→E2=q2→E3=q2）",
+      "encoding": "distributed",
+      "condition": { "entity": "E1", "state": "q3" },
+      "requires": { "entity": "E3", "state": "q2" }
+    },
+    {
+      "id": "I2",
+      "description": "E2=q3ならE3=q2（explicit: O4がE3=q2を直接要求）",
+      "encoding": "explicit",
+      "condition": { "entity": "E2", "state": "q3" },
+      "requires": { "entity": "E3", "state": "q2" }
+    },
+    {
+      "id": "I3",
+      "description": "E4=q3ならE5=q2（explicit: O8がE5=q2を直接要求）",
+      "encoding": "explicit",
+      "condition": { "entity": "E4", "state": "q3" },
+      "requires": { "entity": "E5", "state": "q2" }
+    },
+    {
+      "id": "I4",
+      "description": "E1=q3ならE5=q2（explicit cross-chain: O2がE5=q2を直接要求）",
+      "encoding": "explicit",
+      "condition": { "entity": "E1", "state": "q3" },
+      "requires": { "entity": "E5", "state": "q2" }
+    },
+    {
+      "id": "I5",
+      "description": "E2=q3ならE5=q2（distributed cross-chain: O4がE4=q2を要求、O7がE5=q2を要求、E5は単調なので E2=q3→E4=q2→E5=q2）",
+      "encoding": "distributed",
+      "condition": { "entity": "E2", "state": "q3" },
+      "requires": { "entity": "E5", "state": "q2" }
+    },
+    {
+      "id": "I6",
+      "description": "E4=q3ならE3=q2（distributed cross-chain: O8がE2=q2を要求、O3がE3=q2を要求、E3は単調なので E4=q3→E2=q2→E3=q2）",
+      "encoding": "distributed",
+      "condition": { "entity": "E4", "state": "q3" },
+      "requires": { "entity": "E3", "state": "q2" }
+    }
+  ]
+}

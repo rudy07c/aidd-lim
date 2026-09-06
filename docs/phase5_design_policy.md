@@ -27,31 +27,45 @@
 | E4 | Fen                 | q1/q2/q3    | q1       | Chain 2 の中間・終端 entity  |
 | E5 | Osk                 | q1/q2       | q1       | Chain 2 の根（preconditionなし）|
 
+**既存 operation の precondition 修正（クロスチェーン invariant を成立させるため）:**
+
+| ID | 変更前 Precondition | 変更後 Precondition    | 理由                                           |
+|----|---------------------|------------------------|------------------------------------------------|
+| O2 | [E2=q2]             | [E2=q2, **E5=q2**]     | I4 を explicit に保証（Vok=dor には Osk=pex が必要）|
+| O4 | [E3=q2]             | [E3=q2, **E4=q2**]     | I5 を distributed で保証（Zef=dor には Fen=pex が必要）|
+
 **新 operation 仕様案（O6〜O8）:**
 
-| ID | 仮名 (A-obfuscated) | Effect          | Precondition | 備考                    |
-|----|---------------------|-----------------|--------------|-------------------------|
-| O6 | advanceOsk1         | E5: q1→q2       | なし         | Tal と並行する根操作    |
-| O7 | advanceFen1         | E4: q1→q2       | E5=q2        | advanceZef1 と対称構造  |
-| O8 | advanceFen2         | E4: q2→q3       | E5=q2        | advanceZef2 と対称構造  |
+| ID | 仮名 (A-obfuscated) | Effect          | Precondition         | 備考                                              |
+|----|---------------------|-----------------|----------------------|---------------------------------------------------|
+| O6 | advanceOsk1         | E5: q1→q2       | なし                 | Tal と並行する根操作                              |
+| O7 | advanceFen1         | E4: q1→q2       | [E5=q2]              | advanceZef1 と対称構造                            |
+| O8 | advanceFen2         | E4: q2→q3       | [E5=q2, **E2=q2**]   | E3=q2 ではなく E2=q2 を要求（I6 を distributed で保証）|
 
 計: 5+3 = **8 operation**（目標達成）
 
-**新 invariant 仕様案（I3〜I6）:**
+**invariant 仕様（I3〜I6）— model_checker.ts で検証済み:**
 
-| ID  | Encoding    | Condition  | Requires   | 備考                                             |
-|-----|-------------|------------|------------|--------------------------------------------------|
-| I3  | explicit    | E4=q3      | E5=q2      | I2 の Chain 2 類似版。O8 の precondition が直接保証|
-| I4  | distributed | E1=q3      | E5=q2      | クロスチェーン。E5 が pex なければ Vok は dor になれない設計が必要|
-| I5  | distributed | E2=q3      | E5=q2      | クロスチェーン。Zef=dor には Osk=pex が前提という設計|
-| I6  | distributed | E4=q3      | E3=q2      | クロスチェーン逆方向。Fen=dor には Tal=pex も前提|
+| ID  | Encoding    | Condition  | Requires   | 成立メカニズム                                                                    |
+|-----|-------------|------------|------------|-----------------------------------------------------------------------------------|
+| I3  | explicit    | E4=q3      | E5=q2      | O8 が E5=q2 を直接要求                                                            |
+| I4  | explicit    | E1=q3      | E5=q2      | O2 が E5=q2 を直接要求（クロスチェーン直接参照）                                  |
+| I5  | distributed | E2=q3      | E5=q2      | O4 が E4=q2 を要求 → O7 が E5=q2 を要求 → E5 は単調 → E2=q3 → E4=q2 → E5=q2    |
+| I6  | distributed | E4=q3      | E3=q2      | O8 が E2=q2 を要求 → O3 が E3=q2 を要求 → E3 は単調 → E4=q3 → E2=q2 → E3=q2    |
 
 計: 2+4 = **6 invariant**（目標達成）
 
-> **注意**: I4/I5/I6 は「distributed」=現行 precondition チェーンが自動保証する「かもしれない」invariant。
-> 実際には新しい operation の precondition 設計で明示的に保証するか、
-> H(G) が invariant_stressing task のテストで違反を検出できるよう設計する必要がある。
-> ground_truth.json 記述前に model_checker.ts で全到達可能状態を検証すること（必須）。
+> **検証結果（model_checker.ts）**: 到達可能状態 26、invariant 違反 0。
+> 候補 JSON: `synthetic-world/ground_truth_v1_candidate.json`（実装時は `ground_truth.json` に統合する）
+> 状態数が設計初期の 40 から 26 に減少しているのは、クロスチェーン precondition が到達可能空間を意図的に制約しているため。
+
+**3つのクロスチェーン invariant のパターン比較:**
+
+| Invariant | Precond 変更箇所 | パターン                    | Encoding     |
+|-----------|-----------------|------------------------------|--------------|
+| I4        | O2 に E5=q2     | Chain 1 terminus → Chain 2 root（直接）| explicit     |
+| I5        | O4 に E4=q2     | Chain 1 terminus → Chain 2 intermediate（間接）| distributed  |
+| I6        | O8 に E2=q2     | Chain 2 terminus → Chain 1 intermediate（間接、逆方向）| distributed  |
 
 **naming_schemes.json 追記案:**
 
@@ -116,7 +130,7 @@ heldout_tasks.json は配列順が実験順序を示す（＝後半ほど複雑�
 | 発見  | 内容要約                                   | Phase 5 での再発リスク | 対策                                                        |
 |-------|--------------------------------------------|------------------------|-------------------------------------------------------------|
 | F1    | Haiku が I1 guard を実装しない             | **高（再発確実）**     | 6 invariant 化で再発機会が増える。H(G) テスト網羅が必須    |
-| F2    | Budget degeneracy（B≥2K = Full）           | **解消見込み**         | 5-entity 世界は ~3000-4000 tokens 予測。B=2K が Full でなくなる|
+| F2    | Budget degeneracy（B≥2K = Full）           | **解消見込み**         | 5-entity 世界は ~3000-4000 tokens 予測（O2/O4 precondition 追加でコード量も増加）。B=2K が Full でなくなり実効測定点が 3→4 に増える見込み|
 | F3    | tests 除外でregression 蓄積               | 解消済み               | tests は always included。新 entity テストも同様に含める   |
 | F5    | テスト記述が probe の答えを漏らす          | **中（要確認）**       | system1 mode で解消済み。新 visible test 追加時も同じルール維持|
 | F6    | 複合 operation が schema で表現不可        | 解消済み               | effects: Effect[] 導入済み。継続して使用                    |
@@ -209,7 +223,7 @@ heldout_tasks.json は配列順が実験順序を示す（＝後半ほど複雑�
 
 1. `calibration-runner.ts` の probe バッチング対応（前提条件）
 2. `synthetic-world/schema.ts` の確認（`addEntities?` が GroundTruthDelta にあることを確認済み）
-3. `ground_truth.json` に E4/E5/O6-O8/D4-D5/I3-I6 を追加 → `model_checker.ts` で検証
+3. `ground_truth_v1_candidate.json` の内容を `ground_truth.json` に統合（O2/O4 precondition 修正 + E4/E5/O6-O8/D2-D8/I3-I6 追加）→ `model_checker.ts` で再検証（26 states OK が基準）
 4. `naming_schemes.json` 更新
 5. `repository/src/` に新ファイル追加 + `world.ts`/`protocol_adapter.ts` 更新
 6. `tests/rules.visible.test.ts` に新テスト追加
