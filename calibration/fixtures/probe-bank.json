@@ -75,7 +75,52 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-6",
+    "probeId": "A-obfuscated-mc-6",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "repositoryのコードを参照して、Osk を状態 'nim' から 'pex' へ遷移させる操作の関数名を答えよ。",
+    "correctOptionId": "advanceOsk1",
+    "correctAnswer": "advanceOsk1",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O6",
+      "entity": "E5",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-mc-7",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "repositoryのコードを参照して、Fen を状態 'nim' から 'pex' へ遷移させる操作の関数名を答えよ。",
+    "correctOptionId": "advanceFen1",
+    "correctAnswer": "advanceFen1",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O7",
+      "entity": "E4",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-mc-8",
+    "type": "multiple_choice",
+    "namingScheme": "A-obfuscated",
+    "prompt": "repositoryのコードを参照して、Fen を状態 'pex' から 'dor' へ遷移させる操作の関数名を答えよ。",
+    "correctOptionId": "advanceFen2",
+    "correctAnswer": "advanceFen2",
+    "derivedFrom": {
+      "kind": "transition_from_state",
+      "operationId": "O8",
+      "entity": "E4",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-bool-9",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "Vok が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
@@ -88,7 +133,7 @@
     "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
   },
   {
-    "probeId": "A-obfuscated-bool-7",
+    "probeId": "A-obfuscated-bool-10",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "Zef が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
@@ -101,7 +146,59 @@
     "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
   },
   {
-    "probeId": "A-obfuscated-bool-8",
+    "probeId": "A-obfuscated-bool-11",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Fen が 'dor' で、Osk が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I3",
+      "encoding": "explicit"
+    },
+    "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
+  },
+  {
+    "probeId": "A-obfuscated-bool-12",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Vok が 'dor' で、Osk が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I4",
+      "encoding": "explicit"
+    },
+    "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
+  },
+  {
+    "probeId": "A-obfuscated-bool-13",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Zef が 'dor' で、Osk が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I5",
+      "encoding": "distributed"
+    },
+    "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
+  },
+  {
+    "probeId": "A-obfuscated-bool-14",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Fen が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_violation_check",
+      "invariantId": "I6",
+      "encoding": "distributed"
+    },
+    "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
+  },
+  {
+    "probeId": "A-obfuscated-bool-15",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Vok を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
@@ -114,7 +211,7 @@
     "note": "正答には I1 (distributed) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
   },
   {
-    "probeId": "A-obfuscated-bool-9",
+    "probeId": "A-obfuscated-bool-16",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Zef を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
@@ -127,7 +224,238 @@
     "note": "正答には I2 (explicit) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
   },
   {
-    "probeId": "A-obfuscated-stp-16",
+    "probeId": "A-obfuscated-bool-17",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "もし新しいoperationが追加され、Osk の状態を確認せずに直接 Fen を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I3",
+      "encoding": "explicit"
+    },
+    "note": "正答には I3 (explicit) の存在を認識していることが必要。Osk=pex チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "A-obfuscated-bool-18",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "もし新しいoperationが追加され、Osk の状態を確認せずに直接 Vok を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I4",
+      "encoding": "explicit"
+    },
+    "note": "正答には I4 (explicit) の存在を認識していることが必要。Osk=pex チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "A-obfuscated-bool-19",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "もし新しいoperationが追加され、Osk の状態を確認せずに直接 Zef を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I5",
+      "encoding": "distributed"
+    },
+    "note": "正答には I5 (distributed) の存在を認識していることが必要。Osk=pex チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "A-obfuscated-bool-20",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Fen を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_stress_reasoning",
+      "invariantId": "I6",
+      "encoding": "distributed"
+    },
+    "note": "正答には I6 (distributed) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
+  },
+  {
+    "probeId": "A-obfuscated-set-26",
+    "type": "set_selection",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceFen1 の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctSet": [
+      "Osk",
+      "Fen"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D6",
+      "operationId": "O7",
+      "onEntity": "E5"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-set-27",
+    "type": "set_selection",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceFen2 の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctSet": [
+      "Osk",
+      "Zef",
+      "Fen"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D7",
+      "operationId": "O8",
+      "onEntity": "E5"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-set-28",
+    "type": "set_selection",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceFen2 の実行に影響を与えうる entity をすべて選べ（preconditionとして要求するもの、または状態が変化するもの）。",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctSet": [
+      "Osk",
+      "Zef",
+      "Fen"
+    ],
+    "derivedFrom": {
+      "kind": "dependency_scope",
+      "dependencyId": "D8",
+      "operationId": "O8",
+      "onEntity": "E2"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-edge-30",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceVok2 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctAnswer": "Osk",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D2",
+      "operationId": "O2",
+      "onEntity": "E5"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-edge-33",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceZef2 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctAnswer": "Fen",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D5",
+      "operationId": "O4",
+      "onEntity": "E4"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-edge-34",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceFen1 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctAnswer": "Osk",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D6",
+      "operationId": "O7",
+      "onEntity": "E5"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-edge-35",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceFen2 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctAnswer": "Osk",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D7",
+      "operationId": "O8",
+      "onEntity": "E5"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-edge-36",
+    "type": "graph_edge_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "advanceFen2 が実行されるために必要なpreconditionは、どの entity の状態に依存するか？",
+    "options": [
+      "Vok",
+      "Zef",
+      "Tal",
+      "Fen",
+      "Osk"
+    ],
+    "correctAnswer": "Zef",
+    "derivedFrom": {
+      "kind": "dependency_precondition",
+      "dependencyId": "D8",
+      "operationId": "O8",
+      "onEntity": "E2"
+    },
+    "f5Warning": false
+  },
+  {
+    "probeId": "A-obfuscated-stp-37",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
     "prompt": "Vok が 'nim' の状態のとき、repositoryのコードを参照して、Vok を次の状態へ進める操作の関数名を答えよ。",
@@ -141,10 +469,10 @@
     }
   },
   {
-    "probeId": "A-obfuscated-stp-17",
+    "probeId": "A-obfuscated-stp-38",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
-    "prompt": "Zef が 'pex'、Vok が 'pex' の状態のとき、repositoryのコードを参照して、Vok を次の状態へ進める操作の関数名を答えよ。",
+    "prompt": "Zef が 'pex'、Osk が 'pex'、Vok が 'pex' の状態のとき、repositoryのコードを参照して、Vok を次の状態へ進める操作の関数名を答えよ。",
     "correctAnswer": "advanceVok2",
     "derivedFrom": {
       "kind": "transition_outcome_success",
@@ -155,7 +483,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-stp-18",
+    "probeId": "A-obfuscated-stp-39",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
     "prompt": "Zef が 'nim'、Vok が 'pex' の状態のとき、repositoryのコードを参照して、Vok を次の状態へ進める操作を呼び出すと、どうなるか？（実行できる場合は最終状態名を、実行できない場合は 'operation fails' と答えよ）",
@@ -171,7 +499,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-stp-19",
+    "probeId": "A-obfuscated-stp-40",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
     "prompt": "Tal が 'pex'、Zef が 'nim' の状態のとき、repositoryのコードを参照して、Zef を次の状態へ進める操作の関数名を答えよ。",
@@ -185,7 +513,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-stp-20",
+    "probeId": "A-obfuscated-stp-41",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
     "prompt": "Tal が 'nim'、Zef が 'nim' の状態のとき、repositoryのコードを参照して、Zef を次の状態へ進める操作を呼び出すと、どうなるか？（実行できる場合は最終状態名を、実行できない場合は 'operation fails' と答えよ）",
@@ -201,10 +529,10 @@
     }
   },
   {
-    "probeId": "A-obfuscated-stp-21",
+    "probeId": "A-obfuscated-stp-42",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
-    "prompt": "Tal が 'pex'、Zef が 'pex' の状態のとき、repositoryのコードを参照して、Zef を次の状態へ進める操作の関数名を答えよ。",
+    "prompt": "Tal が 'pex'、Fen が 'pex'、Zef が 'pex' の状態のとき、repositoryのコードを参照して、Zef を次の状態へ進める操作の関数名を答えよ。",
     "correctAnswer": "advanceZef2",
     "derivedFrom": {
       "kind": "transition_outcome_success",
@@ -215,7 +543,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-stp-22",
+    "probeId": "A-obfuscated-stp-43",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
     "prompt": "Tal が 'nim'、Zef が 'pex' の状態のとき、repositoryのコードを参照して、Zef を次の状態へ進める操作を呼び出すと、どうなるか？（実行できる場合は最終状態名を、実行できない場合は 'operation fails' と答えよ）",
@@ -231,7 +559,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-stp-23",
+    "probeId": "A-obfuscated-stp-44",
     "type": "state_transition_prediction",
     "namingScheme": "A-obfuscated",
     "prompt": "Tal が 'nim' の状態のとき、repositoryのコードを参照して、Tal を次の状態へ進める操作の関数名を答えよ。",
@@ -242,6 +570,80 @@
       "entity": "E3",
       "fromState": "q1",
       "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-45",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Osk が 'nim' の状態のとき、repositoryのコードを参照して、Osk を次の状態へ進める操作の関数名を答えよ。",
+    "correctAnswer": "advanceOsk1",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O6",
+      "entity": "E5",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-46",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Osk が 'pex'、Fen が 'nim' の状態のとき、repositoryのコードを参照して、Fen を次の状態へ進める操作の関数名を答えよ。",
+    "correctAnswer": "advanceFen1",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O7",
+      "entity": "E4",
+      "fromState": "q1",
+      "toState": "q2"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-47",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Osk が 'nim'、Fen が 'nim' の状態のとき、repositoryのコードを参照して、Fen を次の状態へ進める操作を呼び出すと、どうなるか？（実行できる場合は最終状態名を、実行できない場合は 'operation fails' と答えよ）",
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O7",
+      "entity": "E4",
+      "failedPrecondition": {
+        "entity": "E5",
+        "state": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-48",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Osk が 'pex'、Zef が 'pex'、Fen が 'pex' の状態のとき、repositoryのコードを参照して、Fen を次の状態へ進める操作の関数名を答えよ。",
+    "correctAnswer": "advanceFen2",
+    "derivedFrom": {
+      "kind": "transition_outcome_success",
+      "operationId": "O8",
+      "entity": "E4",
+      "fromState": "q2",
+      "toState": "q3"
+    }
+  },
+  {
+    "probeId": "A-obfuscated-stp-49",
+    "type": "state_transition_prediction",
+    "namingScheme": "A-obfuscated",
+    "prompt": "Osk が 'nim'、Fen が 'pex' の状態のとき、repositoryのコードを参照して、Fen を次の状態へ進める操作を呼び出すと、どうなるか？（実行できる場合は最終状態名を、実行できない場合は 'operation fails' と答えよ）",
+    "correctAnswer": "operation fails",
+    "derivedFrom": {
+      "kind": "transition_outcome_failure",
+      "operationId": "O8",
+      "entity": "E4",
+      "failedPrecondition": {
+        "entity": "E5",
+        "state": "q2"
+      }
     }
   }
 ]

@@ -1,23 +1,44 @@
 [
   {
     "schemeId": "A-obfuscated",
-    "entityNames":    { "E1": "Vok", "E2": "Zef", "E3": "Tal" },
+    "entityNames":    { "E1": "Vok", "E2": "Zef", "E3": "Tal", "E4": "Fen", "E5": "Osk" },
     "stateNames": {
       "E1::q1": "nim", "E1::q2": "pex", "E1::q3": "dor",
       "E2::q1": "nim", "E2::q2": "pex", "E2::q3": "dor",
-      "E3::q1": "nim", "E3::q2": "pex"
+      "E3::q1": "nim", "E3::q2": "pex",
+      "E4::q1": "nim", "E4::q2": "pex", "E4::q3": "dor",
+      "E5::q1": "nim", "E5::q2": "pex"
     },
-    "operationNames": { "O1": "advanceVok1", "O2": "advanceVok2", "O3": "advanceZef1", "O4": "advanceZef2", "O5": "advanceTal1" }
+    "operationNames": {
+      "O1": "advanceVok1",
+      "O2": "advanceVok2",
+      "O3": "advanceZef1",
+      "O4": "advanceZef2",
+      "O5": "advanceTal1",
+      "O6": "advanceOsk1",
+      "O7": "advanceFen1",
+      "O8": "advanceFen2"
+    }
   },
   {
     "schemeId": "B-fictional",
-    "entityNames":    { "E1": "Kelvan", "E2": "Ossuary", "E3": "Brindle" },
+    "entityNames":    { "E1": "Kelvan", "E2": "Ossuary", "E3": "Brindle", "E4": "Caldris", "E5": "Vantrel" },
     "stateNames": {
       "E1::q1": "latent", "E1::q2": "kindled", "E1::q3": "settled",
       "E2::q1": "latent", "E2::q2": "kindled", "E2::q3": "settled",
-      "E3::q1": "latent", "E3::q2": "kindled"
+      "E3::q1": "latent", "E3::q2": "kindled",
+      "E4::q1": "latent", "E4::q2": "kindled", "E4::q3": "settled",
+      "E5::q1": "latent", "E5::q2": "kindled"
     },
-    "operationNames": { "O1": "kindleKelvan", "O2": "settleKelvan", "O3": "kindleOssuary", "O4": "settleOssuary", "O5": "kindleBrindle" }
+    "operationNames": {
+      "O1": "kindleKelvan",
+      "O2": "settleKelvan",
+      "O3": "kindleOssuary",
+      "O4": "settleOssuary",
+      "O5": "kindleBrindle",
+      "O6": "kindleVantrel",
+      "O7": "kindleCaldris",
+      "O8": "settleCaldris"
+    }
   }
 ]
-

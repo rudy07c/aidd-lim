@@ -187,9 +187,13 @@ interface ProbeAPIResult {
   tokenUsage: { input: number; output: number };
 }
 
+/** probe数が増えても max_tokens 超過で出力が切れないよう、バッチ分割する単位 */
+const PROBE_BATCH_SIZE = 20;
+
 /**
- * Anthropic APIを直接呼び出してprobeに回答する。
- * 回答（probeId → answer string）、latency、tokenUsageをまとめて返す。
+ * Anthropic APIを呼び出してprobeに回答する。
+ * probe数が PROBE_BATCH_SIZE を超える場合は複数回に分割して呼び出し、結果を結合する。
+ * 回答（probeId → answer string）、latency合計、tokenUsage合計をまとめて返す。
  * set_selection の値は JSON 配列を文字列化して返す（probe-scorer が JSON.parse する）。
  */
 async function answerProbesWithAnthropicAPI(
@@ -199,65 +203,88 @@ async function answerProbesWithAnthropicAPI(
 ): Promise<ProbeAPIResult> {
   const client = new Anthropic();
 
-  // REPOSITORY FILES セクションを構築（anthropic.ts の formatContextFiles と同じフォーマット）
+  // REPOSITORY FILES セクションを構築（全バッチで共有）
   const fileLines: string[] = ["REPOSITORY FILES:"];
   for (const [filePath, content] of Object.entries(contextFiles)) {
     fileLines.push(`\n--- ${filePath} ---\n${content}`);
   }
   const contextSection = fileLines.join("");
 
-  const userMessage = buildProbePrompt(contextSection, probes);
+  // probeをバッチに分割
+  const batches: GeneratedProbe[][] = [];
+  for (let i = 0; i < probes.length; i += PROBE_BATCH_SIZE) {
+    batches.push(probes.slice(i, i + PROBE_BATCH_SIZE));
+  }
 
-  const start = Date.now();
-  const response = await client.messages.create({
-    model,
-    max_tokens: 4096,
-    system: PROBE_SYSTEM_PROMPT,
-    messages: [{ role: "user", content: userMessage }],
-  });
-  const latencyMs = Date.now() - start;
-  const tokenUsage = { input: response.usage.input_tokens, output: response.usage.output_tokens };
+  const allAnswers: Record<string, string> = {};
+  let totalLatencyMs = 0;
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
 
-  const rawText = response.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("");
-
-  const emptyAnswers = (): Record<string, string> => {
+  const emptyBatchAnswers = (batch: GeneratedProbe[]): Record<string, string> => {
     const m: Record<string, string> = {};
-    for (const p of probes) m[p.probeId] = "";
+    for (const p of batch) m[p.probeId] = "";
     return m;
   };
 
-  // <probe_answers>...</probe_answers> を抽出してパース
-  const match = rawText.match(/<probe_answers>([\s\S]*?)<\/probe_answers>/);
-  if (!match) {
-    console.warn("[system1] <probe_answers> tag not found in response. Returning empty answers.");
-    return { answers: emptyAnswers(), latencyMs, tokenUsage };
-  }
+  for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+    const batch = batches[batchIdx];
+    if (batches.length > 1) {
+      console.log(`[system1] batch ${batchIdx + 1}/${batches.length} (${batch.length} probes)`);
+    }
 
-  let parsed: Record<string, unknown>;
-  try {
-    parsed = JSON.parse(match[1].trim());
-  } catch (e) {
-    console.error("[system1] Failed to parse probe_answers JSON:", e);
-    return { answers: emptyAnswers(), latencyMs, tokenUsage };
-  }
+    const userMessage = buildProbePrompt(contextSection, batch);
 
-  // 各値を文字列に変換（set_selection では配列が返ることがある）
-  const answers: Record<string, string> = {};
-  for (const p of probes) {
-    const raw = parsed[p.probeId];
-    if (raw === undefined || raw === null) {
-      answers[p.probeId] = "";
-    } else if (Array.isArray(raw)) {
-      // set_selection: 配列 → JSON 文字列（probe-scorer が JSON.parse する）
-      answers[p.probeId] = JSON.stringify(raw);
-    } else {
-      answers[p.probeId] = String(raw);
+    const start = Date.now();
+    const response = await client.messages.create({
+      model,
+      max_tokens: 4096,
+      system: PROBE_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userMessage }],
+    });
+    totalLatencyMs += Date.now() - start;
+    totalInputTokens += response.usage.input_tokens;
+    totalOutputTokens += response.usage.output_tokens;
+
+    const rawText = response.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("");
+
+    const match = rawText.match(/<probe_answers>([\s\S]*?)<\/probe_answers>/);
+    if (!match) {
+      console.warn(`[system1] batch ${batchIdx + 1}/${batches.length}: <probe_answers> tag not found. Returning empty answers for this batch.`);
+      Object.assign(allAnswers, emptyBatchAnswers(batch));
+      continue;
+    }
+
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(match[1].trim());
+    } catch (e) {
+      console.error(`[system1] batch ${batchIdx + 1}/${batches.length}: Failed to parse probe_answers JSON:`, e);
+      Object.assign(allAnswers, emptyBatchAnswers(batch));
+      continue;
+    }
+
+    for (const p of batch) {
+      const raw = parsed[p.probeId];
+      if (raw === undefined || raw === null) {
+        allAnswers[p.probeId] = "";
+      } else if (Array.isArray(raw)) {
+        // set_selection: 配列 → JSON 文字列（probe-scorer が JSON.parse する）
+        allAnswers[p.probeId] = JSON.stringify(raw);
+      } else {
+        allAnswers[p.probeId] = String(raw);
+      }
     }
   }
-  return { answers, latencyMs, tokenUsage };
+
+  return {
+    answers: allAnswers,
+    latencyMs: totalLatencyMs,
+    tokenUsage: { input: totalInputTokens, output: totalOutputTokens },
+  };
 }
 
 /**
