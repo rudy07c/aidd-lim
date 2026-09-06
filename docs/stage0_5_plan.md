@@ -237,6 +237,35 @@ Stage 0のPhase 1と同じ発想で、まずmock-noop/mock-oracleで機構を検
 
 **この時点でのゲート**：4.3節の判定結果が出ること（どのパターンであっても構わない。判定自体ができることがゲート）。task単位での取捨選択を経て、Stage 1へ引き継ぐheld-out task setが確定していること。
 
+**Phase 4 ゲート判定（2026-09-06時点）：達成済み（条件付き）**
+
+System1・System2 ともに budget 感度が確認された。ただし以下の確認・修正を経た後の判定である：
+
+- **F4 → F5**：mc/stp のプローブを選択肢形式から記述式に再設計（B=0 フロアが 88% → 0% に改善）
+- **F7**：budget-assembler に system1/system2 モードを追加（tests・operationTable のリーク修正）
+- **F8**：修正後の実行結果。B=0: 0/17, B=1K: 15/17, B=2K: 17/17
+
+修正後の System1 dose-response（system1 モード）:
+```
+B=0:  0/17  (0.00)  — コードなし、全問拒否
+B=1K: 15/17 (0.88)  — bool 2/4 は genuine な情報不足（I1/I2 が B=1K で読めない）
+B=2K: 17/17 (1.00)  — 全ファイル取得で完全正解
+```
+
+残存する軽微な懸念事項：B=1K で advanceZef2 関連の3問（mc-4, stp-21, stp-22）が
+operationTable + パターン推論で正答しており、zef/rules.ts の実装ロジックを直接読んでいない。
+対処方針は Phase 5（world 規模拡大）の議題として持ち越す（世界が拡大すれば zef/rules.ts が
+B=1K 内に収まるようになり自然解消する見込み）。
+
+System2 dose-response（system2 モード、変化なし）:
+```
+B=0:  0/6 (0.00)
+B=1K: 3/6 (0.50)  — T-local-1❌ T-invariant-stress-1❌ T-crosscut-2❌
+B=2K: 5/6 (0.83)  — T-local-1❌（全 budget で継続失敗、F6 参照）
+```
+
+4.3節の判定パターン：**「budget に応じて改善（→ 測定器として使用可能）」に近いが、規模の制約（F2）から実質3点のカーブ**。Phase 5（規模拡大）でより滑らかなカーブを得るのが次のステップ。
+
 ### Phase 5（条件付き）：規模拡大
 
 Phase 4の結果が「測定器として使用可能」（budgetに応じ滑らかに改善）であれば、Phase 5はスキップしてPhase 6（命名方式Bとの比較、正式な較正完了）へ進んでよい。
@@ -279,7 +308,8 @@ Stage 0で繰り返し発生した「一部だけ修正して、依存箇所の�
 - Phase 5（規模拡大）に進む場合のgenerator実装方針（完全自動生成 vs テンプレートからの半自動生成）は、その時点で改めて設計相談する
 
 **解決済みの未決事項：**
-- ~~未決事項#2（命名方式A/Bのどちらを採用するか）~~：**Phase 1のF5静的チェックにより解決。B-fictionalを採用（A-obfuscatedは26%のprobeで答え漏洩が検出された）。** 詳細は`docs/findings/stage0_5_findings.md` F1参照。
+- ~~未決事項#2（命名方式A/Bのどちらを採用するか）~~：**Phase 1のF5静的チェックにより一旦B-fictionalを採用したが、Phase 4でリポジトリとの語彙断絶が発覚。A-obfuscatedに確定。** 詳細は `docs/findings/stage0_5_findings.md` F1改訂参照。
+- **budget-assembler の System1 用優先順位**：system2 のルール（tests・protocol_adapter.ts 優先）を system1 にそのまま適用すると答えが漏洩することが判明し、`AssemblyMode` を追加して分岐。F7 参照。
 
 ---
 

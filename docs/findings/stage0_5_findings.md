@@ -407,6 +407,137 @@ task-specificの要件を見落とす。
 
 ---
 
+## F7: budget-assembler に system1/system2 モードを追加（tests・operationTable リークの修正）
+
+**日付**：2026-09-06
+**Phase**：Phase 4（System1 較正修正）
+**元コード**：`calibration/src/budget-assembler.ts`（`AssemblyMode` 追加）、`calibration/src/calibration-runner.ts`（`runSystem1` の mode 指定）
+
+### 発見した問題（F6 の後日判明）
+
+Phase 4 Step 2 実行後の分析で、System1（意味理解測定）の B=1K 結果が「実装コード読解」ではなく **2つの別経路からの漏洩** で達成されていたことが判明した：
+
+1. **tests 漏洩（precondition-failure 問題）**：budget-assembler の system2 優先順位では、tests ファイルが priority 2（fixed_contract の次）に置かれるため、B=1K でテストが 52% 切り詰めで含まれる。`rules.visible.test.ts` の冒頭部に `"advanceVok2: fails if Zef is not 'pex'"` 等の記述があり、stp-failure 問題（正解 `"operation fails"`）をコードを読まずに答えられる。
+
+2. **operationTable 漏洩（関数名問題）**：`protocol_adapter.ts` が priority 1（fixed_contract）に置かれるため、B=1K では全文が含まれる。`operationTable` に全5関数名（`advanceVok1`, `advanceVok2`, `advanceZef1`, `advanceZef2`, `advanceTal1`）が列挙されており、mc/stp の関数名問題をコードの実装ロジックを読まずに答えられる。
+
+**根本原因**：budget-assembler の優先順位ルールは Stage 0（世代を重ねる実験、回帰防止が目的）由来であり、System1（コードを変更しない、意味理解を測定する）には不適切な前提だった。
+
+### 対処：AssemblyMode の追加
+
+`budget-assembler.ts` に `AssemblyMode = "system1" | "system2"` を追加：
+
+| モード | 優先順位 | 用途 |
+|---|---|---|
+| `system2`（デフォルト） | type_def(0) > fixed_contract(1) > test(2) > implementation(3) | Stage 0 由来。系統2（コード変更あり）で回帰防止のため維持 |
+| `system1` | type_def(0) > その他全て同列(1)、アルファベット順で埋める | 系統1（意味理解測定）専用。答えを教えてしまう情報源を優先させない |
+
+`calibration-runner.ts` の `runSystem1()` は `mode="system1"` を渡すよう変更。`runSystem2()` はデフォルト `"system2"` のまま（未変更）。
+
+### system1 モード B=1K ファイル内訳（変更後）
+
+```
+B=1K (system1, budget=1000 tokens):
+  [FULL]      src/vok/state.ts  (type_def, 46 chars)
+  [FULL]      src/world.ts      (type_def, 456 chars)
+  [FULL]      src/protocol_adapter.ts  (fixed_contract, 2365 chars)  ← アルファベット順で含まれる
+  [FULL]      src/tal/rules.ts  (implementation, 300 chars)   ← 新規に含まれる
+  [FULL]      src/vok/rules.ts  (implementation, 688 chars)   ← 新規に含まれる
+  [TRUNCATED] src/zef/rules.ts  (implementation, 145/1135 chars = 13%)  ← 断片
+  [EXCLUDED]  tests/rules.visible.test.ts  (test, 2171 chars)  ← 除外される
+```
+
+前回（system2 B=1K）と比較：
+- `src/vok/rules.ts`・`src/tal/rules.ts`：EXCLUDED → **FULL** ✅
+- `tests/rules.visible.test.ts`：TRUNCATED 52% → **EXCLUDED** ✅
+- `src/zef/rules.ts`：EXCLUDED → TRUNCATED 13% ⚠️（precondition 情報の一部が見える）
+- `src/protocol_adapter.ts`：FULL のまま（アルファベット順で priority-1 群の先頭になる）
+
+### なぜ注目すべきか
+
+- **意味測定とコード変更支援では budget-assembler の目的が異なる**。Stage 0 の設計を System1 にそのまま流用したことが漏洩の根本原因。測定系の設計は「何を測りたいか」から逆算して priority を決める必要がある。
+- `AssemblyMode` という分岐を設けることで、両系統が「同じコードで、異なる情報提示順」を使えるようになり、system2 への影響なく修正できた。
+
+### 今後への示唆
+
+- world 規模拡大後も、System1 用の priority 設定は「型定義のみ優先、実装・契約・tests は同列」のまま維持する。規模が大きくなれば B=1K で見えるファイルの組み合わせが変わるため、再度内訳を確認する。
+- `protocol_adapter.ts` は system1 B=1K でも含まれるが（アルファベット順）、vok/rules.ts・tal/rules.ts も同時に含まれるため「operationTable だけで全問答える」状況ではなくなった。F8 参照。
+
+---
+
+## F8: system1 モード修正後の B=0, 1K, 2K 実行結果と残存する advanceZef2 命名パターン依存
+
+**日付**：2026-09-06
+**Phase**：Phase 4（System1 較正修正後の検証）
+**実行条件**：backend=anthropic, model=claude-haiku-4-5-20251001, budgets=[0, 1K, 2K]
+
+### スコア結果
+
+| Budget | R^sem_B | mc | bool | stp |
+|---|---|---|---|---|
+| B=0K | 0/17 (0.00) | 0/5 | 0/4 | 0/8 |
+| B=1K | 15/17 (0.88) | 5/5 | 2/4 | 8/8 |
+| B=2K | 17/17 (1.00) | 5/5 | 4/4 | 8/8 |
+
+### 確認1：bool-6, bool-7 の失敗は genuine な情報不足による ✅
+
+**設問と正解：**
+- bool-6：`"Vok が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？"` → `true`
+- bool-7：`"Zef が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？"` → `true`
+
+**B=1K の誤答（原文）：**
+```
+Q6-Q7: Invariant checking - Since TalState only has "nim" | "pex",
+Tal can never be "dor", so states with Tal="nim" are valid
+→ "false" × 2
+```
+
+TalState の型定義から「Tal='nim' は有効な状態」と正しく読んだが、「Vok='dor' かつ Tal='nim' という組み合わせが I1（if Vok=dor then Tal=pex）に違反する」という不変条件との接続に失敗した。I1 の記述は zef/rules.ts の後半にあり、B=1K の 13% 切り詰めで届かない → **コードの情報不足による genuine な失敗**。
+
+### 確認2：mc/stp の advanceZef2 関連に命名パターン依存が残存 ⚠️
+
+**B=1K での advanceZef2 に関する推論（原文）：**
+```
+Key insight: `advanceZef2` is in the operationTable but the full code
+isn't shown. However, based on the pattern and the fact that ZefState
+includes "dor", `advanceZef2` must transition Zef: pex → dor.
+```
+
+| プローブ | 根拠 | 評価 |
+|---|---|---|
+| mc-1〜mc-3 (Vok/Zef1/Tal) | vok/rules.ts・zef/rules.ts 冒頭・tal/rules.ts を直接読解 | ✅ コード読解 |
+| mc-4 (advanceZef2 名前) | operationTable から名前確認 + ZefState 型からの遷移方向推論 | ⚠️ 命名パターン依存 |
+| mc-5 (Tal) | tal/rules.ts を直接読解 | ✅ コード読解 |
+| stp-16〜stp-20 (Vok/Zef1/Tal) | vok/tal rules.ts 実装を直接参照 | ✅ コード読解 |
+| stp-21 (Tal='pex', Zef='pex' → advanceZef2) | operationTable 名前 + パターン推論 | ⚠️ 命名パターン依存 |
+| stp-22 (Tal='nim', Zef='pex' → operation fails) | advanceZef1 の precondition（visible）からのパターン推論 | △ 推論（許容範囲） |
+| stp-23 (Tal) | tal/rules.ts を直接参照 | ✅ コード読解 |
+
+mc/stp 13問中10問はコード読解、3問（23%）が命名パターン依存または推論に基づく。
+
+**残存する依存の scope：**
+- `advanceZef2` は全 5 operation のうち 1 つ（20%）
+- 原因は system1 B=1K で zef/rules.ts が 13% しか見えないため、advanceZef2 の実装本体が読めないこと
+- vok/rules.ts・tal/rules.ts は全文読めており、それらに対応する mc/stp はコード読解で正答している
+
+### System2 への影響
+
+system2 の結果は変化なし（B=0: 0/6, B=1K: 3/6, B=2K: 5/6）。`runSystem2()` は `mode="system2"` 維持。
+
+### なぜ注目すべきか
+
+- **bool の genuine gap が生まれた**：B=1K で bool 2/4（I1/I2 の invariant が見えない）という正当な失敗が確認された。B=2K で全文が見えると 4/4 に回復。これは System1 が「情報の有無を感知できている」証拠。
+- **advanceZef2 の部分的命名依存は残存**：13問中3問（23%）が operationTable または推論経由。world 規模拡大で zef/rules.ts が B=1K 内に完全に収まるようになれば自然に解消する。
+- 全体として F4（命名パターン推測で全問正解）の問題は解消し、「コードを読んだ場合のみ正解できるプローブ」の割合が大幅に増加した。
+
+### 今後への示唆
+
+- advanceZef2 の残存依存は、Phase 5（world 規模拡大）で zef/rules.ts の内容が B=1K 内に収まるようになれば自動解消する。現段階での追加対処は不要。
+- bool 2/4 の失敗（B=1K）→ 4/4 成功（B=2K）という推移は、System1 の budget 感度の証拠として有効。Phase 4 の目的である「測定器として機能しているか」の判断には十分な信号。
+- F6 で報告した「B=1K での System1: 16/17 (0.94)」は本修正前の誤った数値。正しくは **15/17 (0.88)**（bool が 3/4 → 2/4 に変化）。F6 は当時の実行結果の記録として残すが、この F8 が上書き優先。
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・
