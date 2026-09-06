@@ -234,13 +234,95 @@ B=0では部分正解（2/4）、B=Full では全問正解（4/4）となり、�
   に該当する可能性があるが、原因が「budgetを与えても情報が入らない」ではなく
   「コードなしでも推定できてしまうプローブ設計」にある点で、意味が異なる。
 
+### F4後の対処（→ F5へ続く）
+
+mc/stp型プローブを記述式（選択肢なし・設問にoperation名なし）に再設計し、
+モデルが「repositoryのコードを参照して関数名を答える」形式に変更した。
+詳細はF5参照。
+
+---
+
+## F5: mc/stp記述式化によりB=0フロアが88%→0%に改善、dose-response幅が100%ptに拡大
+
+**日付**：2026-09-06
+**Phase**：Phase 4 Step 1（System1感度改善）
+**元コード**：`calibration/src/probe-generator.ts`（mc/stp生成ロジック改訂）
+**元データ**：`calibration/fixtures/probe-bank.json`（再生成後：17問）
+**実行条件**：backend=anthropic, model=claude-haiku-4-5-20251001, budgets=[0, full]
+
+### 設計変更の内容
+
+**変更前（選択肢形式）:**
+```
+mc-1: "Vok が状態 'nim' のとき、Vok を次の状態 'pex' へ遷移させる operation はどれか？"
+  Options: [advanceVok1, advanceVok2, advanceZef1, advanceZef2, advanceTal1]
+  → 命名規則から選択肢の正解を推定可能（コード不要）
+
+stp-16: "Vok が 'nim' の状態で advanceVok1 を実行すると、Vok の状態はどうなるか？"
+  Options: [nim, pex, dor, operation fails]
+  → operation名が設問に明示されており、名前から結果を推定可能
+```
+
+**変更後（記述式）:**
+```
+mc-1: "repositoryのコードを参照して、Vok を状態 'nim' から 'pex' へ遷移させる操作の関数名を答えよ。"
+  選択肢なし。正解: "advanceVok1"
+
+stp-16 (success): "Vok が 'nim' の状態のとき、repositoryのコードを参照して、Vok を次の状態へ進める操作の関数名を答えよ。"
+  選択肢なし。正解: "advanceVok1"（関数名、以前は状態名 "pex"）
+
+stp-18 (failure): "Zef が 'nim'、Vok が 'pex' の状態のとき、repositoryのコードを参照して、Vok を次の状態へ進める操作を呼び出すと、どうなるか？（実行できる場合は最終状態名を、実行できない場合は 'operation fails' と答えよ）"
+  選択肢なし。正解: "operation fails"（"preconditionを満たさない"ヒントを除去）
+```
+
+### 実行結果（変更後）
+
+```
+B=0:    0/17 (0%)   — mc: 0/5, bool: 0/4, stp: 0/8
+B=Full: 17/17 (100%) — mc: 5/5, bool: 4/4, stp: 8/8
+```
+
+前回との比較:
+```
+           B=0             B=Full   dose-response幅
+変更前:  15/17 (88%)     17/17 (100%)    12%pt
+変更後:   0/17  (0%)     17/17 (100%)   100%pt
+```
+
+### B=0の回答根拠（透明性チェック）
+
+モデルはB=0（コンテキストなし）で以下のように応答した:
+
+```
+"I notice that no repository files were provided... I cannot see the TypeScript code needed to answer these questions"
+```
+
+全17問に "AWAITING_CODE" を返し、命名規則からの推測を一切行わなかった。
+「advance + entity名 + 連番」という命名規則パターンを使った推測が起きるリスクは、
+この実行においては観察されなかった。
+
+（ただし、これはモデルがコードのないことを明示されたからであり、
+将来的なモデル変更・プロンプト変更時には再チェックが必要）
+
+### なぜ注目すべきか
+
+- **System1のdose-response幅が12%ptから100%ptに拡大した**。6段階budgetの測定が
+  意味を持つための基本条件（B=0とB=Fullの間に有意な差）が確立した。
+- B=0でモデルが「コードがないから答えられない」と明示することで、
+  System1が「コード理解に依存した測定器」として機能していることが確認できた。
+- stp-failure型の変更（"preconditionを満たさない"ヒント除去）により、
+  precondition判定もコードを読まないと答えられない問題になった。
+  これはとくにdistributed encoding（I1）の理解を要する T-local-1 に相当する
+  意味的難易度と対応する。
+
 ### 今後への示唆
 
-- System1を「意味理解の測定器」として機能させるには、boolean型の比率を増やすか、
-  mc/stp型のプローブをcodingtransparentでない形式に再設計する必要がある。
-  具体的な選択肢はStep 2着手前に別途検討する（A/B/C案参照）。
-- 現状のSystem1は「B≥Full条件下での100%正答率」を確認する用途（較正の上限チェック）には
-  機能している。問題はB=0のフロアが高すぎて、dose-responseの勾配を正確に測定できない点。
+- System1のdose-response幅が100%ptになったことで、Phase 4 Step 2（6段階フル実行）で
+  明確な勾配（B=0→Fullにかけての改善）が観測できる条件が整った。
+- B=Full=17/17(100%)は変わらないため、System1の上限は較正済みのまま。
+- 残る懸念: B=0が0%なのは「コードがない」と知ったから（モデルが正直に拒否）だが、
+  コードが一部しかない中間budget（B=1K）では命名規則推測が混入しうる。
+  実API実行後に中間budgetの回答根拠も確認することが望ましい。
 
 ---
 

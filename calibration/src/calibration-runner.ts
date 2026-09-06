@@ -146,10 +146,13 @@ function buildProbePrompt(
     } else if (p.type === "set_selection") {
       lines.push(`Options: ${(p.options ?? []).join(", ")}`);
       lines.push(`Answer format: JSON array of selected options, e.g. ["A","B"]`);
-    } else {
-      // multiple_choice / graph_edge_prediction / state_transition_prediction
-      lines.push(`Options: ${(p.options ?? []).join(", ")}`);
+    } else if (p.options && p.options.length > 0) {
+      // graph_edge_prediction（選択肢あり）
+      lines.push(`Options: ${p.options.join(", ")}`);
       lines.push(`Answer format: one of the option strings exactly as listed`);
+    } else {
+      // multiple_choice / state_transition_prediction（記述式）: 設問文に指示が含まれる
+      lines.push(`Answer format: a single exact string as described in the question (function name or state/result)`);
     }
 
     questionLines.push(lines.join("\n"));
@@ -163,7 +166,8 @@ ${questionLines.join("\n\n")}
 
 OUTPUT FORMAT:
 Respond with a JSON object inside <probe_answers> tags. Keys are probe IDs (exactly as shown), values are answers.
-- multiple_choice / graph_edge_prediction / state_transition_prediction: answer is a string (exact option)
+- multiple_choice / state_transition_prediction (記述式): answer is a string (exact function name, state name, or "operation fails" as described in the question)
+- graph_edge_prediction: answer is a string (exact option from the listed options)
 - boolean: answer is "true" or "false"
 - set_selection: answer is a JSON array of selected option strings
 
@@ -218,6 +222,7 @@ async function answerProbesWithAnthropicAPI(
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)
     .join("");
+
 
   const emptyAnswers = (): Record<string, string> => {
     const m: Record<string, string> = {};

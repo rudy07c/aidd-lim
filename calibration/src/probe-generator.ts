@@ -115,8 +115,9 @@ export function generateProbes(
   const allEntityNames = g.entities.map((e) => eName(scheme, e.id));
 
   // ─────────────────────────────────────────
-  // 1. multiple_choice: transition_from_state
-  //    「entity が fromState にあるとき、entity を遷移させるoperationはどれか？」
+  // 1. multiple_choice: transition_from_state（記述式）
+  //    「repositoryのコードを参照して、entity を fromState から toState へ遷移させる操作の関数名を答えよ」
+  //    選択肢なし。正解はoperation表示名（関数名）の完全一致。
   // ─────────────────────────────────────────
   for (const t of g.transitions) {
     for (const effect of t.effects) {
@@ -125,16 +126,14 @@ export function generateProbes(
       const toStateDisplayName = sName(scheme, effect.entity, effect.toState);
       const correctOp = oName(scheme, t.operationId);
 
-      // distractors: 他のoperation名をすべて選択肢に含める（正解も含む）
-      const options = [...allOpNames];
-
       probes.push({
         probeId: nextId("mc"),
         type: "multiple_choice",
         namingScheme: scheme.schemeId,
-        prompt: `${entityDisplayName} が状態 '${fromStateDisplayName}' のとき、${entityDisplayName} を次の状態 '${toStateDisplayName}' へ遷移させる operation はどれか？`,
-        options,
+        prompt: `repositoryのコードを参照して、${entityDisplayName} を状態 '${fromStateDisplayName}' から '${toStateDisplayName}' へ遷移させる操作の関数名を答えよ。`,
+        // options なし（記述式）: 選択肢を提示せず、コードを読んで関数名を特定させる
         correctOptionId: correctOp,
+        correctAnswer: correctOp,
         derivedFrom: {
           kind: "transition_from_state",
           operationId: t.operationId,
@@ -266,25 +265,21 @@ export function generateProbes(
   }
 
   // ─────────────────────────────────────────
-  // 6. state_transition_prediction: transition_outcome
-  //    「この状態でoperationを実行すると、対象entityはどうなるか」
-  //    preconditionが満たされている場合（成功）と満たされていない場合（失敗）の2パターン。
+  // 6. state_transition_prediction: transition_outcome（記述式）
+  //    2パターン:
+  //    パターンA（成功）: preconditionがすべて満たされた状態のとき、どの関数が遷移を起こすか
+  //      → 正解は関数名（operation名）の完全一致
+  //    パターンB（失敗）: preconditionが不成立の状態のとき、遷移を試みるとどうなるか
+  //      → 正解は "operation fails"（コードを読まないと判定不可）
+  //    どちらも選択肢なし。operationの名前は設問に出さない。
   // ─────────────────────────────────────────
   for (const t of g.transitions) {
     for (const effect of t.effects) {
       const opDisplayName = oName(scheme, t.operationId);
       const entityDisplayName = eName(scheme, effect.entity);
       const fromStateName = sName(scheme, effect.entity, effect.fromState);
-      const toStateName = sName(scheme, effect.entity, effect.toState);
 
-      // 全stateのdisplay name（このentityの）+ "operation fails"
-      const entity = g.entities.find((e) => e.id === effect.entity)!;
-      const stateOptions = [
-        ...entity.states.map((s) => sName(scheme, effect.entity, s)),
-        "operation fails",
-      ];
-
-      // パターンA: preconditionがすべて満たされた状態での実行
+      // パターンA: preconditionがすべて満たされた状態での実行 → 正解は関数名
       const precondDescription = t.preconditions.length === 0
         ? `${entityDisplayName} が '${fromStateName}'`
         : t.preconditions
@@ -296,9 +291,9 @@ export function generateProbes(
         probeId: nextId("stp"),
         type: "state_transition_prediction",
         namingScheme: scheme.schemeId,
-        prompt: `${precondDescription} の状態で ${opDisplayName} を実行すると、${entityDisplayName} の状態はどうなるか？`,
-        options: stateOptions,
-        correctAnswer: toStateName,
+        prompt: `${precondDescription} の状態のとき、repositoryのコードを参照して、${entityDisplayName} を次の状態へ進める操作の関数名を答えよ。`,
+        // options なし（記述式）: 正解は関数名
+        correctAnswer: opDisplayName,
         derivedFrom: {
           kind: "transition_outcome_success",
           operationId: t.operationId,
@@ -309,10 +304,11 @@ export function generateProbes(
       });
 
       // パターンB: preconditionが1つでもある場合、precondition不成立時の失敗を問う
+      // 設問にoperation名を出さず、preconditionを満たさないことも明示しない。
+      // モデルはコードを読んでpreconditionを特定し、不成立を判断する必要がある。
       if (t.preconditions.length > 0) {
         const firstPrecond = t.preconditions[0];
         const precondEntityName = eName(scheme, firstPrecond.entity);
-        const precondStateName = sName(scheme, firstPrecond.entity, firstPrecond.state);
         // preconditionを満たさない状態: precond entityのinitialState（多くの場合q1=nim）
         const precondEntity = g.entities.find((e) => e.id === firstPrecond.entity)!;
         const failState = precondEntity.states.find((s) => s !== firstPrecond.state) ?? precondEntity.initialState;
@@ -322,8 +318,8 @@ export function generateProbes(
           probeId: nextId("stp"),
           type: "state_transition_prediction",
           namingScheme: scheme.schemeId,
-          prompt: `${precondEntityName} が '${failStateName}'（preconditionを満たさない）、${entityDisplayName} が '${fromStateName}' の状態で ${opDisplayName} を実行すると、${entityDisplayName} の状態はどうなるか？`,
-          options: stateOptions,
+          prompt: `${precondEntityName} が '${failStateName}'、${entityDisplayName} が '${fromStateName}' の状態のとき、repositoryのコードを参照して、${entityDisplayName} を次の状態へ進める操作を呼び出すと、どうなるか？（実行できる場合は最終状態名を、実行できない場合は 'operation fails' と答えよ）`,
+          // options なし（記述式）: 正解は "operation fails"
           correctAnswer: "operation fails",
           derivedFrom: {
             kind: "transition_outcome_failure",
