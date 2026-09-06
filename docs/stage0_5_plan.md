@@ -237,9 +237,9 @@ Stage 0のPhase 1と同じ発想で、まずmock-noop/mock-oracleで機構を検
 
 **この時点でのゲート**：4.3節の判定結果が出ること（どのパターンであっても構わない。判定自体ができることがゲート）。task単位での取捨選択を経て、Stage 1へ引き継ぐheld-out task setが確定していること。
 
-**Phase 4 ゲート判定（2026-09-06時点）：達成済み（条件付き）**
+**Phase 4 ゲート判定（2026-09-06 確定）：達成**
 
-System1・System2 ともに budget 感度が確認された。ただし以下の確認・修正を経た後の判定である：
+System1・System2 ともに budget 感度が確認された。以下の確認・修正を経た後の判定：
 
 - **F4 → F5**：mc/stp のプローブを選択肢形式から記述式に再設計（B=0 フロアが 88% → 0% に改善）
 - **F7**：budget-assembler に system1/system2 モードを追加（tests・operationTable のリーク修正）
@@ -252,19 +252,17 @@ B=1K: 15/17 (0.88)  — bool 2/4 は genuine な情報不足（I1/I2 が B=1K �
 B=2K: 17/17 (1.00)  — 全ファイル取得で完全正解
 ```
 
-残存する軽微な懸念事項：B=1K で advanceZef2 関連の3問（mc-4, stp-21, stp-22）が
-operationTable + パターン推論で正答しており、zef/rules.ts の実装ロジックを直接読んでいない。
-対処方針は Phase 5（world 規模拡大）の議題として持ち越す（世界が拡大すれば zef/rules.ts が
-B=1K 内に収まるようになり自然解消する見込み）。
-
-System2 dose-response（system2 モード、変化なし）:
+System2 dose-response（system2 モード）:
 ```
 B=0:  0/6 (0.00)
 B=1K: 3/6 (0.50)  — T-local-1❌ T-invariant-stress-1❌ T-crosscut-2❌
 B=2K: 5/6 (0.83)  — T-local-1❌（全 budget で継続失敗、F6 参照）
 ```
 
-4.3節の判定パターン：**「budget に応じて改善（→ 測定器として使用可能）」に近いが、規模の制約（F2）から実質3点のカーブ**。Phase 5（規模拡大）でより滑らかなカーブを得るのが次のステップ。
+4.3節の判定パターン：**「budget に応じて改善（→ 測定器として使用可能）」**。
+ただし規模の制約（F2）から実質3点のカーブ。Phase 5（規模拡大）でより滑らかなカーブを得るのが次のステップ。
+
+advanceZef2 の B=1K 命名パターン依存（3問 / 23%）は設計ミスではなく budget 制御の帰結として Phase 5 へ持ち越し確定（F8 参照）。
 
 ### Phase 5（条件付き）：規模拡大
 
@@ -275,6 +273,10 @@ Phase 4の結果が天井効果・床効果を示した場合（1.2節で予見�
 16. Synthetic World generatorの設計に着手する（計画書「次のアクション」⑥）。1.1節の目標規模（5 entity・8 operation・6 invariant・20 task）を満たすworldを構築する
 17. 拡大後のworldに対し、model checker・累積validator・semantic locality計算等、Stage 0時点で構築済みの検証ツール一式を再実行し、拡大後のworldが自己無矛盾であることを確認する
 18. Phase 1〜4を拡大後のworldに対して再実行する
+
+**Phase 5 固有の確認項目（Phase 4 からの持ち越し）：**
+- **advanceZef2 命名依存の追跡**：拡大後 B=1K の system1 内訳を `budget-assembler.ts` CLI で再確認し、zef 相当のファイルが B=1K 内に完全収容されているかを確認する。収容されていれば命名パターン依存は自動解消しているはず。依然として断片的な場合、System1 B=1K スコアの mc/stp 成分に対して同様の推論根拠チェックを実施する。
+- **budget degeneracy（F2）の解消確認**：拡大後の Full トークン数が B=2K を超えていること（6段階が再び distinct になること）を `budget-assembler.ts` CLI で確認する。
 
 ### Phase 6：較正の正式完了（命名方式比較はスキップ済み）
 
