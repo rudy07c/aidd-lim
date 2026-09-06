@@ -27,7 +27,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import Anthropic from "@anthropic-ai/sdk";
-import { assembleContext, ALL_BUDGETS, BudgetValue } from "./budget-assembler";
+import { assembleContext, ALL_BUDGETS, BudgetValue, AssemblyMode } from "./budget-assembler";
 import { scoreProbes, summarizeScores } from "./probe-scorer";
 import type { GeneratedProbe } from "./probe-generator";
 import { runScoring } from "../../harness/src/scoring";
@@ -223,7 +223,6 @@ async function answerProbesWithAnthropicAPI(
     .map((b) => b.text)
     .join("");
 
-
   const emptyAnswers = (): Record<string, string> => {
     const m: Record<string, string> = {};
     for (const p of probes) m[p.probeId] = "";
@@ -278,9 +277,10 @@ async function runSystem1(
   probes: GeneratedProbe[],
   budget: BudgetValue,
   backend: CalibrationBackend,
-  model: string
+  model: string,
+  mode: AssemblyMode = "system1"
 ): Promise<System1BudgetResult> {
-  const ctx = assembleContext(repositoryFiles, budget);
+  const ctx = assembleContext(repositoryFiles, budget, mode);
 
   let answers: Record<string, string>;
   let latencyMs: number | undefined;

@@ -29,6 +29,18 @@ export const ALL_BUDGETS: BudgetValue[] = [0, 1000, 2000, 4000, 8000, "full"];
 
 export type FileCategory = "type_definition" | "fixed_contract" | "test" | "implementation";
 
+/**
+ * コンテキスト構築モード。
+ *
+ * - "system2" (デフォルト): Stage 0由来のルール。型定義 > protocol_adapter.ts > tests > 実装の順に優先。
+ *   世代を重ねる実験で回帰防止のため tests/固定契約を常に優先的に含める。
+ * - "system1": 系統1（意味理解測定）専用。型定義のみ優先し、
+ *   protocol_adapter.ts / tests / 実装ロジックは全て同列でアルファベット順に埋める。
+ *   「答えを教えてしまう」情報源（operationTable、preconditionテスト記述）を
+ *   優先させない設計。
+ */
+export type AssemblyMode = "system1" | "system2";
+
 export interface FileDetail {
   path: string;
   category: FileCategory;
@@ -77,11 +89,20 @@ export function estimateTokenCount(files: Record<string, string>): number {
 
 // ---- 優先順位定義 ----
 
-const CATEGORY_PRIORITY: Record<FileCategory, number> = {
+/** system2: Stage 0由来。型定義 > 固定契約 > tests > 実装の順 */
+const CATEGORY_PRIORITY_SYSTEM2: Record<FileCategory, number> = {
   type_definition: 0,
   fixed_contract: 1,
   test: 2,
   implementation: 3,
+};
+
+/** system1: 型定義のみ優先（priority 0）。それ以外は全て同列（priority 1）でパス順に埋める */
+const CATEGORY_PRIORITY_SYSTEM1: Record<FileCategory, number> = {
+  type_definition: 0,
+  fixed_contract: 1,
+  test: 1,
+  implementation: 1,
 };
 
 // ---- コンテキスト構築 ----
@@ -91,14 +112,18 @@ const CATEGORY_PRIORITY: Record<FileCategory, number> = {
  *
  * @param repositoryFiles - path → content のマップ
  * @param budget - トークン予算（0 / 1K / 2K / 4K / 8K / "full"）
+ * @param mode - "system1"（意味理解測定）または "system2"（デフォルト、機能的継続）
  */
 export function assembleContext(
   repositoryFiles: Record<string, string>,
-  budget: BudgetValue
+  budget: BudgetValue,
+  mode: AssemblyMode = "system2"
 ): AssembledContext {
   if (budget === 0) {
     return { budget, files: {}, totalTokens: 0, fileDetails: [] };
   }
+
+  const priorityTable = mode === "system1" ? CATEGORY_PRIORITY_SYSTEM1 : CATEGORY_PRIORITY_SYSTEM2;
 
   // ファイルを分類してpriority順にソート
   const entries = Object.entries(repositoryFiles)
@@ -108,7 +133,7 @@ export function assembleContext(
       category: categorize(filePath, content),
     }))
     .sort((a, b) => {
-      const pDiff = CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
+      const pDiff = priorityTable[a.category] - priorityTable[b.category];
       if (pDiff !== 0) return pDiff;
       return a.filePath.localeCompare(b.filePath); // 同優先度内はパス順（決定的）
     });
@@ -201,21 +226,29 @@ if (require.main === module) {
   const totalFull = estimateTokenCount(repositoryFiles);
   console.log(`\nRepository: ${Object.keys(repositoryFiles).length} files, Full=${totalFull} tokens (~${totalFull * 4} chars)`);
 
-  for (const budget of ALL_BUDGETS) {
-    const ctx = assembleContext(repositoryFiles, budget);
-    const label = budget === "full" ? "Full" : `${budget / 1000}K`;
-    console.log(`\n── B=${label} (budget=${budget === "full" ? "∞" : budget + " tokens"}) ──`);
-    console.log(`  Included files: ${Object.keys(ctx.files).length} / ${Object.keys(repositoryFiles).length}`);
-    console.log(`  Total tokens:   ${ctx.totalTokens}`);
-    for (const d of ctx.fileDetails) {
-      if (d.includedChars === 0) {
-        console.log(`    [EXCLUDED]  ${d.path} (${d.category}, ${d.originalChars} chars)`);
-      } else if (d.truncated) {
-        const pct = Math.round((d.includedChars / d.originalChars) * 100);
-        console.log(`    [TRUNCATED] ${d.path} (${d.category}, ${d.includedChars}/${d.originalChars} chars = ${pct}%)`);
-      } else {
-        console.log(`    [FULL]      ${d.path} (${d.category}, ${d.includedChars} chars)`);
+  function printBudgetReport(mode: AssemblyMode) {
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`MODE: ${mode}`);
+    console.log("=".repeat(60));
+    for (const budget of ALL_BUDGETS) {
+      const ctx = assembleContext(repositoryFiles, budget, mode);
+      const label = budget === "full" ? "Full" : `${budget / 1000}K`;
+      console.log(`\n── B=${label} (budget=${budget === "full" ? "∞" : budget + " tokens"}) ──`);
+      console.log(`  Included files: ${Object.keys(ctx.files).length} / ${Object.keys(repositoryFiles).length}`);
+      console.log(`  Total tokens:   ${ctx.totalTokens}`);
+      for (const d of ctx.fileDetails) {
+        if (d.includedChars === 0) {
+          console.log(`    [EXCLUDED]  ${d.path} (${d.category}, ${d.originalChars} chars)`);
+        } else if (d.truncated) {
+          const pct = Math.round((d.includedChars / d.originalChars) * 100);
+          console.log(`    [TRUNCATED] ${d.path} (${d.category}, ${d.includedChars}/${d.originalChars} chars = ${pct}%)`);
+        } else {
+          console.log(`    [FULL]      ${d.path} (${d.category}, ${d.includedChars} chars)`);
+        }
       }
     }
   }
+
+  printBudgetReport("system2");
+  printBudgetReport("system1");
 }
