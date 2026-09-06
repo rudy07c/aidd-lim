@@ -1,0 +1,19 @@
+{
+  "_comment": "Batch 1 limited validation: mock-oracle + simple-limited で新規7タスクをテスト。",
+  "stage": "stage0",
+  "experimentId": "stage0-mock-oracle-batch1-limited",
+  "lineageId": "lineage-0",
+  "backend": "mock-oracle",
+  "condition": "simple-limited",
+  "contextBudget": "simple-limited",
+  "generations": 7,
+  "tasks": [
+    "T-local-3",
+    "T-local-4",
+    "T-local-5",
+    "T-local-6",
+    "T-local-7",
+    "T-crosscut-3",
+    "T-crosscut-4"
+  ]
+}

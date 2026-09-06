@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/fen/state.ts, src/osk/state.ts, src/protocol_adapter.ts, src/vok/state.ts, src/world.ts, tests/rules.visible.test.ts]\n\nTask:\nFen が 'pex' の状態から 'nim' へ戻す operation 'resetFen' を追加せよ。"
+}

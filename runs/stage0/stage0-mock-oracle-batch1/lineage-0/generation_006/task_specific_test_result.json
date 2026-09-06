@@ -1,0 +1,108 @@
+{
+  "passed": true,
+  "numPassed": 3,
+  "numFailed": 0,
+  "testCases": [
+    {
+      "testName": "T-crosscut-4: lockFenZef lockFenZef: Fen and Zef pex→dor when Osk=pex and Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-4: lockFenZef lockFenZef: fails when Fen=nim (fromState guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-4: lockFenZef lockFenZef: fails when Zef=nim (fromState guard)",
+      "passed": true
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 0,
+    "numFailedTests": 0,
+    "numPassedTestSuites": 1,
+    "numPassedTests": 3,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 3,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788697588080,
+    "success": true,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "T-crosscut-4: lockFenZef"
+            ],
+            "duration": 2,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-4: lockFenZef lockFenZef: Fen and Zef pex→dor when Osk=pex and Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 7,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "lockFenZef: Fen and Zef pex→dor when Osk=pex and Tal=pex"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-4: lockFenZef"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-4: lockFenZef lockFenZef: fails when Fen=nim (fromState guard)",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "lockFenZef: fails when Fen=nim (fromState guard)"
+          },
+          {
+            "ancestorTitles": [
+              "T-crosscut-4: lockFenZef"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "T-crosscut-4: lockFenZef lockFenZef: fails when Zef=nim (fromState guard)",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 3,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "lockFenZef: fails when Zef=nim (fromState guard)"
+          }
+        ],
+        "endTime": 1788697589100,
+        "message": "",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-miKayE/task_specific_tests/task.test.ts",
+        "startTime": 1788697588181,
+        "status": "passed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

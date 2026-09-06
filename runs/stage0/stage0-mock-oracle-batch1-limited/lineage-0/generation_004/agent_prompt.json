@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/fen/state.ts, src/osk/state.ts, src/protocol_adapter.ts, src/vok/state.ts, src/world.ts, tests/rules.visible.test.ts]\n\nTask:\nVok が 'dor' の状態から一気に 'nim' へ完全リセットする operation 'fullResetVok' を追加せよ。"
+}

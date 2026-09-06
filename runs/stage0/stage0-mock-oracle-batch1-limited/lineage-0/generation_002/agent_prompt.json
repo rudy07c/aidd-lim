@@ -1,0 +1,3 @@
+{
+  "prompt": "[Context files: src/fen/state.ts, src/osk/state.ts, src/protocol_adapter.ts, src/vok/state.ts, src/world.ts, tests/rules.visible.test.ts]\n\nTask:\nZef が 'dor' に達した後に 'pex' へ一段階戻す operation 'recoverZef' を追加せよ。"
+}
