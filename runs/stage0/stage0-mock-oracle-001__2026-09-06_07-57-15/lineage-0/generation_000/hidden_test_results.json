@@ -1,0 +1,560 @@
+{
+  "passed": false,
+  "numPassed": 7,
+  "numFailed": 15,
+  "testCases": [
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O1 (advanceVok1): E1 q1->q2, no precondition",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O2 (advanceVok2): E1 q2->q3, requires E2=q2 AND E5=q2",
+      "passed": false,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:42:43)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O3 (advanceZef1): E2 q1->q2, requires E3=q2",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O4 (advanceZef2): E2 q2->q3, requires E3=q2 AND E4=q2",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:60:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O5 (advanceTal1): E3 q1->q2, no precondition",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O6 (advanceOsk1): E5 q1->q2, no precondition",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:72:16)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O7 (advanceFen1): E4 q1->q2, requires E5=q2",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:79:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O8 (advanceFen2): E4 q2->q3, requires E5=q2 AND E2=q2",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:85:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I1, encoding=distributed] Vok=dor implies Tal=pex",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:106:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I2, encoding=explicit] Zef=dor implies Tal=pex",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:117:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I3, encoding=explicit] Fen=dor implies Osk=pex",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:129:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I4, encoding=explicit] Vok=dor implies Osk=pex",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:141:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I5, encoding=distributed] Zef=dor implies Osk=pex",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:154:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I6, encoding=distributed] Fen=dor implies Tal=pex",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:167:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D1] O2 fails without E2 dependency satisfied",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D2] O2 fails without E5 dependency satisfied",
+      "passed": false,
+      "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:186:43)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D3] O3 fails without E3 dependency satisfied",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D4] O4 fails without E3 dependency satisfied",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:199:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D5] O4 fails without E4 dependency satisfied",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D6] O7 fails without E5 dependency satisfied",
+      "passed": true
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D7] O8 fails without E5 dependency satisfied",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:232:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D8] O8 fails without E2 dependency satisfied",
+      "passed": false,
+      "error": "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:241:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    }
+  ],
+  "rawJestOutput": {
+    "numFailedTestSuites": 1,
+    "numFailedTests": 15,
+    "numPassedTestSuites": 0,
+    "numPassedTests": 7,
+    "numPendingTestSuites": 0,
+    "numPendingTests": 0,
+    "numRuntimeErrorTestSuites": 0,
+    "numTodoTests": 0,
+    "numTotalTestSuites": 1,
+    "numTotalTests": 22,
+    "openHandles": [],
+    "snapshot": {
+      "added": 0,
+      "didUpdate": false,
+      "failure": false,
+      "filesAdded": 0,
+      "filesRemoved": 0,
+      "filesRemovedList": [],
+      "filesUnmatched": 0,
+      "filesUpdated": 0,
+      "matched": 0,
+      "total": 0,
+      "unchecked": 0,
+      "uncheckedKeysByFile": [],
+      "unmatched": 0,
+      "updated": 0
+    },
+    "startTime": 1788681437213,
+    "success": false,
+    "testResults": [
+      {
+        "assertionResults": [
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 1,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O1 (advanceVok1): E1 q1->q2, no precondition",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "O1 (advanceVok1): E1 q1->q2, no precondition"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 1,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "actual": true,
+                  "expected": false,
+                  "message": "expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true",
+                  "name": "toBe",
+                  "pass": false
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:42:43)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O2 (advanceVok2): E1 q2->q3, requires E2=q2 AND E5=q2",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "O2 (advanceVok2): E1 q2->q3, requires E2=q2 AND E5=q2"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O3 (advanceZef1): E2 q1->q2, requires E3=q2",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 2,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "O3 (advanceZef1): E2 q1->q2, requires E3=q2"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:60:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O4 (advanceZef2): E2 q2->q3, requires E3=q2 AND E4=q2",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "O4 (advanceZef2): E2 q2->q3, requires E3=q2 AND E4=q2"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O5 (advanceTal1): E3 q1->q2, no precondition",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "O5 (advanceTal1): E3 q1->q2, no precondition"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:72:16)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O6 (advanceOsk1): E5 q1->q2, no precondition",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "O6 (advanceOsk1): E5 q1->q2, no precondition"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:79:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O7 (advanceFen1): E4 q1->q2, requires E5=q2",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "O7 (advanceFen1): E4 q1->q2, requires E5=q2"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:85:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) O8 (advanceFen2): E4 q2->q3, requires E5=q2 AND E2=q2",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "O8 (advanceFen2): E4 q2->q3, requires E5=q2 AND E2=q2"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:106:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I1, encoding=distributed] Vok=dor implies Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: I1, encoding=distributed] Vok=dor implies Tal=pex"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:117:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I2, encoding=explicit] Zef=dor implies Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: I2, encoding=explicit] Zef=dor implies Tal=pex"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:129:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I3, encoding=explicit] Fen=dor implies Osk=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: I3, encoding=explicit] Fen=dor implies Osk=pex"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:141:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I4, encoding=explicit] Vok=dor implies Osk=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: I4, encoding=explicit] Vok=dor implies Osk=pex"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:154:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I5, encoding=distributed] Zef=dor implies Osk=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: I5, encoding=distributed] Zef=dor implies Osk=pex"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:167:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: I6, encoding=distributed] Fen=dor implies Tal=pex",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: I6, encoding=distributed] Fen=dor implies Tal=pex"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D1] O2 fails without E2 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "[element: D1] O2 fails without E2 dependency satisfied"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {
+                "matcherResult": {
+                  "actual": true,
+                  "expected": false,
+                  "message": "expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true",
+                  "name": "toBe",
+                  "pass": false
+                }
+              }
+            ],
+            "failureMessages": [
+              "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: false\nReceived: true\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:186:43)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D2] O2 fails without E5 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: D2] O2 fails without E5 dependency satisfied"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D3] O3 fails without E3 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "[element: D3] O3 fails without E3 dependency satisfied"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:199:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D4] O4 fails without E3 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: D4] O4 fails without E3 dependency satisfied"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D5] O4 fails without E4 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "[element: D5] O4 fails without E4 dependency satisfied"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [],
+            "failureMessages": [],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D6] O7 fails without E5 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 1,
+            "retryReasons": [],
+            "status": "passed",
+            "title": "[element: D6] O7 fails without E5 dependency satisfied"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:232:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D7] O8 fails without E5 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: D7] O8 fails without E5 dependency satisfied"
+          },
+          {
+            "ancestorTitles": [
+              "H(G) — Present^beh micro-tests (per semantic element x in G)"
+            ],
+            "duration": 0,
+            "failureDetails": [
+              {}
+            ],
+            "failureMessages": [
+              "Error: unknown operation: advanceOsk1\n    at apply (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:18:11)\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts:241:9)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+            ],
+            "fullName": "H(G) — Present^beh micro-tests (per semantic element x in G) [element: D8] O8 fails without E2 dependency satisfied",
+            "invocations": 1,
+            "location": null,
+            "numPassingAsserts": 0,
+            "retryReasons": [],
+            "status": "failed",
+            "title": "[element: D8] O8 fails without E2 dependency satisfied"
+          }
+        ],
+        "endTime": 1788681438334,
+        "message": "  ● H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) › O2 (advanceVok2): E1 q2->q3, requires E2=q2 AND E5=q2\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: false\n    Received: true\n\n      40 |     w = apply(w, \"advanceZef1\"); // E2 -> q2 (Tal=pex なので成功)\n      41 |     // E5 still nim — D2: E5=q2 もなければ失敗する\n    > 42 |     expect(tryApply(w, \"advanceVok2\").ok).toBe(false);\n         |                                           ^\n      43 |     w = apply(w, \"advanceOsk1\"); // E5 -> q2\n      44 |     expect(protocol.getEntityState(apply(w, \"advanceVok2\"), \"Vok\")).toBe(\"dor\");\n      45 |   });\n\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:42:43)\n\n  ● H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) › O4 (advanceZef2): E2 q2->q3, requires E3=q2 AND E4=q2\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:60:9)\n\n  ● H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) › O6 (advanceOsk1): E5 q1->q2, no precondition\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:72:16)\n\n  ● H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) › O7 (advanceFen1): E4 q1->q2, requires E5=q2\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:79:9)\n\n  ● H(G) — regression: full behavioral fidelity to ground_truth.json (via WorldProtocol only) › O8 (advanceFen2): E4 q2->q3, requires E5=q2 AND E2=q2\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:85:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: I1, encoding=distributed] Vok=dor implies Tal=pex\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:106:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: I2, encoding=explicit] Zef=dor implies Tal=pex\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:117:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: I3, encoding=explicit] Fen=dor implies Osk=pex\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:129:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: I4, encoding=explicit] Vok=dor implies Osk=pex\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:141:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: I5, encoding=distributed] Zef=dor implies Osk=pex\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:154:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: I6, encoding=distributed] Fen=dor implies Tal=pex\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:167:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: D2] O2 fails without E5 dependency satisfied\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: false\n    Received: true\n\n      184 |     w = apply(w, \"advanceZef1\");  // E2: pex\n      185 |     w = apply(w, \"advanceVok1\");  // E1: pex\n    > 186 |     expect(tryApply(w, \"advanceVok2\").ok).toBe(false); // E5 still nim\n          |                                           ^\n      187 |   });\n      188 |\n      189 |   test(\"[element: D3] O3 fails without E3 dependency satisfied\", () => {\n\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:186:43)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: D4] O4 fails without E3 dependency satisfied\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:199:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: D7] O8 fails without E5 dependency satisfied\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:232:9)\n\n  ● H(G) — Present^beh micro-tests (per semantic element x in G) › [element: D8] O8 fails without E2 dependency satisfied\n\n    unknown operation: advanceOsk1\n\n      16 |   const result = protocol.applyOperation(world, op);\n      17 |   if (!result.success) {\n    > 18 |     throw new Error(result.error ?? `operation failed: ${op}`);\n         |           ^\n      19 |   }\n      20 |   return result.newState;\n      21 | }\n\n      at apply (hidden_regression_tests/H_G.test.ts:18:11)\n      at Object.<anonymous> (hidden_regression_tests/H_G.test.ts:241:9)\n",
+        "name": "/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-CzAX2T/hidden_regression_tests/H_G.test.ts",
+        "startTime": 1788681437319,
+        "status": "failed",
+        "summary": ""
+      }
+    ],
+    "wasInterrupted": false
+  }
+}

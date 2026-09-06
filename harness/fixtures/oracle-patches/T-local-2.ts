@@ -31,7 +31,6 @@ export function resetVok(world: WorldState): WorldState {
 `;
 
   return {
-    ...files,
     "src/vok/rules.ts": currentVokRules + resetVokCode,
     "src/protocol_adapter.ts": registerOperation(
       currentProtocolAdapter,

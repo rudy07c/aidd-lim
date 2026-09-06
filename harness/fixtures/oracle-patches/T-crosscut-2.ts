@@ -6,11 +6,11 @@
 //
 // groundTruthDelta:
 //   O11: Vok(E1) q1(nim) -> q3(dor)  AND  Zef(E2) q1(nim) -> q3(dor)  [複合operation]
-//   preconditions: Tal(E3) = q2(pex)
+//   preconditions: Tal(E3) = q2(pex)  AND  Osk(E5) = q2(pex)
 //
 // jumpVokZef は VokとZefを同時にdorへ一気に進める複合operation。
-// E1=dor→E3=pex（I1）とE2=dor→E3=pex（I2）の両方を同時に保証するため、
-// preconditionにE3=q2（Tal=pex）が必須。
+// I1: Vok=dor → Tal=pex, I2: Zef=dor → Tal=pex のため Tal=pex が必須。
+// I4: Vok=dor → Osk=pex のため Osk=pex が必須。
 //
 // 実装はvok/rules.tsに追加する（compound operationの配置は任意だが、
 // Vok側を主とみなした配置にする）。
@@ -24,10 +24,11 @@ export function applyOracle(
   const jumpVokZefCode = `
 /**
  * jumpVokZef (= O11): Vok: nim -> dor  AND  Zef: nim -> dor  [複合operation]
- * precondition: Tal must be 'pex' (required for Invariant I1 and I2).
+ * preconditions: Tal must be 'pex' AND Osk must be 'pex'
  *
- * I1: Vok=dor → Tal=pex  (この precondition で保証)
+ * I1: Vok=dor → Tal=pex  (Tal=pex precondition で保証)
  * I2: Zef=dor → Tal=pex  (同じ precondition で保証)
+ * I4: Vok=dor → Osk=pex  (Osk=pex precondition で保証)
  */
 export function jumpVokZef(world: WorldState): WorldState {
   if (world.vok !== "nim") {
@@ -39,12 +40,14 @@ export function jumpVokZef(world: WorldState): WorldState {
   if (world.tal !== "pex") {
     throw new Error("jumpVokZef: requires Tal to be 'pex' (Invariant I1+I2 guard)");
   }
+  if (world.osk !== "pex") {
+    throw new Error("jumpVokZef: requires Osk to be 'pex' (Invariant I4 guard)");
+  }
   return { ...world, vok: "dor", zef: "dor" };
 }
 `;
 
   return {
-    ...files,
     "src/vok/rules.ts": currentVokRules + jumpVokZefCode,
     "src/protocol_adapter.ts": registerOperation(
       currentProtocolAdapter,
