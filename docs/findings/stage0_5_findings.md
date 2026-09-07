@@ -746,7 +746,13 @@ B=4K/8K/Full が全て ctx=2862t（repo 全体 = 2862t）に収束するため b
 
 ### 異常: T-crosscut-3 at B=4K
 
-B=1K, 2K, 8K, Full では ✅ だが B=4K では vis=0/1, hid=0/1（コントラクト違反）で ❌。
+B=1K, 2K, 8K, Full では ✅ だが B=4K では vis=0/1, hid=0/1 で ❌。
+`protocolContractViolated: false`（WorldProtocol 契約違反ではない）。
+
+実際の失敗原因はテストスイートのコンパイルエラー：
+`repository/src/vok/rules.ts:47` で `fen: string` が `FenState` 型に非適合（TS2322）。
+エージェントが生成したコードの型エラーであり、protocol_adapter.ts の契約違反とは別系統。
+
 B=4K の ctx も 2862t（= Full と同じ）のため context 量の違いではない。
 LLM のサンプリング確率的失敗（シングルラン）と判断する。この budget 点でのみ観測された散発的退行。
 

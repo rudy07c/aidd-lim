@@ -458,6 +458,13 @@ state transition prediction （例：この operation 実行後の状態はど�
 
 成功基準は「高得点」ではなく**測定感度**があること。
 
+**ゲート達成（2026-09-07）**：全20タスク・6段階budget（B∈{0, 1K, 2K, 4K, 8K, Full}）の較正ラン完了。
+System1（R^sem_B、boolean主指標）: 0.50 → 0.58 → 1.00 の単調増加（B≥2Kで飽和）。
+System2（M̂_B、20タスク）: 0.00 → 0.05 → 0.70（B≥2Kでプラトー）。
+dose-response curveは「budgetに応じ滑らかに改善」パターンを満たし、測定器として機能することを確認。
+参照ログ: `runs/stage0_5/stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T08-25-10/`
+参照文書: `docs/stage0_5_plan.md`、`docs/findings/stage0_5_findings.md`（F1〜F10）
+
 ### Stage 1：Context Decomposition（診断実験）
 
 - 目的：性能差のうち「情報量」と「retrieval」がそれぞれどれだけ寄与するかを分離する
