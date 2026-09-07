@@ -547,6 +547,119 @@ Phase 5 では、拡大後の B=1K 内訳を再確認し、advanceZef2 相当の
 
 ---
 
+## F9: mc/stp型プローブの構造的類推問題と R^sem_B 主指標の boolean 型への変更
+
+**日付**：2026-09-07
+**Phase**：Phase 5（v1拡大世界較正 Step 8）
+**元データ**：`runs/stage0_5/stage0_5-8task-anthropic-claude-haiku-4-5-20251001__2026-09-07T05-36-58/`
+**実行条件**：backend=anthropic, model=claude-haiku-4-5-20251001, budgets=[0, 1K, 2K, 4K, 8K, Full], 8 tasks
+
+### 問題の発見経緯
+
+Phase 5（v1拡大世界）の Step 8 較正実行後、System1 B=1K で mc=8/8（満点）・stp=13/13（満点）が得られた。
+これは v0.3 世界での F7・F8（advanceZef2 命名パターン依存、23%残存）と類似した問題が、
+拡大後の世界でも起きていないかを確認する必要があると判断し、B=1K の agent_response を分析した。
+
+### 観察：mc/stp の回答経路
+
+**`agent_response_batch0.json` より（mc+bool バッチ）：**
+```
+"From protocol_adapter.ts operationTable:
+  advanceVok1, advanceVok2, advanceZef1, advanceZef2, advanceTal1, advanceOsk1, advanceFen1, advanceFen2"
+```
+mc 型 8 問すべてが `operationTable` からの直読み。`vok/rules.ts`・`zef/rules.ts`・`tal/rules.ts` は
+B=1K context に含まれていないが、それでも全問正解した。
+
+**`agent_response_batch1.json` より（stp バッチ）：**
+```
+"Vok rules (referenced in protocol_adapter.ts but not shown, so I must infer)"
+"Zef rules (referenced in protocol_adapter.ts but not shown, so I must infer)"
+"Tal rules (src/tal/rules.ts not shown but referenced)"
+```
+- Fen/Osk（6問）: `fen/rules.ts`・`osk/rules.ts` が context に含まれており、実際のコードから正答 ✅
+- Vok/Zef/Tal（7問）: 実装ファイル不在のため「I must infer」と明示しつつ、`fen/rules.ts` の
+  コメント構造（`D3: O3 depends on E3` 等）+ 命名規則から推測・捏造。偶然すべて正解 ⚠️
+
+### v0.3 世界との比較（本質的に同一の問題）
+
+| 世界 | 漏洩経路 | 残存範囲 |
+|---|---|---|
+| v0.3 (F7/F8) | operationTable（zef/rules.ts が 13% 切り詰め）| mc/stp の 23%（3/13問） |
+| v1 (F9) | operationTable（vok/zef/tal/rules.ts が context 外）| mc=8/8 全問・stp=7/13問 |
+
+v1 ではリポジトリが大きくなり、B=1K に含まれるファイルが少なくなったため、
+operationTable への依存がより広範囲に及ぶようになった。
+
+「規則的に設計された Synthetic World には、賢いモデルが類推できる構造的パターンが必然的に生まれる」
+という本質的な性質であり、個別修正では根本解決にならない。
+
+### 誤答確認：boolean 型は genuine なコード読解を要求している
+
+B=1K で誤答した 2 問（bool-13・bool-19）はいずれも I5 invariant（Zef=dor → Osk=pex、
+distributed 経路）に対応しており、context に含まれるどのファイルからも推論不可能。
+モデルは正しく「false」と答えた（正解は「true」）。
+
+### 対処：R^sem_B の主指標を boolean 型のみに変更
+
+mc/stp（21問）は「reference probes」として引き続き実行・記録するが、
+主指標（dose-response curve の軸）からは除外する。
+
+**変更内容**：
+- `calibration-runner.ts`：`System1BudgetResult` に `boolNumCorrect`・`boolNumTotal`・`boolAccuracy` を追加。
+  コンソール出力で boolean 型を `[PRIMARY]`、全体集計を `[REF]` として明示。
+- `calibration-logging.ts`：summary.json / meta.json に boolean 主指標フィールドを追加。
+- mc/stp が reference であることの理由を型定義コメントに記録。
+
+### boolean 型のみでの dose-response curve（Run 3 ログ再集計）
+
+既存の Run 3 ログ（`runs/stage0_5/stage0_5-8task-anthropic-claude-haiku-4-5-20251001__2026-09-07T05-36-58/`）
+から boolean 型のみを抽出した dose-response curve：
+
+| Budget | ctx tokens | bool | R^sem_B (boolean only) |
+|---|---|---|---|
+| B=0    | 0t    | 0/12  | 0.00 |
+| B=1K   | 1000t | 10/12 | 0.83 |
+| B=2K   | 2000t | 11/12 | 0.92 |
+| B=4K   | 2862t | 12/12 | 1.00 |
+| B=8K   | 2862t | 12/12 | 1.00 |
+| BFull  | 2862t | 12/12 | 1.00 |
+
+0.00 → 0.83 → 0.92 → 1.00 の滑らかな改善。4.3節のパターン4「budget に応じて改善」を満たす。
+B=4K/8K/Full の横ばいは F2 の budget degeneracy（repo=2862t）による。
+
+### 参考：mc/stp（reference probes）の dose-response
+
+| Budget | mc (8問) | stp (13問) |
+|---|---|---|
+| B=0   | 0/8 | 0/13 |
+| B=1K  | 8/8 | 13/13 |
+| B=2K+ | 8/8 | 13/13 |
+
+B=1K から即時飽和。operationTable が B=1K context に含まれるためコードを読まずに正答できる。
+測定器としての感度はない。
+
+### なぜ注目すべきか
+
+- **2回の修正（選択肢隠し化 → 記述式化）を経ても、mc/stp の漏洩が異なる経路で再発した。**
+  これは実装のバグではなく、「命名規則から意味を推定できる Synthetic World の構造的性質」という
+  根本的な制約である。
+- **boolean 型のみが genuine なコード読解を要求する測定器として機能し続けている。**
+  これは I5 への正しい誤答（context に情報がないから解けない）で実証されている。
+- Phase 4 較正の最終ゲート判定は、boolean 型のみの dose-response（0.00 → 0.83 → 0.92 → 1.00）
+  で行うべきことが確定した。
+
+### 今後への示唆
+
+- **mc/stp を reference として保持する理由**：完全廃止すると「関数名の推測力」という
+  別の側面の情報が失われる。reference として記録し、budget 変化での挙動の違いを
+  boolean との対比として観察する価値がある。
+- Phase 5 の Phase 4 再較正以降（Step 9 のレポート）で、boolean 型の dose-response が
+  4.3節のパターン4を満たすことを確認したら、Phase 4 較正を正式完了とする。
+- Phase 6（Stage 1 引き継ぎ）では、probe-bank の boolean 比率をさらに高める方向が望ましい。
+  現状 12/33（36%）を、目標として 50%+ を検討する。
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・

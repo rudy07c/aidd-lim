@@ -65,6 +65,19 @@ export interface System1BudgetResult {
   numCorrect: number;
   numTotal: number;
   accuracy: number;
+  /**
+   * R^sem_B の主指標（boolean型プローブのみ）。
+   *
+   * mc/stp型はprotocol_adapter.tsのoperationTableや命名規則から
+   * コードを読まずに回答できることが判明（F9: 構造的類推問題）。
+   * boolean型（invariant違反チェック）はコードを読まなければ解けないため、
+   * コードへの意味理解を測定する主指標として採用。
+   *
+   * mc/stpはリファレンスとして引き続き記録するが主指標には含めない。
+   */
+  boolNumCorrect: number;
+  boolNumTotal: number;
+  boolAccuracy: number;
   byType: Record<string, { total: number;  correct: number; accuracy: number }>;
   probeDetails: System1TaskResult[];
   /** anthropic backend のみ。API呼び出し1回分の所要時間（ms） */
@@ -353,6 +366,7 @@ async function runSystem1(
   const scoringResults = scoreProbes(probes, answers);
   const summary = summarizeScores(scoringResults, probes);
 
+  const probeTypeMap = new Map(probes.map((p) => [p.probeId, p.type]));
   const probeDetails: System1TaskResult[] = scoringResults.map((r) => {
     const probe = probes.find((p) => p.probeId === r.probeId)!;
     return {
@@ -365,12 +379,21 @@ async function runSystem1(
     };
   });
 
+  // boolean型プローブのみを集計（R^sem_B の主指標）
+  const boolResults = scoringResults.filter((r) => probeTypeMap.get(r.probeId) === "boolean");
+  const boolNumCorrect = boolResults.filter((r) => r.correct).length;
+  const boolNumTotal = boolResults.length;
+  const boolAccuracy = boolNumTotal > 0 ? boolNumCorrect / boolNumTotal : 0;
+
   return {
     budget,
     contextTokens: ctx.totalTokens,
     numCorrect: summary.correct,
     numTotal: summary.total,
     accuracy: summary.accuracy,
+    boolNumCorrect,
+    boolNumTotal,
+    boolAccuracy,
     byType: summary.byType,
     probeDetails,
     latencyMs,
@@ -744,16 +767,19 @@ if (require.main === module) {
     }
 
     // ── 系統1 ──
-    console.log("\n├─ 系統1 (R^sem_B): セマンティックプローブ\n│");
+    // 主指標: boolean型プローブのみ（R^sem_B）
+    // mc/stp型はoperationTableや命名規則から推測可能なため reference のみ（F9参照）
+    console.log("\n├─ 系統1 (R^sem_B): セマンティックプローブ\n│  主指標: boolean型のみ / mc・stpはreference\n│");
     for (const s1 of result.system1) {
       const label = s1.budget === "full" ? "Full" : `${(s1.budget as number) / 1000}K`;
       const extras = [
         s1.latencyMs ? `${s1.latencyMs}ms` : "",
         s1.tokenUsage ? `in=${s1.tokenUsage.input} out=${s1.tokenUsage.output}` : "",
       ].filter(Boolean).join(" ");
-      console.log(`│  B=${label} (ctx=${s1.contextTokens}t): ${s1.numCorrect}/${s1.numTotal} correct (acc=${s1.accuracy.toFixed(2)})${extras ? " " + extras : ""}`);
+      console.log(`│  B=${label} (ctx=${s1.contextTokens}t): [PRIMARY] bool=${s1.boolNumCorrect}/${s1.boolNumTotal} (${s1.boolAccuracy.toFixed(2)}) | [REF] total=${s1.numCorrect}/${s1.numTotal} (${s1.accuracy.toFixed(2)})${extras ? " " + extras : ""}`);
       for (const [type, stat] of Object.entries(s1.byType)) {
-        console.log(`│    ${type}: ${stat.correct}/${stat.total}`);
+        const marker = type === "boolean" ? " *" : "";
+        console.log(`│    ${type}: ${stat.correct}/${stat.total}${marker}`);
       }
     }
 

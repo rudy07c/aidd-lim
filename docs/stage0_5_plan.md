@@ -264,6 +264,38 @@ B=2K: 5/6 (0.83)  — T-local-1❌（全 budget で継続失敗、F6 参照）
 
 advanceZef2 の B=1K 命名パターン依存（3問 / 23%）は設計ミスではなく budget 制御の帰結として Phase 5 へ持ち越し確定（F8 参照）。
 
+---
+
+**Phase 5 Step 8 較正結果と R^sem_B 主指標変更（2026-09-07 確定）**
+
+Phase 5 v1 拡大世界で実施した 8-task 6-budget 較正の分析から、mc/stp 型プローブの
+構造的類推問題（F9）が発覚し、**R^sem_B の主指標を boolean 型プローブのみに変更した**。
+
+**変更方針**：
+- **主指標**：`boolAccuracy`（boolean 型 12 問のみ）— 「コードを読まなければ解けない」確認済み
+- **reference**：`accuracy`（全 33 問）— mc/stp を含む。operationTable 経由の漏洩あり、感度測定には使わない
+
+**boolean 型のみの dose-response curve（Run 3 ログ再集計）**：
+```
+B=0:    0/12 (0.00)
+B=1K:  10/12 (0.83)
+B=2K:  11/12 (0.92)
+B=4K:  12/12 (1.00)  ctx=2862t（F2 degeneracy）
+B=8K:  12/12 (1.00)  ctx=2862t
+BFull: 12/12 (1.00)  ctx=2862t
+```
+
+4.3節の判定パターン：**「budget に応じて滑らかに改善（→ 測定器として使用可能）」** ✅
+
+System2 dose-response（v1 8-task）：
+```
+B=0:   0/8 (0.00)
+B=1K:  1/8 (0.125)
+B=2K+: 6/8 (0.75)   T-local-1・T-invariant-stress-5 が全 budget で継続失敗
+```
+
+**Phase 4/5 最終判定（boolean 型主指標ベース）：測定器として機能 → Phase 5 較正完了** ✅
+
 ### Phase 5（条件付き）：規模拡大
 
 Phase 4の結果が「測定器として使用可能」（budgetに応じ滑らかに改善）であれば、Phase 5はスキップしてPhase 6（命名方式Bとの比較、正式な較正完了）へ進んでよい。

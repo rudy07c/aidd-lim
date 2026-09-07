@@ -68,6 +68,11 @@ export function writeCalibrationLog(
     system1: result.system1.map((s1) => ({
       budget: s1.budget,
       contextTokens: s1.contextTokens,
+      // 主指標: boolean型プローブのみ（mc/stpはreference。F9参照）
+      boolAccuracy: s1.boolAccuracy,
+      boolNumCorrect: s1.boolNumCorrect,
+      boolNumTotal: s1.boolNumTotal,
+      // 参考: 全プローブ集計
       accuracy: s1.accuracy,
       numCorrect: s1.numCorrect,
       numTotal: s1.numTotal,
@@ -123,6 +128,11 @@ function writeSystem1BudgetLog(runDir: string, s1: System1BudgetResult): void {
   writeJson(dir, "meta.json", {
     budget: s1.budget,
     contextTokens: s1.contextTokens,
+    // 主指標: boolean型プローブのみ（mc/stpはreference。F9参照）
+    boolAccuracy: s1.boolAccuracy,
+    boolNumCorrect: s1.boolNumCorrect,
+    boolNumTotal: s1.boolNumTotal,
+    // 参考: 全プローブ集計
     accuracy: s1.accuracy,
     numCorrect: s1.numCorrect,
     numTotal: s1.numTotal,
