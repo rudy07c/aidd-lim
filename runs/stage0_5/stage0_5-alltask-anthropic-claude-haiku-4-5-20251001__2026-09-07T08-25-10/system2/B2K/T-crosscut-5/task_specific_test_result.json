@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-crosscut-5: boostTalFen boostTalFen: Tal and Fen both advance nim→pex when Osk=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-5: boostTalFen boostTalFen: fails when Osk=nim",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-5: boostTalFen boostTalFen: Vok and Zef are unchanged",
+      "passed": true
+    }
+  ]
+}

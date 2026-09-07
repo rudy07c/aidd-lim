@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-local-2: resetVok resetVok: Vok pex→nim",
+      "passed": true
+    },
+    {
+      "testName": "T-local-2: resetVok resetVok: fails when Vok=nim (fromState guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-local-2: resetVok resetVok: Tal and Zef states are unchanged",
+      "passed": true
+    }
+  ]
+}

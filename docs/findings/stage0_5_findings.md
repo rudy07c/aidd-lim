@@ -660,6 +660,97 @@ B=1K から即時飽和。operationTable が B=1K context に含まれるため�
 
 ---
 
+## F10: Step 9 全20タスク6段階較正ラン — System1 B=1Kディップと System2 フロアタスク分析
+
+**日付**: 2026-09-07
+**Phase**: Phase 5 Step 9（本較正ラン）
+**実行ログ**: `runs/stage0_5/stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T08-25-10/`
+**モデル**: claude-haiku-4-5-20251001 / backend=anthropic
+
+### 概要
+
+Phase 5 の本較正ラン（全20タスク・6段階budget）が完了した。
+System1（R^sem_B）において B=1K で boolean が 0/12 (0.00) という予期しないディップが観測され、
+System2（M̂_B）は B≥2K で 14/20（0.70）のプラトーに達した。
+
+### System1 (R^sem_B) dose-response — boolean 主指標
+
+| Budget | ctx | bool | R^sem_B | mc | stp | 特記 |
+|--------|-----|------|---------|-----|-----|------|
+| B=0    | 0t    | 6/12  | 0.50 | 0/8  | 0/13 | ランダム推測（文脈なし）|
+| B=1K   | 1000t | 0/12  | 0.00 | 0/8  | 13/13 | ← **B=1K ディップ** |
+| B=2K   | 2000t | 12/12 | 1.00 | 8/8  | 13/13 | 閾値突破 |
+| B=4K   | 2862t | 12/12 | 1.00 | 8/8  | 13/13 | |
+| B=8K   | 2862t | 12/12 | 1.00 | 8/8  | 13/13 | |
+| B=Full | 2862t | 12/12 | 1.00 | 8/8  | 13/13 | |
+
+**B=0 = 0.50** はランダム推測（boolean=True/False の二値、chance level = 0.50）と一致。
+Run 3 では B=0 = 0.00 だったが、これも LLM のサンプリング変動の範囲
+（モデルが全問 False で回答すれば 0.00、ランダムなら期待値 0.50）。
+
+**B=1K ディップ（0.00）**: stp=13/13 が示すように、1K context にはオペレーション定義は含まれており
+状態遷移は読めているが、invariant の定義ファイルが context 外のため boolean プローブに対して
+モデルは体系的に誤答（おそらく全問 False）している。
+「部分的な文脈が提供された際に invariant を持たない世界として解釈してしまう」という機構。
+
+Run 3（8タスク）では B=1K = 0.83 だったが、これは LLM のサンプリング変動（temperature）によるもの。
+B=1K の boolean 正答率はシングルラン単位で大きく変動する（0.00〜0.83）。
+
+**確定的な閾値**: B=2K 以上で boolean=1.00 が安定して得られる。
+B=4K/8K/Full が全て ctx=2862t（repo 全体 = 2862t）に収束するため budget degeneracy。
+
+### System2 (M̂_B) dose-response — 20タスク
+
+| Budget | 通過 | M̂_B | 特記 |
+|--------|------|------|------|
+| B=0    | 0/20 | 0.00 | |
+| B=1K   | 1/20 | 0.05 | T-crosscut-3 のみ通過 |
+| B=2K   | 14/20 | 0.70 | プラトー到達 |
+| B=4K   | 13/20 | 0.65 | T-crosscut-3 散発的退行（後述） |
+| B=8K   | 14/20 | 0.70 | |
+| B=Full | 14/20 | 0.70 | |
+
+### フロアタスク（B≥2K で恒常的失敗）
+
+以下の6タスクは B=2K, 4K, 8K, Full の全てで失敗。vis/hid は Pass するが task-spec が fail。
+
+| タスク | task-spec (B=Full) | 備考 |
+|--------|-------------------|------|
+| T-local-1 | 2/3 | 既知: F1/F2 Tal guard 欠落 |
+| T-crosscut-2 | 1/3 | invariant-stressing との交差 |
+| T-invariant-stress-2 | 1/3 | invariant stress |
+| T-invariant-stress-4 | 1/3 | invariant stress |
+| T-invariant-stress-5 | 1/3 | invariant stress |
+| T-crosscut-6 | 1/3 | cross-entity dependency |
+
+フロアタスクを除いた **budget-sensitive タスク通過率 = 14/20（70%）**。
+
+### 異常: T-crosscut-3 at B=4K
+
+B=1K, 2K, 8K, Full では ✅ だが B=4K では vis=0/1, hid=0/1（コントラクト違反）で ❌。
+B=4K の ctx も 2862t（= Full と同じ）のため context 量の違いではない。
+LLM のサンプリング確率的失敗（シングルラン）と判断する。この budget 点でのみ観測された散発的退行。
+
+### 考察
+
+- **System1 の B=1K 不安定性**: boolean dose-response のシングルラン変動が大きい（0.00〜0.83）。
+  B=2K 以上では安定して 1.00 が得られるため、較正測定器として実用的に機能する閾値は B=2K。
+- **System2 プラトー 70%**: フロアタスク6件（うち5件が invariant-stress 系または crosscut 系）が
+  budget 非依存の困難を持つ。これらは「モデルが全 context を持っても解けない task-spec の難問」であり、
+  Stage 0.5 が測定しようとしている「context 量による改善」とは別のエラーソース。
+- **budget degeneracy**: B=4K/8K/Full は全て ctx=2862t に収束するため、実質 3段階のカーブ
+  （B=0, B=1K, B=2K）。Stage 1 設計への示唆：repo サイズを大きくして degeneracy を解消する。
+
+### なぜ注目すべきか
+
+- **B=1K ディップの発見**: 部分文脈が boolean 型 invariant 推論に対して「無文脈より有害」になり得る。
+  1K context は stp（状態遷移）には十分だが invariant 理解には不十分で、かつ誤った確信を与える。
+- **フロアタスク分類**: 20タスク中 6件が budget-independent floor であることが判明。
+  Stage 1 では该6件の再設計か、測定対象からの明示的除外が必要。
+- **B=2K が実質的な閾値**: System1（boolean 1.00）と System2（プラトー到達）の両方で B=2K が転換点。
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・

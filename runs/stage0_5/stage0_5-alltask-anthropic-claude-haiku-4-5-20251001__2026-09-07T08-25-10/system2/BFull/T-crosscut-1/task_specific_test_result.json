@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Zef and Tal both advance nim→pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: Vok is unchanged",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-1: kindleBoth kindleBoth: is registered as a known operation",
+      "passed": true
+    }
+  ]
+}

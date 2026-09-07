@@ -1,0 +1,7 @@
+{
+  "budget": 2000,
+  "contextTokens": 2000,
+  "passRate": 0.7,
+  "numPassed": 14,
+  "numTotal": 20
+}

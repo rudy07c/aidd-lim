@@ -1,0 +1,9 @@
+{
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m73\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2307: \u001b[0mCannot find module './types' or its corresponding type declarations.\n\n    \u001b[7m1\u001b[0m import { Operation, EntityState, WorldProtocol, AbstractSnapshot } from './types';\n    \u001b[7m \u001b[0m \u001b[91m                                                                        ~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m9\u001b[0m:\u001b[93m10\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2353: \u001b[0mObject literal may only specify known properties, and 'id' does not exist in type 'VokState'.\n\n    \u001b[7m9\u001b[0m   vok: { id: 'vok', stage: 'initial' },\n    \u001b[7m \u001b[0m \u001b[91m         ~~\u001b[0m\n\n      \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m5\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m5\u001b[0m   vok: VokState;\n        \u001b[7m \u001b[0m \u001b[96m  ~~~\u001b[0m\n        The expected type comes from property 'vok' which is declared here on type 'WorldState'\n"
+    }
+  ]
+}

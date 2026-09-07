@@ -1,0 +1,9 @@
+{
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m36\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2307: \u001b[0mCannot find module './types' or its corresponding type declarations.\n\n    \u001b[7m1\u001b[0m import type { WorldProtocol } from './types';\n    \u001b[7m \u001b[0m \u001b[91m                                   ~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m3\u001b[0m:\u001b[93m33\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2307: \u001b[0mCannot find module './types' or its corresponding type declarations.\n\n    \u001b[7m3\u001b[0m import type { WorldState } from './types';\n    \u001b[7m \u001b[0m \u001b[91m                                ~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m31\u001b[0m:\u001b[93m13\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS18046: \u001b[0m'entity' is of type 'unknown'.\n\n    \u001b[7m31\u001b[0m         id: entity.id,\n    \u001b[7m  \u001b[0m \u001b[91m            ~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m32\u001b[0m:\u001b[93m15\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS18046: \u001b[0m'entity' is of type 'unknown'.\n\n    \u001b[7m32\u001b[0m         name: entity.name,\n    \u001b[7m  \u001b[0m \u001b[91m              ~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m33\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS18046: \u001b[0m'entity' is of type 'unknown'.\n\n    \u001b[7m33\u001b[0m         position: entity.position,\n    \u001b[7m  \u001b[0m \u001b[91m                  ~~~~~~\u001b[0m\n"
+    }
+  ]
+}

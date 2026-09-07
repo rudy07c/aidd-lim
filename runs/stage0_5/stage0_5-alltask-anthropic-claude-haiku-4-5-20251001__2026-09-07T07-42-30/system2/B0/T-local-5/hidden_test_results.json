@@ -1,0 +1,9 @@
+{
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m62\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2307: \u001b[0mCannot find module './types' or its corresponding type declarations.\n\n    \u001b[7m1\u001b[0m import { WorldProtocol, EntityState, AbstractSnapshot } from './types';\n    \u001b[7m \u001b[0m \u001b[91m                                                             ~~~~~~~~~\u001b[0m\n"
+    }
+  ]
+}

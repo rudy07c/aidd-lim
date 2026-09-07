@@ -1,0 +1,60 @@
+{
+  "testCases": [
+    {
+      "testName": "advanceVok1: nim -> pex succeeds from initial state",
+      "passed": true
+    },
+    {
+      "testName": "advanceVok2: fails if Zef is not 'pex'",
+      "passed": false,
+      "error": "Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-JJaemO/repository/tests/rules.visible.test.ts:21:32)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "advanceZef1: fails if Tal is not 'pex'",
+      "passed": false,
+      "error": "Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-JJaemO/repository/tests/rules.visible.test.ts:26:32)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "advanceVok2: succeeds once Zef is 'pex' and Osk is 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: fails if Tal is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: succeeds once Tal is 'pex' and Fen is 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "advanceOsk1: nim -> pex succeeds from initial state",
+      "passed": true
+    },
+    {
+      "testName": "advanceOsk1: fails if Osk is not 'nim'",
+      "passed": true
+    },
+    {
+      "testName": "advanceFen1: fails if Osk is not 'pex'",
+      "passed": false,
+      "error": "Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-JJaemO/repository/tests/rules.visible.test.ts:91:32)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "advanceFen1: succeeds once Osk is 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceFen2: fails if Zef is not 'pex'",
+      "passed": false,
+      "error": "Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (/private/var/folders/0v/xgc5r25d5h5bf4xm6h9z4nkm0000gn/T/aidd-ilm-scoring-JJaemO/repository/tests/rules.visible.test.ts:108:32)\n    at Promise.then.completed (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+    },
+    {
+      "testName": "advanceFen2: succeeds once Osk is 'pex' and Zef is 'pex'",
+      "passed": true
+    }
+  ]
+}

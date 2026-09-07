@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-local-5: recoverZef recoverZef: Zef dor→pex",
+      "passed": true
+    },
+    {
+      "testName": "T-local-5: recoverZef recoverZef: fails when Zef=nim (fromState guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-local-5: recoverZef recoverZef: Tal and Fen states are unchanged",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-crosscut-3: advanceOskFen advanceOskFen: Osk and Fen both advance nim→pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-3: advanceOskFen advanceOskFen: Vok and Zef are unchanged",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-3: advanceOskFen advanceOskFen: fails when Osk is already pex",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-local-4: recoverVok recoverVok: Vok dor→pex",
+      "passed": true
+    },
+    {
+      "testName": "T-local-4: recoverVok recoverVok: fails when Vok=nim (fromState guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-local-4: recoverVok recoverVok: Tal and Osk states are unchanged",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,233 @@
+[
+  {
+    "probeId": "A-obfuscated-mc-1",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceVok1"
+  },
+  {
+    "probeId": "A-obfuscated-mc-2",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceVok2"
+  },
+  {
+    "probeId": "A-obfuscated-mc-3",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceZef1"
+  },
+  {
+    "probeId": "A-obfuscated-mc-4",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceZef2"
+  },
+  {
+    "probeId": "A-obfuscated-mc-5",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceTal1"
+  },
+  {
+    "probeId": "A-obfuscated-mc-6",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceOsk1"
+  },
+  {
+    "probeId": "A-obfuscated-mc-7",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceFen1"
+  },
+  {
+    "probeId": "A-obfuscated-mc-8",
+    "type": "multiple_choice",
+    "correct": false,
+    "agentAnswer": "Unable to determine - no repository files provided",
+    "correctAnswer": "advanceFen2"
+  },
+  {
+    "probeId": "A-obfuscated-bool-9",
+    "type": "boolean",
+    "correct": false,
+    "agentAnswer": "false",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-10",
+    "type": "boolean",
+    "correct": false,
+    "agentAnswer": "false",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-11",
+    "type": "boolean",
+    "correct": false,
+    "agentAnswer": "false",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-12",
+    "type": "boolean",
+    "correct": false,
+    "agentAnswer": "false",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-13",
+    "type": "boolean",
+    "correct": false,
+    "agentAnswer": "false",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-14",
+    "type": "boolean",
+    "correct": false,
+    "agentAnswer": "false",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-15",
+    "type": "boolean",
+    "correct": true,
+    "agentAnswer": "true",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-16",
+    "type": "boolean",
+    "correct": true,
+    "agentAnswer": "true",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-17",
+    "type": "boolean",
+    "correct": true,
+    "agentAnswer": "true",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-18",
+    "type": "boolean",
+    "correct": true,
+    "agentAnswer": "true",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-19",
+    "type": "boolean",
+    "correct": true,
+    "agentAnswer": "true",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-bool-20",
+    "type": "boolean",
+    "correct": true,
+    "agentAnswer": "true",
+    "correctAnswer": "true"
+  },
+  {
+    "probeId": "A-obfuscated-stp-37",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceVok1"
+  },
+  {
+    "probeId": "A-obfuscated-stp-38",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceVok2"
+  },
+  {
+    "probeId": "A-obfuscated-stp-39",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "operation fails"
+  },
+  {
+    "probeId": "A-obfuscated-stp-40",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceZef1"
+  },
+  {
+    "probeId": "A-obfuscated-stp-41",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "operation fails"
+  },
+  {
+    "probeId": "A-obfuscated-stp-42",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceZef2"
+  },
+  {
+    "probeId": "A-obfuscated-stp-43",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "operation fails"
+  },
+  {
+    "probeId": "A-obfuscated-stp-44",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceTal1"
+  },
+  {
+    "probeId": "A-obfuscated-stp-45",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceOsk1"
+  },
+  {
+    "probeId": "A-obfuscated-stp-46",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceFen1"
+  },
+  {
+    "probeId": "A-obfuscated-stp-47",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "operation fails"
+  },
+  {
+    "probeId": "A-obfuscated-stp-48",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "advanceFen2"
+  },
+  {
+    "probeId": "A-obfuscated-stp-49",
+    "type": "state_transition_prediction",
+    "correct": false,
+    "agentAnswer": "Unable to answer - no repository files provided",
+    "correctAnswer": "operation fails"
+  }
+]

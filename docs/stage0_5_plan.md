@@ -296,6 +296,36 @@ B=2K+: 6/8 (0.75)   T-local-1・T-invariant-stress-5 が全 budget で継続失�
 
 **Phase 4/5 最終判定（boolean 型主指標ベース）：測定器として機能 → Phase 5 較正完了** ✅
 
+**Phase 5 Step 9 本較正ラン完了（2026-09-07）**
+
+全20タスク・6段階budget で本較正を実施。
+実行ログ: `runs/stage0_5/stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T08-25-10/`
+
+System1 dose-response（boolean 主指標）：
+```
+B=0:    6/12 (0.50)   ランダム推測（文脈なし、chance level=0.50）
+B=1K:   0/12 (0.00)   ← B=1K ディップ（stp=13/13 だが boolean=0/12、F10 参照）
+B=2K:  12/12 (1.00)   閾値突破
+B=4K:  12/12 (1.00)
+B=8K:  12/12 (1.00)
+BFull: 12/12 (1.00)   B=4K/8K/Full はいずれも ctx=2862t（budget degeneracy）
+```
+
+System2 dose-response（20タスク）：
+```
+B=0:   0/20 (0.00)
+B=1K:  1/20 (0.05)   T-crosscut-3 のみ通過
+B=2K: 14/20 (0.70)   プラトー到達
+B=4K: 13/20 (0.65)   T-crosscut-3 散発的退行（確率的失敗）
+B=8K: 14/20 (0.70)
+BFull:14/20 (0.70)
+```
+
+フロアタスク（B≥2K で恒常的失敗）: T-local-1（F1/F2）、T-crosscut-2、
+T-invariant-stress-2/4/5、T-crosscut-6 の計6件。
+
+**Stage 0.5 較正完了** ✅
+
 ### Phase 5（条件付き）：規模拡大
 
 Phase 4の結果が「測定器として使用可能」（budgetに応じ滑らかに改善）であれば、Phase 5はスキップしてPhase 6（命名方式Bとの比較、正式な較正完了）へ進んでよい。

@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-invariant-stress-4: turboVokZef turboVokZef: Vok and Zef pex→dor when Tal=pex and Osk=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-4: turboVokZef turboVokZef: fails when Vok=nim (fromState guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-4: turboVokZef turboVokZef: Tal and Osk remain pex after operation",
+      "passed": true
+    }
+  ]
+}

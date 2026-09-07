@@ -1,0 +1,17 @@
+{
+  "taskId": "T-crosscut-2",
+  "passed": false,
+  "visiblePassed": 0,
+  "visibleTotal": 1,
+  "hiddenPassed": 0,
+  "hiddenTotal": 1,
+  "taskSpecificPassed": 0,
+  "taskSpecificTotal": 1,
+  "protocolContractViolated": false,
+  "latencyMs": 12403,
+  "tokenUsage": {
+    "input": 387,
+    "output": 1491
+  },
+  "error": null
+}

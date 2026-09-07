@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-invariant-stress-1: fastTrackZef fastTrackZef: Zef nim→dor when Tal=pex and Fen=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-1: fastTrackZef fastTrackZef: fails when Tal=nim (Invariant I2 guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-1: fastTrackZef fastTrackZef: Tal remains pex after operation",
+      "passed": true
+    }
+  ]
+}

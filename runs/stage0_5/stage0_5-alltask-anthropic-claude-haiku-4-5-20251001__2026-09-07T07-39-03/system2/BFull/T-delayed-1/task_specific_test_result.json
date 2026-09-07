@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-delayed-1: resetZef resetZef: Zef pex→nim",
+      "passed": true
+    },
+    {
+      "testName": "T-delayed-1: resetZef resetZef: fails when Zef=nim",
+      "passed": true
+    },
+    {
+      "testName": "T-delayed-1: resetZef resetZef: Tal state is unchanged after reset",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m16\u001b[0m:\u001b[93m42\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m16\u001b[0m   const result = protocol.applyOperation(world, op);\n    \u001b[7m  \u001b[0m \u001b[91m                                         ~~~~~\u001b[0m\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m24\u001b[0m:\u001b[93m42\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'string'.\n\n    \u001b[7m24\u001b[0m   const result = protocol.applyOperation(world, op);\n    \u001b[7m  \u001b[0m \u001b[91m                                         ~~~~~\u001b[0m\n"
+    }
+  ]
+}

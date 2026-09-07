@@ -1,0 +1,11 @@
+{
+  "runId": "stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T07-42-30",
+  "backend": "anthropic",
+  "timestamp": "2026-09-07T07-42-30",
+  "model": "claude-haiku-4-5-20251001",
+  "budgets": [
+    0,
+    "full"
+  ],
+  "tasks": "all"
+}

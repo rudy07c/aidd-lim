@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-delayed-2: advanceTalOsk advanceTalOsk: Tal and Osk both advance nim→pex",
+      "passed": true
+    },
+    {
+      "testName": "T-delayed-2: advanceTalOsk advanceTalOsk: fails when Tal is already pex",
+      "passed": true
+    },
+    {
+      "testName": "T-delayed-2: advanceTalOsk advanceTalOsk: Vok, Zef, Fen are unchanged",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-local-3: resetFen resetFen: Fen pex→nim",
+      "passed": true
+    },
+    {
+      "testName": "T-local-3: resetFen resetFen: fails when Fen=nim",
+      "passed": true
+    },
+    {
+      "testName": "T-local-3: resetFen resetFen: Osk state is unchanged after reset",
+      "passed": true
+    }
+  ]
+}

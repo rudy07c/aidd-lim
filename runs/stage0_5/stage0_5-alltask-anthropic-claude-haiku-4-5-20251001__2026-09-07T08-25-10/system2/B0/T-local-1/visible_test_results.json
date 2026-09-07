@@ -1,0 +1,9 @@
+{
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m6\u001b[0m:\u001b[93m10\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2724: \u001b[0m'\"../src/vok/rules\"' has no exported member named 'advanceVok1'. Did you mean 'advanceVok'?\n\n    \u001b[7m6\u001b[0m import { advanceVok1, advanceVok2 } from \"../src/vok/rules\";\n    \u001b[7m \u001b[0m \u001b[91m         ~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m12\u001b[0m:\u001b[93m17\u001b[0m\n        \u001b[7m12\u001b[0m export function advanceVok(vokState: VokState): VokState {\n        \u001b[7m  \u001b[0m \u001b[96m                ~~~~~~~~~~\u001b[0m\n        'advanceVok' is declared here.\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m6\u001b[0m:\u001b[93m23\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2724: \u001b[0m'\"../src/vok/rules\"' has no exported member named 'advanceVok2'. Did you mean 'advanceVok'?\n\n    \u001b[7m6\u001b[0m import { advanceVok1, advanceVok2 } from \"../src/vok/rules\";\n    \u001b[7m \u001b[0m \u001b[91m                      ~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m12\u001b[0m:\u001b[93m17\u001b[0m\n        \u001b[7m12\u001b[0m export function advanceVok(vokState: VokState): VokState {\n        \u001b[7m  \u001b[0m \u001b[96m                ~~~~~~~~~~\u001b[0m\n        'advanceVok' is declared here.\n"
+    }
+  ]
+}

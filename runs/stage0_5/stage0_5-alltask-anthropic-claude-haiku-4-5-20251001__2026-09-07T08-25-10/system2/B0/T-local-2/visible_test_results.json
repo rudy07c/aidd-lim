@@ -1,0 +1,9 @@
+{
+  "testCases": [
+    {
+      "testName": "[suite] undefined",
+      "passed": false,
+      "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m6\u001b[0m:\u001b[93m10\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../src/vok/rules\"' has no exported member 'advanceVok1'.\n\n    \u001b[7m6\u001b[0m import { advanceVok1, advanceVok2 } from \"../src/vok/rules\";\n    \u001b[7m \u001b[0m \u001b[91m         ~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m6\u001b[0m:\u001b[93m23\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../src/vok/rules\"' has no exported member 'advanceVok2'.\n\n    \u001b[7m6\u001b[0m import { advanceVok1, advanceVok2 } from \"../src/vok/rules\";\n    \u001b[7m \u001b[0m \u001b[91m                      ~~~~~~~~~~~\u001b[0m\n"
+    }
+  ]
+}

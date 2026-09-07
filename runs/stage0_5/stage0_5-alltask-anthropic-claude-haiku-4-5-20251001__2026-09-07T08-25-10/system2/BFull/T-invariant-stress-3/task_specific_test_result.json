@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-invariant-stress-3: rushZefFen rushZefFen: Zef and Fen nim→dor when Tal=pex and Osk=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-3: rushZefFen rushZefFen: fails when Tal=nim (Invariants I2+I6 guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-invariant-stress-3: rushZefFen rushZefFen: Tal and Osk remain unchanged after operation",
+      "passed": true
+    }
+  ]
+}

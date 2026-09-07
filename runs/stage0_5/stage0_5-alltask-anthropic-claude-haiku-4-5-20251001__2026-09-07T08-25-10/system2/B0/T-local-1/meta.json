@@ -1,0 +1,17 @@
+{
+  "taskId": "T-local-1",
+  "passed": false,
+  "visiblePassed": 0,
+  "visibleTotal": 1,
+  "hiddenPassed": 0,
+  "hiddenTotal": 1,
+  "taskSpecificPassed": 0,
+  "taskSpecificTotal": 1,
+  "protocolContractViolated": false,
+  "latencyMs": 11852,
+  "tokenUsage": {
+    "input": 363,
+    "output": 1386
+  },
+  "error": null
+}

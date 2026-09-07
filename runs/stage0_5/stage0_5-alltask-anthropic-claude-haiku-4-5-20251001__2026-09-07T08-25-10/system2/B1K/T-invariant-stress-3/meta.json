@@ -1,0 +1,17 @@
+{
+  "taskId": "T-invariant-stress-3",
+  "passed": false,
+  "visiblePassed": 9,
+  "visibleTotal": 13,
+  "hiddenPassed": 11,
+  "hiddenTotal": 22,
+  "taskSpecificPassed": 2,
+  "taskSpecificTotal": 3,
+  "protocolContractViolated": false,
+  "latencyMs": 21013,
+  "tokenUsage": {
+    "input": 2134,
+    "output": 2445
+  },
+  "error": null
+}

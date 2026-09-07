@@ -1,0 +1,32 @@
+{
+  "budget": 0,
+  "contextTokens": 0,
+  "boolAccuracy": 0.5,
+  "boolNumCorrect": 6,
+  "boolNumTotal": 12,
+  "accuracy": 0.18181818181818182,
+  "numCorrect": 6,
+  "numTotal": 33,
+  "byType": {
+    "multiple_choice": {
+      "total": 8,
+      "correct": 0,
+      "accuracy": 0
+    },
+    "boolean": {
+      "total": 12,
+      "correct": 6,
+      "accuracy": 0.5
+    },
+    "state_transition_prediction": {
+      "total": 13,
+      "correct": 0,
+      "accuracy": 0
+    }
+  },
+  "latencyMs": 11789,
+  "tokenUsage": {
+    "input": 3726,
+    "output": 1182
+  }
+}

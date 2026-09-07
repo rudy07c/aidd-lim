@@ -1,0 +1,2172 @@
+{
+  "system1": [
+    {
+      "budget": 0,
+      "contextTokens": 0,
+      "boolAccuracy": 0.5,
+      "boolNumCorrect": 6,
+      "boolNumTotal": 12,
+      "accuracy": 0.18181818181818182,
+      "numCorrect": 6,
+      "numTotal": 33,
+      "byType": {
+        "multiple_choice": {
+          "total": 8,
+          "correct": 0,
+          "accuracy": 0
+        },
+        "boolean": {
+          "total": 12,
+          "correct": 6,
+          "accuracy": 0.5
+        },
+        "state_transition_prediction": {
+          "total": 13,
+          "correct": 0,
+          "accuracy": 0
+        }
+      },
+      "latencyMs": 11789,
+      "tokenUsage": {
+        "input": 3726,
+        "output": 1182
+      }
+    },
+    {
+      "budget": 1000,
+      "contextTokens": 1000,
+      "boolAccuracy": 0,
+      "boolNumCorrect": 0,
+      "boolNumTotal": 12,
+      "accuracy": 0.3939393939393939,
+      "numCorrect": 13,
+      "numTotal": 33,
+      "byType": {
+        "multiple_choice": {
+          "total": 8,
+          "correct": 0,
+          "accuracy": 0
+        },
+        "boolean": {
+          "total": 12,
+          "correct": 0,
+          "accuracy": 0
+        },
+        "state_transition_prediction": {
+          "total": 13,
+          "correct": 13,
+          "accuracy": 1
+        }
+      },
+      "latencyMs": 20209,
+      "tokenUsage": {
+        "input": 7360,
+        "output": 2079
+      }
+    },
+    {
+      "budget": 2000,
+      "contextTokens": 2000,
+      "boolAccuracy": 1,
+      "boolNumCorrect": 12,
+      "boolNumTotal": 12,
+      "accuracy": 1,
+      "numCorrect": 33,
+      "numTotal": 33,
+      "byType": {
+        "multiple_choice": {
+          "total": 8,
+          "correct": 8,
+          "accuracy": 1
+        },
+        "boolean": {
+          "total": 12,
+          "correct": 12,
+          "accuracy": 1
+        },
+        "state_transition_prediction": {
+          "total": 13,
+          "correct": 13,
+          "accuracy": 1
+        }
+      },
+      "latencyMs": 13707,
+      "tokenUsage": {
+        "input": 10862,
+        "output": 1601
+      }
+    },
+    {
+      "budget": 4000,
+      "contextTokens": 2862,
+      "boolAccuracy": 1,
+      "boolNumCorrect": 12,
+      "boolNumTotal": 12,
+      "accuracy": 1,
+      "numCorrect": 33,
+      "numTotal": 33,
+      "byType": {
+        "multiple_choice": {
+          "total": 8,
+          "correct": 8,
+          "accuracy": 1
+        },
+        "boolean": {
+          "total": 12,
+          "correct": 12,
+          "accuracy": 1
+        },
+        "state_transition_prediction": {
+          "total": 13,
+          "correct": 13,
+          "accuracy": 1
+        }
+      },
+      "latencyMs": 7560,
+      "tokenUsage": {
+        "input": 14154,
+        "output": 679
+      }
+    },
+    {
+      "budget": 8000,
+      "contextTokens": 2862,
+      "boolAccuracy": 1,
+      "boolNumCorrect": 12,
+      "boolNumTotal": 12,
+      "accuracy": 1,
+      "numCorrect": 33,
+      "numTotal": 33,
+      "byType": {
+        "multiple_choice": {
+          "total": 8,
+          "correct": 8,
+          "accuracy": 1
+        },
+        "boolean": {
+          "total": 12,
+          "correct": 12,
+          "accuracy": 1
+        },
+        "state_transition_prediction": {
+          "total": 13,
+          "correct": 13,
+          "accuracy": 1
+        }
+      },
+      "latencyMs": 13784,
+      "tokenUsage": {
+        "input": 14154,
+        "output": 1555
+      }
+    },
+    {
+      "budget": "full",
+      "contextTokens": 2862,
+      "boolAccuracy": 1,
+      "boolNumCorrect": 12,
+      "boolNumTotal": 12,
+      "accuracy": 1,
+      "numCorrect": 33,
+      "numTotal": 33,
+      "byType": {
+        "multiple_choice": {
+          "total": 8,
+          "correct": 8,
+          "accuracy": 1
+        },
+        "boolean": {
+          "total": 12,
+          "correct": 12,
+          "accuracy": 1
+        },
+        "state_transition_prediction": {
+          "total": 13,
+          "correct": 13,
+          "accuracy": 1
+        }
+      },
+      "latencyMs": 13441,
+      "tokenUsage": {
+        "input": 14154,
+        "output": 1509
+      }
+    }
+  ],
+  "system2": [
+    {
+      "budget": 0,
+      "contextTokens": 0,
+      "passRate": 0,
+      "numPassed": 0,
+      "numTotal": 20,
+      "taskSummary": [
+        {
+          "taskId": "T-local-1",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 11852,
+          "tokenUsage": {
+            "input": 363,
+            "output": 1386
+          }
+        },
+        {
+          "taskId": "T-crosscut-1",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 13314,
+          "tokenUsage": {
+            "input": 349,
+            "output": 1570
+          }
+        },
+        {
+          "taskId": "T-delayed-1",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 7216,
+          "tokenUsage": {
+            "input": 355,
+            "output": 761
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-1",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 12593,
+          "tokenUsage": {
+            "input": 380,
+            "output": 1447
+          }
+        },
+        {
+          "taskId": "T-local-2",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 11443,
+          "tokenUsage": {
+            "input": 348,
+            "output": 1391
+          }
+        },
+        {
+          "taskId": "T-crosscut-2",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 13494,
+          "tokenUsage": {
+            "input": 387,
+            "output": 1589
+          }
+        },
+        {
+          "taskId": "T-local-3",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 7118,
+          "tokenUsage": {
+            "input": 348,
+            "output": 771
+          }
+        },
+        {
+          "taskId": "T-local-4",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 8387,
+          "tokenUsage": {
+            "input": 354,
+            "output": 938
+          }
+        },
+        {
+          "taskId": "T-local-5",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 7850,
+          "tokenUsage": {
+            "input": 354,
+            "output": 862
+          }
+        },
+        {
+          "taskId": "T-local-6",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 8282,
+          "tokenUsage": {
+            "input": 354,
+            "output": 880
+          }
+        },
+        {
+          "taskId": "T-local-7",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 9588,
+          "tokenUsage": {
+            "input": 356,
+            "output": 1098
+          }
+        },
+        {
+          "taskId": "T-crosscut-3",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 7946,
+          "tokenUsage": {
+            "input": 357,
+            "output": 886
+          }
+        },
+        {
+          "taskId": "T-crosscut-4",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 7052,
+          "tokenUsage": {
+            "input": 380,
+            "output": 1075
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-2",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 13043,
+          "tokenUsage": {
+            "input": 378,
+            "output": 1514
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-3",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 9204,
+          "tokenUsage": {
+            "input": 387,
+            "output": 1066
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-4",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 17018,
+          "tokenUsage": {
+            "input": 370,
+            "output": 2132
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-5",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 13998,
+          "tokenUsage": {
+            "input": 356,
+            "output": 1664
+          }
+        },
+        {
+          "taskId": "T-crosscut-5",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 6596,
+          "tokenUsage": {
+            "input": 356,
+            "output": 746
+          }
+        },
+        {
+          "taskId": "T-crosscut-6",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 9172,
+          "tokenUsage": {
+            "input": 387,
+            "output": 1038
+          }
+        },
+        {
+          "taskId": "T-delayed-2",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": true,
+          "latencyMs": 11096,
+          "tokenUsage": {
+            "input": 361,
+            "output": 1352
+          }
+        }
+      ]
+    },
+    {
+      "budget": 1000,
+      "contextTokens": 1000,
+      "passRate": 0.05,
+      "numPassed": 1,
+      "numTotal": 20,
+      "taskSummary": [
+        {
+          "taskId": "T-local-1",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16180,
+          "tokenUsage": {
+            "input": 2110,
+            "output": 1751
+          }
+        },
+        {
+          "taskId": "T-crosscut-1",
+          "passed": false,
+          "visiblePassed": 9,
+          "visibleTotal": 13,
+          "hiddenPassed": 11,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22304,
+          "tokenUsage": {
+            "input": 2096,
+            "output": 2625
+          }
+        },
+        {
+          "taskId": "T-delayed-1",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 18,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16045,
+          "tokenUsage": {
+            "input": 2102,
+            "output": 1784
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-1",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 18,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 14441,
+          "tokenUsage": {
+            "input": 2127,
+            "output": 1582
+          }
+        },
+        {
+          "taskId": "T-local-2",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 15706,
+          "tokenUsage": {
+            "input": 2095,
+            "output": 1729
+          }
+        },
+        {
+          "taskId": "T-crosscut-2",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16225,
+          "tokenUsage": {
+            "input": 2134,
+            "output": 1735
+          }
+        },
+        {
+          "taskId": "T-local-3",
+          "passed": false,
+          "visiblePassed": 11,
+          "visibleTotal": 13,
+          "hiddenPassed": 18,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 15813,
+          "tokenUsage": {
+            "input": 2095,
+            "output": 1753
+          }
+        },
+        {
+          "taskId": "T-local-4",
+          "passed": false,
+          "visiblePassed": 9,
+          "visibleTotal": 13,
+          "hiddenPassed": 11,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 13304,
+          "tokenUsage": {
+            "input": 2101,
+            "output": 2431
+          }
+        },
+        {
+          "taskId": "T-local-5",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 18,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16786,
+          "tokenUsage": {
+            "input": 2101,
+            "output": 1872
+          }
+        },
+        {
+          "taskId": "T-local-6",
+          "passed": false,
+          "visiblePassed": 11,
+          "visibleTotal": 13,
+          "hiddenPassed": 18,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 15083,
+          "tokenUsage": {
+            "input": 2101,
+            "output": 1674
+          }
+        },
+        {
+          "taskId": "T-local-7",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 10002,
+          "tokenUsage": {
+            "input": 2103,
+            "output": 1664
+          }
+        },
+        {
+          "taskId": "T-crosscut-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 17792,
+          "tokenUsage": {
+            "input": 2104,
+            "output": 1872
+          }
+        },
+        {
+          "taskId": "T-crosscut-4",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16723,
+          "tokenUsage": {
+            "input": 2127,
+            "output": 1801
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-2",
+          "passed": false,
+          "visiblePassed": 11,
+          "visibleTotal": 13,
+          "hiddenPassed": 18,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16301,
+          "tokenUsage": {
+            "input": 2125,
+            "output": 1753
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-3",
+          "passed": false,
+          "visiblePassed": 9,
+          "visibleTotal": 13,
+          "hiddenPassed": 11,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21013,
+          "tokenUsage": {
+            "input": 2134,
+            "output": 2445
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-4",
+          "passed": false,
+          "visiblePassed": 9,
+          "visibleTotal": 13,
+          "hiddenPassed": 11,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21355,
+          "tokenUsage": {
+            "input": 2117,
+            "output": 2525
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-5",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16209,
+          "tokenUsage": {
+            "input": 2103,
+            "output": 1805
+          }
+        },
+        {
+          "taskId": "T-crosscut-5",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 17954,
+          "tokenUsage": {
+            "input": 2103,
+            "output": 1948
+          }
+        },
+        {
+          "taskId": "T-crosscut-6",
+          "passed": false,
+          "visiblePassed": 9,
+          "visibleTotal": 13,
+          "hiddenPassed": 11,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19398,
+          "tokenUsage": {
+            "input": 2134,
+            "output": 2258
+          }
+        },
+        {
+          "taskId": "T-delayed-2",
+          "passed": false,
+          "visiblePassed": 12,
+          "visibleTotal": 13,
+          "hiddenPassed": 19,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18820,
+          "tokenUsage": {
+            "input": 2108,
+            "output": 2014
+          }
+        }
+      ]
+    },
+    {
+      "budget": 2000,
+      "contextTokens": 2000,
+      "passRate": 0.7,
+      "numPassed": 14,
+      "numTotal": 20,
+      "taskSummary": [
+        {
+          "taskId": "T-local-1",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20149,
+          "tokenUsage": {
+            "input": 3999,
+            "output": 2015
+          }
+        },
+        {
+          "taskId": "T-crosscut-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22700,
+          "tokenUsage": {
+            "input": 3985,
+            "output": 2209
+          }
+        },
+        {
+          "taskId": "T-delayed-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20397,
+          "tokenUsage": {
+            "input": 3991,
+            "output": 2026
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21983,
+          "tokenUsage": {
+            "input": 4016,
+            "output": 2249
+          }
+        },
+        {
+          "taskId": "T-local-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20507,
+          "tokenUsage": {
+            "input": 3984,
+            "output": 2037
+          }
+        },
+        {
+          "taskId": "T-crosscut-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22760,
+          "tokenUsage": {
+            "input": 4023,
+            "output": 2388
+          }
+        },
+        {
+          "taskId": "T-local-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19186,
+          "tokenUsage": {
+            "input": 3984,
+            "output": 1952
+          }
+        },
+        {
+          "taskId": "T-local-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19641,
+          "tokenUsage": {
+            "input": 3990,
+            "output": 1951
+          }
+        },
+        {
+          "taskId": "T-local-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21039,
+          "tokenUsage": {
+            "input": 3990,
+            "output": 2076
+          }
+        },
+        {
+          "taskId": "T-local-6",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20013,
+          "tokenUsage": {
+            "input": 3990,
+            "output": 2027
+          }
+        },
+        {
+          "taskId": "T-local-7",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19711,
+          "tokenUsage": {
+            "input": 3992,
+            "output": 1947
+          }
+        },
+        {
+          "taskId": "T-crosscut-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20030,
+          "tokenUsage": {
+            "input": 3993,
+            "output": 1940
+          }
+        },
+        {
+          "taskId": "T-crosscut-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 24830,
+          "tokenUsage": {
+            "input": 4016,
+            "output": 2687
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21307,
+          "tokenUsage": {
+            "input": 4014,
+            "output": 2219
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 24871,
+          "tokenUsage": {
+            "input": 4023,
+            "output": 2491
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-4",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22850,
+          "tokenUsage": {
+            "input": 4006,
+            "output": 2351
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-5",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21170,
+          "tokenUsage": {
+            "input": 3992,
+            "output": 2109
+          }
+        },
+        {
+          "taskId": "T-crosscut-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 26150,
+          "tokenUsage": {
+            "input": 3992,
+            "output": 2865
+          }
+        },
+        {
+          "taskId": "T-crosscut-6",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21935,
+          "tokenUsage": {
+            "input": 4023,
+            "output": 2263
+          }
+        },
+        {
+          "taskId": "T-delayed-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21318,
+          "tokenUsage": {
+            "input": 3997,
+            "output": 2106
+          }
+        }
+      ]
+    },
+    {
+      "budget": 4000,
+      "contextTokens": 2862,
+      "passRate": 0.65,
+      "numPassed": 13,
+      "numTotal": 20,
+      "taskSummary": [
+        {
+          "taskId": "T-local-1",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19600,
+          "tokenUsage": {
+            "input": 5577,
+            "output": 1928
+          }
+        },
+        {
+          "taskId": "T-crosscut-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20741,
+          "tokenUsage": {
+            "input": 5563,
+            "output": 1946
+          }
+        },
+        {
+          "taskId": "T-delayed-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21534,
+          "tokenUsage": {
+            "input": 5569,
+            "output": 2137
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20804,
+          "tokenUsage": {
+            "input": 5594,
+            "output": 2210
+          }
+        },
+        {
+          "taskId": "T-local-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18827,
+          "tokenUsage": {
+            "input": 5562,
+            "output": 1894
+          }
+        },
+        {
+          "taskId": "T-crosscut-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22769,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2376
+          }
+        },
+        {
+          "taskId": "T-local-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19926,
+          "tokenUsage": {
+            "input": 5562,
+            "output": 2031
+          }
+        },
+        {
+          "taskId": "T-local-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19820,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 2032
+          }
+        },
+        {
+          "taskId": "T-local-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21439,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 2265
+          }
+        },
+        {
+          "taskId": "T-local-6",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22395,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 2240
+          }
+        },
+        {
+          "taskId": "T-local-7",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20820,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 2103
+          }
+        },
+        {
+          "taskId": "T-crosscut-3",
+          "passed": false,
+          "visiblePassed": 0,
+          "visibleTotal": 1,
+          "hiddenPassed": 0,
+          "hiddenTotal": 1,
+          "taskSpecificPassed": 0,
+          "taskSpecificTotal": 1,
+          "protocolContractViolated": false,
+          "latencyMs": 18020,
+          "tokenUsage": {
+            "input": 5571,
+            "output": 2395
+          }
+        },
+        {
+          "taskId": "T-crosscut-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16805,
+          "tokenUsage": {
+            "input": 5594,
+            "output": 2380
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21676,
+          "tokenUsage": {
+            "input": 5592,
+            "output": 2258
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 26692,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2992
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-4",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16045,
+          "tokenUsage": {
+            "input": 5584,
+            "output": 2328
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-5",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20462,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 2099
+          }
+        },
+        {
+          "taskId": "T-crosscut-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21796,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 2230
+          }
+        },
+        {
+          "taskId": "T-crosscut-6",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21946,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2299
+          }
+        },
+        {
+          "taskId": "T-delayed-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21690,
+          "tokenUsage": {
+            "input": 5575,
+            "output": 2271
+          }
+        }
+      ]
+    },
+    {
+      "budget": 8000,
+      "contextTokens": 2862,
+      "passRate": 0.7,
+      "numPassed": 14,
+      "numTotal": 20,
+      "taskSummary": [
+        {
+          "taskId": "T-local-1",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19057,
+          "tokenUsage": {
+            "input": 5577,
+            "output": 1932
+          }
+        },
+        {
+          "taskId": "T-crosscut-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 24049,
+          "tokenUsage": {
+            "input": 5563,
+            "output": 2377
+          }
+        },
+        {
+          "taskId": "T-delayed-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21169,
+          "tokenUsage": {
+            "input": 5569,
+            "output": 2161
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21995,
+          "tokenUsage": {
+            "input": 5594,
+            "output": 2371
+          }
+        },
+        {
+          "taskId": "T-local-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18888,
+          "tokenUsage": {
+            "input": 5562,
+            "output": 1908
+          }
+        },
+        {
+          "taskId": "T-crosscut-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21927,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2292
+          }
+        },
+        {
+          "taskId": "T-local-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19577,
+          "tokenUsage": {
+            "input": 5562,
+            "output": 1965
+          }
+        },
+        {
+          "taskId": "T-local-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18956,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 1893
+          }
+        },
+        {
+          "taskId": "T-local-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22057,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 2293
+          }
+        },
+        {
+          "taskId": "T-local-6",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20974,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 2100
+          }
+        },
+        {
+          "taskId": "T-local-7",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18430,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 1886
+          }
+        },
+        {
+          "taskId": "T-crosscut-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 14912,
+          "tokenUsage": {
+            "input": 5571,
+            "output": 1868
+          }
+        },
+        {
+          "taskId": "T-crosscut-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20784,
+          "tokenUsage": {
+            "input": 5594,
+            "output": 1993
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22018,
+          "tokenUsage": {
+            "input": 5592,
+            "output": 2251
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 27172,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 3008
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-4",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16041,
+          "tokenUsage": {
+            "input": 5584,
+            "output": 2364
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-5",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19603,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 1966
+          }
+        },
+        {
+          "taskId": "T-crosscut-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20437,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 1969
+          }
+        },
+        {
+          "taskId": "T-crosscut-6",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22343,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2316
+          }
+        },
+        {
+          "taskId": "T-delayed-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22028,
+          "tokenUsage": {
+            "input": 5575,
+            "output": 2228
+          }
+        }
+      ]
+    },
+    {
+      "budget": "full",
+      "contextTokens": 2862,
+      "passRate": 0.7,
+      "numPassed": 14,
+      "numTotal": 20,
+      "taskSummary": [
+        {
+          "taskId": "T-local-1",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 2,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18429,
+          "tokenUsage": {
+            "input": 5577,
+            "output": 1845
+          }
+        },
+        {
+          "taskId": "T-crosscut-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22199,
+          "tokenUsage": {
+            "input": 5563,
+            "output": 2227
+          }
+        },
+        {
+          "taskId": "T-delayed-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20093,
+          "tokenUsage": {
+            "input": 5569,
+            "output": 2106
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-1",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 22486,
+          "tokenUsage": {
+            "input": 5594,
+            "output": 2431
+          }
+        },
+        {
+          "taskId": "T-local-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18925,
+          "tokenUsage": {
+            "input": 5562,
+            "output": 1892
+          }
+        },
+        {
+          "taskId": "T-crosscut-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 23614,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2483
+          }
+        },
+        {
+          "taskId": "T-local-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19672,
+          "tokenUsage": {
+            "input": 5562,
+            "output": 1987
+          }
+        },
+        {
+          "taskId": "T-local-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18839,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 1901
+          }
+        },
+        {
+          "taskId": "T-local-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20634,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 2174
+          }
+        },
+        {
+          "taskId": "T-local-6",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21346,
+          "tokenUsage": {
+            "input": 5568,
+            "output": 2149
+          }
+        },
+        {
+          "taskId": "T-local-7",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 18072,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 1828
+          }
+        },
+        {
+          "taskId": "T-crosscut-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 16106,
+          "tokenUsage": {
+            "input": 5571,
+            "output": 1921
+          }
+        },
+        {
+          "taskId": "T-crosscut-4",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21815,
+          "tokenUsage": {
+            "input": 5594,
+            "output": 2288
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-2",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21649,
+          "tokenUsage": {
+            "input": 5592,
+            "output": 2241
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-3",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21478,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2240
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-4",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 15970,
+          "tokenUsage": {
+            "input": 5584,
+            "output": 2401
+          }
+        },
+        {
+          "taskId": "T-invariant-stress-5",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 20687,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 2086
+          }
+        },
+        {
+          "taskId": "T-crosscut-5",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 21083,
+          "tokenUsage": {
+            "input": 5570,
+            "output": 2110
+          }
+        },
+        {
+          "taskId": "T-crosscut-6",
+          "passed": false,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 1,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 23802,
+          "tokenUsage": {
+            "input": 5601,
+            "output": 2426
+          }
+        },
+        {
+          "taskId": "T-delayed-2",
+          "passed": true,
+          "visiblePassed": 13,
+          "visibleTotal": 13,
+          "hiddenPassed": 22,
+          "hiddenTotal": 22,
+          "taskSpecificPassed": 3,
+          "taskSpecificTotal": 3,
+          "protocolContractViolated": false,
+          "latencyMs": 19726,
+          "tokenUsage": {
+            "input": 5575,
+            "output": 2003
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "taskId": "T-delayed-2",
+  "passed": false,
+  "visiblePassed": 0,
+  "visibleTotal": 1,
+  "hiddenPassed": 0,
+  "hiddenTotal": 1,
+  "taskSpecificPassed": 0,
+  "taskSpecificTotal": 1,
+  "protocolContractViolated": true,
+  "latencyMs": 9912,
+  "tokenUsage": {
+    "input": 361,
+    "output": 1166
+  },
+  "error": null
+}
