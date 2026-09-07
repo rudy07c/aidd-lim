@@ -302,8 +302,11 @@ async function answerProbesWithAnthropicAPI(
       continue;
     }
 
-    for (const p of batch) {
-      const raw = parsed[p.probeId];
+    for (let batchLocalIdx = 0; batchLocalIdx < batch.length; batchLocalIdx++) {
+      const p = batch[batchLocalIdx];
+      // モデルが "Q{n}" 形式（プロンプト表示番号）で回答する場合があるため、
+      // probeId でのルックアップが失敗したときは "Q{batchLocalIdx+1}" でフォールバックする
+      const raw = parsed[p.probeId] ?? parsed[`Q${batchLocalIdx + 1}`];
       if (raw === undefined || raw === null) {
         allAnswers[p.probeId] = "";
       } else if (Array.isArray(raw)) {

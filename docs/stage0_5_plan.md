@@ -301,10 +301,10 @@ B=2K+: 6/8 (0.75)   T-local-1・T-invariant-stress-5 が全 budget で継続失�
 全20タスク・6段階budget で本較正を実施。
 実行ログ: `runs/stage0_5/stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T08-25-10/`
 
-System1 dose-response（boolean 主指標）：
+System1 dose-response（boolean 主指標、パース修正後の正値）：
 ```
 B=0:    6/12 (0.50)   ランダム推測（文脈なし、chance level=0.50）
-B=1K:   0/12 (0.00)   ← B=1K ディップ（stp=13/13 だが boolean=0/12、F10 参照）
+B=1K:   7/12 (0.58)   部分正解（旧値 0/12 はパースバグ。F10 参照）
 B=2K:  12/12 (1.00)   閾値突破
 B=4K:  12/12 (1.00)
 B=8K:  12/12 (1.00)
