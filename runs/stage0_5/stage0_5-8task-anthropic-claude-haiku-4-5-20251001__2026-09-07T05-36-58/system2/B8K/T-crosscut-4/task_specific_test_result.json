@@ -1,0 +1,16 @@
+{
+  "testCases": [
+    {
+      "testName": "T-crosscut-4: lockFenZef lockFenZef: Fen and Zef pex→dor when Osk=pex and Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-4: lockFenZef lockFenZef: fails when Fen=nim (fromState guard)",
+      "passed": true
+    },
+    {
+      "testName": "T-crosscut-4: lockFenZef lockFenZef: fails when Zef=nim (fromState guard)",
+      "passed": true
+    }
+  ]
+}

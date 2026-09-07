@@ -1,0 +1,56 @@
+{
+  "testCases": [
+    {
+      "testName": "advanceVok1: nim -> pex succeeds from initial state",
+      "passed": true
+    },
+    {
+      "testName": "advanceVok2: fails if Zef is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef1: fails if Tal is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceVok2: succeeds once Zef is 'pex' and Osk is 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: fails if Tal is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceZef2: succeeds once Tal is 'pex' and Fen is 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "full valid sequence reaches Vok=dor, Zef=dor, Tal=pex",
+      "passed": true
+    },
+    {
+      "testName": "advanceOsk1: nim -> pex succeeds from initial state",
+      "passed": true
+    },
+    {
+      "testName": "advanceOsk1: fails if Osk is not 'nim'",
+      "passed": true
+    },
+    {
+      "testName": "advanceFen1: fails if Osk is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceFen1: succeeds once Osk is 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceFen2: fails if Zef is not 'pex'",
+      "passed": true
+    },
+    {
+      "testName": "advanceFen2: succeeds once Osk is 'pex' and Zef is 'pex'",
+      "passed": true
+    }
+  ]
+}

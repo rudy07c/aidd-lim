@@ -1,0 +1,29 @@
+{
+  "budget": 1000,
+  "contextTokens": 1000,
+  "accuracy": 0.9393939393939394,
+  "numCorrect": 31,
+  "numTotal": 33,
+  "byType": {
+    "multiple_choice": {
+      "total": 8,
+      "correct": 8,
+      "accuracy": 1
+    },
+    "boolean": {
+      "total": 12,
+      "correct": 10,
+      "accuracy": 0.8333333333333334
+    },
+    "state_transition_prediction": {
+      "total": 13,
+      "correct": 13,
+      "accuracy": 1
+    }
+  },
+  "latencyMs": 24013,
+  "tokenUsage": {
+    "input": 7360,
+    "output": 2591
+  }
+}

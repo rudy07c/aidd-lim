@@ -1,0 +1,24 @@
+{
+  "runId": "stage0_5-8task-anthropic-claude-haiku-4-5-20251001__2026-09-07T05-36-58",
+  "backend": "anthropic",
+  "timestamp": "2026-09-07T05-36-58",
+  "model": "claude-haiku-4-5-20251001",
+  "budgets": [
+    0,
+    1000,
+    2000,
+    4000,
+    8000,
+    "full"
+  ],
+  "tasks": [
+    "T-local-1",
+    "T-invariant-stress-1",
+    "T-invariant-stress-5",
+    "T-crosscut-4",
+    "T-local-3",
+    "T-crosscut-1",
+    "T-delayed-1",
+    "T-crosscut-3"
+  ]
+}

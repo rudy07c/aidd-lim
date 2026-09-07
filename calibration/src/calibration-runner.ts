@@ -35,6 +35,7 @@ import { MockNoopBackend } from "../../harness/src/agent-backend/mock-noop";
 import { MockOracleBackend } from "../../harness/src/agent-backend/mock-oracle";
 import { AnthropicBackend } from "../../harness/src/agent-backend/anthropic";
 import type { AgentBackend } from "../../harness/src/agent-backend/types";
+import type { TestCaseResult } from "../../harness/src/types";
 
 // ---- 公開型 ----
 
@@ -70,6 +71,12 @@ export interface System1BudgetResult {
   latencyMs?: number;
   /** anthropic backend のみ。API呼び出し1回分のトークン使用量 */
   tokenUsage?: { input: number; output: number };
+  // ログ用詳細データ（anthropic backend のみ）
+  contextFiles?: Record<string, string>;
+  /** バッチごとの送信プロンプト（[batch0, batch1, ...]） */
+  agentPromptBatches?: string[];
+  /** バッチごとの受信レスポンス（[batch0, batch1, ...]） */
+  agentResponseBatches?: string[];
 }
 
 export interface System2TaskResult {
@@ -85,6 +92,13 @@ export interface System2TaskResult {
   latencyMs?: number;
   tokenUsage?: { input: number; output: number };
   error?: string;
+  // ログ用詳細データ（anthropic backend のみ）
+  agentResponse?: string;
+  contextFiles?: Record<string, string>;
+  repositoryAfter?: Record<string, string>;
+  visibleTestCases?: TestCaseResult[];
+  hiddenTestCases?: TestCaseResult[];
+  taskSpecificTestCases?: TestCaseResult[];
 }
 
 export interface System2BudgetResult {
@@ -187,6 +201,8 @@ interface ProbeAPIResult {
   answers: Record<string, string>;
   latencyMs: number;
   tokenUsage: { input: number; output: number };
+  promptBatches: string[];
+  responseBatches: string[];
 }
 
 /** probe数が増えても max_tokens 超過で出力が切れないよう、バッチ分割する単位 */
@@ -222,6 +238,8 @@ async function answerProbesWithAnthropicAPI(
   let totalLatencyMs = 0;
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
+  const promptBatches: string[] = [];
+  const responseBatches: string[] = [];
 
   const emptyBatchAnswers = (batch: GeneratedProbe[]): Record<string, string> => {
     const m: Record<string, string> = {};
@@ -236,6 +254,7 @@ async function answerProbesWithAnthropicAPI(
     }
 
     const userMessage = buildProbePrompt(contextSection, batch);
+    promptBatches.push(userMessage);
 
     const start = Date.now();
     const response = await client.messages.create({
@@ -252,6 +271,7 @@ async function answerProbesWithAnthropicAPI(
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
       .map((b) => b.text)
       .join("");
+    responseBatches.push(rawText);
 
     const match = rawText.match(/<probe_answers>([\s\S]*?)<\/probe_answers>/);
     if (!match) {
@@ -286,6 +306,8 @@ async function answerProbesWithAnthropicAPI(
     answers: allAnswers,
     latencyMs: totalLatencyMs,
     tokenUsage: { input: totalInputTokens, output: totalOutputTokens },
+    promptBatches,
+    responseBatches,
   };
 }
 
@@ -314,12 +336,16 @@ async function runSystem1(
   let answers: Record<string, string>;
   let latencyMs: number | undefined;
   let tokenUsage: { input: number; output: number } | undefined;
+  let agentPromptBatches: string[] | undefined;
+  let agentResponseBatches: string[] | undefined;
 
   if (backend === "anthropic") {
     const apiResult = await answerProbesWithAnthropicAPI(ctx.files, probes, model);
     answers = apiResult.answers;
     latencyMs = apiResult.latencyMs;
     tokenUsage = apiResult.tokenUsage;
+    agentPromptBatches = apiResult.promptBatches;
+    agentResponseBatches = apiResult.responseBatches;
   } else {
     answers = mockAnswerProbes(probes);
   }
@@ -349,6 +375,9 @@ async function runSystem1(
     probeDetails,
     latencyMs,
     tokenUsage,
+    contextFiles: ctx.files,
+    agentPromptBatches,
+    agentResponseBatches,
   };
 }
 
@@ -444,6 +473,9 @@ async function runSystem2TaskAnthropicOrOther(
     ...result,
     latencyMs,
     tokenUsage: agentResult.tokenUsage,
+    agentResponse: agentResult.rawResponse,
+    contextFiles: ctx.files,
+    repositoryAfter: agentResult.modifiedFiles,
   };
 }
 
@@ -470,6 +502,9 @@ async function runScoringForTask(
       taskSpecificPassed: tsRes?.numPassed ?? null,
       taskSpecificTotal: tsRes ? tsRes.numPassed + tsRes.numFailed : null,
       protocolContractViolated: result.protocolContractViolated,
+      visibleTestCases: result.visibleTests.testCases,
+      hiddenTestCases: result.hiddenTests.testCases,
+      taskSpecificTestCases: tsRes?.testCases,
     };
   } catch (e) {
     return {
@@ -723,6 +758,29 @@ if (require.main === module) {
     }
 
     console.log("\n└─ Done.\n");
+
+    // ── ログ書き出し（anthropic backend のみ）──
+    if (backend === "anthropic") {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { writeCalibrationLog } = require("./calibration-logging") as typeof import("./calibration-logging");
+      const runsDir = path.join(__dirname, "../../runs");
+      const runId = [
+        "stage0_5",
+        taskFilter ? `${taskFilter.length}task` : "alltask",
+        backend,
+        model.replace(/[^a-zA-Z0-9]/g, "-"),
+      ].join("-");
+      writeCalibrationLog(result, {
+        runsDir,
+        runId,
+        meta: {
+          backend,
+          model,
+          budgets,
+          tasks: taskFilter ?? "all",
+        },
+      });
+    }
   }).catch((e) => {
     console.error("calibration-runner failed:", e);
     process.exit(1);
