@@ -79,6 +79,11 @@ Stage 0.5較正で得た20 task・6 budgetのデータのうち、**同一条件
 
 **前提条件（新規発見、Phase 1着手前に解決）**：task-awareな選択を行うには、「今回のtaskがどのentityに触れるか」（GroundTruthDelta）をPrivileged Selectorが参照できる必要がある。しかし現状の`orchestrator.ts`内の`HeldOutTask`型は`taskId`・`visibleInstruction`・`taskSpecificTestCode`のみを保持し、GroundTruthDeltaを読み込んでいない（worker agentに非公開にする設計は正しいが、**evaluator側であるPrivileged Selector自体はGroundTruthDeltaを参照してよい**——worker agentへ内容を漏らすわけではなく、あくまで「どのファイルを見せるか」の判断材料として使うだけであるため）。Phase 1の最初のタスクとして、`orchestrator.ts`が`heldout_tasks.json`からGroundTruthDeltaも読み込み、Privileged Selectorへ渡せるようにする設計変更を行う。
 
+**追加の前提条件（2回目のレビューで判明）**：
+
+- `computeSemanticLocality(g0, delta)`（`synthetic-world/semantic_locality.ts`）は`Set<EntityId>`（例：`"E1"`, `"E3"`）を返すが、Privileged Selectorが「どのファイルを優先するか」を決めるには**entity→ファイルパスの対応表**が必要（例：`E1`(Vok) → `src/vok/rules.ts`, `src/vok/state.ts`）。この対応表は現状どこにも定義されていない。命名規則（`Vok`→`vok/`等）から機械的に導出できるはずだが、これをコードとして定式化するステップをPhase 1に追加する
+- `computeSemanticLocality`は第1引数に`GroundTruth`型全体（＝`ground_truth.json`の中身）を必要とするが、`orchestrator.ts`は現状`ground_truth.json`を一切読み込んでいない。GroundTruthDeltaの読み込みに加え、`ground_truth.json`本体のロードも`orchestrator.ts`に追加する必要がある
+
 **実装は`harness/src/context/assembler.ts`を拡張する形にする**（ゼロから作らない）。task-awareな優先順位付けロジックを追加するのがStage 1固有の拡張点。
 
 ### 2.3 Agent-Retrieved Limitedの実装（新規、最も工数がかかる部分）
@@ -103,10 +108,11 @@ Stage 0.5較正で得た20 task・6 budgetのデータのうち、**同一条件
 
 Stage 1は「$S$固定・1回のcontext提示」ではなく、**Stage 0と同じく世代を重ねる**（10〜15世代）。したがって`calibration-runner.ts`（Stage 0.5の単発較正用）ではなく、`harness/src/orchestrator.ts`（Stage 0の世代ループ本体）を拡張するのが適切。
 
-- `ContextCondition`型を`"full" | "simple-limited"`から`"full" | "privileged-limited" | "agent-retrieved-limited"`へ拡張
+- `ContextCondition`型を`"full" | "simple-limited" | "privileged-limited" | "agent-retrieved-limited"`へ**拡張**する（既存の`"simple-limited"`は削除せず残す。以前の記述では削除を示唆する表現になっていたが、これは誤りで、既存configとの後方互換性のため`"simple-limited"`は維持したまま新しい2条件を追加する）
 - `assembleContext()`に`"privileged-limited"`のtask-aware分岐を追加（2.2節）
 - `"agent-retrieved-limited"`の場合は、事前のcontext構築をスキップし、agentへツールを渡す形に分岐（2.3節）
 - held-out task setは、Stage 0.5で確立した20 taskをそのまま使う。ただしStage 1は10〜15世代なので、20 taskのうち構成A/B比率を保ったまま10〜15個を使う（または全20を使い切って良ければそのまま）
+- **$\hat{M}_B$の集計方法の明示（レビューで判明、新規追加）**：`orchestrator.ts`は現状「1世代につき1 task（`tasks[gen % tasks.length]`で周回）」というループ構造であり、Stage 0.5の$\hat{M}_B$（固定$S$に対し全20 taskを評価したpass rate）とは前提が異なる。Stage 1における$\hat{M}_B$は、**「$N$世代のうち`functional_task_result=true`だった世代の割合」として定義する**（各世代は異なるtaskを解いているが、世代を重ねてもrepositoryが壊れず機能追加を続けられているか、という継続的な意味で$M_B$を捉え直す）。この定義をPhase 4着手前に`docs/findings/stage1_findings.md`（新規）に明記し、3条件間で同じ定義で比較できるようにする
 - **既存configとの後方互換性（新規追加）**：`ContextCondition`型の拡張により、既存の`stage0-mock.json`等（`"simple-limited"`を使用）が引き続き正しく動作するかを確認する。型自体は既存値を包含する拡張なので問題ないはずだが、Phase 3のmock確認時に既存configも一緒に再実行し、回帰がないことを明示的にチェックする
 
 ### 2.5 Stage 1で使用するcontext budgetの明示（新規追加）
@@ -118,15 +124,26 @@ F10で確認した通り、現在のrepository全体は2862トークンであり
 
 この設定を明示しておかないと、Stage 1の結果が「Full > Privileged > Agent」のどのパターンに分類されるかの解釈自体が揺らぐため、Phase 3（mock確認）着手前に確定させる。
 
-### 2.6 System1（$R^{sem}_B$）の測定タイミング（新規追加）
+**前提となる実装変更（レビューで判明）**：現状の`harness/src/context/assembler.ts`の`assembleContext(repositoryFiles, condition)`は、`condition`のみを受け取り、**budget値を渡すパラメータが存在しない**。`config.contextBudget`（`types.ts`に存在）も、`orchestrator.ts`から`assembleContext()`呼び出し時に渡されていない。Privileged-Selection Limitedで「$B=1\text{K}$に収まるよう選択する」処理を実現するには、以下のいずれかの設計変更が必要：
 
-Stage 0.5の`calibration-runner.ts`は「$S$固定・1回限りのprobe測定」という設計だったが、Stage 1は世代を重ねてrepositoryが変化していく。以下のいずれかを選択する必要がある：
+- `assembleContext(repositoryFiles, condition, budget?)`のようにbudget引数を追加する
+- または`condition`と`budget`を1つの設定オブジェクトにまとめて渡す設計に変更する
 
-- **(a) 各世代終了後にSystem1を測定する**：世代ごとの$R^{sem}_B$の推移が追えるが、世代数×3条件分のprobe測定コストが追加される
-- **(b) 最終世代後にのみSystem1を測定する**：コストは抑えられるが、途中経過が見えない
-- **(c) Stage 1ではSystem1を使わず、$\hat{M}_B$のみで3条件を比較する**：計画書0節の判定基準（4パターン）は$R^{sem}_B$と$M_B$の対比を前提にしているため、この選択は判定基準自体の見直しを伴う
+これはPhase 1着手前に確定させる、Privileged Selector実装の前提条件である。
 
-**推奨**：Stage 1は「情報量とretrievalの寄与を切り分ける診断実験」であり、Stage 2以降でtrajectory全体を見る際に(a)相当の詳細さが必要になる。Stage 1では**(b)最終世代後のみ**を基本とし、コストと知見のバランスを取る。Phase 4着手前に、この方針をfindings docに明記する。
+### 2.6 System1（$R^{sem}_B$）の測定対象と実装方法（レビューを受けて再整理）
+
+**当初の3択（a/b/c、いつ測定するか）は、問いの立て方自体が不正確だった。** 本質的な問いは「いつ測定するか」ではなく、**「どのリポジトリ状態$S$に対して測定するか」**である。
+
+Stage 1は3条件それぞれで世代ループを走らせるため、世代を重ねるにつれてrepositoryは条件ごとに異なる方向へ変化していく。もし「各条件の最終世代後のrepositoryに対してSystem1を測定する」とすると、Full条件とPrivileged条件では測定対象の$S$自体が異なる（世代を重ねる過程で異なるコードに育っているため）。この場合、$R^{sem}_B$の差が「contextの差によるものか」「repositoryの変化の差によるものか」を分離できなくなり、Stage 1の目的（情報量とretrievalの寄与を切り分ける）を果たせない。
+
+**採用する方式**：**初期リポジトリ状態（世代0開始前、Stage 0.5較正で使った$S$と同一）に対して、$B=1\text{K}$と$B=\text{Full}$でSystem1を測定する。** この測定はrepositoryが変化する前の、単一の固定$S$に対して行うため、Stage 0.5の較正データ（`calibration-runner.ts`の実行結果）を**そのまま再利用でき、Stage 1として新たにSystem1を実行する必要がない**。
+
+これにより：
+
+- 測定対象の一貫性が保たれる（3条件とも同じ初期$S$に対する$R^{sem}_B$を参照する）
+- 実装コストが発生しない（Stage 0.5の既存データの再利用のみ）
+- ただし、この方式では「世代を重ねた後のrepositoryに対する意味理解」は測定しない。**この観点（trajectoryに沿った意味理解の変化）はStage 2（Longitudinal Pilot）以降の課題として明示的に切り分ける**
 
 ---
 
@@ -134,7 +151,7 @@ Stage 0.5の`calibration-runner.ts`は「$S$固定・1回限りのprobe測定」
 
 ### Phase 0：\(\Delta_M, \Delta_R\)の確定
 
-1. Stage 0.5の`calibration-runner.ts`を使い、3〜5 task × 3回反復（$B=\text{Full}$固定）を実行
+1. Stage 0.5の`calibration-runner.ts`を使い、3〜5 task × 3回反復を、$B=\text{Full}$と$B=2\text{K}$の両方で実行する
 2. $\hat{M}_B$・boolean accuracyの標準偏差を算出し、\(\Delta_M, \Delta_R\)を決定する
 3. `docs/experiment_plan.md`未決事項#5を確定済みに更新
 
@@ -142,7 +159,7 @@ Stage 0.5の`calibration-runner.ts`は「$S$固定・1回限りのprobe測定」
 
 ### Phase 1：Privileged Selectorの実装
 
-4. `calibration/src/budget-assembler.ts`を拡張し、task-awareな優先順位付け（依存グラフ距離）を追加した`privileged-selector.ts`（または既存ファイルの拡張）を作る
+4. `harness/src/context/assembler.ts`に、entity→ファイルパス対応表の定義、`ground_truth.json`のロード、`assembleContext()`へのbudget引数追加（2.5節）を行った上で、task-awareな優先順位付け（`synthetic-world/semantic_locality.ts`の`computeSemanticLocality`を利用した依存グラフ距離）を追加する新しい`"privileged-limited"`分岐を実装する
 5. mock-noop/mock-oracleで、いくつかのheld-out taskについて、実際に選択されるファイルの一覧を出力し、依存グラフ距離が近いファイルが優先されていることを目視確認する
 
 **この時点でのゲート**：Privileged Selectorが、taskごとに異なるファイル優先順位を出力できること（固定順ではなくtask-awareであることの確認）。
