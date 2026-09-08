@@ -1,8 +1,15 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.4
+**版**: v2.5
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.5での変更点（Batch APIをPre-Stage 1 P1の必須経路として明確化）**：
+- GPT-5.6 Lunaのcost efficiencyを活かすため、OpenAI Batch APIをP1完了条件として実装する
+- Batchは独立・tool-free request向けの**実行経路**として限定し、balanced semantic probe、Luna capability-floor calibration、static EL calibration等に使用する
+- C1〜C3のprimary comparisonではBatch/Syncを混在させず、AF / EL / PR / ARを同一Sync execution modeへ揃える。PR/ARのinteractive retrieval、Stage 1Bの依存episode、Stage 1C longitudinal loopにはBatchを使用しない
+- Batch実装はsync `AgentBackend.run()`へ無理に統合せず、同じResponses request body / structured-output schema / provenance normalizationを再利用する独立`BatchRunner`層として実装する
+- Batch provenanceとしてbatch id、custom_id、endpoint、completion window、output/error file id、actual model、usage、request-level error、pricing modeを保存する
 
 **v2.4での変更点（Stage 1 primary modelをLunaへ変更）**：
 - Stage 1のprimary modelを **GPT-5.6 Luna**（API model ID: `gpt-5.6-luna`）へ変更

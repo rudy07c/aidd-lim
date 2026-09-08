@@ -1,6 +1,6 @@
 # Stage 1（Inheritance / Context Decomposition）実装計画
 
-**対象**：`docs/experiment_plan.md`（v2.4）の Stage 1「Inheritance / Context Decomposition」  
+**対象**：`docs/experiment_plan.md`（v2.5）の Stage 1「Inheritance / Context Decomposition」  
 **理論親文書**：`docs/aidd_ilm_paper.md`  
 **前提**：Stage 0（Harness Feasibility）・Stage 0.5（Measurement Calibration）は、それぞれ当時のoperationalizationに対してゲート達成済み  
 **Stage 1の役割**：`有限context` に混在していた複数のmechanismを、**inheritance / transmission** と **observation / retrieval** の二軸へ分解し、5条件が意図したmechanismだけを操作できる実験装置を完成させる  
@@ -388,7 +388,7 @@ Stage 1事前準備で追加較正する。
 本実装前に以下を同じ定義へ揃える。
 
 1. `docs/aidd_ilm_paper.md`
-2. `docs/experiment_plan.md`（v2.1）
+2. `docs/experiment_plan.md`（v2.5）
 3. `docs/stage1_plan.md`
 4. `docs/findings/` のmethodology note
 5. code側 `ContextCondition` / `InheritanceMode`
@@ -424,8 +424,6 @@ Stage 1事前準備で追加較正する。
 Stage 1 primary modelは **GPT-5.6 Luna**（`gpt-5.6-luna`）とする。Lunaは現行GPT-5.6 familyのcost-sensitive / high-volume tierであり、Stage 1の大量反復で必要なcost efficiencyを優先する基準モデルとして採用する。能力面は事前に仮定せず、Artifact-Full calibrationでprimary taskがfloorにならないことを採用gateとする。
 
 ただしmodel tierの継続的更新と実験再現性は分離する。main run開始前に、利用可能なmodel identifier、reasoning effort、endpoint、tool / structured-output設定、retry policyをfreezeし、requested model IDとAPI response上のactual model identifierを必ず保存する。dated snapshotが利用可能な場合はその採用を優先検討するが、存在を前提にはしない。
-
-プロジェクト上の現行方針としてStage 1 primary model候補をGPT-5.6 Lunaとする。
 
 Stage 1本実験前に、実際に使用するmodel identifier、endpoint、reasoning設定等をfreezeする。
 
@@ -471,31 +469,52 @@ provider-neutral interfaceで少なくとも：
 
 requested modelとAPI response上のactual model idを両方logする。
 
-### 3.4 Batch
+### 3.4 Batch API：P1で実装必須
 
-Batchは**独立request**へ使用する。
+GPT-5.6 Lunaをcost-sensitive / high-volume experimental modelとして採用するため、**P2へ進む前にOpenAI Batch API経路を実装する**。
 
-向く：
+Batchはprovider-neutral `AgentBackend.run()`そのものへ押し込まず、同じResponses request body・structured-output schema・model freeze設定・result normalizationを再利用する独立の`BatchRunner` / `OpenAIBatchClient`層として実装する。Batchは非同期jobであり、同期的な1 episode executionとはlifecycleが異なるためである。
+
+最低実装要件：
+
+1. 各requestをunique `custom_id`付きJSONLへserializeする
+2. method=`POST`、url=`/v1/responses`を使用する
+3. input fileをpurpose=`batch`でuploadする
+4. `completion_window=24h`でbatch jobを作成する
+5. batch status / request countsを取得できる
+6. output file / error fileを取得し、`custom_id`で元requestへ対応付ける
+7. response bodyからstructured mutation / probe answer、actual model、usage、request errorをsync pathと同じ研究用型へnormalizeする
+8. Batch料金でcostを計算し、Sync料金と混同しない
+9. batch id、input/output/error file id、custom_id、endpoint、completion window、status、pricing modeをprovenanceとして保存する
+
+Batchを使うprimary用途：
 
 - balanced semantic probe calibration
+- Luna capability-floor calibration
 - static EL calibration
-- AF fixed-S tasks
-- Stage 1A repeat / variance pilot
+- independent fixed-S AF calibration / variance pilot
+- tool callを必要としない独立repeat
 
-初版で無理にBatch化しない：
+Batchを使わないprimary用途：
 
-- PR / ARのinteractive paging
-- MOI→AF one-step comparisonで前段episode生成と依存する処理
+- C1〜C3のprimary condition comparison（AF / EL / PR / ARは同一Sync execution modeへ揃える）
+- PR / ARのinteractive paging / retrieval
+- Stage 1Bで前段episodeに依存するMOI / AF comparison
 - Stage 1C longitudinal generation loop
+- application-side custom function toolの結果を同一episode中に返す必要がある処理
 
-Batch / Syncを研究条件にはしない。
+したがってBatch / Syncは**研究条件ではなくexecution infrastructure**である。Batchによる50% discountや別rate-limit poolはexperiment throughput改善に利用するが、condition contrastへ混入させない。
 
 **Gate P1**
 
-- selected OpenAI modelでone-shot structured outputが動く
+- selected OpenAI modelでSync one-shot structured outputが動く
 - function callingが動く
-- usage/model provenanceが取れる
-- independent calibration requestのBatch pathが動く
+- Sync pathでusage/model/error provenanceが取れる
+- independent tool-free requestをBatch JSONLへserializeできる
+- `/v1/responses` Batchをcreate / retrieve / output-error decodeできる
+- Batch resultを`custom_id`で元requestへ対応付け、usage/model/error/cost provenanceを正規化できる
+- Sync / Batchのpricing modeがlog上で区別される
+- primary C1〜C3でBatch/Syncが混在しないことをconfig / runnerで検証できる
 - existing Stage 0 mock regressionを壊していない
 
 ---
