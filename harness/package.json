@@ -1,15 +1,19 @@
 {
   "name": "aidd-ilm-harness",
   "version": "0.1.0",
-  "description": "Stage 0 harness for AIDD-ILM generation loop experiments.",
+  "description": "AIDD-ILM experimental harness (Stage 0 historical + Stage 1 runtime).",
   "private": true,
   "scripts": {
     "run": "ts-node run.ts",
-    "verify": "ts-node verify-logs.ts"
+    "verify": "ts-node verify-logs.ts",
+    "typecheck": "tsc --noEmit",
+    "verify:openai": "ts-node verify-openai-backend.ts",
+    "verify:openai-live": "ts-node verify-openai-live.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "openai": "^7.10.0"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

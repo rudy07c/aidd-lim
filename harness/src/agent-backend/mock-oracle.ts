@@ -32,9 +32,19 @@ export class MockOracleBackend implements AgentBackend {
     return {
       modifiedFiles,
       rawResponse: `[mock-oracle] Applied oracle patch for task "${this.taskId}".`,
-      tokenUsage: { input: 0, output: 0 },
+      explicitWorkingNote: null,
+      toolEvents: [],
+      tokenUsage: { input: 0, output: 0, total: 0 },
       latencyMs: Date.now() - start,
       executionStatus: "ok",
+      modelProvenance: {
+        provider: "mock", requestedModel: null, actualModel: "mock-oracle", responseId: null,
+        responseStatus: "completed", endpoint: "mock", reasoningEffort: null, maxOutputTokens: null,
+        structuredOutput: true, storeResponses: null, serviceTier: null, sdkVersion: null,
+        retryPolicy: { maxRetries: null, timeoutMs: null },
+      },
+      estimatedCostUsd: 0,
+      error: null,
     };
   }
 }

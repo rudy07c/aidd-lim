@@ -52,6 +52,11 @@ async function main(): Promise<void> {
     contextBudget: rawConfig.contextBudget ?? "full",
     generations: rawConfig.generations ?? 5,
     tasks: rawConfig.tasks ?? ["T-local-1", "T-crosscut-1", "T-delayed-1", "T-invariant-stress-1"],
+    maxOutputTokens: rawConfig.maxOutputTokens ?? 8192,
+    requestTimeoutMs: rawConfig.requestTimeoutMs ?? 120_000,
+    maxRetries: rawConfig.maxRetries ?? 2,
+    storeResponses: rawConfig.storeResponses ?? false,
+    maxToolRounds: rawConfig.maxToolRounds ?? 4,
     syntheticWorldDir: rawConfig.syntheticWorldDir ?? DEFAULT_SYNTHETIC_WORLD_DIR,
     runsDir: resolvedRunsDir,
   };

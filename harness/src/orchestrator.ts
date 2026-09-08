@@ -9,6 +9,7 @@ import { AgentBackend } from "./agent-backend/types";
 import { MockNoopBackend } from "./agent-backend/mock-noop";
 import { MockOracleBackend } from "./agent-backend/mock-oracle";
 import { AnthropicBackend } from "./agent-backend/anthropic";
+import { OpenAIBackend } from "./agent-backend/openai";
 import { assembleContext, estimateTokenCount } from "./context/assembler";
 import { runScoring } from "./scoring";
 import { writeGenerationLog, generateDiff } from "./logging";
@@ -140,6 +141,7 @@ async function runOneGeneration(
     generation,
     condition: config.condition,
     model: config.model ?? null,
+    model_provenance: agentResult.modelProvenance,
     task_id: taskId,
     repository_before: repositoryBefore,
     repository_after: repositoryAfter,
@@ -149,8 +151,10 @@ async function runOneGeneration(
     context_contents: contextFiles,
     agent_prompt: agentPromptSummary,
     agent_response: agentResult.rawResponse,
-    tool_calls: [],
+    explicit_working_note: agentResult.explicitWorkingNote,
+    tool_calls: agentResult.toolEvents,
     agent_execution_status: executionStatus,
+    agent_error: agentResult.error,
     visible_test_results: scoring.visibleTests,
     hidden_test_results: scoring.hiddenTests,
     task_specific_test_result: scoring.taskSpecificTests,
@@ -159,7 +163,7 @@ async function runOneGeneration(
     semantic_element_trace: null,
     latency_ms: agentResult.latencyMs,
     token_usage: agentResult.tokenUsage ?? null,
-    cost: null,
+    cost: agentResult.estimatedCostUsd,
     protocol_contract_violated: scoring.protocolContractViolated,
   };
 
@@ -179,6 +183,18 @@ function createBackend(config: RunConfig, taskId: string): AgentBackend {
     case "anthropic": {
       const model = config.model ?? "claude-haiku-4-5-20251001";
       return new AnthropicBackend(model);
+    }
+    case "openai": {
+      const model = config.model ?? "gpt-5.6-luna";
+      return new OpenAIBackend({
+        model,
+        reasoningEffort: config.reasoningEffort ?? "medium",
+        maxOutputTokens: config.maxOutputTokens ?? 8192,
+        requestTimeoutMs: config.requestTimeoutMs ?? 120_000,
+        maxRetries: config.maxRetries ?? 2,
+        storeResponses: config.storeResponses ?? false,
+        maxToolRounds: config.maxToolRounds ?? 4,
+      });
     }
   }
 }

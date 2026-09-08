@@ -45,10 +45,14 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
     generation: log.generation,
     condition: log.condition,
     model: log.model,
+    model_provenance: log.model_provenance,
     task_id: log.task_id,
     context_budget: log.context_budget,
     actual_context_tokens: log.actual_context_tokens,
     functional_task_result: log.functional_task_result,
+    agent_execution_status: log.agent_execution_status,
+    agent_error: log.agent_error,
+    explicit_working_note: log.explicit_working_note,
     task_specific_test_result: log.task_specific_test_result
       ? {
           passed: log.task_specific_test_result.passed,
@@ -76,7 +80,9 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
   // agent_response.json
   writeJson(generationDir, "agent_response.json", {
     response: log.agent_response,
+    explicit_working_note: log.explicit_working_note,
     tool_calls: log.tool_calls,
+    error: log.agent_error,
   });
 
   // visible_test_results.json

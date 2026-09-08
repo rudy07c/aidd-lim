@@ -1,6 +1,6 @@
 import { BackendType, ContextCondition, RunConfig } from "../types";
 
-const BACKENDS: BackendType[] = ["mock-noop", "mock-oracle", "anthropic"];
+const BACKENDS: BackendType[] = ["mock-noop", "mock-oracle", "anthropic", "openai"];
 const CONDITIONS: ContextCondition[] = ["full", "simple-limited"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -25,9 +25,20 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
   assertOptionalString(value, "backend");
   assertOptionalString(value, "condition");
   assertOptionalString(value, "model");
+  assertOptionalString(value, "reasoningEffort");
   assertOptionalString(value, "stage");
   assertOptionalString(value, "syntheticWorldDir");
   assertOptionalString(value, "runsDir");
+
+  for (const key of ["maxOutputTokens", "requestTimeoutMs", "maxRetries", "maxToolRounds"] as const) {
+    const v = value[key];
+    if (v !== undefined && (typeof v !== "number" || !Number.isInteger(v))) {
+      throw new Error(`Config field "${key}" must be an integer`);
+    }
+  }
+  if (value.storeResponses !== undefined && typeof value.storeResponses !== "boolean") {
+    throw new Error('Config field "storeResponses" must be a boolean');
+  }
 
   if (
     value.contextBudget !== undefined &&
@@ -75,12 +86,35 @@ export function validateResolvedRunConfig(config: RunConfig): void {
     throw new Error("task ids must be non-empty strings");
   }
 
+  const reasoningEfforts = new Set(["none", "low", "medium", "high", "xhigh", "max"]);
+  if (config.reasoningEffort !== undefined && !reasoningEfforts.has(config.reasoningEffort)) {
+    throw new Error(`Unsupported reasoningEffort: ${config.reasoningEffort}`);
+  }
+  for (const [key, value, min] of [
+    ["maxOutputTokens", config.maxOutputTokens, 1],
+    ["requestTimeoutMs", config.requestTimeoutMs, 1],
+    ["maxRetries", config.maxRetries, 0],
+    ["maxToolRounds", config.maxToolRounds, 0],
+  ] as const) {
+    if (value !== undefined && (!Number.isInteger(value) || value < min)) {
+      throw new Error(`${key} must be an integer >= ${min}`);
+    }
+  }
+
   // Stage 0はhistorical behaviorとしてtask cyclingを許す。
   // Stage 1以降のscientific longitudinal runでは同じGroundTruthDeltaの再適用を禁止する。
   const scientificLongitudinal =
     config.stage?.startsWith("stage1") || config.stage?.startsWith("stage2");
 
   if (scientificLongitudinal) {
+    if (config.backend === "openai") {
+      if (!config.model) throw new Error("Stage 1/2 OpenAI run must explicitly freeze model");
+      if (!config.reasoningEffort) throw new Error("Stage 1/2 OpenAI run must explicitly freeze reasoningEffort");
+      if (config.maxOutputTokens === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxOutputTokens");
+      if (config.requestTimeoutMs === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze requestTimeoutMs");
+      if (config.maxRetries === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxRetries");
+      if (config.storeResponses !== false) throw new Error("Stage 1/2 OpenAI run must set storeResponses=false for explicit statelessness");
+    }
     const unique = new Set(config.tasks);
     if (unique.size !== config.tasks.length) {
       throw new Error(

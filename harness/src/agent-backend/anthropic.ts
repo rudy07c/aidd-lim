@@ -1,5 +1,4 @@
 // harness/src/agent-backend/anthropic.ts
-//
 // 実Anthropic APIを呼ぶagent。Stage 0 historical backend。
 // 毎回新しいmessages配列で開始し、前世代の履歴は含めない。
 
@@ -21,52 +20,91 @@ IMPORTANT CONSTRAINTS:
 3. Return ONLY the files you actually changed. Do not return unchanged files.
 
 OUTPUT FORMAT:
-After implementing the change, output a JSON object inside <modified_files> tags like this:
-
-<modified_files>
-{
-  "src/vok/rules.ts": "complete new content of the file",
-  "src/protocol_adapter.ts": "complete new content of the file"
-}
-</modified_files>
-
-The JSON keys are file paths relative to the repository root.
-The JSON values are the complete new file contents (not diffs).`;
+After implementing the change, output a JSON object inside <modified_files> tags mapping paths to complete file contents.`;
 
 export class AnthropicBackend implements AgentBackend {
   private readonly client: Anthropic;
-  private readonly model: string;
 
-  constructor(model: string) {
+  constructor(private readonly model: string) {
     this.client = new Anthropic();
-    this.model = model;
   }
 
   async run(input: AgentInput): Promise<AgentResult> {
     const start = Date.now();
-    const contextSection = formatContextFiles(input.contextFiles, input.contextBudget);
-    const userMessage = `${contextSection}\n\nTASK:\n${input.visibleInstruction}\n\nImplement this change. Remember to output only the modified files in the <modified_files> JSON format described in the system prompt.`;
+    if ((input.tools?.length ?? 0) > 0) {
+      return this.failure(start, "Historical AnthropicBackend does not implement provider-neutral tools");
+    }
 
-    const response = await this.client.messages.create({
-      model: this.model,
-      max_tokens: 8192,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
+    try {
+      const contextSection = formatContextFiles(input.contextFiles, input.contextBudget);
+      const userMessage = `${contextSection}\n\nTASK:\n${input.visibleInstruction}\n\nImplement this change. Output only modified files in <modified_files> JSON tags.`;
+      const response = await this.client.messages.create({
+        model: this.model,
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
+      });
 
-    const latencyMs = Date.now() - start;
-    const rawResponse = extractTextContent(response);
-    const parsed = parseModifiedFiles(rawResponse);
+      const rawResponse = extractTextContent(response);
+      const parsed = parseModifiedFiles(rawResponse);
+      return {
+        modifiedFiles: parsed.modifiedFiles,
+        rawResponse,
+        explicitWorkingNote: null,
+        toolEvents: [],
+        tokenUsage: { input: response.usage.input_tokens, output: response.usage.output_tokens },
+        latencyMs: Date.now() - start,
+        executionStatus: parsed.ok ? "ok" : "output-parse-failure",
+        modelProvenance: {
+          provider: "anthropic",
+          requestedModel: this.model,
+          actualModel: response.model,
+          responseId: response.id,
+          responseStatus: "completed",
+          endpoint: "messages",
+          reasoningEffort: null,
+          maxOutputTokens: 8192,
+          structuredOutput: false,
+          storeResponses: null,
+          serviceTier: null,
+          sdkVersion: getPackageVersion("@anthropic-ai/sdk"),
+          retryPolicy: { maxRetries: null, timeoutMs: null },
+        },
+        estimatedCostUsd: null,
+        error: parsed.ok
+          ? null
+          : { category: "output-parse", message: "Failed to parse <modified_files> JSON", retryable: false },
+      };
+    } catch (error) {
+      return this.failure(start, error instanceof Error ? error.message : String(error));
+    }
+  }
 
+  private failure(start: number, message: string): AgentResult {
     return {
-      modifiedFiles: parsed.modifiedFiles,
-      rawResponse,
-      tokenUsage: {
-        input: response.usage.input_tokens,
-        output: response.usage.output_tokens,
+      modifiedFiles: {},
+      rawResponse: "",
+      explicitWorkingNote: null,
+      toolEvents: [],
+      latencyMs: Date.now() - start,
+      executionStatus: "provider-error",
+      modelProvenance: {
+        provider: "anthropic",
+        requestedModel: this.model,
+        actualModel: null,
+        responseId: null,
+        responseStatus: "failed",
+        endpoint: "messages",
+        reasoningEffort: null,
+        maxOutputTokens: 8192,
+        structuredOutput: false,
+        storeResponses: null,
+        serviceTier: null,
+        sdkVersion: getPackageVersion("@anthropic-ai/sdk"),
+        retryPolicy: { maxRetries: null, timeoutMs: null },
       },
-      latencyMs,
-      executionStatus: parsed.ok ? "ok" : "output-parse-failure",
+      estimatedCostUsd: null,
+      error: { category: "provider", message, retryable: null },
     };
   }
 }
@@ -75,17 +113,12 @@ function formatContextFiles(files: Record<string, string>, budget: number | "ful
   const lines: string[] = ["REPOSITORY FILES:"];
   let totalChars = 0;
   const budgetChars = budget === "full" ? Infinity : budget * 4;
-
-  for (const [filePath, content] of Object.entries(files)) {
-    const entry = `\n--- ${filePath} ---\n${content}\n`;
-    if (totalChars + entry.length > budgetChars) {
-      lines.push(`\n[... remaining files truncated due to context budget (${budget} tokens) ...]`);
-      break;
-    }
+  for (const filePath of Object.keys(files).sort()) {
+    const entry = `\n--- ${filePath} ---\n${files[filePath]}\n`;
+    if (totalChars + entry.length > budgetChars) break;
     lines.push(entry);
     totalChars += entry.length;
   }
-
   return lines.join("");
 }
 
@@ -100,24 +133,22 @@ function parseModifiedFiles(
   rawResponse: string
 ): { ok: true; modifiedFiles: Record<string, string> } | { ok: false; modifiedFiles: {} } {
   const match = rawResponse.match(/<modified_files>([\s\S]*?)<\/modified_files>/);
-  if (!match) {
-    console.warn("[anthropic] <modified_files> tag not found; recording output-parse-failure.");
-    return { ok: false, modifiedFiles: {} };
-  }
-
+  if (!match) return { ok: false, modifiedFiles: {} };
   try {
     const parsed = JSON.parse(match[1].trim());
-    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-      throw new Error("Expected a JSON object");
-    }
-    for (const [k, v] of Object.entries(parsed)) {
-      if (typeof v !== "string") {
-        throw new Error(`Value for key "${k}" is not a string`);
-      }
-    }
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return { ok: false, modifiedFiles: {} };
+    for (const value of Object.values(parsed)) if (typeof value !== "string") return { ok: false, modifiedFiles: {} };
     return { ok: true, modifiedFiles: parsed as Record<string, string> };
-  } catch (e) {
-    console.error("[anthropic] Failed to parse modified_files JSON:", e);
+  } catch {
     return { ok: false, modifiedFiles: {} };
+  }
+}
+
+function getPackageVersion(packageName: string): string | null {
+  try {
+    const pkg = require(`${packageName}/package.json`) as { version?: string };
+    return pkg.version ?? null;
+  } catch {
+    return null;
   }
 }

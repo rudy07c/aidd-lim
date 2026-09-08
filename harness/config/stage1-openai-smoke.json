@@ -1,0 +1,17 @@
+{
+  "experimentId": "stage1-openai-luna-smoke",
+  "lineageId": "lineage-0",
+  "stage": "stage1-smoke",
+  "backend": "openai",
+  "condition": "full",
+  "contextBudget": "full",
+  "generations": 1,
+  "tasks": ["T-local-1"],
+  "model": "gpt-5.6-luna",
+  "reasoningEffort": "medium",
+  "maxOutputTokens": 8192,
+  "requestTimeoutMs": 120000,
+  "maxRetries": 2,
+  "storeResponses": false,
+  "maxToolRounds": 4
+}
