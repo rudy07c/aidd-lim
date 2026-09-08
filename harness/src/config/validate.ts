@@ -108,25 +108,28 @@ export function validateResolvedRunConfig(config: RunConfig): void {
     if (value !== undefined && (!Number.isInteger(value) || value < min)) throw new Error(`${key} must be an integer >= ${min}`);
   }
 
-  const scientificRun = config.runClass === "scientific-calibration" || config.runClass === "scientific-main";
-  if (scientificRun) {
-    if (config.backend === "openai") {
-      if (!config.model) throw new Error("Stage 1/2 OpenAI run must explicitly freeze model");
-      if (!config.reasoningEffort) throw new Error("Stage 1/2 OpenAI run must explicitly freeze reasoningEffort");
-      if (config.maxOutputTokens === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxOutputTokens");
-      if (config.requestTimeoutMs === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze requestTimeoutMs");
-      if (config.maxRetries === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxRetries");
-      if (config.maxToolRounds === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxToolRounds");
-      if (config.storeResponses !== false) throw new Error("Stage 1/2 OpenAI run must set storeResponses=false");
-      if (config.serviceTier !== "default") throw new Error('Stage 1/2 primary Sync run must set serviceTier="default"');
-      if (!config.promptCacheMode) throw new Error("Stage 1/2 OpenAI run must explicitly freeze promptCacheMode");
-    }
+  const requiresScientificFreeze =
+    config.runClass === "scientific-calibration" || config.runClass === "scientific-main";
+  if (requiresScientificFreeze && config.backend === "openai") {
+    if (!config.model) throw new Error("Stage 1/2 OpenAI run must explicitly freeze model");
+    if (!config.reasoningEffort) throw new Error("Stage 1/2 OpenAI run must explicitly freeze reasoningEffort");
+    if (config.maxOutputTokens === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxOutputTokens");
+    if (config.requestTimeoutMs === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze requestTimeoutMs");
+    if (config.maxRetries === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxRetries");
+    if (config.maxToolRounds === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxToolRounds");
+    if (config.storeResponses !== false) throw new Error("Stage 1/2 OpenAI run must set storeResponses=false");
+    if (config.serviceTier !== "default") throw new Error('Stage 1/2 primary Sync run must set serviceTier="default"');
+    if (!config.promptCacheMode) throw new Error("Stage 1/2 OpenAI run must explicitly freeze promptCacheMode");
+  }
+
+  const requiresUniqueTaskSequence = config.runClass === "scientific-main";
+  if (requiresUniqueTaskSequence) {
     const unique = new Set(config.tasks);
     if (unique.size !== config.tasks.length) {
-      throw new Error("Stage 1/2 scientific runs must not contain duplicate task ids; GroundTruthDelta reuse is forbidden");
+      throw new Error("Stage 1/2 scientific main runs must not contain duplicate task ids; GroundTruthDelta reuse is forbidden");
     }
     if (config.generations > config.tasks.length) {
-      throw new Error(`Stage 1/2 scientific runs require one unique task per generation: generations=${config.generations}, tasks=${config.tasks.length}`);
+      throw new Error(`Stage 1/2 scientific main runs require one unique task per generation: generations=${config.generations}, tasks=${config.tasks.length}`);
     }
   }
 }
