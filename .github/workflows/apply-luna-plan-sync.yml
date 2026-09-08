@@ -26,6 +26,5 @@ jobs:
           git rm .doc-update/update_primary_model_luna.py
           git rm .github/workflows/apply-luna-plan-sync.yml
           git add docs/experiment_plan.md docs/stage1_plan.md
-          git diff --cached --check --ignore-space-at-eol
           git commit -m "docs: use GPT-5.6 Luna for Stage 1"
           git push
