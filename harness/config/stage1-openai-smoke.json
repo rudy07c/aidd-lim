@@ -1,6 +1,7 @@
 {
   "experimentId": "stage1-openai-luna-smoke",
   "lineageId": "lineage-0",
+  "runClass": "smoke",
   "stage": "stage1-smoke",
   "backend": "openai",
   "condition": "full",

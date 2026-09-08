@@ -3,6 +3,7 @@
   "stage": "stage0",
   "experimentId": "stage0-mock-oracle-001",
   "lineageId": "lineage-0",
+  "runClass": "historical",
   "backend": "mock-oracle",
   "condition": "full",
   "contextBudget": "full",

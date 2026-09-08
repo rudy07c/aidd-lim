@@ -69,8 +69,8 @@ async function runOneGeneration(
 
   // Provider/network failures are infrastructure failures, not software-evolution outcomes.
   // Do not score or advance the lineage after the SDK's frozen retry policy is exhausted.
-  if (agentResult.executionStatus === "provider-error") {
-    throw new Error(`Provider infrastructure failure; generation invalid/censored: ${agentResult.error?.message ?? "unknown provider error"}`);
+  if (shouldCensorGeneration(agentResult.executionStatus)) {
+    throw new Error(`Provider/response failure; generation invalid/censored (${agentResult.executionStatus}): ${agentResult.error?.message ?? "no detail"}`);
   }
 
   let executionStatus: AgentExecutionStatus = agentResult.executionStatus;
@@ -161,4 +161,23 @@ function loadDirRecursive(baseDir: string, currentDir: string, result: Record<st
 }
 function buildAgentPromptSummary(contextFiles: Record<string, string>, visibleInstruction: string): string {
   return `[Context files: ${Object.keys(contextFiles).sort().join(", ")}]\n\nTask:\n${visibleInstruction}`;
+}
+
+
+const CENSORED_AGENT_STATUSES = new Set<AgentExecutionStatus>([
+  "provider-error",
+  "response-failed",
+  "response-incomplete",
+  "response-not-completed",
+  "response-refusal",
+]);
+
+/**
+ * Provider/Responses transport・completion由来で、software evolutionの結果として
+ * lineageへ取り込んではならないstatusだけをcensorする。
+ * output-parse-failure / tool-error / mutation-validation-failureはagentがtaskを
+ * 実際に試みた結果としてcensorしない。
+ */
+export function shouldCensorGeneration(status: AgentExecutionStatus): boolean {
+  return CENSORED_AGENT_STATUSES.has(status);
 }

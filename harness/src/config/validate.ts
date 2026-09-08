@@ -3,6 +3,7 @@ import {
   ContextCondition,
   OpenAIServiceTier,
   PromptCacheMode,
+  RunClass,
   RunConfig,
 } from "../types";
 
@@ -10,6 +11,7 @@ const BACKENDS: BackendType[] = ["mock-noop", "mock-oracle", "anthropic", "opena
 const CONDITIONS: ContextCondition[] = ["full", "simple-limited"];
 const SERVICE_TIERS: OpenAIServiceTier[] = ["auto", "default", "flex", "fast", "priority", "ultrafast"];
 const CACHE_MODES: PromptCacheMode[] = ["implicit", "explicit"];
+const RUN_CLASSES: RunClass[] = ["historical", "smoke", "scientific-calibration", "scientific-main"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -27,11 +29,11 @@ function requireOwn(obj: Record<string, unknown>, key: string): void {
 }
 
 /** JSON parse直後のshape検査。Stage 1/2のfreeze必須fieldはdefault適用前に存在確認する。 */
-export function validateRawRunConfig(value: unknown): asserts value is Partial<RunConfig> {
+export function validateRawRunConfig(value: unknown): asserts value is Partial<RunConfig> & { runClass: RunClass } {
   if (!isRecord(value)) throw new Error("Config root must be a JSON object");
 
   for (const key of [
-    "experimentId", "lineageId", "backend", "condition", "model", "reasoningEffort", "stage",
+    "experimentId", "lineageId", "runClass", "backend", "condition", "model", "reasoningEffort", "stage",
     "syntheticWorldDir", "runsDir", "serviceTier", "promptCacheMode",
   ]) assertOptionalString(value, key);
 
@@ -55,8 +57,13 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
     throw new Error('Config field "tasks" must be an array of strings');
   }
 
+  requireOwn(value, "runClass");
+  if (!RUN_CLASSES.includes(value.runClass as RunClass)) {
+    throw new Error(`Unsupported runClass: ${String(value.runClass)}`);
+  }
+
   const scientificOpenAI =
-    typeof value.stage === "string" && (value.stage.startsWith("stage1") || value.stage.startsWith("stage2")) &&
+    (value.runClass === "scientific-calibration" || value.runClass === "scientific-main") &&
     value.backend === "openai";
   if (scientificOpenAI) {
     for (const key of [
@@ -72,6 +79,7 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
 
 /** default適用・path解決後のsemantic validation。 */
 export function validateResolvedRunConfig(config: RunConfig): void {
+  if (!RUN_CLASSES.includes(config.runClass)) throw new Error(`Unsupported runClass: ${config.runClass}`);
   if (!BACKENDS.includes(config.backend)) throw new Error(`Unsupported backend: ${config.backend}`);
   if (!CONDITIONS.includes(config.condition)) throw new Error(`Unsupported context condition: ${config.condition}`);
   if (config.contextBudget !== "full" && (!Number.isFinite(config.contextBudget) || config.contextBudget < 0)) {
@@ -100,8 +108,8 @@ export function validateResolvedRunConfig(config: RunConfig): void {
     if (value !== undefined && (!Number.isInteger(value) || value < min)) throw new Error(`${key} must be an integer >= ${min}`);
   }
 
-  const scientificLongitudinal = config.stage?.startsWith("stage1") || config.stage?.startsWith("stage2");
-  if (scientificLongitudinal) {
+  const scientificRun = config.runClass === "scientific-calibration" || config.runClass === "scientific-main";
+  if (scientificRun) {
     if (config.backend === "openai") {
       if (!config.model) throw new Error("Stage 1/2 OpenAI run must explicitly freeze model");
       if (!config.reasoningEffort) throw new Error("Stage 1/2 OpenAI run must explicitly freeze reasoningEffort");

@@ -8,6 +8,7 @@ export type ReasoningEffort = "none" | "low" | "medium" | "high" | "xhigh" | "ma
 export type OpenAIServiceTier = "auto" | "default" | "flex" | "fast" | "priority" | "ultrafast";
 export type PromptCacheMode = "implicit" | "explicit";
 export type PricingMode = "sync" | "batch";
+export type RunClass = "historical" | "smoke" | "scientific-calibration" | "scientific-main";
 
 export type AgentExecutionStatus =
   | "ok"
@@ -70,6 +71,8 @@ export interface NormalizedAgentError {
 export interface RunConfig {
   experimentId: string;
   lineageId: string;
+  /** runの科学的位置づけ。freeze gateはstage名ではなくこの値で判定する。 */
+  runClass: RunClass;
   backend: BackendType;
   condition: ContextCondition;
   /** 1世代あたりのtoken budget（"full"は全ファイルを渡す） */

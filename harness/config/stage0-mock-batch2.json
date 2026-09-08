@@ -3,6 +3,7 @@
   "stage": "stage0",
   "experimentId": "stage0-mock-noop-batch2",
   "lineageId": "lineage-0",
+  "runClass": "historical",
   "backend": "mock-noop",
   "condition": "full",
   "contextBudget": "full",

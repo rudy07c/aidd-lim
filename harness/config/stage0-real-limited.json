@@ -3,6 +3,7 @@
   "stage": "stage0",
   "experimentId": "stage0-real-limited-001",
   "lineageId": "lineage-0",
+  "runClass": "historical",
   "backend": "anthropic",
   "condition": "simple-limited",
   "contextBudget": "full",
