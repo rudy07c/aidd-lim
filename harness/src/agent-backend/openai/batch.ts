@@ -158,7 +158,6 @@ export class OpenAIBatchRunner {
     for (const request of requests) {
       if (seen.has(request.customId)) throw new Error(`Duplicate Batch custom_id: ${request.customId}`);
       seen.add(request.customId);
-      // Revalidate even if callers constructed the object manually.
       this.createRequest(request.customId, request.body);
       const line: OpenAIBatchJsonlLine = {
         custom_id: request.customId,
@@ -223,7 +222,7 @@ export class OpenAIBatchRunner {
     if (batch.outputFileId) texts.push(await this.readFileText(batch.outputFileId));
     if (batch.errorFileId) texts.push(await this.readFileText(batch.errorFileId));
     const lines = mergeBatchJsonlTexts(texts);
-    assertBatchResultCompleteness(lines, expected);
+    assertBatchResultCompleteness(lines, [...expected]);
     return { batch, lines };
   }
 
@@ -454,11 +453,9 @@ export function mergeBatchJsonlTexts(texts: string[]): OpenAIBatchRawResultLine[
 
 export function assertBatchResultCompleteness(
   lines: readonly OpenAIBatchRawResultLine[],
-  expectedCustomIds: ReadonlySet<string> | readonly string[]
+  expectedCustomIds: readonly string[]
 ): void {
-  const expected = expectedCustomIds instanceof Set
-    ? expectedCustomIds
-    : normalizeExpectedCustomIds(expectedCustomIds);
+  const expected = normalizeExpectedCustomIds(expectedCustomIds);
   const actual = new Set(lines.map((line) => line.custom_id));
   const missing = [...expected].filter((id) => !actual.has(id));
   const unexpected = [...actual].filter((id) => !expected.has(id));
