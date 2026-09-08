@@ -1,0 +1,30 @@
+name: Apply Stage 1 preflight docs
+
+on:
+  push:
+    paths:
+      - '.doc-update/apply_stage1_preflight.py'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply deterministic doc updates
+        run: python .doc-update/apply_stage1_preflight.py
+      - name: Commit updates and remove one-shot files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .doc-update/apply_stage1_preflight.py
+          git rm .github/workflows/apply-stage1-preflight-docs.yml
+          git add docs/aidd_ilm_paper.md docs/experiment_plan.md docs/stage1_plan.md
+          git diff --cached --check
+          git commit -m "docs: freeze Stage 1 preflight design"
+          git push
