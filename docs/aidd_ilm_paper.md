@@ -9,7 +9,7 @@
 
 本稿でいう「選択圧」「選択環境」は、複数の変異体（variant）の集団からfitnessの高いものが繁殖するという厳密なDarwinian selectionを意味しない。実際に扱う過程は単一のlineage \(S_0 \to S_1 \to S_2 \to \cdots\) であり、そこで生じうるのは、世代継承の過程で正確に保持・再構成されやすい情報と、歪んだり失われたりしやすい情報との間の**差異的伝達可能性（differential transmissibility）**である。
 
-AIDDにおける世代継承には、少なくとも二種類のselection pressureが考えられる。第一は、前世代の一時的な会話・判断・作業記憶等が次世代へ自動的には残らないことによって、後世に必要な意味を永続artifactへ刻むことを要求する**Externalization Pressure**である。第二は、artifactに情報が残っていても、次世代主体がそれを一度にすべて保持・処理できないことによって、限られた観測から意味を再構成可能な形で情報を配置することを要求する**Reconstruction Pressure**である。
+AIDDにおける世代継承には、少なくとも二種類のselection pressureが考えられる。第一は、前世代の一時的な会話・判断・作業記憶等が次世代へ自動的には残らないことによって、後世に必要な意味を**永続software artifactへ**刻むことを要求する **Artifact-Externalization Pressure（以下、Externalization Pressure）** である。第二は、artifactに情報が残っていても、次世代主体がそれを一度にすべて保持・処理できないことによって、限られた観測から意味を再構成可能な形で情報を配置することを要求する**Reconstruction Pressure**である。
 
 この二つを実験的に分解するため、本稿は世代 \(g\) の内部的理解を \(K_g\)、永続artifactを \(S_g\)、実験系が観測・保存可能だが通常はartifactに含まれないinteraction historyを \(H_g\)、次世代主体が実際に保持しているartifact由来contextを \(C_g\) と区別する。その上で、全条件でfresh agent原則を維持しつつ、**Maximal Observable Inheritance（MOI） / Artifact-Full / Exposure-Limited / Privileged-Retrieved Limited / Agent-Retrieved Limited** の五条件を比較する。MOIは古典的ILMにおけるFull-transmission controlの完全な再現ではなく、実験系が保存可能なobservable informationについての操作的上限である。
 
@@ -115,7 +115,7 @@ S_0 \to S_1 \to S_2 \to S_3 \to \cdots
 \text{Reconstruction Pressure}
 \]
 
-前者は「後世に必要な意味をartifactの外へ残したままにするな」という圧力であり、後者は「artifactへ外在化するだけでなく、有限な観測から再構成できる形で残せ」という圧力である。
+前者は「後世に必要な意味を非永続なinteraction channelだけに残さず、永続software artifactへ刻め」という圧力であり、後者は「artifactへ外在化するだけでなく、有限な観測から再構成できる形で残せ」という圧力である。
 
 実験で操作する条件は、この有限性をゼロから作り出すのではなく、**何が世代間に残るか、残ったartifactをどのように観測できるかを制御可能な独立変数へ変換するための操作**として位置づける。
 
@@ -142,19 +142,21 @@ S_0 \to S_1 \to S_2 \to S_3 \to \cdots
 
 ただし \(H_g\) は \(K_g\) の完全な写像ではない。モデルのhidden state、非出力の内部表象、非観測的な推論過程等は含まれない。
 
-したがって、AIDDにおける世代継承をより正確に書けば、
+ここで注意すべきなのは、\(H_g\) の全内容が \(K_g\) から「外在化」されたものではないことである。task instructionやtool result、外部から与えられたfeedbackは、episodeの外部入力・環境との相互作用に由来する。したがって、因果過程をより厳密には、世代 \(g\) のtaskを \(T_g\)、observable tool / feedback environmentを \(E_g\) として、
 
 \[
-K_g
-\longrightarrow
-(S_{g+1}, H_g)
-\longrightarrow
+(K_g,S_g,T_g,E_g)
+\xrightarrow{\mathrm{episode\ interaction}}
+(S_{g+1},H_g)
+\xrightarrow{\mathrm{inheritance\ condition}}
 C_{g+1}
 \longrightarrow
 K_{g+1}
 \]
 
-と表せる。
+と表す方がよい。
+
+ここで \(S_{g+1}\) は永続software artifact、\(H_g\) はepisode中に観測・保存できた非repositoryのinteraction recordである。本研究がMOI / Artifact-Fullで操作するのは、\(K_g\) 全体の継承ではなく、**episode後に残ったobservable channel \(H_g\) をartifactとは別に次世代へ渡すかどうか**である。
 
 本研究では、**すべての条件で次世代はfresh agentとする**。同一sessionを継続する条件は設けない。変数として操作するのは「fresh agentへ何を渡すか」であり、主体の連続性そのものではない。
 
@@ -182,7 +184,7 @@ Agent_{g+1}
 
 のみを許す。
 
-このとき、後世に必要な意味が \(S_{g+1}\) へ外在化されていなければ失われる。これがartifactへの**Externalization Pressure**を生みうる。
+このとき、後世に必要な意味が \(S_{g+1}\) へ外在化されていなければ失われる。これが、意味を非永続なinteraction channelに残すのではなく**永続software artifactへ刻むことを要求するArtifact-Externalization Pressure**を生みうる。以下では簡潔さのためExternalization Pressureと呼ぶ。
 
 一方、本研究ではこの圧力を固定前提のままにせず、部分的に操作可能な変数へ昇格させる。そのため、fresh agentへ
 
@@ -386,13 +388,31 @@ ILMは「有限contextならartifactは必ずこう進化する」という答�
 
 この二つは独立でありうる。AIがシステムを正しく理解していても、コード生成能力自体が不十分で変更に失敗する場合がある。逆に、システムの意味を十分に理解していなくても、偶然テストを通過する変更を生成できる場合もある。本稿の哲学的な核心は「次世代のAIに意味が伝わるか」という問いにあるため、この二つを区別せず「タスクが成功したか」のみを測定すると、通常のcoding benchmarkに接近してしまい、ILMとの理論的対応が弱まる。
 
-そこで本稿では、両者を分離して定義する。context条件ごとに定義された観測・working-context budget \(B\) のもとで、
+そこで本稿では、両者を分離して定義する。五条件化後は、単一のbudget \(B\) だけではMOI / AF / EL / PR / ARの評価環境を一意に表せない。そこで、inheritance・observation・retrieval条件を含む評価環境を \(e\) とし、簡略表記としてcondition \(c\) を用いる。
 
 \[
-M_B(S) = P(\text{将来の変更タスクが回帰を伴わず成功する} \mid S,\ B)
+M(S;e)
+=
+P(\text{将来の変更タスクが回帰を伴わず成功する} \mid S,e)
 \]
 
-を**機能的継続可能性**（従来 \(R_B(S)\) と呼んでいた量に相当）とする。これに対し、意味的再構成そのものは、たとえば後続AIに「このモジュールの制約・不変条件・依存関係を説明させる」課題を課し、正解の仕様やADRとの一致度を測定するといった、**変更タスクの成功とは独立の評価**によって \(R_B^{\mathrm{sem}}(S)\) として定義する。
+または簡潔に
+
+\[
+M_c(S)
+\]
+
+を**機能的継続可能性**とする。意味的再構成そのものは、変更タスクの成功とは独立のsemantic probeによって
+
+\[
+R^{\mathrm{sem}}(S;e)
+\quad\text{または}\quad
+R_c^{\mathrm{sem}}(S)
+\]
+
+として定義する。
+
+Stage 0.5のようにbudgetだけを操作したhistorical calibrationでは \(M_B(S),R_B^{\mathrm{sem}}(S)\) という表記を用いてよいが、五条件を横断する理論量としてはcondition / evaluation-environment indexed notationを用いる。
 
 両者を分離して測定することで、「artifactから何が意味的に再構成されたか」を独立に観察できるようになり、ILMとの対応をより厳密にできる。
 
@@ -431,11 +451,22 @@ P_{\mathrm{functional}}(S) \geq \theta
 一方、本研究では反復的継承という限定された観点から、二つの主要評価軸をすでに持つ。そこで、一般的なsoftware quality全体とは区別した操作的な**継承品質（inheritance quality）**を、
 
 \[
-Q_B(S)
+Q(S;e)
 =
 \left(
-R_B^{\mathrm{sem}}(S),
-M_B(S)
+R^{\mathrm{sem}}(S;e),
+M(S;e)
+\right)
+\]
+
+または簡潔に、
+
+\[
+Q_c(S)
+=
+\left(
+R_c^{\mathrm{sem}}(S),
+M_c(S)
 \right)
 \]
 
@@ -535,7 +566,7 @@ Artifact-Fullが両軸のhub conditionとなる。
 |---|---|---|---|---|---|
 | **Maximal Observable Inheritance（MOI）** | artifact + 直前世代のobservable history \(H_g\) | 全体 | 追加制限なし | 不要 | observable ephemeral context loss |
 | **Artifact-Full（AF）** | artifactのみ | 全体 | 追加制限なし | 不要 | artifact-only inheritance baseline / hub |
-| **Exposure-Limited（EL）** | artifactの選択subsetのみ | subsetのみ | \(B_{work}\) 以下 | privileged static selector | irreversible transmission / exposure loss |
+| **Exposure-Limited（EL）** | artifactの選択subsetのみ | subsetのみ | static exposure budget \(B_{expose}\) | privileged static selector | irreversible transmission / exposure loss |
 | **Privileged-Retrieved Limited（PR）** | artifactのみ | 全体へ再アクセス可能 | \(B_{work}\) | privileged controller | finite working cognition |
 | **Agent-Retrieved Limited（AR）** | artifactのみ | 全体へ再アクセス可能 | \(B_{work}\) | agent自身 | retrieval / information-selection |
 
@@ -569,7 +600,7 @@ Outcome_{PR}
 
 AFとPRはartifact-only inheritanceとrepository全体へのaccess可能性を共有する。PRだけが有限working contextを持つ。
 
-したがってこの差を、privileged retrievalでも残る**有限working cognitionそのものの効果**として解釈する。
+したがってこの差を、**privilegedな情報選択を与えたbest-case bounded-observation effect**として解釈する。AFとPRでmodel-call回数やepisode protocolまで異なれば純粋なworking-set effectではなくなるため、実験では可能な限りrunner・decision opportunityを揃え、残る差を有限working cognitionの効果へ寄せる。
 
 #### C2：Retrieval-policy effect
 
@@ -593,9 +624,9 @@ Outcome_{PR}
 Outcome_{EL}
 \]
 
-ELはepisode開始時に提示されなかったartifactへアクセスできず、PRは必要に応じてartifact全体へ再アクセスできる。
+ELはepisode開始時に提示されなかったartifactへアクセスできず、PRは必要に応じてartifact全体へ再アクセスできる。ELの \(B_{expose}\) はepisode全体でアクセス可能なstatic artifact pool、PRの \(B_{work}\) は同時保持量であり、同一resourceではない。
 
-この差は、**不可逆な情報欠落と、回復可能な有限認知帯域の差**を表す。
+この差は、**不可逆な情報欠落と、回復可能な有限認知帯域の差**を表す。ただしPRはepisode全体では \(B_{work}\) を超える累積unique informationを観測できる一方、ELは提示subset外を一度も観測できないため、C3はrecoverabilityだけでなく**cumulative exposure possibility**も含むcompound contrastである。純粋な一因子比較とは解釈しない。
 
 補助的に、
 
@@ -623,6 +654,8 @@ artifact全体へのaccess可能性は維持し、
 
 とする。
 
+さらに、working-set manager上で情報をevictしても、provider側の会話履歴に過去のfile内容が残っていればmodelはそれを再参照でき、\(|W_t|\le B_{work}\) が形骸化する。したがってPR / ARの各reasoning stepは、**current \(W_t\) + bounded explicit memory + current taskからstatelessにmodel inputを再構築**し、provider thread、previous response参照、暗黙のmessage history等によってevicted artifact evidenceを保持してはならない。
+
 ### 5.1.2 MOIの実装原則
 
 MOIで継承する \(H_g\) は、実験系がobservableかつ保存可能な情報に限定する。
@@ -640,6 +673,8 @@ MOIで継承する \(H_g\) は、実験系がobservableかつ保存可能な情�
 
 また、原則として直前世代 \(H_g\) のみを渡し、全過去historyを無制限に累積しない。これにより、世代数に比例したcontext膨張を新しい独立変数として持ち込むことを避ける。
 
+MOIのhistoryには、設計理由・working note等の**ephemeral information**だけでなく、tool resultとして取得したrepository断片やdiffなど、artifact内容の再提示も含まれうる。したがって \(H_g\) 内の各itemにはsource tagを付与し、少なくとも `ephemeral-rationale / task-feedback / artifact-redundant / mutation-metadata` を区別して保存する。これによりMOIの効果が非artifact文脈の継承によるものか、単なるartifact salience / re-exposureによるものかを後続ablationで検査できるようにする。
+
 
 ### 5.2 priorの統制
 
@@ -654,7 +689,7 @@ AIエージェントは事前学習によって強いpriorを持つ。単に人�
 
 ### 5.3 要求の質の統制：本稿が操作しない変数の明示
 
-本研究がcontext bottleneckとして操作するのは、**過去に継承されるartifact（コード・テスト・型・コメント等）に対するaccess・exposure・working-context条件の強さと形**である。これに対し、各世代でAIへ提示される新規要求（held-out taskのvisible instruction）そのものの詳細度・明確さは、本研究が操作する変数ではない。
+本研究が操作するのは、**世代間に何を継承するかというinheritance channel**（observable historyを継承するか、artifactのみか、artifact exposureをさらに制限するか）と、**継承されたartifactをどう観測・探索するかというobservation channel**（working-context、retrieval）の強さと形である。これに対し、各世代でAIへ提示される新規要求（held-out taskのvisible instruction）そのものの詳細度・明確さは、本研究が操作する変数ではない。
 
 この区別は実験の初期段階で明確化する必要が生じた。予備的な実行観察において、AIが新しいoperationを実装する際、既存のinvariant（複数entityにまたがる制約）を壊さないという条件を、要求文が明示していない場合に見落とす事例が観察された。この観察は、有限context下での意味的再構成可能性を検証する上で重要な交絡因子を示唆する。すなわち、観測される失敗が
 
@@ -676,8 +711,8 @@ AIエージェントは事前学習によって強いpriorを持つ。単に人�
 主要な従属変数の候補は以下の通りである。
 
 **主要指標（primary outcome）**
-- 指定されたcontext条件・working-context budgetのもとでの機能的継続可能性 \(M_B(S)\)
-- 独立に測定された意味的再構成可能性 \(R^{\mathrm{sem}}_B(S)\)
+- 指定されたcontext条件・working-context budgetのもとでの機能的継続可能性 \(M(S;e)\) / \(M_c(S)\)
+- 独立に測定された意味的再構成可能性 \(R^{\mathrm{sem}}(S;e)\) / \(R_c^{\mathrm{sem}}(S)\)
 - 累積的な隠しテストの保持率
 - 目標成功確率に到達するための最小working-context量または必要観測量
 
@@ -713,6 +748,8 @@ fresh\ agent + artifact\ only + fixed\ observation\ condition
 \]
 
 へ投入し、同一の \(R^{sem}\) / \(M\) を測定する。
+
+さらに、適応が一般的改善なのか特定環境への適応なのかを区別するため、AF-grown / PR-grown artifactをAF環境とPR環境の双方で評価するような**reciprocal evaluation**も有効である。これにより、artifactが育成環境を離れても優位を保つのか、あるいは特定のobservation regimeでのみ優位なのかを区別できる。
 
 もしArtifact-Full lineageのartifactがこの共通条件で高い継承品質を示すなら、
 
@@ -884,7 +921,7 @@ Artifact-Full / Exposure-Limited / Privileged-Retrieved / Agent-Retrievedのarti
 
 ### 8.1 意味的再構成と機能的継続の測定可能性
 
-4.1節で提案した \(R^{\mathrm{sem}}_B(S)\) と \(M_B(S)\) の分離は理論的には妥当だが、意味的再構成そのものを変更タスクの成功と独立に測定する方法は、さらなる精緻化が必要である。後続AIに仕様を説明させる課題の設計、正解との一致度の自動評価方法などは、パイロット実験を通じて検討すべき課題として残る。
+4.1節で提案した \(R^{\mathrm{sem}}(S;e)\) と \(M(S;e)\) の分離は理論的には妥当だが、意味的再構成そのものを変更タスクの成功と独立に測定する方法は、さらなる精緻化が必要である。後続AIに仕様を説明させる課題の設計、正解との一致度の自動評価方法などは、パイロット実験を通じて検討すべき課題として残る。
 
 ### 8.2 複合評価枠組みの形式
 
@@ -911,6 +948,18 @@ MOI = K_g\text{の完全継承}
 とは解釈しない。
 
 また、どこまでを \(H_g\) に含めるかによってMOIの強さは変わるため、含有項目を事前に固定し、全runで同じschemaを使用する必要がある。全過去historyの無制限累積はcontext量そのものを世代とともに増加させるため、主実験では直前世代のobservable historyを基本単位とする。
+
+さらに、Artifact-FullおよびMOIが操作的に「全artifactを追加制限なく渡す条件」であり続けるには、各generationでrepository全体（MOIでは加えて直前history）がmodelの入力contextへ実際に収まる必要がある。したがって実験では、
+
+\[
+tokens(S_g)
++ tokens(H_{g-1})_{\mathrm{MOI}}
++ fixed\ overhead
++ reserved\ output
+< model\ context\ capacity
+\]
+
+を**Operational-Full feasibility invariant**として監視する。これを超えた場合にsilent truncationして「Full」と呼び続けてはならず、事前に定めた停止・censoring・world-size再設計規則に従う必要がある。
 
 ### 8.6 要求の質という、本研究が扱わない変数
 

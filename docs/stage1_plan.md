@@ -1,7 +1,7 @@
 # Stage 1（Inheritance / Context Decomposition）実装計画
 
-**対象**：`docs/experiment_plan.md` v2.0 の Stage 1「Inheritance / Context Decomposition」  
-**理論親文書**：`aidd_ilm_paper_v6.md`  
+**対象**：`docs/experiment_plan.md`（v2.1）の Stage 1「Inheritance / Context Decomposition」  
+**理論親文書**：`docs/aidd_ilm_paper.md`  
 **前提**：Stage 0（Harness Feasibility）・Stage 0.5（Measurement Calibration）は、それぞれ当時のoperationalizationに対してゲート達成済み  
 **Stage 1の役割**：`有限context` に混在していた複数のmechanismを、**inheritance / transmission** と **observation / retrieval** の二軸へ分解し、5条件が意図したmechanismだけを操作できる実験装置を完成させる  
 **primary model候補**：GPT-5 mini（プロジェクト上の現行方針）。Stage 1本実験前に利用可能なmodel identifier・reasoning設定・tool/structured-output設定を再確認しfreezeする  
@@ -57,7 +57,7 @@ Stage 1では、5条件を単純な制約強度の順序として扱わない。
 |---|---|---|---|---|---|
 | **Maximal Observable Inheritance（MOI）** | artifact + 直前世代のobservable interaction record \(\mathcal{I}^{obs}_g\) | 全体 | 追加的人工制限なし | 不要 | observable-history availability |
 | **Artifact-Full（AF）** | artifactのみ | 全体 | 追加的人工制限なし | 不要 | hub baseline |
-| **Exposure-Limited（EL）** | artifactの選択subsetのみ | subsetのみ | \(B_{work}\) 以下 | privileged static selector | irreversible exposure |
+| **Exposure-Limited（EL）** | artifactの選択subsetのみ | subsetのみ | static exposure budget \(B_{expose}\) | privileged static selector | irreversible exposure |
 | **Privileged-Retrieved Limited（PR）** | artifactのみ | 全体へ再アクセス可能 | \(B_{work}\) | privileged retrieval controller | bounded working cognition |
 | **Agent-Retrieved Limited（AR）** | artifactのみ | 全体へ再アクセス可能 | \(B_{work}\) | worker agent自身 | retrieval / information selection |
 
@@ -97,7 +97,7 @@ Agent_g = Agent_{g+1}
 
 ### 0.4 \(\mathcal{I}^{obs}_g\) の定義
 
-paper v6ではobservable historyを \(H_g\) と表現しているが、実験計画には既にhidden evaluator \(H(G)\) が存在する。
+paperではobservable historyを \(H_g\) と表現しているが、実験計画には既にhidden evaluator \(H(G)\) が存在する。
 
 実装・ログでは混同を避けるため、
 
@@ -206,7 +206,7 @@ Outcome_{AF}
 Outcome_{PR}
 \]
 
-AFとPRはartifact-only inheritanceとfull repository availabilityを共有し、PRだけがfinite working setを持つ。
+AFとPRはartifact-only inheritanceとfull repository availabilityを共有する。C1をworking-set effectへ寄せるため、model-call上限・decision rounds・retry/repair opportunity・common task protocolを可能な限り揃える。PRにはprivileged controllerによるevidence curationがあるため、C1は厳密なpure working-set effectではなく**best-case privileged bounded-observation effect**として解釈する。
 
 #### C2：Retrieval-policy effect
 
@@ -240,7 +240,7 @@ Outcome_{EL}
 
 ELは最初に提示されなかったartifactへ後からaccessできない。
 
-PRは同じ有限working-set制約でもartifact全体へ再アクセス可能。
+PRは有限working-set制約のもとartifact全体へ再アクセス可能。なおELの \(B_{expose}\) はepisode全体のstatic artifact pool、PRの \(B_{work}\) は同時保持量であり同じresourceではない。PRは累積では \(B_{work}\) を超えるunique artifactを観測できるため、C3はrecoverabilityだけでなくcumulative exposure possibilityも含むcompound contrastとする。
 
 ### 0.7 ILM-core secondary contrast
 
@@ -339,8 +339,8 @@ Stage 1事前準備で追加較正する。
 
 本実装前に以下を同じ定義へ揃える。
 
-1. `aidd_ilm_paper_v6.md`
-2. `docs/experiment_plan.md` v2.0
+1. `docs/aidd_ilm_paper.md`
+2. `docs/experiment_plan.md`（v2.1）
 3. `docs/stage1_plan.md`
 4. `docs/findings/` のmethodology note
 5. code側 `ContextCondition` / `InheritanceMode`
@@ -484,6 +484,13 @@ interface ObservableInteractionRecord {
   }>;
 
   tokenCount: number;
+  sourceBreakdown: {
+    ephemeralRationaleTokens: number;
+    taskFeedbackTokens: number;
+    artifactRedundantTokens: number;
+    mutationMetadataTokens: number;
+  };
+
   contentHash: string;
 }
 ```
@@ -528,7 +535,22 @@ AR/PR等でagentに明示的working noteを出させる場合、MOIではそれ�
 
 ただしprivate reasoningではなく、専用fieldとして明示的に出力させる。
 
-### 4.6 前世代一世代だけ
+### 4.6 history itemのsource tagging
+
+MOI historyには、非artifact的なrationaleだけでなく、tool resultとして取得したrepository断片やapplied diffも含まれる。これらを一括して「非artifact context」と解釈すると、history継承効果とartifact re-exposure / salience効果を混同する。
+
+各itemを少なくとも次へ分類する。
+
+- `ephemeral-rationale`
+- `task-feedback`
+- `artifact-redundant`
+- `mutation-metadata`
+
+raw item自体とcategoryを保存し、token countもcategory別に集計する。
+
+Stage 3では`artifact-redundant`だけを除いたMOI history等のablationを可能にする。
+
+### 4.7 前世代一世代だけ
 
 orchestratorはgeneration \(g+1\) 開始時に、
 
@@ -541,7 +563,7 @@ orchestratorはgeneration \(g+1\) 開始時に、
 
 log保存用には全generation recordをdiskへ保持してよい。
 
-### 4.7 MOI history size
+### 4.8 MOI history size
 
 MOIだけhistory量が無制限に増えないよう、一世代episodeの：
 
@@ -562,7 +584,7 @@ MOI recordが事前上限を超えた場合の扱いを本実験前に固定：
 
 初版推奨：**episode生成側の上限でrecordをboundedにし、MOI継承時に後処理summarizationしない**。
 
-### 4.8 MOI prompt assembly
+### 4.9 MOI prompt assembly
 
 MOI用promptは、
 
@@ -577,6 +599,22 @@ CURRENT REPOSITORY
 
 AFとの差がhistory有無以外へ広がらないよう、MOI/AFのcommon prompt wordingを可能な限り共有する。
 
+### 4.10 Operational-Full feasibility invariant
+
+AF / MOIでは全repository（MOIは加えて直前history）を追加的な人工制限なしで渡すため、model contextへ無truncateで収容できること自体を実験invariantにする。
+
+\[
+tokens(S_g)
++ tokens(\mathcal{I}^{obs}_{g-1})_{\mathrm{MOI}}
++ fixed\ overhead
++ reserved\ output
+< context\ capacity
+\]
+
+をgenerationごとに検査する。
+
+超過時のsilent truncationは禁止。Stage 1本実験前に、`invalid/censored runとして停止`を基本とする規則をfreezeし、必要ならworld規模・generation horizonを再設計する。
+
 **Gate P2**
 
 - recordがgenerationごとに生成される
@@ -584,7 +622,8 @@ AFとの差がhistory有無以外へ広がらないよう、MOI/AFのcommon prom
 - MOIでfresh backend instanceが作られる
 - MOI generation \(g+1\) が直前recordだけ受け取る
 - AFは同じrepositoryを受け取るがrecordは受け取らない
-- record hash / tokensがlogされる
+- record hash / tokensとsource breakdownがlogされる
+- AF/MOIでOperational-Full feasibility invariantを検査できる
 
 ---
 
@@ -692,6 +731,8 @@ PR / ARで有限なのは「一度でも読める総量」ではない。
 
 repository全体は常に再アクセス可能。
 
+ただし「再アクセス可能」と「provider会話履歴に過去artifactが残り続ける」は別である。working-setからevictしたchunkがAPI thread historyに残れば \(B_{work}\) 制約を迂回できるため、PR / ARでは各reasoning stepを**stateless request**として再構築する。入力はcurrent \(W_t\) + bounded explicit memory + current task + fixed system/tool schemaのみとし、`previous_response_id`、provider thread、暗黙のmessage history等でevicted artifact evidenceを保持しない。
+
 ### 6.2 \(B_{work}\) に含める
 
 - active artifact chunks
@@ -763,7 +804,23 @@ E_{used}
 
 をlogする。
 
-### 6.7 common episodic runner
+### 6.7 AF / PR / ARのdecision opportunity統制
+
+C1をworking-set effectへ寄せるには、AFが1回call、PRが複数回callというだけで推論機会が増減しないようにする必要がある。
+
+Stage 1Aでは可能な限り以下を揃える。
+
+- max model calls / decision rounds
+- max output tokens per step / total
+- retry / repair opportunity
+- common task protocol
+- final mutation opportunity
+
+AFを同じepisodic runnerへ通すことが可能ならそれを優先する。ただしAFでは全artifactをactive working contextとして保持し、retrieval自体は不要とする。
+
+それでもPRにはprivileged curationが残るため、C1の名称・解釈は`pure working-set effect`ではなく**best-case privileged bounded-observation effect**とする。
+
+### 6.8 common episodic runner
 
 ```text
 current task
@@ -794,6 +851,8 @@ ELはstatic exposureだが、可能な範囲で同じagent result schemaを使�
 - evicted evidenceを再取得できる
 - explicit memoryがbudget計数される
 - \(E_{max}\) と \(B_{work}\) が分離
+- evicted evidenceがprovider-side historyから再参照不能
+- AF/PR/ARのdecision opportunity差が事前規則内
 
 ---
 
@@ -876,6 +935,7 @@ Stage 0実装のmerge pathを信頼しない。
 - working-set before / after
 - evicted units
 - explicit working note
+- \(B_{expose}\)（EL）
 - \(B_{work,used}\)
 - unique observed tokens
 - total retrieved tokens
@@ -933,7 +993,7 @@ artifact-only inheritanceのbaseline。
 
 - artifact-only inheritance
 - privileged relevance policyでinitial static subset選択
-- \(B_{work}\) 相当量を提示
+- static exposure budget \(B_{expose}\) 相当量を提示
 - 未提示artifactへepisode中アクセス不可
 - workerにGTは見せない
 
@@ -1025,10 +1085,10 @@ selected primary modelで、
 
 ### 10.2 EL static exposure
 
-複数budget：
+複数static exposure budget：
 
 \[
-B \in \{0,B_1,B_2,\ldots,AF\}
+B_{expose} \in \{0,B_1,B_2,\ldots,AF\}
 \]
 
 でdose-response確認。
@@ -1084,6 +1144,7 @@ MOIについては「budget dose-response」は不要。
 
 Stage 1本実験前に：
 
+- \(B_{expose}\)
 - \(B_{work}\)
 - \(E_{max}\)
 - eviction policy
@@ -1254,9 +1315,9 @@ success(S_0,T_i,c)
 
 答える：
 
-1. privileged retrievalでもfinite working-set effectは残るか
+1. privileged curationを与えたbest-case bounded observationでもAFとの差は残るか
 2. self-retrievalは追加損失を生むか
-3. irreversible exposureとrecoverable bounded cognitionは異なるか
+3. irreversible static exposureとrecoverable bounded working cognitionというcompound environmentsは異なるか
 4. \(R^{sem}\) と \(M\) で解釈は一致するか
 
 ---
@@ -1336,7 +1397,26 @@ predecessor/next pairは、historyが原理的に：
 - prior interactionとは弱く関連
 - artifactにすでに完全外在化された情報
 
-### 13.5 outcomes
+### 13.5 sham-history placebo diagnostic
+
+C0でMOIがAFを上回った場合、それがhistory内容の意味によるのか、単に入力token数やprompt sectionが増えたためなのかを診断する。
+
+longitudinal 5条件とは別に、Stage 1B限定で`MOI-sham`を用意する。
+
+- real MOIと同程度のhistory token量
+- 同じschema / placement
+- 別predecessor episode由来で \(T_{next}\) に無関係
+- hidden informationは当然含まない
+
+比較：
+
+\[
+MOI_{real},\quad MOI_{sham},\quad AF
+\]
+
+`MOI-sham`は第6のlineage conditionではなく、C0解釈用のplacebo controlである。
+
+### 13.6 outcomes
 
 - \(R^{sem}\)
 - \(M\)
@@ -1346,7 +1426,7 @@ predecessor/next pairは、historyが原理的に：
 - total input tokens
 - latency/cost
 
-### 13.6 Stage 1B gate
+### 13.7 Stage 1B gate
 
 C0：
 
@@ -1354,15 +1434,62 @@ C0：
 D_{history}^{immediate}
 \]
 
-が推定可能。
+が推定可能で、real historyとsham historyの差もdiagnosticに確認できる。
 
 ただしExternalization Pressureのtrajectory claimは出さない。
 
 ---
 
-## 14. Pre-Stage 1 / P7：Longitudinal Evaluator修正
+## 14. Pre-Stage 1 / P6.5：MOI対応Semantic Element Trace
 
-### 14.1 現状問題
+既存traceの`Exposed(x,C_g)`だけでは、MOIでsemantic element \(x\) をartifactから見たのかhistoryから見たのか区別できない。
+
+Stage 1C開始前に、少なくとも以下へ拡張する。
+
+\[
+Present^{syn}(x,S_g)
+\]
+\[
+Present^{beh}(x,S_g)
+\]
+\[
+Present^{hist}(x,\mathcal{I}^{obs}_{g-1})
+\]
+\[
+Exposed^{artifact}(x,C_g)
+\]
+\[
+Exposed^{history}(x,C_g)
+\]
+\[
+Reconstructed(x,A_g)
+\]
+\[
+Preserved(x,S_{g+1})
+\]
+
+これにより、例えば
+
+```text
+historyには存在
+artifactには不存在
+→ MOIではhistory経由で再構成
+→ 後世代でtest/type/specへartifact化
+```
+
+というartifact re-externalizationの経路を追跡できる。
+
+**Gate P6.5**
+
+- MOIでartifact-source / history-source exposureを区別可能
+- history item source tagとtraceが対応
+- AF/EL/PR/ARではhistory-source exposureが常にfalse
+
+---
+
+## 15. Pre-Stage 1 / P7：Longitudinal Evaluator修正
+
+### 15.1 現状問題
 
 Stage 0 scoringは、
 
@@ -1373,7 +1500,7 @@ Stage 0 scoringは、
 
 過去taskの意味が後世代で壊れても、全てが累積再評価される保証がない。
 
-### 14.2 最低限
+### 15.2 最低限
 
 generation \(g\) では：
 
@@ -1382,7 +1509,7 @@ generation \(g\) では：
 
 を累積実行。
 
-### 14.3 望ましい
+### 15.3 望ましい
 
 current \(G_g\) からbehavioral micro-tests / evaluatorを構築し、
 
@@ -1392,11 +1519,11 @@ S_g \models G_g
 
 を評価できるinterface。
 
-### 14.4 path guard
+### 15.4 path guard
 
 scoring workspaceへのwriteもrepository root内pathのみ。
 
-### 14.5 MOIにscoring leakageさせない
+### 15.5 MOIにscoring leakageさせない
 
 cumulative evaluator結果をMOI recordへ自動追加しない。
 
@@ -1412,9 +1539,9 @@ workerへ実際にfeedbackした情報だけが`\mathcal{I}^{obs}`へ入る。
 
 ---
 
-## 15. Stage 1C：Five-Condition Iterated Integration Run
+## 16. Stage 1C：Five-Condition Iterated Integration Run
 
-### 15.1 規模
+### 16.1 規模
 
 5条件：
 
@@ -1430,7 +1557,7 @@ workerへ実際にfeedbackした情報だけが`\mathcal{I}^{obs}`へ入る。
 
 目的はintegrationでありpower確保ではない。
 
-### 15.2 common fixed controls
+### 16.2 common fixed controls
 
 - model
 - reasoning
@@ -1444,6 +1571,7 @@ workerへ実際にfeedbackした情報だけが`\mathcal{I}^{obs}`へ入る。
 
 bounded conditions：
 
+- \(B_{expose}\)
 - \(B_{work}\)
 - \(E_{max}\)
 - eviction
@@ -1456,7 +1584,7 @@ MOI：
 
 をfreeze。
 
-### 15.3 generation flow
+### 16.3 generation flow
 
 #### MOI
 
@@ -1485,7 +1613,7 @@ S_(g+1)
 #### EL
 
 ```text
-privileged static exposure(S_g,T_g,B_work)
+privileged static exposure(S_g,T_g,B_expose)
 + T_g
    ↓
 fresh agent
@@ -1505,7 +1633,7 @@ fresh episodic agent
 S_(g+1)
 ```
 
-### 15.4 評価
+### 16.4 評価
 
 各generation：
 
@@ -1519,11 +1647,12 @@ S_(g+1)
 - \(M\) diagnostic
 - structural snapshot
 - retrieval logs
-- working-set logs
-- MOI history metadata
+- exposure / working-set logs
+- MOI history metadata + source breakdown
+- Operational-Full feasibility status
 - actual cost
 
-### 15.5 Stage 1Cではまだ言わない
+### 16.5 Stage 1Cではまだ言わない
 
 10〜15 generation trajectoryから、
 
@@ -1538,11 +1667,11 @@ Stage 2のpilotに進むためのintegration gate。
 
 ---
 
-## 16. Stage 2 common-environment evaluationの事前準備
+## 17. Stage 2 common-environment evaluationの事前準備
 
 本格実行はStage 2だが、Stage 1C終了時にrunner interfaceだけ準備しておく価値がある。
 
-### 16.1 目的
+### 17.1 目的
 
 育成環境のadvantageとartifact自体の性質を分ける。
 
@@ -1566,17 +1695,22 @@ same evaluation condition
 
 へ投入。
 
-### 16.2 必須候補
+### 17.2 必須候補
 
 **Artifact-Full evaluation**
 
 を共通環境の第一候補とする。
 
-### 16.3 optional
+### 17.3 reciprocal evaluation候補
 
-共通finite-\(B_{work}\) evaluation。
+共通finite-\(B_{work}\) evaluationに加え、主要contrastごとのreciprocal evaluationを候補とする。
 
-### 16.4 Stage 1ではpreflightのみ
+- MOI-grown / AF-grown → AF environment
+- AF-grown / PR-grown → AF + PR environments
+- PR-grown / EL-grown → PR + EL environments
+- PR-grown / AR-grown → PR + AR environments
+
+### 17.4 Stage 1ではpreflightのみ
 
 - runner accepts arbitrary snapshot
 - lineage historyを自動継承しない
@@ -1586,7 +1720,7 @@ same evaluation condition
 
 ---
 
-## 17. 既存コードに対する変更一覧
+## 18. 既存コードに対する変更一覧
 
 ### `harness/src/types.ts`
 
@@ -1738,6 +1872,7 @@ Stage 1B：
 - condition
 - inheritance mode
 - `Iobs` hash/tokens
+- \(B_{expose}\)
 - \(B_{work}\)
 - \(E_{max}\)
 - retrieval/eviction
@@ -1747,7 +1882,7 @@ Stage 1B：
 
 ---
 
-## 18. File deletion
+## 19. File deletion
 
 現行mutationはadd/replace中心で、deleteが弱い。
 
@@ -1765,7 +1900,7 @@ MOI recordの`appliedChanges`は将来のdeleteも表現できるschemaにする
 
 ---
 
-## 19. Reproducibility / Provenance
+## 20. Reproducibility / Provenance
 
 Stage 1以降のrunで保存：
 
@@ -1782,6 +1917,10 @@ Stage 1以降のrunで保存：
 - inheritance mode
 - previous `Iobs` hash / size
 - `Iobs` schema version
+- `Iobs` source breakdown
+- Operational-Full feasibility status
+- EL `B_expose`
+- \(B_{expose}\)
 - \(B_{work}\)
 - \(E_{max}\)
 - eviction policy
@@ -1798,13 +1937,13 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 ---
 
-## 20. 実装順序
+## 21. 実装順序
 
 ### Phase P0：Conceptual / Naming Sync
 
-1. paper v6
-2. experiment plan v2.0
-3. Stage 1 plan v2.0
+1. `docs/aidd_ilm_paper.md`
+2. `docs/experiment_plan.md`（v2.1）
+3. `docs/stage1_plan.md`
 4. code condition names
 5. methodology finding
 
@@ -1873,12 +2012,14 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 39. EL static dose-response
 40. PR working-set dose-response
 41. AR smoke/non-floor
-42. MOI serialization preflight
-43. \(B_{work}\) freeze
-44. \(E_{max}\) freeze
-45. MOI schema/size freeze
-46. equivalence margins
-47. variance / repeats freeze
+42. MOI serialization + source-tagging preflight
+43. Operational-Full feasibility preflight
+44. \(B_{expose}\) freeze
+45. \(B_{work}\) freeze
+46. \(E_{max}\) freeze
+47. MOI schema/size freeze
+48. equivalence margins
+49. variance / repeats freeze
 
 **Gate**：5 conditions non-degenerate。
 
@@ -1894,14 +2035,22 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 ### Phase 1B：One-Step Inheritance Diagnostic
 
-53. predecessor task-pair design
-54. predecessor fixtures生成
-55. freeze S/Iobs pair
-56. MOI vs AF fresh-agent runs
-57. C0 immediate effect
-58. pair-level/aggregate uncertainty
+55. predecessor task-pair design
+56. predecessor fixtures生成
+57. freeze S/Iobs pair
+58. MOI vs AF + sham-history fresh-agent runs
+59. C0 immediate effect + sham diagnostic
+60. pair-level/aggregate uncertainty
 
 **Gate**：observable-history availabilityをcleanに比較可能。
+
+### Phase P6.5：MOI-aware Semantic Trace
+
+61. `Present^hist` / source-aware `Exposed`
+62. history source tag連携
+63. AF/EL/PR/AR history-source=false regression
+
+**Gate**：artifact経由とhistory経由のsemantic transmissionを区別可能。
 
 ### Phase P7：Longitudinal Evaluator
 
@@ -1929,7 +2078,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 ---
 
-## 21. Stage 1完了条件
+## 22. Stage 1完了条件
 
 ### A. Conceptual validity
 
@@ -1939,6 +2088,11 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 - MOIはtrue fullと呼ばない
 - C0 short-term utilityとExternalization Pressureを混同しない
 - PR/ARはfull artifactへ再アクセス可能
+- evicted artifact evidenceはprovider-side historyから再参照不能
+- C1はdecision opportunity差を統制しbest-case bounded-observation effectとして解釈
+- ELの \(B_{expose}\) とPR/ARの \(B_{work}\) は別resource
+- C3はcompound contrastとして解釈
+- AF/MOIはOperational-Full feasibility invariantを満たす
 - ELだけがirrecoverable exposure
 
 ### B. Inheritance validity
@@ -1949,12 +2103,13 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 - MOI/AFで同一repositoryを比較可能
 - record size rule freeze
 - provenance hash
+- history source breakdown
 
 ### C. Measurement validity
 
 - balanced \(R^{sem}\)
 - model移行後再較正
-- \(B_{work}\), \(E_{max}\) freeze
+- \(B_{expose}\), \(B_{work}\), \(E_{max}\) freeze
 - equivalence margins freeze
 - raw logs available
 
@@ -1972,7 +2127,9 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 - same \(S_{next}\)
 - same next task
 - MOI vs AF difference only in `Iobs`
+- MOI-sham placebo control
 - C0 immediate utility
+- real vs sham history diagnostic
 - no externalization claim
 
 ### F. Stage 1C engineering gate
@@ -1980,7 +2137,9 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 - 5 conditions × 10〜15 gen
 - fresh agent every generation
 - cumulative behavior preservation
-- raw history / retrieval / working-set logs
+- raw history / exposure / retrieval / working-set logs
+- source-aware semantic element trace
+- Operational-Full feasibility logs
 - no extreme condition-specific system failures
 - cost/provenance reconstructable
 
@@ -1994,7 +2153,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 ---
 
-## 22. Stage 1で言ってよいこと / まだ言わないこと
+## 23. Stage 1で言ってよいこと / まだ言わないこと
 
 ### Stage 1で言ってよい
 
@@ -2016,7 +2175,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 ---
 
-## 23. Stage 1の位置づけ
+## 24. Stage 1の位置づけ
 
 Stage 1は、
 
