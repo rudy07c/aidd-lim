@@ -8,6 +8,7 @@
     "verify": "ts-node verify-logs.ts",
     "typecheck": "tsc --noEmit",
     "verify:openai": "ts-node verify-openai-backend.ts",
+    "verify:openai-batch": "ts-node verify-openai-batch.ts",
     "verify:openai-live": "ts-node verify-openai-live.ts",
     "verify:run-validity": "ts-node verify-run-validity.ts"
   },
