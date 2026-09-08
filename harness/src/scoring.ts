@@ -1,24 +1,13 @@
 // harness/src/scoring.ts
 //
 // visible tests + H(G) + task-specific tests を実行し、結果を集計する。
-//
-// アーキテクチャ:
-// - 各世代で「修正後リポジトリ」を一時ディレクトリへコピーし、
-//   その場で jest を実行する。
-// - synthetic-world の node_modules をシンボリックリンクで再利用する。
-// - jest の --json --outputFile オプションで結果をファイルに書き出し、
-//   spawnSync で同期的に実行してから読み込む。
-//
-// protocol_adapter.ts の契約違反検出（docs/harness_stage0_plan.md 2.2節）:
-// H(G) テストが import エラーで落ちた場合、それ自体を契約違反として記録する。
 
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { spawnSync } from "child_process";
 import { TestSuiteResult, TestCaseResult } from "./types";
-
-// ---- 公開API ----
+import { normalizeRepositoryRelativePath } from "./repository/path-guard";
 
 export interface ScoringResult {
   visibleTests: TestSuiteResult;
@@ -27,13 +16,6 @@ export interface ScoringResult {
   protocolContractViolated: boolean;
 }
 
-/**
- * 修正後リポジトリに対して visible tests と H(G)、task-specific tests を実行する。
- *
- * @param repositoryFiles 完全なリポジトリファイル群（path relative to repository/）
- * @param syntheticWorldDir synthetic-world ディレクトリへの絶対パス
- * @param taskSpecificTestCode タスク固有テストコード文字列（省略可）
- */
 export async function runScoring(
   repositoryFiles: Record<string, string>,
   syntheticWorldDir: string,
@@ -47,7 +29,6 @@ export async function runScoring(
     const visibleTests = runJest(tmpDir, syntheticWorldDir, "visible", "repository/tests");
     const hiddenTests = runJest(tmpDir, syntheticWorldDir, "hidden", "hidden_regression_tests");
 
-    // task-specific テスト: テストコードを一時ファイルに書き出して実行
     let taskSpecificTests: TestSuiteResult | null = null;
     if (taskSpecificTestCode) {
       const testDir = path.join(tmpDir, "task_specific_tests");
@@ -56,40 +37,21 @@ export async function runScoring(
       taskSpecificTests = runJest(tmpDir, syntheticWorldDir, "task-specific", "task_specific_tests");
     }
 
-    // 契約違反: H(G) が import エラーで全滅した場合を検出
     const protocolContractViolated = detectProtocolViolation(hiddenTests);
-
     return { visibleTests, hiddenTests, taskSpecificTests, protocolContractViolated };
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 }
 
-// ---- 内部実装 ----
-
-/**
- * 一時ワークスペースを構築する。
- * synthetic-world と同じディレクトリ構造を tmpDir に作り、
- * リポジトリファイルを修正後のものに差し替える。
- */
 function setupWorkspace(
   tmpDir: string,
   repositoryFiles: Record<string, string>,
   syntheticWorldDir: string
 ): void {
-  // 1. schema.ts をコピー（protocol_adapter.ts が ../../schema でimportする）
-  copyFile(
-    path.join(syntheticWorldDir, "schema.ts"),
-    path.join(tmpDir, "schema.ts")
-  );
+  copyFile(path.join(syntheticWorldDir, "schema.ts"), path.join(tmpDir, "schema.ts"));
+  copyFile(path.join(syntheticWorldDir, "jest.config.js"), path.join(tmpDir, "jest.config.js"));
 
-  // 2. jest.config.js をコピー
-  copyFile(
-    path.join(syntheticWorldDir, "jest.config.js"),
-    path.join(tmpDir, "jest.config.js")
-  );
-
-  // 3. tsconfig.json を書く（シンプル版、tmpDir 内の全.tsファイルを対象）
   const tsconfig = {
     compilerOptions: {
       target: "ES2020",
@@ -101,34 +63,33 @@ function setupWorkspace(
     include: ["**/*.ts"],
     exclude: ["node_modules"],
   };
-  fs.writeFileSync(
-    path.join(tmpDir, "tsconfig.json"),
-    JSON.stringify(tsconfig, null, 2)
-  );
+  fs.writeFileSync(path.join(tmpDir, "tsconfig.json"), JSON.stringify(tsconfig, null, 2));
 
-  // 4. node_modules をシンボリックリンクで参照
   const nodeModulesLink = path.join(tmpDir, "node_modules");
   const nodeModulesTarget = path.join(syntheticWorldDir, "node_modules");
   if (!fs.existsSync(nodeModulesLink)) {
     fs.symlinkSync(nodeModulesTarget, nodeModulesLink, "dir");
   }
 
-  // 5. 修正後リポジトリファイルを書き込む
+  // Agent merge境界とは独立に、filesystem write境界でもpathを再検証する。
   for (const [relPath, content] of Object.entries(repositoryFiles)) {
-    const absPath = path.join(tmpDir, "repository", relPath);
+    const safeRelPath = normalizeRepositoryRelativePath(relPath);
+    const repositoryRoot = path.join(tmpDir, "repository");
+    const absPath = path.join(repositoryRoot, safeRelPath);
+    const resolved = path.resolve(absPath);
+    const resolvedRoot = path.resolve(repositoryRoot) + path.sep;
+    if (!resolved.startsWith(resolvedRoot)) {
+      throw new Error(`Scoring path escaped repository root: ${relPath}`);
+    }
     fs.mkdirSync(path.dirname(absPath), { recursive: true });
     fs.writeFileSync(absPath, content, "utf8");
   }
 
-  // 6. H(G) テストをコピー（評価ハーネス側のファイル。修正不可）
   const hiddenTestSrc = path.join(syntheticWorldDir, "hidden_regression_tests");
   const hiddenTestDst = path.join(tmpDir, "hidden_regression_tests");
   copyDirRecursive(hiddenTestSrc, hiddenTestDst);
 }
 
-/**
- * jest を subprocess として実行し、結果を返す。
- */
 function runJest(
   tmpDir: string,
   syntheticWorldDir: string,
@@ -137,7 +98,6 @@ function runJest(
 ): TestSuiteResult {
   const jestBin = path.join(syntheticWorldDir, "node_modules", ".bin", "jest");
   const resultsFile = path.join(tmpDir, `jest-results-${label}.json`);
-
   const cacheDir = path.join(syntheticWorldDir, ".jest-cache");
   const args = [
     "--json",
@@ -161,9 +121,7 @@ function runJest(
   if (!fs.existsSync(resultsFile)) {
     const stderr = result.stderr?.slice(0, 2000) ?? "";
     const stdout = result.stdout?.slice(0, 2000) ?? "";
-    return makeExecutionError(
-      `jest did not produce output file. stderr: ${stderr}\nstdout: ${stdout}`
-    );
+    return makeExecutionError(`jest did not produce output file. stderr: ${stderr}\nstdout: ${stdout}`);
   }
 
   try {
@@ -175,7 +133,6 @@ function runJest(
 }
 
 function parseJestResults(raw: unknown): TestSuiteResult {
-  // jest --json 出力のスキーマ（主要フィールドのみ）
   type JestOutput = {
     success: boolean;
     numPassedTests: number;
@@ -193,13 +150,10 @@ function parseJestResults(raw: unknown): TestSuiteResult {
   };
 
   const j = raw as JestOutput;
-
   const testCases: TestCaseResult[] = [];
   let suiteLevelFailures = 0;
 
   for (const suite of j.testResults ?? []) {
-    // suite-levelの失敗（TypeScriptコンパイルエラー等でテスト自体が実行されなかった場合）
-    // assertionResultsが空でstatus=failedのとき、suite.messageにエラー内容が入っている
     if (suite.status === "failed" && (suite.assertionResults ?? []).length === 0) {
       suiteLevelFailures++;
       testCases.push({
@@ -237,24 +191,12 @@ function makeExecutionError(message: string): TestSuiteResult {
   };
 }
 
-/**
- * H(G) テストが全件失敗かつ import エラーを含む場合、
- * protocol_adapter.ts の契約違反と判定する。
- */
 function detectProtocolViolation(hiddenTests: TestSuiteResult): boolean {
-  if (hiddenTests.executionError) {
-    // jest 起動失敗は契約違反とは区別する
+  if (hiddenTests.executionError || hiddenTests.numPassed > 0) {
     return false;
   }
-  if (hiddenTests.numPassed > 0) {
-    // 1つでも通っていれば import はできている
-    return false;
-  }
-  // 全失敗かつ import / syntax エラーを示すメッセージが含まれるか確認
-  const allErrors = hiddenTests.testCases
-    .flatMap((tc) => tc.error ?? "")
-    .join("\n");
 
+  const allErrors = hiddenTests.testCases.flatMap((tc) => tc.error ?? "").join("\n");
   return (
     hiddenTests.numFailed > 0 &&
     (allErrors.includes("Cannot find module") ||
@@ -262,15 +204,9 @@ function detectProtocolViolation(hiddenTests: TestSuiteResult): boolean {
       allErrors.includes("TypeError: Cannot read") ||
       allErrors.includes("is not a function") ||
       allErrors.includes("has no exported member") ||
-      // TypeScriptコンパイルエラーが protocol_adapter.ts に起因する場合
-      // （戻り値型の不一致 TS2322 等、契約シグネチャの再実装で発生）
-      // 注: jest出力にはANSIエスケープコードが含まれるため "error TS" は連続しない。
-      //     TSエラーコード（TS\d{4}）で直接検出する。
       (allErrors.includes("protocol_adapter.ts") && /TS\d{4}/.test(allErrors)))
   );
 }
-
-// ---- ファイルユーティリティ ----
 
 function copyFile(src: string, dst: string): void {
   fs.mkdirSync(path.dirname(dst), { recursive: true });
