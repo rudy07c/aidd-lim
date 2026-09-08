@@ -1,10 +1,10 @@
 # Stage 1（Inheritance / Context Decomposition）実装計画
 
-**対象**：`docs/experiment_plan.md`（v2.3）の Stage 1「Inheritance / Context Decomposition」  
+**対象**：`docs/experiment_plan.md`（v2.4）の Stage 1「Inheritance / Context Decomposition」  
 **理論親文書**：`docs/aidd_ilm_paper.md`  
 **前提**：Stage 0（Harness Feasibility）・Stage 0.5（Measurement Calibration）は、それぞれ当時のoperationalizationに対してゲート達成済み  
 **Stage 1の役割**：`有限context` に混在していた複数のmechanismを、**inheritance / transmission** と **observation / retrieval** の二軸へ分解し、5条件が意図したmechanismだけを操作できる実験装置を完成させる  
-**Stage 1 primary model**：GPT-5.6 Terra（API model ID: `gpt-5.6-terra`）。Stage 1本実験前にreasoning effort・tool/structured-output設定・API設定をfreezeし、requested model IDとAPI response上のactual model identifierをrun provenanceへ保存する  
+**Stage 1 primary model**：GPT-5.6 Luna（API model ID: `gpt-5.6-luna`）。大量のgeneration / repeatを前提とするためcost efficiencyを優先して採用する。Pre-Stage 1 calibrationでArtifact-Fullのprimary taskがfloorにならないことを確認し、main run前にreasoning effort・tool/structured-output設定・API設定をfreezeする。requested model IDとAPI response上のactual model identifierはrun provenanceへ保存する  
 **historical baseline**：Stage 0〜0.5で使用したClaude Haiku 4.5のrunは上書きせずhistorical calibrationとして保持する
 
 ---
@@ -421,15 +421,15 @@ Stage 1事前準備で追加較正する。
 
 ### 3.1 primary model
 
-Stage 1 primary modelは **GPT-5.6 Terra**（`gpt-5.6-terra`）とする。Terraは現行GPT-5.6 familyのbalanced tierであり、旧GPT-5系のmini tierに概ね対応する位置づけのため、Stage 1の反復実験で必要なcapability / cost balanceの基準モデルとして採用する。
+Stage 1 primary modelは **GPT-5.6 Luna**（`gpt-5.6-luna`）とする。Lunaは現行GPT-5.6 familyのcost-sensitive / high-volume tierであり、Stage 1の大量反復で必要なcost efficiencyを優先する基準モデルとして採用する。能力面は事前に仮定せず、Artifact-Full calibrationでprimary taskがfloorにならないことを採用gateとする。
 
 ただしmodel tierの継続的更新と実験再現性は分離する。main run開始前に、利用可能なmodel identifier、reasoning effort、endpoint、tool / structured-output設定、retry policyをfreezeし、requested model IDとAPI response上のactual model identifierを必ず保存する。dated snapshotが利用可能な場合はその採用を優先検討するが、存在を前提にはしない。
 
-プロジェクト上の現行方針としてStage 1 primary model候補をGPT-5.6 Terraとする。
+プロジェクト上の現行方針としてStage 1 primary model候補をGPT-5.6 Lunaとする。
 
 Stage 1本実験前に、実際に使用するmodel identifier、endpoint、reasoning設定等をfreezeする。
 
-2026-09時点のOpenAI公式model referenceではGPT-5.6 TerraはResponses API、function calling、Structured Outputs、Batchをサポートしている。ただしmodel familyやrecommended modelは将来変化しうるため、**本番run前に再確認して固定**する。
+2026-09時点のOpenAI公式model referenceではGPT-5.6 LunaはResponses API、function calling、Structured Outputs、Batchをサポートしている。ただしmodel familyやrecommended modelは将来変化しうるため、**本番run前に再確認して固定**する。
 
 ### 3.2 provider-neutral backend
 
@@ -1148,6 +1148,12 @@ Stage 1でLLM selectorは使わない。
 - AFでも難しいが、diagnostic / stress testとして価値があるtask
 
 構成A（通常feature task）をprimary outcomeの中心に置き、構成B（invariant-stressingを含む）はdiagnosticとして別集計する。閾値、repeat数、分類理由はStage 1Aのcondition差を見る前にfreezeする。
+
+### 10.0.1 Luna capability-floor gate
+
+GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main comparison前にmodel capability floorを明示的に検査する。Artifact-Fullで \(\mathcal T_{primary}\) が恒常的に失敗する、または \(R^{sem}\) / \(M\) がfloorへ張り付く場合、そのtaskはchallenge setへ移す。primary task全体がfloorとなる場合のみ、model選択自体を再検討する。
+
+このgateはLunaを有利に見せるためのpost-hoc task除外ではなく、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
 
 ### 10.1 AF baseline
 

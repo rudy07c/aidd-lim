@@ -1,8 +1,14 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.3
+**版**: v2.4
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.4での変更点（Stage 1 primary modelをLunaへ変更）**：
+- Stage 1のprimary modelを **GPT-5.6 Luna**（API model ID: `gpt-5.6-luna`）へ変更
+- Lunaはcost-sensitive / high-volume workloads向けのGPT-5.6 tierであり、大量のgeneration・repeatを必要とする本研究ではcost efficiencyを優先して採用する
+- 採用は能力を無条件に仮定せず、Pre-Stage 1 calibrationでArtifact-Full条件のprimary taskがfloorにならないことをgateとして確認する
+- main run前にreasoning effort・API設定・tool / structured-output設定をfreezeし、requested model IDとAPI response上のactual model identifierをrun provenanceへ保存する方針を維持
 
 **v2.3での変更点（Stage 1 primary model更新）**：
 - Stage 1のprimary modelを **GPT-5.6 Terra**（API model ID: `gpt-5.6-terra`）へ更新
