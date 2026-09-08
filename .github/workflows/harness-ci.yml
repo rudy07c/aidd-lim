@@ -1,0 +1,30 @@
+name: Harness CI
+
+on:
+  push:
+    paths:
+      - 'harness/**'
+      - '.github/workflows/harness-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/**'
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npx tsc --noEmit
