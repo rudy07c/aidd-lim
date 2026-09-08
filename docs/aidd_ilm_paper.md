@@ -322,6 +322,8 @@ H_1 + H_2 + \cdots + H_g
 
 を無制限に渡す設計は採用しない。世代とともにhistory量そのものが増大し、context length・cost・lost-in-the-middle等が新たな交絡となるためである。基本単位は**直前世代のobservable history \(H_g\)** とし、より古い情報が必要なら、前世代がartifactまたは明示的な継承memoryへ残す必要がある。
 
+したがってMOIはArtifact-Externalization Pressureをゼロにする条件ではない。MOIが緩和するのは、**直前のgenerational linkにおいてobservableな非repository情報をartifact以外のchannelでも継承できるようにすることによる圧力の一部**である。二世代以上先へ保持したい情報については、MOIでもartifactまたは次世代が再び明示的に外在化した情報へ移す必要がある。したがってMOIは、全歴史についての完全継承ではなく、**各generational linkにおけるMaximal Observable Transmission**への操作的近似として解釈する。
+
 ### 3.5 ILMとの対応：ILM-coreとAIDD extension
 
 五条件設計により、古典ILMとの対応範囲をより明確にできる。
@@ -413,6 +415,28 @@ R_c^{\mathrm{sem}}(S)
 として定義する。
 
 Stage 0.5のようにbudgetだけを操作したhistorical calibrationでは \(M_B(S),R_B^{\mathrm{sem}}(S)\) という表記を用いてよいが、五条件を横断する理論量としてはcondition / evaluation-environment indexed notationを用いる。
+
+さらにlongitudinal experimentでは、artifactが**どの条件で育ったか**と、最終的に**どの環境で評価されるか**を分離しなければならない。育成条件を \(c_{\mathrm{train}}\)、評価環境を \(e_{\mathrm{eval}}\) とし、generation \(g\) のartifactを
+
+\[
+S_g^{[c_{\mathrm{train}}]}
+\]
+
+と表す。評価は、
+
+\[
+M\left(S_g^{[c_{\mathrm{train}}]};e_{\mathrm{eval}}\right),
+\qquad
+R^{\mathrm{sem}}\left(S_g^{[c_{\mathrm{train}}]};e_{\mathrm{eval}}\right)
+\]
+
+と書く。これにより、lineageが自分の育った環境で高いperformanceを示す**native performance**と、同じcommon environmentへ移したときにもartifact自体の差が残る**common-environment performance**を区別する。MOIのnative evaluationでは必要に応じて直前historyも入力に含め、
+
+\[
+M\left(S_g^{[MOI]},H_{g-1};e_{MOI}\right)
+\]
+
+のように明示する。したがって \(M_c(S_g)\) のような簡略記法は、育成条件と評価条件が文脈上明白な場合に限って用いる。
 
 両者を分離して測定することで、「artifactから何が意味的に再構成されたか」を独立に観察できるようになり、ILMとの対応をより厳密にできる。
 
@@ -523,6 +547,28 @@ M_c(S)
 となる。
 
 モジュール性、局所性、明示的契約、テスト、Spec、命名規則、ADR、冗長性等は、あらかじめ「良い構造」として目的変数へ埋め込まず、どの形質が差異的に保持・増幅されるかを事後的に検討する候補として位置づける。
+
+### 4.4 selection pressureを主張するためのevidence chain
+
+条件間でtrajectoryが異なるという事実だけでは、selection mechanismが実証されたとはみなさない。本研究でselection pressureをより強く主張するには、少なくとも次のevidence chainを区別して追跡する。
+
+\[
+\text{Condition}
+\rightarrow
+\text{Differential Preservation / Reconstruction}
+\rightarrow
+\text{Trait Change}
+\rightarrow
+\text{Environment-specific Advantage}
+\]
+
+すなわち、
+
+1. あるinheritance / observation条件で特定のsemantic elementや構造が差異的に保持・再構成されること、
+2. その差が世代反復を通じてartifact上の形質差へ蓄積すること、
+3. common / reciprocal evaluationで、その形質差が対応する環境における継承品質の差へ結びつくこと、
+
+を段階的に確認する。Stage 2のtrajectory差はこのchainの候補証拠であり、Stage 4のsemantic element / encoding-medium分析とreciprocal evaluationを組み合わせてmechanism claimを強める。
 
 ---
 

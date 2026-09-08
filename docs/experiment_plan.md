@@ -1,8 +1,17 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.1
+**版**: v2.2
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.2での変更点（Stage 1 preflight freeze）**：
+- longitudinal notationで、artifactの**育成条件**と**評価環境**を分離：\(S_g^{[c_{train}]}\) と \(M(S_g^{[c_{train}]};e_{eval})\) / \(R^{sem}(S_g^{[c_{train}]};e_{eval})\) を導入
+- MOIはExternalization Pressureを消去する条件ではなく、直前generational linkでobservable historyを追加継承することで圧力の一部を緩和する条件と明記
+- selection pressureの主張を trajectory差だけに依存させず、`Condition → Differential preservation/reconstruction → Trait change → Environment-specific advantage` のevidence chainとして事前定義
+- Stage 1のprimary task bankをmodel移行後に事前規則でfreezeし、AFでも恒常的に失敗するtaskはchallenge / diagnostic setへ分離する方針を追加
+- Stage 1Bのprimary predecessor fixtureは、next taskに関連し、かつartifactへ完全には重複していないobservable informationを含むことを適格条件に追加
+- C1〜C3のprimary comparisonではBatch/Syncを混在させず、execution mode / model-call opportunity / output schemaを可能な限り統一
+- scientific longitudinal runでは同一GroundTruthDeltaをmodulo循環再利用しないことを明記。Stage 1Cはunique task sequenceを使用し、Stage 2開始前に30〜50世代分のvalid unique deltaを準備する
 
 **v2.1での変更点（Stage 1内部妥当性の精密化）**：
 - Externalization Pressureを、非永続channel一般ではなく**永続software artifactへの外在化を要求する圧力**として精密化（Artifact-Externalization Pressure）
@@ -197,6 +206,46 @@ artifactへ情報が外在化されていても、次世代主体が一度に全
 | 4 | \(R^{sem}, M\) と相関する構造的形質の候補が絞り込める | 相関が弱すぎる場合はraw dataの再分析に留める |
 | 5 | 事前登録した主仮説が検証可能な検定力を持つ | 検定力不足なら条件数を絞り再設計 |
 | 6 | 媒体操作によって \(R^{sem}, M\) に予測通りの変化が出る | 出ない場合は機序仮説を修正しStage 4に戻る |
+
+### 0.4 育成条件と評価環境の分離
+
+longitudinal resultでは、artifactがどのconditionで生成・継承されてきたかと、そのartifactをどのenvironmentで評価したかを分離する。
+
+\[
+S_g^{[c_{train}]}
+\]
+
+をcondition \(c_{train}\) でgeneration \(g\) まで育ったartifactとし、
+
+\[
+M\left(S_g^{[c_{train}]};e_{eval}\right),
+\qquad
+R^{sem}\left(S_g^{[c_{train}]};e_{eval}\right)
+\]
+
+をevaluation environment \(e_{eval}\) での評価量とする。
+
+- **native evaluation**：育成条件と同系統のenvironmentで評価する
+- **common-environment evaluation**：異なるlineage artifactを同一environmentへ移して評価する
+- **reciprocal evaluation**：主要contrastの双方のenvironmentへ両lineage artifactを移して評価する
+
+この区別により、`その条件でagentが有利だった`ことと、`その履歴によってartifact自体がその環境へ適応した`ことを分離する。MOI native evaluationで直前historyを併用する場合は、artifact-only evaluationと同一視せず入力historyを明示する。
+
+### 0.5 selection mechanismのevidence chain
+
+selection pressureは単なるtrajectory差ではなく、次のchainとして検証する。
+
+\[
+\text{Condition}
+\rightarrow
+\text{Differential Preservation / Reconstruction}
+\rightarrow
+\text{Trait Change}
+\rightarrow
+\text{Environment-specific Advantage}
+\]
+
+Stage 1は主として最初の条件操作とimmediate effectを検証し、Stage 2〜4でtrait trajectoryとcommon / reciprocal evaluationを組み合わせて後半のlinkを検証する。
 
 ---
 
@@ -953,6 +1002,20 @@ dose-response curveは「budgetに応じ滑らかに改善」パターンを満�
 
 ### Stage 1：Inheritance / Context Decomposition
 
+#### Stage 1開始前にfreezeする追加事項（v2.2）
+
+**Primary task eligibility**：Stage 0.5では旧modelでArtifact-Fullでも恒常失敗するtaskが存在したため、既存20 taskを機械的にすべてprimary \(M\) へ入れない。primary model移行後、main comparisonとは独立したcalibration runでtask適格性を判定し、次をfreezeする。
+
+- \(\mathcal T_{primary}\)：AFで非floor、system/compiler failure主体でない、measurement leakageがないtask
+- \(\mathcal T_{challenge}\)：AFでも難しいが診断価値を持つtask
+- task bank構成Aをprimary、構成B（invariant-stressingを含む）をdiagnosticとして扱う
+
+閾値・repeat数・除外理由は結果観測後に変更しない。
+
+**Execution-mode parity**：C1〜C3のprimary comparisonでは、AFだけBatch、PR/ARだけinteractive syncというようにexecution modeを混在させない。model identifier、reasoning、output schema、max model calls、decision opportunity、retry / repair ruleを可能な限り共通化する。Batchはindependent calibration / probe処理へ限定してよい。
+
+**Non-cycling longitudinal tasks**：scientific longitudinal runでは同一GroundTruthDeltaをmoduloで循環再適用しない。Stage 1Cは現在のbankからvalidなunique 10〜15 taskを使い、各deltaを一度だけ適用する。Stage 2の30〜50世代を開始する前に、累積validatorを通過した30〜50個のunique delta sequenceを準備する。
+
 **目的**：5条件をlongitudinalに走らせる前に、各条件が意図したmechanismだけを操作できていることを診断する。
 
 重要：MOIは「固定artifactに対するcontext量」の条件ではなく、**世代間に何を継承するかというinheritance condition**である。したがってAF/EL/PR/ARと全く同じFixed-\(S_0\) experimentへ形式的に並べない。
@@ -1032,7 +1095,7 @@ Outcome_{AF}
 
 Externalization Pressureはlongitudinal selection effectなので、Stage 2以降でMOI/AFのartifact trajectoryとcommon-environment evaluationを使って判断する。
 
-Stage 1Bでは複数のpredecessor episode / next-task pairを用意し、特定の1 historyに依存しないことを確認する。
+Stage 1Bでは複数のpredecessor episode / next-task pairを用意し、特定の1 historyに依存しないことを確認する。primary fixtureとして採用するpairは、少なくとも **(a) history内にnext taskへ関連するobservable informationがある、(b) その情報がartifactへ完全には重複していない、(c) hidden evaluator / Ground Truth由来の非可視情報を含まない** ことを事前検査する。artifactに完全外在化済みのhistoryやnext taskと無関係なhistoryは、primary C0ではなくnegative / placebo diagnosticとして扱う。
 
 さらに、入力token増加やsection配置だけの効果を診断するため、longitudinal conditionとは別の**Stage 1B限定sham-history control**を置く。MOIと同程度のtoken量を持つがnext taskには無関係な別episodeのhistoryを渡し、
 
@@ -1271,13 +1334,13 @@ fixed\ evaluation\ observation\ condition
 初期にはAFやMOIがbounded条件より有利でも、generationとともにPR/AR/EL lineageがその制約へ適応し、
 
 \[
-M_c(S_g) > M_{AF}(S_g)
+M\left(S_g^{[c]};e_c\right) > M\left(S_g^{[AF]};e_c\right)
 \]
 
 または
 
 \[
-R^{sem}_c(S_g) > R^{sem}_{AF}(S_g)
+R^{sem}\left(S_g^{[c]};e_c\right) > R^{sem}\left(S_g^{[AF]};e_c\right)
 \]
 
 となるcrossoverを探索する。

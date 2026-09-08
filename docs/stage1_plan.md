@@ -1,6 +1,6 @@
 # Stage 1（Inheritance / Context Decomposition）実装計画
 
-**対象**：`docs/experiment_plan.md`（v2.1）の Stage 1「Inheritance / Context Decomposition」  
+**対象**：`docs/experiment_plan.md`（v2.2）の Stage 1「Inheritance / Context Decomposition」  
 **理論親文書**：`docs/aidd_ilm_paper.md`  
 **前提**：Stage 0（Harness Feasibility）・Stage 0.5（Measurement Calibration）は、それぞれ当時のoperationalizationに対してゲート達成済み  
 **Stage 1の役割**：`有限context` に混在していた複数のmechanismを、**inheritance / transmission** と **observation / retrieval** の二軸へ分解し、5条件が意図したmechanismだけを操作できる実験装置を完成させる  
@@ -296,6 +296,54 @@ C0の**immediate history utility**を診断する。
 MOI / AF / EL / PR / ARを10〜15世代通し、5条件がlongitudinal harness上で安定して動くことを確認する。
 
 Stage 1Cでartifact adaptationの科学的結論は出さない。
+
+### 0.9 Stage 1 preflightでfreezeする追加決定
+
+#### 0.9.1 育成条件と評価環境を分離する
+
+longitudinal artifactは、育成条件を明示して
+
+\[
+S_g^{[c_{train}]}
+\]
+
+と表し、評価は
+
+\[
+M\left(S_g^{[c_{train}]};e_{eval}\right),
+\qquad
+R^{sem}\left(S_g^{[c_{train}]};e_{eval}\right)
+\]
+
+と記録する。native / common-environment / reciprocal evaluationをlog schema上でも区別する。MOIでhistory付きnative evaluationを行う場合は、artifact-only evaluationと区別してhistory inputを明示する。
+
+#### 0.9.2 MOIはExternalization Pressureをゼロにしない
+
+MOIは直前世代の \(\mathcal I_g^{obs}\) を追加継承することでartifactへの外在化圧力の一部を緩和するが、全過去historyを継承しないため、二世代以上先へ保持する情報についてはなおartifact等への外在化が必要である。MOIを`pressure = 0` controlとは解釈しない。
+
+#### 0.9.3 selection signature
+
+Stage 2以降でselection pressureを主張する際は、
+
+\[
+\text{Condition}
+\rightarrow
+\text{Differential Preservation / Reconstruction}
+\rightarrow
+\text{Trait Change}
+\rightarrow
+\text{Environment-specific Advantage}
+\]
+
+のevidence chainを用いる。Stage 1のimmediate performance差だけではselection mechanismを主張しない。
+
+#### 0.9.4 execution modeをprimary contrastで揃える
+
+C1〜C3のprimary comparisonではBatch/Syncを混在させない。AF / EL / PR / ARで、model、reasoning、output schema、model-call上限、decision opportunity、retry / repair ruleを可能な限り共有する。Batchはindependent calibrationに限定してよい。
+
+#### 0.9.5 scientific lineageではtaskを循環再利用しない
+
+現行Stage 0 orchestratorの `tasks[gen % tasks.length]` はStage 1 scientific runへ持ち込まない。GroundTruthDeltaは同一IDを再追加できないため、Stage 1Cでは10〜15個のvalid unique taskを一度ずつ適用する。Stage 2開始前に30〜50世代分のvalid unique delta sequenceを別途準備する。
 
 ---
 
@@ -1074,6 +1122,29 @@ Stage 1でLLM selectorは使わない。
 
 ## 10. Pre-Stage 1 / P6：再較正
 
+### 10.0 Primary task eligibility
+
+旧Stage 0.5では、当時のmodelでArtifact-Fullでも恒常的に失敗するtaskが存在した。primary model移行後は、その旧結果だけでtaskを除外せず、main comparisonとは独立したcalibration repeatでtask適格性を再評価する。
+
+事前にfreezeする集合：
+
+\[
+\mathcal T_{primary}
+\]
+
+- AFでsuccess probabilityがfloorではない
+- compiler/system/protocol failureだけで決まらない
+- visible test / prompt leakageがない
+- condition差を測る余地がある
+
+\[
+\mathcal T_{challenge}
+\]
+
+- AFでも難しいが、diagnostic / stress testとして価値があるtask
+
+構成A（通常feature task）をprimary outcomeの中心に置き、構成B（invariant-stressingを含む）はdiagnosticとして別集計する。閾値、repeat数、分類理由はStage 1Aのcondition差を見る前にfreezeする。
+
 ### 10.1 AF baseline
 
 selected primary modelで、
@@ -1341,6 +1412,19 @@ S_{g+1}
 \]
 
 を生成した**predecessor episode**である。
+
+### 13.1.1 Primary predecessor fixtureの適格条件
+
+Stage 1Bのprimary pairは、predecessor historyが単に長いだけでなく、情報的に意味を持つことを事前確認する。
+
+必須条件：
+
+1. \(\mathcal I^{obs}_{pre}\) 内に \(T_{next}\) と関連するobservable informationが存在する
+2. その情報が \(S_{next}\) に完全には重複していない
+3. Ground Truth / hidden evaluator / unrevealed scoring情報を含まない
+4. fixture eligibility判定はMOI / AFのnext-step outcomeを見る前に行う
+
+artifactに完全外在化済みのhistory、無関係historyはnegative control / sham-history側へ回す。
 
 ### 13.2 paired episode生成
 
