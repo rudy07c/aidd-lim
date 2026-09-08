@@ -124,6 +124,9 @@ export class OpenAIBatchRunner {
     if (options.storeResponses !== false) {
       throw new Error("OpenAI Batch Stage 1 requests must set storeResponses=false");
     }
+    if (options.runClass === "scientific-calibration" && options.serviceTier !== "default") {
+      throw new Error('OpenAI Batch scientific-calibration must explicitly use serviceTier="default"');
+    }
     this.client = client ?? (new OpenAI({
       timeout: options.requestTimeoutMs,
       maxRetries: options.maxRetries,
@@ -141,16 +144,10 @@ export class OpenAIBatchRunner {
     return this.createRequest(customId, body);
   }
 
-  /** Generic tool-free request constructor for future semantic-probe workloads. */
+  /** Generic tool-free request constructor for semantic-probe and other independent workloads. */
   createRequest(customId: string, body: Record<string, unknown>): OpenAIBatchRequest {
     if (!customId || customId.trim().length === 0) throw new Error("Batch custom_id must be non-empty");
-    if (body.model !== this.options.model) {
-      throw new Error(`Batch request model must equal frozen model ${this.options.model}`);
-    }
-    if (Array.isArray(body.tools) && body.tools.length > 0) {
-      throw new Error("Stage 1 Batch runner only accepts independent tool-free requests");
-    }
-    if (body.stream === true) throw new Error("Batch request must not set stream=true");
+    assertFrozenBatchRequestBody(body, this.options);
     return { customId, body };
   }
 
@@ -196,12 +193,38 @@ export class OpenAIBatchRunner {
     return normalizeBatchObject(await this.client.batches.retrieve(batchId));
   }
 
-  async download(batchId: string): Promise<OpenAIBatchDownload> {
+  /**
+   * Download is intentionally strict: only a completed batch may become calibration data,
+   * and every expected custom_id must appear exactly once across output/error files.
+   */
+  async download(batchId: string, expectedCustomIds: readonly string[]): Promise<OpenAIBatchDownload> {
+    const expected = normalizeExpectedCustomIds(expectedCustomIds);
     const batch = await this.retrieve(batchId);
+    if (batch.status !== "completed") {
+      const terminal = new Set(["failed", "expired", "cancelled"]);
+      if (terminal.has(batch.status)) {
+        throw new Error(`Batch ${batch.batchId} terminated with status=${batch.status}; results are invalid for calibration`);
+      }
+      throw new Error(`Batch ${batch.batchId} is not completed yet (status=${batch.status})`);
+    }
+    if (batch.requestCounts && batch.requestCounts.total !== expected.size) {
+      throw new Error(
+        `Batch ${batch.batchId} request count mismatch: expected=${expected.size}, api_total=${batch.requestCounts.total}`
+      );
+    }
+    if (batch.requestCounts && batch.requestCounts.completed + batch.requestCounts.failed !== batch.requestCounts.total) {
+      throw new Error(
+        `Batch ${batch.batchId} completed with inconsistent request counts: ` +
+        `completed=${batch.requestCounts.completed}, failed=${batch.requestCounts.failed}, total=${batch.requestCounts.total}`
+      );
+    }
+
     const texts: string[] = [];
     if (batch.outputFileId) texts.push(await this.readFileText(batch.outputFileId));
     if (batch.errorFileId) texts.push(await this.readFileText(batch.errorFileId));
-    return { batch, lines: mergeBatchJsonlTexts(texts) };
+    const lines = mergeBatchJsonlTexts(texts);
+    assertBatchResultCompleteness(lines, expected);
+    return { batch, lines };
   }
 
   normalizeMutationResults(download: OpenAIBatchDownload): OpenAIBatchMutationResult[] {
@@ -356,6 +379,51 @@ export class OpenAIBatchRunner {
   }
 }
 
+/** Enforce the scientific request envelope even for generic probe bodies. */
+export function assertFrozenBatchRequestBody(
+  body: Record<string, unknown>,
+  options: OpenAIRequestOptions
+): void {
+  if (body.model !== options.model) {
+    throw new Error(`Batch request model must equal frozen model ${options.model}`);
+  }
+  const reasoning = isRecord(body.reasoning) ? body.reasoning : null;
+  if (reasoning?.effort !== options.reasoningEffort) {
+    throw new Error(`Batch request reasoning.effort must equal frozen value ${options.reasoningEffort}`);
+  }
+  if (body.max_output_tokens !== options.maxOutputTokens) {
+    throw new Error(`Batch request max_output_tokens must equal frozen value ${options.maxOutputTokens}`);
+  }
+  if (body.store !== options.storeResponses) {
+    throw new Error(`Batch request store must equal frozen value ${String(options.storeResponses)}`);
+  }
+  if (body.service_tier !== options.serviceTier) {
+    throw new Error(`Batch request service_tier must equal frozen value ${options.serviceTier}`);
+  }
+  const cache = isRecord(body.prompt_cache_options) ? body.prompt_cache_options : null;
+  if (cache?.mode !== options.promptCacheMode || cache?.ttl !== "30m") {
+    throw new Error(
+      `Batch request prompt_cache_options must freeze mode=${options.promptCacheMode} and ttl=30m`
+    );
+  }
+  if (body.truncation !== "disabled") {
+    throw new Error('Batch request truncation must be "disabled"');
+  }
+  if (Array.isArray(body.tools) && body.tools.length > 0) {
+    throw new Error("Stage 1 Batch runner only accepts independent tool-free requests");
+  }
+  if (body.stream === true) throw new Error("Batch request must not set stream=true");
+  if (body.previous_response_id !== undefined && body.previous_response_id !== null) {
+    throw new Error("Batch calibration request must not carry previous_response_id");
+  }
+  if (body.conversation !== undefined && body.conversation !== null) {
+    throw new Error("Batch calibration request must not carry conversation state");
+  }
+  if (Array.isArray(body.include) && body.include.includes("reasoning.encrypted_content")) {
+    throw new Error("Batch calibration request must not carry encrypted reasoning state");
+  }
+}
+
 export function parseBatchJsonl(text: string): OpenAIBatchRawResultLine[] {
   if (text.trim().length === 0) return [];
   return text
@@ -384,6 +452,37 @@ export function mergeBatchJsonlTexts(texts: string[]): OpenAIBatchRawResultLine[
   return lines;
 }
 
+export function assertBatchResultCompleteness(
+  lines: readonly OpenAIBatchRawResultLine[],
+  expectedCustomIds: ReadonlySet<string> | readonly string[]
+): void {
+  const expected = expectedCustomIds instanceof Set
+    ? expectedCustomIds
+    : normalizeExpectedCustomIds(expectedCustomIds);
+  const actual = new Set(lines.map((line) => line.custom_id));
+  const missing = [...expected].filter((id) => !actual.has(id));
+  const unexpected = [...actual].filter((id) => !expected.has(id));
+  if (missing.length > 0 || unexpected.length > 0) {
+    throw new Error(
+      `Batch result custom_id mismatch: missing=[${missing.join(",")}], unexpected=[${unexpected.join(",")}]`
+    );
+  }
+  if (actual.size !== lines.length) {
+    throw new Error("Batch result contains duplicate custom_id values");
+  }
+}
+
+function normalizeExpectedCustomIds(ids: readonly string[]): Set<string> {
+  if (ids.length === 0) throw new Error("Expected Batch custom_id set must not be empty");
+  const expected = new Set<string>();
+  for (const id of ids) {
+    if (!id || id.trim().length === 0) throw new Error("Expected Batch custom_id must be non-empty");
+    if (expected.has(id)) throw new Error(`Duplicate expected Batch custom_id: ${id}`);
+    expected.add(id);
+  }
+  return expected;
+}
+
 function normalizeBatchObject(batch: any): OpenAIBatchSubmission {
   return {
     batchId: String(batch.id),
@@ -399,4 +498,8 @@ function normalizeBatchObject(batch: any): OpenAIBatchSubmission {
       failed: Number(batch.request_counts.failed ?? 0),
     } : null,
   };
+}
+
+function isRecord(value: unknown): value is Record<string, any> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
