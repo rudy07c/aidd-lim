@@ -34,3 +34,6 @@ jobs:
       - name: Verify OpenAI backend offline
         working-directory: harness
         run: npm run verify:openai
+      - name: Verify OpenAI Batch runner offline
+        working-directory: harness
+        run: npm run verify:openai-batch
