@@ -1,8 +1,13 @@
 // harness/src/types.ts
-// 共有型定義。docs/experiment_plan_v1.6.md 3.1節のログスキーマに対応。
+// 共有型定義。Stage 0互換を維持しつつ、Stage 1 preflight用の実行状態を追加する。
 
 export type ContextCondition = "full" | "simple-limited";
 export type BackendType = "mock-noop" | "mock-oracle" | "anthropic";
+
+export type AgentExecutionStatus =
+  | "ok"
+  | "output-parse-failure"
+  | "mutation-validation-failure";
 
 // ---- 設定 ----
 
@@ -14,9 +19,9 @@ export interface RunConfig {
   /** 1世代あたりのtoken budget（"full"は全ファイルを渡す） */
   contextBudget: number | "full";
   generations: number;
-  /** 使用するtask IDのリスト。generations > tasks.length のときはラップアラウンド */
+  /** 使用するtask IDのリスト。Stage 1/2 scientific runでは循環再利用しない */
   tasks: string[];
-  /** 使用するモデル名（anthropic backendのみ使用） */
+  /** 使用するモデル名 */
   model?: string;
   /** Stageディレクトリ名（例: "stage0"）。runs/<stage>/ 配下に出力する */
   stage?: string;
@@ -53,6 +58,7 @@ export interface AgentOutput {
   rawResponse: string;
   tokenUsage?: { input: number; output: number };
   latencyMs: number;
+  executionStatus: Exclude<AgentExecutionStatus, "mutation-validation-failure">;
 }
 
 // ---- Stage 0.5 測定結果型 ----
@@ -105,13 +111,14 @@ export interface GenerationLog {
   agent_prompt: string;
   agent_response: string;
   tool_calls: unknown[];
+  agent_execution_status: AgentExecutionStatus;
 
   // --- スコアリング ---
   visible_test_results: TestSuiteResult;
   hidden_test_results: TestSuiteResult;
   /** タスク固有テスト結果（新operationが実際に動作するかを検証） */
   task_specific_test_result: TestSuiteResult | null;
-  /** visible + hidden + task_specific すべてが通ったか */
+  /** visible + hidden + task_specific すべてが通り、agent protocolも正常だったか */
   functional_task_result: boolean;
 
   // --- Stage 0.5以降で追加 ---
