@@ -1,4 +1,4 @@
-// Shared OpenAI Responses request/response utilities used by Sync and future Batch paths.
+// Shared OpenAI Responses request/response utilities used by Sync and Batch paths.
 
 import * as crypto from "crypto";
 import OpenAI from "openai";
@@ -57,6 +57,22 @@ export interface OpenAIRequestOptions {
   promptCacheMode: PromptCacheMode;
 }
 
+/**
+ * Workload-specific Structured Output contract. Batch infrastructure consumes the same
+ * Responses request envelope as Sync; mutation/probe workloads only supply this contract.
+ */
+export interface OpenAIStructuredOutputSpec {
+  instructions: string;
+  schemaName: string;
+  schema: Record<string, unknown>;
+}
+
+export const OPENAI_MUTATION_OUTPUT_SPEC: OpenAIStructuredOutputSpec = {
+  instructions: OPENAI_SYSTEM_PROMPT,
+  schemaName: "repository_mutation_v2",
+  schema: OPENAI_MUTATION_SCHEMA as unknown as Record<string, unknown>,
+};
+
 export interface StructuredMutation {
   modifiedFiles: Array<{ path: string; content: string }>;
   workingNote: string;
@@ -74,16 +90,24 @@ export function buildOpenAIUserMessage(input: AgentInput): string {
   return lines.join("");
 }
 
-export function buildOpenAIResponseRequestBody(args: {
+/** Generic Responses envelope shared by Sync and Batch workloads. */
+export function buildOpenAIStructuredResponseRequestBody(args: {
   options: OpenAIRequestOptions;
   responseInput: any[];
-  tools: AgentTool[];
-  includeEncryptedReasoning: boolean;
+  tools?: AgentTool[];
+  includeEncryptedReasoning?: boolean;
+  outputSpec: OpenAIStructuredOutputSpec;
 }): Record<string, unknown> {
-  const { options, responseInput, tools, includeEncryptedReasoning } = args;
+  const {
+    options,
+    responseInput,
+    tools = [],
+    includeEncryptedReasoning = false,
+    outputSpec,
+  } = args;
   return {
     model: options.model,
-    instructions: OPENAI_SYSTEM_PROMPT,
+    instructions: outputSpec.instructions,
     input: responseInput,
     reasoning: { effort: options.reasoningEffort },
     max_output_tokens: options.maxOutputTokens,
@@ -98,12 +122,25 @@ export function buildOpenAIResponseRequestBody(args: {
     text: {
       format: {
         type: "json_schema",
-        name: "repository_mutation_v2",
+        name: outputSpec.schemaName,
         strict: true,
-        schema: OPENAI_MUTATION_SCHEMA,
+        schema: outputSpec.schema,
       },
     },
   };
+}
+
+/** Repository-mutation compatibility wrapper used by the existing Sync backend. */
+export function buildOpenAIResponseRequestBody(args: {
+  options: OpenAIRequestOptions;
+  responseInput: any[];
+  tools: AgentTool[];
+  includeEncryptedReasoning: boolean;
+}): Record<string, unknown> {
+  return buildOpenAIStructuredResponseRequestBody({
+    ...args,
+    outputSpec: OPENAI_MUTATION_OUTPUT_SPEC,
+  });
 }
 
 function toOpenAITool(tool: AgentTool): Record<string, unknown> {
@@ -178,9 +215,9 @@ export function accumulateCost(current: number | null, next: number | null): num
   return current + next;
 }
 
-export function extractObservableAssistantMessages(response: OpenAI.Responses.Response): string[] {
+export function extractObservableAssistantMessages(response: { output?: unknown[] }): string[] {
   const messages: string[] = [];
-  for (const item of response.output as any[]) {
+  for (const item of (response.output ?? []) as any[]) {
     if (item?.type !== "message" || !Array.isArray(item.content)) continue;
     for (const content of item.content) {
       if (content?.type === "output_text" && typeof content.text === "string" && content.text.length > 0) {
@@ -193,8 +230,14 @@ export function extractObservableAssistantMessages(response: OpenAI.Responses.Re
   return messages;
 }
 
-export function extractRefusal(response: OpenAI.Responses.Response): string | null {
-  for (const item of response.output as any[]) {
+/** Raw Batch response bodies do not rely on SDK-computed helpers, so derive output text if needed. */
+export function extractOutputText(response: { output_text?: unknown; output?: unknown[] }): string {
+  if (typeof response.output_text === "string") return response.output_text;
+  return extractObservableAssistantMessages(response).join("");
+}
+
+export function extractRefusal(response: { output?: unknown[] }): string | null {
+  for (const item of (response.output ?? []) as any[]) {
     if (item?.type !== "message" || !Array.isArray(item.content)) continue;
     for (const content of item.content) {
       if (content?.type === "refusal" && typeof content.refusal === "string") return content.refusal;
@@ -203,16 +246,16 @@ export function extractRefusal(response: OpenAI.Responses.Response): string | nu
   return null;
 }
 
-export function responseFailureDetails(response: OpenAI.Responses.Response): {
+export function responseFailureDetails(response: unknown): {
   incompleteReason: string | null;
   providerErrorCode: string | null;
   providerErrorMessage: string | null;
 } {
   const r = response as any;
   return {
-    incompleteReason: r.incomplete_details?.reason ?? null,
-    providerErrorCode: r.error?.code ?? null,
-    providerErrorMessage: r.error?.message ?? null,
+    incompleteReason: r?.incomplete_details?.reason ?? null,
+    providerErrorCode: r?.error?.code ?? null,
+    providerErrorMessage: r?.error?.message ?? null,
   };
 }
 
