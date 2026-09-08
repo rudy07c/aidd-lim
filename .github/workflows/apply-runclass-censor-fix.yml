@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.code-update/apply_runclass_censor_fix.py'
+      - '.code-update/fix_runclass_assertion.py'
       - '.github/workflows/apply-runclass-censor-fix.yml'
 
 permissions:
@@ -26,7 +27,9 @@ jobs:
             synthetic-world/package-lock.json
 
       - name: Apply requested fixes
-        run: python .code-update/apply_runclass_censor_fix.py
+        run: |
+          python .code-update/apply_runclass_censor_fix.py
+          python .code-update/fix_runclass_assertion.py
 
       - name: Install harness dependencies
         working-directory: harness
