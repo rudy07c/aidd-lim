@@ -1,10 +1,10 @@
 # Stage 1（Inheritance / Context Decomposition）実装計画
 
-**対象**：`docs/experiment_plan.md`（v2.2）の Stage 1「Inheritance / Context Decomposition」  
+**対象**：`docs/experiment_plan.md`（v2.3）の Stage 1「Inheritance / Context Decomposition」  
 **理論親文書**：`docs/aidd_ilm_paper.md`  
 **前提**：Stage 0（Harness Feasibility）・Stage 0.5（Measurement Calibration）は、それぞれ当時のoperationalizationに対してゲート達成済み  
 **Stage 1の役割**：`有限context` に混在していた複数のmechanismを、**inheritance / transmission** と **observation / retrieval** の二軸へ分解し、5条件が意図したmechanismだけを操作できる実験装置を完成させる  
-**primary model候補**：GPT-5 mini（プロジェクト上の現行方針）。Stage 1本実験前に利用可能なmodel identifier・reasoning設定・tool/structured-output設定を再確認しfreezeする  
+**Stage 1 primary model**：GPT-5.6 Terra（API model ID: `gpt-5.6-terra`）。Stage 1本実験前にreasoning effort・tool/structured-output設定・API設定をfreezeし、requested model IDとAPI response上のactual model identifierをrun provenanceへ保存する  
 **historical baseline**：Stage 0〜0.5で使用したClaude Haiku 4.5のrunは上書きせずhistorical calibrationとして保持する
 
 ---
@@ -421,11 +421,15 @@ Stage 1事前準備で追加較正する。
 
 ### 3.1 primary model
 
-プロジェクト上の現行方針としてStage 1 primary model候補をGPT-5 miniとする。
+Stage 1 primary modelは **GPT-5.6 Terra**（`gpt-5.6-terra`）とする。Terraは現行GPT-5.6 familyのbalanced tierであり、旧GPT-5系のmini tierに概ね対応する位置づけのため、Stage 1の反復実験で必要なcapability / cost balanceの基準モデルとして採用する。
+
+ただしmodel tierの継続的更新と実験再現性は分離する。main run開始前に、利用可能なmodel identifier、reasoning effort、endpoint、tool / structured-output設定、retry policyをfreezeし、requested model IDとAPI response上のactual model identifierを必ず保存する。dated snapshotが利用可能な場合はその採用を優先検討するが、存在を前提にはしない。
+
+プロジェクト上の現行方針としてStage 1 primary model候補をGPT-5.6 Terraとする。
 
 Stage 1本実験前に、実際に使用するmodel identifier、endpoint、reasoning設定等をfreezeする。
 
-2026-09時点のOpenAI公式model referenceではGPT-5 miniはResponses API、function calling、Structured Outputs、Batchをサポートしている。ただしmodel familyやrecommended modelは将来変化しうるため、**本番run前に再確認して固定**する。
+2026-09時点のOpenAI公式model referenceではGPT-5.6 TerraはResponses API、function calling、Structured Outputs、Batchをサポートしている。ただしmodel familyやrecommended modelは将来変化しうるため、**本番run前に再確認して固定**する。
 
 ### 3.2 provider-neutral backend
 

@@ -1,8 +1,13 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.2
+**版**: v2.3
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.3での変更点（Stage 1 primary model更新）**：
+- Stage 1のprimary modelを **GPT-5.6 Terra**（API model ID: `gpt-5.6-terra`）へ更新
+- Terraは現行GPT-5.6 familyのbalanced tierとして採用し、旧GPT-5系のmini tier相当の役割を担うモデルとして位置づける
+- model tierの継続的更新と実験再現性を分離し、main run前にreasoning effort・API設定をfreezeし、requested model IDとAPI response上のactual model identifierをrun provenanceへ保存する方針を維持
 
 **v2.2での変更点（Stage 1 preflight freeze）**：
 - longitudinal notationで、artifactの**育成条件**と**評価環境**を分離：\(S_g^{[c_{train}]}\) と \(M(S_g^{[c_{train}]};e_{eval})\) / \(R^{sem}(S_g^{[c_{train}]};e_{eval})\) を導入
