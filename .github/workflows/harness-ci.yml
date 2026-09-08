@@ -28,6 +28,9 @@ jobs:
       - name: Typecheck harness
         working-directory: harness
         run: npm run typecheck
+      - name: Verify run validity semantics
+        working-directory: harness
+        run: npm run verify:run-validity
       - name: Verify OpenAI backend offline
         working-directory: harness
         run: npm run verify:openai
