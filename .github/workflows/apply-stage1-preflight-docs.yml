@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.doc-update/apply_stage1_preflight.py'
+      - '.github/workflows/apply-stage1-preflight-docs.yml'
 
 permissions:
   contents: write
