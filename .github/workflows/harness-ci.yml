@@ -27,4 +27,7 @@ jobs:
         run: npm ci
       - name: Typecheck harness
         working-directory: harness
-        run: npx tsc --noEmit
+        run: npm run typecheck
+      - name: Verify OpenAI backend offline
+        working-directory: harness
+        run: npm run verify:openai
