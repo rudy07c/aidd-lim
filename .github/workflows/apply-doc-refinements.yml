@@ -20,8 +20,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
+          base64 -d .doc-update/paper.patch.gz.b64 | gzip -d > /tmp/paper.patch
+          sed -i '1c--- a/docs/aidd_ilm_paper.md' /tmp/paper.patch
+          sed -i '2c+++ b/docs/aidd_ilm_paper.md' /tmp/paper.patch
+
+          base64 -d .doc-update/experiment.patch.gz.b64 | gzip -d > /tmp/experiment.patch
+          sed -i '1c--- a/docs/experiment_plan.md' /tmp/experiment.patch
+          sed -i '2c+++ b/docs/experiment_plan.md' /tmp/experiment.patch
+
+          base64 -d .doc-update/stage1.patch.gz.b64 | gzip -d > /tmp/stage1.patch
+          sed -i '1c--- a/docs/stage1_plan.md' /tmp/stage1.patch
+          sed -i '2c+++ b/docs/stage1_plan.md' /tmp/stage1.patch
+
           for n in paper experiment stage1; do
-            base64 -d ".doc-update/${n}.patch.gz.b64" | gzip -d > "/tmp/${n}.patch"
             git apply --check "/tmp/${n}.patch"
             git apply "/tmp/${n}.patch"
           done
