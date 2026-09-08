@@ -11,7 +11,6 @@ import {
 export interface AgentTool {
   name: string;
   description: string;
-  /** JSON Schema object for function arguments. */
   parameters: Record<string, unknown>;
   execute(argumentsValue: unknown): Promise<unknown>;
 }
@@ -26,22 +25,19 @@ export interface AgentToolEvent {
 }
 
 export interface AgentInput {
-  /** workerに渡すファイル群。path（repository/ 相対）-> content */
+  /** condition runnerが最終的にmodelへ提示すると決めたartifact evidence。backendは再truncateしない。 */
   contextFiles: Record<string, string>;
-  /** 実験計画書 heldout_tasks.json の visibleInstruction */
   visibleInstruction: string;
-  /** token budget。"full" = 制限なし */
+  /** historical backends向け。OpenAI Stage 1 backendはbudget authorityとして使用しない。 */
   contextBudget: number | "full";
-  /** Stage 1 PR/ARでRepositoryAccessorを載せるためのprovider-neutral function tools。 */
   tools?: AgentTool[];
 }
 
 export interface AgentResult {
-  /** 変更後のファイル内容（全体、差分ではない）。path -> content */
   modifiedFiles: Record<string, string>;
-  /** providerから得た最終visible response text */
   rawResponse: string;
-  /** private CoTではなく、modelが明示的に出力した短いhandoff note */
+  /** workerが実際に生成したobservable assistant messages。MOI record生成で使用する。 */
+  observableAssistantMessages: string[];
   explicitWorkingNote: string | null;
   toolEvents: AgentToolEvent[];
   tokenUsage?: TokenUsage;

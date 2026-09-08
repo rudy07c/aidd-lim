@@ -80,6 +80,7 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
   // agent_response.json
   writeJson(generationDir, "agent_response.json", {
     response: log.agent_response,
+    observable_assistant_messages: log.observable_assistant_messages,
     explicit_working_note: log.explicit_working_note,
     tool_calls: log.tool_calls,
     error: log.agent_error,

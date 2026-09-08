@@ -26,22 +26,18 @@ function parseArgs(): { configPath: string; smoke: boolean } {
 async function main(): Promise<void> {
   const { configPath, smoke } = parseArgs();
   const absConfigPath = path.resolve(HARNESS_DIR, configPath);
-
   if (!fs.existsSync(absConfigPath)) {
     console.error(`Config file not found: ${absConfigPath}`);
     process.exit(1);
   }
 
   const parsed: unknown = JSON.parse(fs.readFileSync(absConfigPath, "utf8"));
+  // Raw validation happens BEFORE defaults so scientific freeze cannot be satisfied by harness defaults.
   validateRawRunConfig(parsed);
   const rawConfig = parsed;
 
   const baseRunsDir = rawConfig.runsDir ?? DEFAULT_RUNS_DIR;
-  const resolvedRunsDir = smoke
-    ? path.join(baseRunsDir, "_smoke")
-    : rawConfig.stage
-    ? path.join(baseRunsDir, rawConfig.stage)
-    : baseRunsDir;
+  const resolvedRunsDir = smoke ? path.join(baseRunsDir, "_smoke") : rawConfig.stage ? path.join(baseRunsDir, rawConfig.stage) : baseRunsDir;
 
   const config: RunConfig = {
     ...rawConfig,
@@ -57,10 +53,11 @@ async function main(): Promise<void> {
     maxRetries: rawConfig.maxRetries ?? 2,
     storeResponses: rawConfig.storeResponses ?? false,
     maxToolRounds: rawConfig.maxToolRounds ?? 4,
+    serviceTier: rawConfig.serviceTier ?? "default",
+    promptCacheMode: rawConfig.promptCacheMode ?? "implicit",
     syntheticWorldDir: rawConfig.syntheticWorldDir ?? DEFAULT_SYNTHETIC_WORLD_DIR,
     runsDir: resolvedRunsDir,
   };
-
   validateResolvedRunConfig(config);
 
   const existingDir = path.join(config.runsDir, config.experimentId);
@@ -72,29 +69,23 @@ async function main(): Promise<void> {
     config.experimentId = newExperimentId;
   }
 
-  if (smoke) {
-    console.log(`[run] Mode: SMOKE (output → runs/_smoke/)`);
-  }
+  if (smoke) console.log(`[run] Mode: SMOKE (output → runs/_smoke/)`);
   console.log(`[run] Config: ${absConfigPath}`);
   console.log(`[run] Experiment: ${config.experimentId}`);
   console.log(`[run] Synthetic World: ${config.syntheticWorldDir}`);
   console.log(`[run] Runs Dir: ${config.runsDir}`);
 
   const result = await runGenerationLoop(config);
-
   if (result.crashed) {
-    console.error(`\n[run] FAILED: crashed at generation ${result.completedGenerations}`);
+    console.error(`\n[run] FAILED: invalid/censored after ${result.completedGenerations} valid generations`);
     console.error(`[run] Error: ${result.crashError}`);
     process.exit(1);
   }
-
   console.log(`\n[run] SUCCESS: ${result.completedGenerations} generations completed.`);
-  for (const dir of result.logDirs) {
-    console.log(`  ${dir}`);
-  }
+  for (const dir of result.logDirs) console.log(`  ${dir}`);
 }
 
 main().catch((e) => {
-  console.error("[run] Fatal error:", e);
+  console.error("[run] Fatal harness error:", e);
   process.exit(1);
 });

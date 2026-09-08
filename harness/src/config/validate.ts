@@ -1,7 +1,15 @@
-import { BackendType, ContextCondition, RunConfig } from "../types";
+import {
+  BackendType,
+  ContextCondition,
+  OpenAIServiceTier,
+  PromptCacheMode,
+  RunConfig,
+} from "../types";
 
 const BACKENDS: BackendType[] = ["mock-noop", "mock-oracle", "anthropic", "openai"];
 const CONDITIONS: ContextCondition[] = ["full", "simple-limited"];
+const SERVICE_TIERS: OpenAIServiceTier[] = ["auto", "default", "flex", "fast", "priority", "ultrafast"];
+const CACHE_MODES: PromptCacheMode[] = ["implicit", "explicit"];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -9,26 +17,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function assertOptionalString(obj: Record<string, unknown>, key: string): void {
   const value = obj[key];
-  if (value !== undefined && typeof value !== "string") {
-    throw new Error(`Config field "${key}" must be a string`);
+  if (value !== undefined && typeof value !== "string") throw new Error(`Config field "${key}" must be a string`);
+}
+
+function requireOwn(obj: Record<string, unknown>, key: string): void {
+  if (!Object.prototype.hasOwnProperty.call(obj, key)) {
+    throw new Error(`Stage 1/2 OpenAI run must explicitly specify raw config field "${key}"`);
   }
 }
 
-/** JSON parse直後のshape検査。default適用前に明らかな型不正を弾く。 */
+/** JSON parse直後のshape検査。Stage 1/2のfreeze必須fieldはdefault適用前に存在確認する。 */
 export function validateRawRunConfig(value: unknown): asserts value is Partial<RunConfig> {
-  if (!isRecord(value)) {
-    throw new Error("Config root must be a JSON object");
-  }
+  if (!isRecord(value)) throw new Error("Config root must be a JSON object");
 
-  assertOptionalString(value, "experimentId");
-  assertOptionalString(value, "lineageId");
-  assertOptionalString(value, "backend");
-  assertOptionalString(value, "condition");
-  assertOptionalString(value, "model");
-  assertOptionalString(value, "reasoningEffort");
-  assertOptionalString(value, "stage");
-  assertOptionalString(value, "syntheticWorldDir");
-  assertOptionalString(value, "runsDir");
+  for (const key of [
+    "experimentId", "lineageId", "backend", "condition", "model", "reasoningEffort", "stage",
+    "syntheticWorldDir", "runsDir", "serviceTier", "promptCacheMode",
+  ]) assertOptionalString(value, key);
 
   for (const key of ["maxOutputTokens", "requestTimeoutMs", "maxRetries", "maxToolRounds"] as const) {
     const v = value[key];
@@ -39,56 +44,52 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
   if (value.storeResponses !== undefined && typeof value.storeResponses !== "boolean") {
     throw new Error('Config field "storeResponses" must be a boolean');
   }
-
-  if (
-    value.contextBudget !== undefined &&
-    value.contextBudget !== "full" &&
-    (typeof value.contextBudget !== "number" || !Number.isFinite(value.contextBudget))
-  ) {
+  if (value.contextBudget !== undefined && value.contextBudget !== "full" &&
+      (typeof value.contextBudget !== "number" || !Number.isFinite(value.contextBudget))) {
     throw new Error('Config field "contextBudget" must be a finite number or "full"');
   }
-
-  if (
-    value.generations !== undefined &&
-    (typeof value.generations !== "number" || !Number.isInteger(value.generations))
-  ) {
+  if (value.generations !== undefined && (typeof value.generations !== "number" || !Number.isInteger(value.generations))) {
     throw new Error('Config field "generations" must be an integer');
   }
+  if (value.tasks !== undefined && (!Array.isArray(value.tasks) || value.tasks.some((t) => typeof t !== "string"))) {
+    throw new Error('Config field "tasks" must be an array of strings');
+  }
 
-  if (value.tasks !== undefined) {
-    if (!Array.isArray(value.tasks) || value.tasks.some((t) => typeof t !== "string")) {
-      throw new Error('Config field "tasks" must be an array of strings');
+  const scientificOpenAI =
+    typeof value.stage === "string" && (value.stage.startsWith("stage1") || value.stage.startsWith("stage2")) &&
+    value.backend === "openai";
+  if (scientificOpenAI) {
+    for (const key of [
+      "model", "reasoningEffort", "maxOutputTokens", "requestTimeoutMs", "maxRetries",
+      "storeResponses", "maxToolRounds", "serviceTier", "promptCacheMode",
+    ]) requireOwn(value, key);
+    if (value.storeResponses !== false) throw new Error("Stage 1/2 OpenAI raw config must set storeResponses=false");
+    if (value.serviceTier !== "default") {
+      throw new Error('Stage 1/2 primary Sync OpenAI run must explicitly set serviceTier="default"');
     }
   }
 }
 
 /** default適用・path解決後のsemantic validation。 */
 export function validateResolvedRunConfig(config: RunConfig): void {
-  if (!BACKENDS.includes(config.backend)) {
-    throw new Error(`Unsupported backend: ${config.backend}`);
+  if (!BACKENDS.includes(config.backend)) throw new Error(`Unsupported backend: ${config.backend}`);
+  if (!CONDITIONS.includes(config.condition)) throw new Error(`Unsupported context condition: ${config.condition}`);
+  if (config.contextBudget !== "full" && (!Number.isFinite(config.contextBudget) || config.contextBudget < 0)) {
+    throw new Error('contextBudget must be non-negative or "full"');
   }
-  if (!CONDITIONS.includes(config.condition)) {
-    throw new Error(`Unsupported context condition: ${config.condition}`);
-  }
-  if (
-    config.contextBudget !== "full" &&
-    (!Number.isFinite(config.contextBudget) || config.contextBudget < 0)
-  ) {
-    throw new Error("contextBudget must be non-negative or \"full\"");
-  }
-  if (!Number.isInteger(config.generations) || config.generations <= 0) {
-    throw new Error("generations must be a positive integer");
-  }
-  if (config.tasks.length === 0) {
-    throw new Error("tasks must contain at least one task id");
-  }
-  if (config.tasks.some((taskId) => taskId.length === 0)) {
-    throw new Error("task ids must be non-empty strings");
-  }
+  if (!Number.isInteger(config.generations) || config.generations <= 0) throw new Error("generations must be a positive integer");
+  if (config.tasks.length === 0) throw new Error("tasks must contain at least one task id");
+  if (config.tasks.some((taskId) => taskId.length === 0)) throw new Error("task ids must be non-empty strings");
 
   const reasoningEfforts = new Set(["none", "low", "medium", "high", "xhigh", "max"]);
   if (config.reasoningEffort !== undefined && !reasoningEfforts.has(config.reasoningEffort)) {
     throw new Error(`Unsupported reasoningEffort: ${config.reasoningEffort}`);
+  }
+  if (config.serviceTier !== undefined && !SERVICE_TIERS.includes(config.serviceTier)) {
+    throw new Error(`Unsupported serviceTier: ${config.serviceTier}`);
+  }
+  if (config.promptCacheMode !== undefined && !CACHE_MODES.includes(config.promptCacheMode)) {
+    throw new Error(`Unsupported promptCacheMode: ${config.promptCacheMode}`);
   }
   for (const [key, value, min] of [
     ["maxOutputTokens", config.maxOutputTokens, 1],
@@ -96,16 +97,10 @@ export function validateResolvedRunConfig(config: RunConfig): void {
     ["maxRetries", config.maxRetries, 0],
     ["maxToolRounds", config.maxToolRounds, 0],
   ] as const) {
-    if (value !== undefined && (!Number.isInteger(value) || value < min)) {
-      throw new Error(`${key} must be an integer >= ${min}`);
-    }
+    if (value !== undefined && (!Number.isInteger(value) || value < min)) throw new Error(`${key} must be an integer >= ${min}`);
   }
 
-  // Stage 0はhistorical behaviorとしてtask cyclingを許す。
-  // Stage 1以降のscientific longitudinal runでは同じGroundTruthDeltaの再適用を禁止する。
-  const scientificLongitudinal =
-    config.stage?.startsWith("stage1") || config.stage?.startsWith("stage2");
-
+  const scientificLongitudinal = config.stage?.startsWith("stage1") || config.stage?.startsWith("stage2");
   if (scientificLongitudinal) {
     if (config.backend === "openai") {
       if (!config.model) throw new Error("Stage 1/2 OpenAI run must explicitly freeze model");
@@ -113,18 +108,17 @@ export function validateResolvedRunConfig(config: RunConfig): void {
       if (config.maxOutputTokens === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxOutputTokens");
       if (config.requestTimeoutMs === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze requestTimeoutMs");
       if (config.maxRetries === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxRetries");
-      if (config.storeResponses !== false) throw new Error("Stage 1/2 OpenAI run must set storeResponses=false for explicit statelessness");
+      if (config.maxToolRounds === undefined) throw new Error("Stage 1/2 OpenAI run must explicitly freeze maxToolRounds");
+      if (config.storeResponses !== false) throw new Error("Stage 1/2 OpenAI run must set storeResponses=false");
+      if (config.serviceTier !== "default") throw new Error('Stage 1/2 primary Sync run must set serviceTier="default"');
+      if (!config.promptCacheMode) throw new Error("Stage 1/2 OpenAI run must explicitly freeze promptCacheMode");
     }
     const unique = new Set(config.tasks);
     if (unique.size !== config.tasks.length) {
-      throw new Error(
-        "Stage 1/2 scientific runs must not contain duplicate task ids; GroundTruthDelta reuse is forbidden"
-      );
+      throw new Error("Stage 1/2 scientific runs must not contain duplicate task ids; GroundTruthDelta reuse is forbidden");
     }
     if (config.generations > config.tasks.length) {
-      throw new Error(
-        `Stage 1/2 scientific runs require one unique task per generation: generations=${config.generations}, tasks=${config.tasks.length}`
-      );
+      throw new Error(`Stage 1/2 scientific runs require one unique task per generation: generations=${config.generations}, tasks=${config.tasks.length}`);
     }
   }
 }

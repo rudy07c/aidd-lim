@@ -6,12 +6,16 @@
   "condition": "full",
   "contextBudget": "full",
   "generations": 1,
-  "tasks": ["T-local-1"],
+  "tasks": [
+    "T-local-1"
+  ],
   "model": "gpt-5.6-luna",
   "reasoningEffort": "medium",
   "maxOutputTokens": 8192,
   "requestTimeoutMs": 120000,
   "maxRetries": 2,
   "storeResponses": false,
-  "maxToolRounds": 4
+  "maxToolRounds": 4,
+  "serviceTier": "default",
+  "promptCacheMode": "implicit"
 }

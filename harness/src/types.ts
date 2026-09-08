@@ -5,18 +5,26 @@ export type ContextCondition = "full" | "simple-limited";
 export type BackendType = "mock-noop" | "mock-oracle" | "anthropic" | "openai";
 export type ModelProvider = "mock" | "anthropic" | "openai";
 export type ReasoningEffort = "none" | "low" | "medium" | "high" | "xhigh" | "max";
+export type OpenAIServiceTier = "auto" | "default" | "flex" | "fast" | "priority" | "ultrafast";
+export type PromptCacheMode = "implicit" | "explicit";
+export type PricingMode = "sync" | "batch";
 
 export type AgentExecutionStatus =
   | "ok"
   | "output-parse-failure"
   | "mutation-validation-failure"
   | "provider-error"
-  | "tool-error";
+  | "tool-error"
+  | "response-incomplete"
+  | "response-failed"
+  | "response-refusal"
+  | "response-not-completed";
 
 export interface TokenUsage {
   input: number;
   output: number;
   cachedInput?: number;
+  cacheWriteInput?: number;
   reasoningOutput?: number;
   total?: number;
 }
@@ -32,7 +40,18 @@ export interface ModelProvenance {
   maxOutputTokens: number | null;
   structuredOutput: boolean;
   storeResponses: boolean | null;
-  serviceTier: string | null;
+  requestedServiceTier: OpenAIServiceTier | null;
+  actualServiceTier: string | null;
+  promptCacheMode: PromptCacheMode | null;
+  promptVersion: string | null;
+  promptHash: string | null;
+  schemaVersion: string | null;
+  schemaHash: string | null;
+  pricingMode: PricingMode | null;
+  continuationState: "none" | "encrypted-reasoning" | null;
+  incompleteReason: string | null;
+  refusal: string | null;
+  providerErrorCode: string | null;
   sdkVersion: string | null;
   retryPolicy: {
     maxRetries: number | null;
@@ -41,7 +60,7 @@ export interface ModelProvenance {
 }
 
 export interface NormalizedAgentError {
-  category: "provider" | "tool" | "output-parse";
+  category: "provider" | "tool" | "output-parse" | "response";
   message: string;
   retryable: boolean | null;
 }
@@ -72,6 +91,10 @@ export interface RunConfig {
   storeResponses?: boolean;
   /** 1 episode内のfunction-tool continuation上限 */
   maxToolRounds?: number;
+  /** requested service tier。primary Sync runではdefaultを明示する */
+  serviceTier?: OpenAIServiceTier;
+  /** GPT-5.6 prompt caching mode。Stage 1では明示freezeする */
+  promptCacheMode?: PromptCacheMode;
   /** Stageディレクトリ名（例: "stage0"）。runs/<stage>/ 配下に出力する */
   stage?: string;
   /** synthetic-world ディレクトリへの絶対パス */
@@ -102,9 +125,9 @@ export interface TestSuiteResult {
 // ---- エージェント結果 ----
 
 export interface AgentOutput {
-  /** path -> 新しいファイル全体の内容。変更したファイルのみ含む */
   modifiedFiles: Record<string, string>;
   rawResponse: string;
+  observableAssistantMessages: string[];
   tokenUsage?: TokenUsage;
   latencyMs: number;
   executionStatus: Exclude<AgentExecutionStatus, "mutation-validation-failure">;
@@ -116,23 +139,15 @@ export interface AgentOutput {
 
 // ---- Stage 0.5 測定結果型 ----
 
-/** 1つのsemantic probeに対するagentの回答結果 */
 export interface SemanticProbeResult {
   probeId: string;
   correct: boolean;
   agentAnswer: string;
-  /** 正解を文字列に正規化したもの（boolean は "true"/"false"、set は ソート済みJSON） */
   correctAnswer: string;
 }
 
-/**
- * semantic elementの存在トレース（Present^syn / Present^beh の両軸）。
- * elementId は invariant/dependency/operation の ID（例: "I1", "D2", "O3"）。
- */
 export interface SemanticElementTrace {
-  /** syntactic presence: コード上にsemantic elementのsyntactic markerが存在するか */
   syntactic: Record<string, boolean>;
-  /** behavioral presence: H(G)のmicro-testがそのelementのbehaviorを確認済みか */
   behavioral: Record<string, boolean>;
 }
 
@@ -143,38 +158,30 @@ export interface GenerationLog {
   lineage_id: string;
   generation: number;
   condition: ContextCondition;
-  /** historical compatibility: requested model id */
   model: string | null;
   model_provenance: ModelProvenance;
-
   task_id: string;
-
   repository_before: Record<string, string>;
   repository_after: Record<string, string>;
   git_diff: string;
-
   context_budget: number | "full";
   actual_context_tokens: number;
   context_contents: Record<string, string>;
-
   agent_prompt: string;
   agent_response: string;
+  observable_assistant_messages: string[];
   explicit_working_note: string | null;
   tool_calls: unknown[];
   agent_execution_status: AgentExecutionStatus;
   agent_error: NormalizedAgentError | null;
-
   visible_test_results: TestSuiteResult;
   hidden_test_results: TestSuiteResult;
   task_specific_test_result: TestSuiteResult | null;
   functional_task_result: boolean;
-
   semantic_probe_results: SemanticProbeResult[] | null;
   semantic_element_trace: SemanticElementTrace | null;
-
   latency_ms: number;
   token_usage: TokenUsage | null;
   cost: number | null;
-
   protocol_contract_violated: boolean;
 }

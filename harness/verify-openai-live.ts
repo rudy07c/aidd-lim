@@ -27,6 +27,8 @@ async function main(): Promise<void> {
     maxRetries: 2,
     storeResponses: false,
     maxToolRounds: 3,
+    serviceTier: "default",
+    promptCacheMode: "implicit",
   });
 
   const result = await backend.run({

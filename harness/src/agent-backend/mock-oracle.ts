@@ -15,32 +15,50 @@ export class MockOracleBackend implements AgentBackend {
   async run(input: AgentInput): Promise<AgentResult> {
     const start = Date.now();
     const patchPath = path.join(this.fixturesDir, "oracle-patches", `${this.taskId}.ts`);
-
     let patchModule: { applyOracle: (files: Record<string, string>) => Record<string, string> };
     try {
       patchModule = require(patchPath);
     } catch (e) {
       throw new Error(`[mock-oracle] Oracle patch not found for task "${this.taskId}" at ${patchPath}: ${e}`);
     }
-
     if (typeof patchModule.applyOracle !== "function") {
       throw new Error(`[mock-oracle] Patch module for "${this.taskId}" does not export applyOracle function.`);
     }
-
     const modifiedFiles = patchModule.applyOracle({ ...input.contextFiles });
-
+    const rawResponse = `[mock-oracle] Applied oracle patch for task "${this.taskId}".`;
     return {
       modifiedFiles,
-      rawResponse: `[mock-oracle] Applied oracle patch for task "${this.taskId}".`,
+      rawResponse,
+      observableAssistantMessages: [rawResponse],
       explicitWorkingNote: null,
       toolEvents: [],
       tokenUsage: { input: 0, output: 0, total: 0 },
       latencyMs: Date.now() - start,
       executionStatus: "ok",
       modelProvenance: {
-        provider: "mock", requestedModel: null, actualModel: "mock-oracle", responseId: null,
-        responseStatus: "completed", endpoint: "mock", reasoningEffort: null, maxOutputTokens: null,
-        structuredOutput: true, storeResponses: null, serviceTier: null, sdkVersion: null,
+        provider: "mock",
+        requestedModel: null,
+        actualModel: "mock-oracle",
+        responseId: null,
+        responseStatus: "completed",
+        endpoint: "mock",
+        reasoningEffort: null,
+        maxOutputTokens: null,
+        structuredOutput: true,
+        storeResponses: null,
+        requestedServiceTier: null,
+        actualServiceTier: null,
+        promptCacheMode: null,
+        promptVersion: null,
+        promptHash: null,
+        schemaVersion: null,
+        schemaHash: null,
+        pricingMode: null,
+        continuationState: null,
+        incompleteReason: null,
+        refusal: null,
+        providerErrorCode: null,
+        sdkVersion: null,
         retryPolicy: { maxRetries: null, timeoutMs: null },
       },
       estimatedCostUsd: 0,
