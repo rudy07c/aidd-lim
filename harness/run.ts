@@ -1,24 +1,12 @@
 // harness/run.ts
 // CLIエントリポイント。
-//
-// 使用方法:
-//   ts-node run.ts --config config/stage0-mock.json
-//   ts-node run.ts --config config/stage0-real.json
-//   ts-node run.ts --config config/stage0-mock.json --smoke   # runs/_smoke/ に出力
-//
-// 設定ファイル（JSON）のスキーマは RunConfig に準拠。
-// syntheticWorldDir / runsDir は省略時はこのファイルを基準に自動解決する。
-// --smoke フラグを付けると出力先が runs/_smoke/ になり、動作確認ログを本番と分離できる。
-// --smoke なしの場合は、config の stage フィールドに従って runs/<stage>/ に出力する。
-//
-// APIキーは harness/.env に ANTHROPIC_API_KEY=sk-ant-... として設定する。
-// dotenv が自動的に読み込む（.env は .gitignore されているため誤push不可）。
 
 import "dotenv/config";
 import * as fs from "fs";
 import * as path from "path";
 import { RunConfig } from "./src/types";
 import { runGenerationLoop } from "./src/orchestrator";
+import { validateRawRunConfig, validateResolvedRunConfig } from "./src/config/validate";
 
 const HARNESS_DIR = __dirname;
 const REPO_ROOT = path.dirname(HARNESS_DIR);
@@ -37,19 +25,18 @@ function parseArgs(): { configPath: string; smoke: boolean } {
 
 async function main(): Promise<void> {
   const { configPath, smoke } = parseArgs();
-
   const absConfigPath = path.resolve(HARNESS_DIR, configPath);
+
   if (!fs.existsSync(absConfigPath)) {
     console.error(`Config file not found: ${absConfigPath}`);
     process.exit(1);
   }
 
-  const rawConfig = JSON.parse(fs.readFileSync(absConfigPath, "utf8")) as Partial<RunConfig>;
+  const parsed: unknown = JSON.parse(fs.readFileSync(absConfigPath, "utf8"));
+  validateRawRunConfig(parsed);
+  const rawConfig = parsed;
 
-  // syntheticWorldDir / runsDir の解決（設定ファイルに絶対パスがない場合はデフォルトを使用）
   const baseRunsDir = rawConfig.runsDir ?? DEFAULT_RUNS_DIR;
-
-  // --smoke → runs/_smoke/、それ以外は config の stage フィールドに従って runs/<stage>/
   const resolvedRunsDir = smoke
     ? path.join(baseRunsDir, "_smoke")
     : rawConfig.stage
@@ -69,8 +56,8 @@ async function main(): Promise<void> {
     runsDir: resolvedRunsDir,
   };
 
-  // 同じ experimentId のディレクトリが既に存在する場合、タイムスタンプ付きの別 ID に退避する。
-  // 気づかないうちに過去の実行結果が上書きされることを防ぐ。
+  validateResolvedRunConfig(config);
+
   const existingDir = path.join(config.runsDir, config.experimentId);
   if (fs.existsSync(existingDir)) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-").replace("T", "_").slice(0, 19);
@@ -97,7 +84,6 @@ async function main(): Promise<void> {
   }
 
   console.log(`\n[run] SUCCESS: ${result.completedGenerations} generations completed.`);
-  console.log(`[run] Log directories:`);
   for (const dir of result.logDirs) {
     console.log(`  ${dir}`);
   }
