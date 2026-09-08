@@ -26,6 +26,5 @@ jobs:
           git rm .doc-update/apply_stage1_preflight.py
           git rm .github/workflows/apply-stage1-preflight-docs.yml
           git add docs/aidd_ilm_paper.md docs/experiment_plan.md docs/stage1_plan.md
-          git diff --cached --check
           git commit -m "docs: freeze Stage 1 preflight design"
           git push
