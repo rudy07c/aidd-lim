@@ -22,6 +22,15 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: harness/package-lock.json
+      - name: Normalize preflight mock shape for deterministic updater
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('harness/src/agent-backend/mock-oracle.ts')
+          text = p.read_text(encoding='utf-8')
+          text = text.replace('      latencyMs: Date.now() - start,\n      executionStatus: "ok",\n', '      latencyMs: Date.now() - start,\n')
+          p.write_text(text, encoding='utf-8')
+          PY
       - name: Apply source updates
         run: python .code-update/apply_openai_backend.py
       - name: Install and pin OpenAI SDK
