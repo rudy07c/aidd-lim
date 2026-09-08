@@ -1,0 +1,62 @@
+name: Apply runClass and censor fix
+
+on:
+  push:
+    paths:
+      - '.code-update/apply_runclass_censor_fix.py'
+      - '.github/workflows/apply-runclass-censor-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            harness/package-lock.json
+            synthetic-world/package-lock.json
+
+      - name: Apply requested fixes
+        run: python .code-update/apply_runclass_censor_fix.py
+
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+
+      - name: Verify censor and runClass semantics
+        working-directory: harness
+        run: npm run verify:run-validity
+
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
+        run: npm ci
+
+      - name: Run synthetic-world Jest regression
+        working-directory: synthetic-world
+        run: npm test -- --runInBand
+
+      - name: Run existing mock smoke config
+        working-directory: harness
+        run: npm run run -- --config config/stage0-mock.json --smoke
+
+      - name: Commit verified changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add harness docs/findings/output_serialization_bottleneck.md
+          git status --short
+          git commit -m "fix: separate run class and censor response failures"
+          git push
