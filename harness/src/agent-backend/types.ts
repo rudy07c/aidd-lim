@@ -1,6 +1,7 @@
 // harness/src/agent-backend/types.ts
 // AgentBackend インターフェース定義。
-// docs/harness_stage0_plan.md 2.1節のインターフェース仕様に準拠。
+
+import { AgentExecutionStatus } from "../types";
 
 export interface AgentInput {
   /** workerに渡すファイル群。path（repository/ 相対）-> content */
@@ -18,6 +19,8 @@ export interface AgentResult {
   rawResponse: string;
   tokenUsage?: { input: number; output: number };
   latencyMs: number;
+  /** model responseをmutationとして解釈できたか */
+  executionStatus: Exclude<AgentExecutionStatus, "mutation-validation-failure">;
 }
 
 export interface AgentBackend {
