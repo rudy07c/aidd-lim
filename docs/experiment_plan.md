@@ -1,15 +1,47 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v1.8
-**関連文書**: `aidd_ilm_paper_v4.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
+**版**: v2.0
+**関連文書**: `aidd_ilm_paper_v6.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.0での変更点（Maximal Observable Inheritance / 5条件化）**：
+- `aidd_ilm_paper_v6.md` に同期し、世代間継承を \(K_g \rightarrow (S_{g+1}, \mathcal{I}^{obs}_g) \rightarrow C_{g+1} \rightarrow K_{g+1}\) として再整理
+- **Maximal Observable Inheritance（MOI）** を追加。全条件でfresh agent原則は維持し、MOIのみ前世代のobservable interaction recordをartifactに加えて継承する
+- 従来のArtifact-Fullを **Artifact-Full（AF）** に統一。AFをInheritance/Transmission軸とObservation/Retrieval軸を接続するhub conditionとする
+- Context条件を5条件へ拡張：MOI / Artifact-Full / Exposure-Limited / Privileged-Retrieved Limited / Agent-Retrieved Limited
+- 条件空間を一本の「制約強度」ではなく二軸として定義：
+  - Inheritance / Transmission axis：MOI → AF → EL
+  - Observation / Retrieval axis：AF → PR → AR
+- primary contrastをC0〜C3へ拡張：
+  - C0 MOI−AF：observable-history availability
+  - C1 AF−PR：working-set / reconstruction pressure
+  - C2 PR−AR：retrieval-policy effect
+  - C3 PR−EL：recoverability / exposure effect
+- **C0の短期差だけではExternalization Pressureを証明しない**ことを明記。Externalization Pressureは、MOI/AF lineageの長期trajectory差とcommon-environment evaluationを組み合わせて検証する
+- Stage 1を3部構成へ変更：
+  - Stage 1A：AF/EL/PR/ARによるFixed-S observation decomposition
+  - Stage 1B：MOI vs AFによるone-step inheritance diagnostic
+  - Stage 1C：5条件longitudinal integration run
+- Stage 2へ**common-environment evaluation**を追加。異なる継承条件で育った最終artifactを同一fresh-agent / artifact-only環境で再評価し、lineage環境の効果とartifact自体の適応を分離する
+- MOIでは全過去sessionを無制限累積せず、原則として**直前世代のobservable interaction recordのみ**を継承する
+- 既存の hidden evaluator 記法 \(H(G)\) とpaper v6のhistory記号 \(H_g\) の衝突を避けるため、本実験計画ではobservable interaction recordを \(\mathcal{I}^{obs}_g\) と表記する
+
+**v1.9での変更点（理論枠組みv5との同期）**：
+- 「有限context」に混在していた二種類の制約を分離：前世代の内部理解がartifactへ完全には外在化されない **Externalization Bottleneck** と、artifact上の情報を次世代主体が一度に保持・処理できない **Observation / Cognitive Bottleneck**
+- Artifact-Full条件を「完全な世界」ではなく、継承artifactとして定義した範囲に追加的制限を課さない **Artifact-Full / Artifact-Full** と再定義
+- Stage 1のcontext条件を3条件から4条件へ更新：Artifact-Full / Exposure-Limited / Privileged-Retrieved Limited / Agent-Retrieved Limited
+- Stage 1の主要contrastを、Working-set effect / Retrieval-policy effect / Recoverability・Transmission effect の3つに再定義
+- `B`を単一の「総アクセスtoken量」ではなく、bounded conditionでは **working-set budget \(B_{work}\)** と **exploration resource \(E_{max}\)** に分離。PR/ARではartifact全体への再アクセス可能性を維持
+- \(R^{sem}\) と \(M\) を一般的software qualityではなく、反復的継承に限定した **継承品質（inheritance quality）** の二軸として明確化し、`adaptation ≠ general quality improvement` を明記
+- Synthetic Software Worldの位置づけを、「artifactが変わることの観察」ではなく「trajectoryを形成するselection pressureを条件操作によって分解するための人工世界」として明確化
+- Stage 2以降のcrossover仮説を4条件に対応させ、Exposure-LimitedとWorking-set Limitedが異なるtrajectoryを示す可能性を明記
 
 **v1.8での変更点（Stage 0 Phase 4再実行結果を受けた修正）**：
 - 新設1.5.1節：invariant-stressing taskは「研究対象そのもの」ではなく「構造的変化を診断するための道具」であることを明確化。task bank構成A（暗黙ルールなし、主指標）と構成B（構成A+invariant-stressing task、診断用）の2構成を導入
 - Stage 2に、構成A・構成Bを並行運用する設計を追記
 - Stage 3の対立仮説に「task bank構成」を追加（構成Aだけでも現象が再現するかの頑健性チェック）。既存の「要求の質」の頑健性チェックと並列の位置づけ
 - Stage 4に、構成Bの局所的失敗イベントと構成Aの構造的副次指標を突き合わせる分析方針を追記
-- F5（visible testのカバレッジがFull/Limitedの差を消してしまった発見）を`docs/findings/stage0_findings.md`に追加し、1.5.1節から参照
+- F5（visible testのカバレッジがArtifact-Full / bounded-contextの差を消してしまった発見）を`docs/findings/stage0_findings.md`に追加し、1.5.1節から参照
 - 未決事項#7を「構成比」から「構成A/Bの並行運用」へ位置づけ変更、#14（構成Bのvisible testが答えを漏らしていないかの自動検証方法）を新規追加
 
 **v1.7での変更点（Stage 0 Phase 4実行結果を受けた修正）**：
@@ -45,7 +77,84 @@
 
 ### 0.1 中心命題
 
-> 有限コンテキストという伝達条件の違いが、反復的に継承されるsoftware artifactの構造的trajectory、および後続AIによる意味的再構成可能性 \(R^{sem}_B(S)\) ・機能的継続可能性 \(M_B(S)\) に、系統的な差を生じさせるか。
+反復的AIDDを自然に観察するだけでも、software artifactが世代とともに変化すること自体は観測できる。しかし、その変化はmodel、初期architecture、task sequence、要求文、tests、継承条件、観測条件、偶然など、多数の要因が同時に作用した結果であり、**何がtrajectoryを形成したのか**を識別できない。
+
+したがって本研究の基本目的は、単に「AIDDを続けるとartifactがどう変わるか」を記述することではない。
+
+> **反復的AIDDにおいて、software artifactのtrajectoryを形成するselection pressureを実験的に分解すること。**
+
+そのため本研究では、AIDDにおける「有限context」を単一のtoken budgetとして扱わず、少なくとも次の二つの研究軸へ分解する。
+
+1. **Inheritance / Transmission**  
+   何が世代間に残るか。前世代のobservable interaction contextまで次世代へ渡るのか、artifactだけが残るのか、artifactの一部しか伝達されないのか。
+
+2. **Observation / Retrieval**  
+   残されたartifactを次世代主体がどれだけ同時に観測でき、どのように探索できるか。
+
+世代 \(g\) の主体が持つ内部的理解・設計意図・mental modelを \(K_g\)、永続artifactを \(S_g\)、実験系が観測・保存可能だが通常はrepositoryに含まれないinteraction recordを \(\mathcal{I}^{obs}_g\)、次世代主体が実際に保持・処理するcontextを \(C_g\) とすると、継承過程は概念的に
+
+\[
+K_g
+\longrightarrow
+(S_{g+1}, \mathcal{I}^{obs}_g)
+\longrightarrow
+C_{g+1}
+\longrightarrow
+K_{g+1}
+\]
+
+と捉えられる。
+
+ここで \(\mathcal{I}^{obs}_g\) はpaper v6の \(H_g\) に対応する。ただし本実験計画では、既存のhidden evaluator \(H(G)\) と記号が衝突するため別記号を用いる。
+
+本研究が特に区別するselection pressureは二つである。
+
+### Externalization Pressure
+
+\[
+\text{Observable Ephemeral Context Loss}
+\rightarrow
+\text{Externalization Pressure}
+\]
+
+前世代の会話・判断・tool interaction等が次世代へ自動的に残らないなら、後世に必要な意味はcode・test・type・Spec・ADR・comment等の永続artifactへ外在化されなければ生き残れない。
+
+すなわち、
+
+> **後世に必要な意味をartifactへ外に出せ**
+
+という圧力である。
+
+### Reconstruction Pressure
+
+\[
+\text{Bounded Artifact Observation}
+\rightarrow
+\text{Reconstruction Pressure}
+\]
+
+artifactへ情報が外在化されていても、次世代主体が一度に全artifactを保持・処理できないなら、その情報は有限な観測から再構成可能な形で存在する必要がある。
+
+すなわち、
+
+> **しかも少量の観測から分かる形で外に出せ**
+
+という圧力である。
+
+したがって本研究の中心命題は、
+
+> **何を世代間に残せるかというinheritance constraintと、残されたartifactをどれだけ同時に観測・探索できるかというcognitive constraintは、それぞれ異なるselection pressureとしてsoftware artifactへ作用し、その構造的trajectory、および後続主体による意味的再構成可能性 \(R^{sem}\) と機能的継続可能性 \(M\) を系統的に変化させるか。**
+
+である。
+
+ただし、
+
+\[
+\text{adaptation} \neq \text{general quality improvement}
+\]
+
+である。特定の継承・観測条件へ適応することでsemantic localityやmodularityが高まる一方、redundancy・duplication・local optimization等が増える可能性もある。したがって本研究は「有限contextがsoftwareを良くするか」ではなく、**どの種類の有限性がどの構造的形質を選択し、その結果として \(R^{sem}\) と \(M\) をどう変えるか**を問う。
+
 
 ### 0.2 Stage構成の全体像
 
@@ -53,14 +162,14 @@
 |---|---|---|
 | 0 | 世代継承ループを安定して回せるか | フィージビリティ |
 | 0.5 | \(R^{sem}\), \(M\) は測定器として機能するか | 測定較正（ゲート） |
-| 1 | 情報量の効果とretrievalの効果を分離できるか | 条件設計の診断（ゲート） |
-| 2 | trajectoryに現象（特にcrossover）の兆候はあるか | 探索的pilot |
-| 3 | 現象はprior・初期構造・task順序で説明できないか | 対立仮説の排除 |
-| 4 | 何がreconstructabilityを媒介しているか | 機序の探索 |
+| 1 | observable history loss・exposure loss・finite working set・retrievalを機構的に分離できるか | 条件設計の診断（ゲート） |
+| 2 | 5つの継承・観測条件でtrajectory差とcommon-environment差の兆候はあるか | 探索的pilot |
+| 3 | 現象はprior・初期構造・task順序・model family等で説明できないか | 対立仮説の排除 |
+| 4 | どのartifact構造が \(R^{sem}\), \(M\) を媒介しているか | 機序の探索 |
 | 5 | 現象は統計的に再現するか | 確証的検証（事前登録） |
-| 6 | 継承媒体そのものを操作して因果を確認できるか | 機序の因果検証 |
+| 6 | 継承媒体・観測条件を操作して因果を確認できるか | 機序の因果検証 |
 
-哲学：**存在 → 原因 → 機序 → 制御**の順で進む。「良いAIDDとは何か」を先に設計せず、まず何が自然に起きるかを観察してから、その現象をどう制御するかへ戻る。
+哲学：**What changes? → What causes the change? → Through what mechanism? → Can we control it?** の順で進む。「良いAIDDとは何か」を先に設計せず、まずtrajectoryに差があるかを確認し、その原因と機序を条件操作によって分解してから制御へ戻る。
 
 ### 0.3 各Stageのゲート判定（進行/停止条件）
 
@@ -68,7 +177,7 @@
 |---|---|---|
 | 0 | 世代ループが再現性をもって完走し、ログが完全取得できる | クラッシュ率が高い、ログ欠損がある場合はハーネスを修正 |
 | 0.5 | dose-response curveが感度をもつ（後述4.3の判定基準） | 天井/床効果が出る場合はprobe/domainを再設計 |
-| 1 | Full/Privileged/Agentの3条件が安定して実行でき、equivalence判定ができるだけのデータが取れる | 条件間でシステムエラー率に極端な差がある場合は条件定義を見直す |
+| 1 | MOI / AF / EL / PR / ARの5条件が機構的に成立し、C0〜C3を対応する診断系で推定できる。MOIはfresh-agent原則を維持し、observable historyのみを追加継承できる | 条件間でシステムエラー率に極端な差がある、またはinheritance・access・working-set・retrievalが独立に操作できていない場合は条件定義を見直す |
 | 2 | trajectoryに何らかの形状（単調/非単調/交差）が観察できる。フラットな場合でもStage 0.5で測定感度が確認済みならnull result候補として進行条件を満たすとみなす | 測定感度がStage 0.5で確認できていない場合のみStage 0.5へ差し戻す |
 | 3 | 対立仮説（prior/architecture/sequence）で現象が消えないことを確認 | 対立仮説で説明できてしまう場合は現象の主張を修正 |
 | 4 | \(R^{sem}, M\) と相関する構造的形質の候補が絞り込める | 相関が弱すぎる場合はraw dataの再分析に留める |
@@ -81,11 +190,12 @@
 
 ### 1.1 位置づけ
 
-ILM研究が人工言語を使うのと同じ理由で、実在GitHubリポジトリではなく、**意味のground truthが完全に既知の人工software world**を用いる。これにより：
+ILM研究が人工言語を使うのと同じ理由で、実在GitHubリポジトリではなく、**意味のground truthが完全に既知の人工software world**を用いる。自然なAIDDを観察するだけでは、artifactが変化したことは分かっても、そのtrajectoryを形成した原因を分離できないためである。人工世界では、model・初期artifact・task・task sequence・requirements・evaluator等を可能な限り固定し、context bottleneckだけを操作できる。これにより：
 
 - \(R^{sem}_B(S)\) を機械採点可能な形で自動生成できる
 - hidden testsを ground truth から自動生成できる
 - pretraining priorの混入を統制・測定できる
+- 「何が変わったか」ではなく「何を変えると何が変わるか」を条件差として比較できる
 
 Stage 0.5とStage 3で同一のgeneratorを共用する。
 
@@ -207,7 +317,7 @@ Stage 0 Phase 4の実行観察から、invariant-stressing taskの位置づけ�
 | **構成A（primary）** | 暗黙ルールを含まない、通常の機能追加taskのみ | 3.2節の構造的副次指標の推移を、交絡なしで観察する。研究の本題 |
 | **構成B（diagnostic）** | 構成Aに、explicit-guard task・distributed-invariant taskを混在させる（現行のheldout_tasks.json相当） | 「意味の再構成に失敗した」という局所的イベントを検出する。構成Aの結果を解釈する補助 |
 
-構成Bを使う際の注意点として、**visible testの記述が、暗黙ルールの答えを直接漏らしていないかを事前に確認する必要がある**。Stage 0 Phase 4では、visible testが特定entityのinvariantを直接assertしていたため（例：`advanceZef2: fails if Tal is not 'pex'`）、AIがソースコードを読まずにテストの記述だけから正解を再構成できてしまい、Full/Limited間の差が消失する事例が観測された（`docs/findings/stage0_findings.md` F5参照）。構成Bのtask bankを設計する際は、この種の「答えの漏洩」がないかをタスクごとに確認する。
+構成Bを使う際の注意点として、**visible testの記述が、暗黙ルールの答えを直接漏らしていないかを事前に確認する必要がある**。Stage 0 Phase 4では、visible testが特定entityのinvariantを直接assertしていたため（例：`advanceZef2: fails if Tal is not 'pex'`）、AIがソースコードを読まずにテストの記述だけから正解を再構成できてしまい、Artifact-Full / bounded-context間の差が消失する事例が観測された（`docs/findings/stage0_findings.md` F5参照）。構成Bのtask bankを設計する際は、この種の「答えの漏洩」がないかをタスクごとに確認する。
 
 Stage 2・Stage 3・Stage 4での両構成の使い分けは、それぞれの節を参照。
 
@@ -215,7 +325,7 @@ Stage 2・Stage 3・Stage 4での両構成の使い分けは、それぞれの�
 
 \(T_3\) で invariant \(I_7\) を導入し、\(T_4 \ldots T_{15}\) では触れず、\(T_{16}\) で初めて必要になる設計を考えると、失敗には少なくとも2つの異なる原因がありうる。
 
-- (a) \(I_7\) の情報はartifact上に残っているが、\(T_{16}\) 時点のcontext budgetで提示されなかった（**伝達帯域の問題**）
+- (a) \(I_7\) の情報はartifact上に残っているが、\(T_{16}\) 時点でworkerのworking contextへ入らなかった（**observation / retrievalの問題**）
 - (b) 中間世代のどこかで、AIが「使われていないように見える」\(I_7\) 関連のtest/コメント/コードを削除してしまった（**媒体そのものの喪失**）
 
 これを \(I_7\) 専用の特別扱いにせず、**ground truth \(G\) の全要素 \(x \in G\)（entity・operation・transition・dependency・invariantのいずれも）に対して一般化した semantic element trace** として追跡する。各世代 \(g\) について、可能な範囲で以下を記録する。
@@ -276,7 +386,7 @@ Stage 5では、task sequenceを独立変数として明示的にモデルへ含
 
 ### 1.9 要求の質の統制（本研究が操作しない変数）
 
-本研究がcontext bottleneckとして操作するのは、**過去に継承されるartifact（コード・テスト・型・コメント等）をどれだけ渡すか**である。これに対し、各世代でAIへ提示される新規要求（held-out taskの`visibleInstruction`）そのものの詳細度・明確さは、本研究が操作する変数ではない。
+本研究がcontext bottleneckとして操作するのは、**過去に継承されるartifact（コード・テスト・型・コメント等）に対するexposure・working-context・retrieval条件の強さと形**である。これに対し、各世代でAIへ提示される新規要求（held-out taskの`visibleInstruction`）そのものの詳細度・明確さは、本研究が操作する変数ではない。
 
 この区別は、Stage 0のPhase 4実行観察から必要性が明確になった。AIが新しいoperationを実装する際、既存のdistributed invariant（複数のtransitionにまたがる暗黙の制約）を壊さないという条件を、`visibleInstruction`が明示していない場合に見落とす事例が複数回観測された（`docs/findings/stage0_findings.md` F1, F2参照）。この観測結果は、有限context下での意味的再構成可能性を検証する上で重要な交絡因子を示唆する：観測される失敗が
 
@@ -289,58 +399,341 @@ Stage 5では、task sequenceを独立変数として明示的にモデルへ含
 
 - 全held-out taskの`visibleInstruction`は、**統一されたスタイル**（簡潔な1〜2文、既存の制約への言及を含まない）に統制し、独立変数として操作しない。現在の`heldout_tasks.json`の記述は既にこのスタイルに従っているが、今後task bankを拡張する際もこのスタイルを維持する。
 - ただし、この統制が本研究の主張を歪めていないかを確認するため、Stage 3（対立仮説の排除）に、要求文の詳細度に関する頑健性チェックを追加する（4節 Stage 3参照）。
-- 要求文の詳細度そのものを独立変数として体系的に操作する研究（要求工学・prompt設計としての研究）は、本研究の範囲外とする。理論的位置づけは`aidd_ilm_paper_v4.md`5.3節・8.5節を参照。
+- 要求文の詳細度そのものを独立変数として体系的に操作する研究（要求工学・prompt設計としての研究）は、本研究の範囲外とする。理論的位置づけは`aidd_ilm_paper_v6.md`5.3節・8.6節を参照。
 
 ---
 
-## 2. Context条件の定義
+## 2. Context / Inheritance条件の定義
 
-### 2.1 三条件
+### 2.1 五条件は一本の「Full→Limited」序列ではない
 
-- **Full Context**：リポジトリ全体（実質的に全情報）を利用可能にする
-- **Privileged-Selection Limited**（旧称 Oracle Limited）：フルcontextを見られる privileged selector が、token budget \(B\) の範囲でworker agentへcontextを渡す
-- **Agent-Retrieved Limited**：同じbudget \(B\) の中で、worker agent自身が検索/読み取りツールを用いて情報を取得する
+五条件は、単純に制約が弱い順から強い順へ並ぶ一つの軸ではない。
 
-```text
-Full Repository
-       ↓
-Privileged Context Selector（ヒューリスティックベース）
-       ↓ B tokens
-Worker Agent
+本研究では、二つの研究軸をArtifact-Fullで接続する。
 
-Worker Agent
-   ↕ search/read tools
-Repository（budget B 内で自由に探索）
-```
-
-### 2.2 Privileged Selectorの実装方針（要決定・Stage 1着手前に確定）
-
-Selector自体をLLMにすると、selectorの判断にmodel priorが混入し、「情報量そのものの効果」の測定が汚染される。したがって初版では**固定ヒューリスティック**（依存グラフ距離、直近の変更履歴、対象ファイルからの参照関係など）で実装し、selector自身のprior混入は既知の限界として明示する。Stage 1の診断結果次第で再設計を検討する。
-
-呼称は理論的な"oracle"（正解の完全な選択）を意味しないため、以降 **Privileged-Selection Limited** と呼ぶ。
-
-### 2.3 世代の定義
-
-各generationで**新規セッション・新規agentインスタンス**を開始する。前世代の対話履歴・chain-of-thought・agent内部メモリは一切継承しない。継承されるのはrepository内に固定された永続的artifact（コード・テスト・型・Spec・ADR・コメント）のみ。
-
-**固定される層と、世代ごとに進化する層（v1.5で修正）**：継承される要素（artifact＝\(S_g\)）と継承されない要素（agentの対話履歴・メモリ）という二分法だけでは不十分であることが、GroundTruthDelta（4.1節）の導入によって判明した。正しくは次のように整理する。
-
-**固定されるもの**：WorldProtocol（hidden evaluator \(H(G)\) がrepositoryの内部実装を一切知らずに呼び出すための固定契約。例：`reset` / `applyOperation` / `getEntityState` 等の最小インターフェース。Generation 0で確定した公開API表面を指し、以降の世代はこの契約さえ保てば内部構造を自由にリファクタしてよい）／context条件のルール／評価方法そのもの／agentに何を継承させるかという実験規則。
-
-**世代ごとに変わるもの**：要求 \(T_g\)／**正解世界 \(G_g\) 自体**／hidden evaluatorの具体的内容 \(H(G_g)\)／artifact \(S_g\)。
-
-すなわち実験は次の**2本のtrajectory**を並走させる。
+#### Axis A：Inheritance / Transmission
 
 \[
-G_g \xrightarrow{T_g} G_{g+1} \qquad (\text{worker agentには非公開。GroundTruthDeltaで進む})
+\text{MOI}
+\rightarrow
+\text{Artifact-Full}
+\rightarrow
+\text{Exposure-Limited}
 \]
+
+これは**何が世代間に残るか**を操作する。
+
+#### Axis B：Observation / Retrieval
+
 \[
-S_g \xrightarrow{AI(T_g)} S_{g+1} \qquad (\text{worker agentが実際に変更するartifact})
+\text{Artifact-Full}
+\rightarrow
+\text{Privileged-Retrieved}
+\rightarrow
+\text{Agent-Retrieved}
 \]
 
-そして各世代で \(S_{g+1} \models G_{g+1}\) を外部評価する。「\(S_g\)のみが進化し\(G\)は固定」という単純化ではなく、要求ごとに正解世界そのものも進化する点が本質である。
+これは**残されたartifactを次世代主体がどのように観測・探索できるか**を操作する。
 
-WorldProtocol自体にinvariant等のsemantic knowledgeを含めてはならない（含めると実験が汚染される）。この設計により、\(H(G_g)\) は世代を経たrepositoryのリファクタリングに対して頑健になる（Synthetic World v0の初期実装ではこの分離ができておらず、内部関数への直接importが世代間リファクタで壊れる問題があった。v0.1で `protocol_adapter.ts` として分離・解消）。
+Artifact-Fullは両軸を接続するhub conditionである。
+
+### 2.2 五条件
+
+| 条件 | 世代間に継承するもの | Artifact access | Working context | 情報選択 | 主に操作するもの |
+|---|---|---|---|---|---|
+| **Maximal Observable Inheritance（MOI）** | artifact + 直前世代のobservable interaction record \(\mathcal{I}^{obs}_g\) | 全体 | 追加的な人工制限なし | 不要 | observable ephemeral contextの継承 |
+| **Artifact-Full（AF）** | artifactのみ | 全体 | 追加的な人工制限なし | 不要 | artifact-only inheritance baseline / hub |
+| **Exposure-Limited（EL）** | artifactの選択subsetのみ | 提示subsetのみ | \(B_{work}\) 以下 | privileged static selector | 不可逆なartifact exposure loss |
+| **Privileged-Retrieved Limited（PR）** | artifactのみ | 全体へ再アクセス可能 | \(B_{work}\) | privileged retrieval controller | finite working cognition |
+| **Agent-Retrieved Limited（AR）** | artifactのみ | 全体へ再アクセス可能 | \(B_{work}\) | worker agent自身 | retrieval / information selection |
+
+**全条件でfresh agentを使用する。**  
+MOIも同一sessionの継続ではない。世代 \(g+1\) では新しいagent instanceを開始し、そこへ \(S_{g+1}\) と \(\mathcal{I}^{obs}_g\) を入力として与える。
+
+### 2.3 MOIで継承するobservable interaction record
+
+\(\mathcal{I}^{obs}_g\) に含める候補は、実験系が実際に観測・保存できたものだけとする。
+
+- generation \(g\) のvisible task instruction
+- observable agent response
+- tool calls / tool results
+- agentが明示的に出力したworking note / scratch note
+- applied diff
+- agentへ実際に返されたfeedback
+
+含めないもの：
+
+- model hidden state
+- 非出力の内部表象
+- private chain-of-thought
+- workerに見せていないGround Truth
+- hidden evaluator output
+- evaluator内部の診断情報
+
+したがってMOIは「完全なcontext継承」ではない。
+
+> **実験系が観測可能な情報についてのMaximal Observableな上限条件**
+
+であり、古典ILMのFull-transmission controlへの操作的近似と位置づける。
+
+また、主実験では全過去世代
+
+\[
+\mathcal{I}^{obs}_1+\cdots+\mathcal{I}^{obs}_g
+\]
+
+を無制限に累積しない。原則として**直前世代の \(\mathcal{I}^{obs}_g\)** のみを継承する。
+
+理由：
+
+- history量がgenerationに比例して増えることを避ける
+- context-window saturationを別の独立変数にしない
+- lost-in-the-middleをMOI固有の交絡にしない
+- 世代間伝達というILM的単位を維持する
+
+一世代の \(\mathcal{I}^{obs}_g\) は、agent output・tool count・feedback schema等の共通上限によりoperation上boundedに保つ。
+
+### 2.4 Artifact-Full
+
+Artifact-Fullでは、
+
+- 前世代の \(\mathcal{I}^{obs}_g\) は継承しない
+- repository内の永続artifactだけを継承する
+- artifact自体には追加的なaccess制限やworking-set制限を課さない
+
+したがって、
+
+\[
+fresh\ Agent_{g+1}
+\leftarrow
+S_{g+1}
+\]
+
+となる。
+
+これは「完全な世界」ではない。前世代のobservable ephemeral contextも、非observableな内部状態も失われる。
+
+一方でAFは、
+
+- MOIとの差からobservable-history availabilityを測る
+- PRとの差からworking-set effectを測る
+
+ための共通baselineであり、本研究のhub conditionとなる。
+
+### 2.5 EL / PR / ARの観測制約
+
+#### Exposure-Limited（EL）
+
+episode開始時にprivileged static selectorが \(B_{work}\) 相当のartifact subsetを選択する。
+
+workerは提示されなかったartifactへepisode中アクセスできない。
+
+これは古典ILMのfinite-transmission conditionに最も近い人工的な不可逆exposure制限である。
+
+#### Privileged-Retrieved Limited（PR）
+
+artifact全体へのaccess可能性を保持したまま、ある時点のworking contextを
+
+\[
+|W_t| \le B_{work}
+\]
+
+に制限する。
+
+次に何を見るかはprivileged retrieval controllerが決定する。
+
+#### Agent-Retrieved Limited（AR）
+
+artifact全体へのaccess可能性、\(B_{work}\)、exploration resourceはPRと同じ。
+
+違いは、何を検索・読み取り・再取得するかをworker agent自身が決定する点だけである。
+
+PR / ARでは、
+
+- 新しい情報取得時に古い情報をevictできる
+- evictされた情報を再取得できる
+- explicit summary / working memoryも \(B_{work}\) に算入
+- private chain-of-thoughtは保存・計数対象にしない
+
+### 2.6 主要contrast
+
+#### C0：Observable-history availability
+
+\[
+D_{history}
+=
+Outcome_{MOI}
+-
+Outcome_{AF}
+\]
+
+MOIとAFの違いは、直前世代のobservable interaction recordを次世代へ追加継承するかどうかである。
+
+ただし、この**短期performance差だけをExternalization Pressureの証拠とはみなさない**。
+
+C0の短期差が示すのは、
+
+> observable historyがその次のtaskにどの程度直接役立つか
+
+である。
+
+Externalization Pressureの証拠には、Stage 2以降で
+
+- MOI-grown lineageとAF-grown lineageのartifact trajectory差
+- test/type/spec/interface等への情報外在化差
+- common-environment evaluationでのartifact-only性能差
+
+を組み合わせる必要がある。
+
+#### C1：Working-set / Reconstruction effect
+
+\[
+D_{work}
+=
+Outcome_{AF}
+-
+Outcome_{PR}
+\]
+
+AFとPRはartifact-only inheritanceとfull repository accessを共有し、PRだけがfinite working setを持つ。
+
+#### C2：Retrieval-policy effect
+
+\[
+D_{retrieval}
+=
+Outcome_{PR}
+-
+Outcome_{AR}
+\]
+
+PRとARはartifact-only inheritance、full repository access、同一 \(B_{work}\)、同一exploration resourceを共有する。
+
+#### C3：Recoverability / Exposure effect
+
+\[
+D_{recoverability}
+=
+Outcome_{PR}
+-
+Outcome_{EL}
+\]
+
+ELは提示されなかったartifactを後から取得できず、PRはartifact全体へ再アクセス可能である。
+
+### 2.7 古典ILMとの対応
+
+補助contrastとして、
+
+\[
+Outcome_{MOI}
+-
+Outcome_{EL}
+\]
+
+を保存する。
+
+これは古典ILMにおける
+
+\[
+\text{Full transmission}
+\quad vs \quad
+\text{Bottlenecked transmission}
+\]
+
+への最も近い操作的比較である。
+
+ただし、MOIはtrue full transmissionではなく、複数の機構差を同時に含むため、**C0〜C3のような因果分解contrastとしては扱わない**。ILMとの概念的対応を示すsecondary contrastとする。
+
+### 2.8 Working-set budgetとExploration resource
+
+bounded observation条件では、単一のtoken budget \(B\) に異なる資源を混ぜない。
+
+\[
+B_{work}
+\]
+
+：ある時点で保持できるartifact-derived evidence + explicit persistent memoryの上限。
+
+\[
+E_{max}
+\]
+
+：episodeあたりの探索・計算資源上限。
+
+候補：
+
+- max retrieval turns
+- max tool calls
+- max API calls
+- max wall time
+
+PR / ARで \(E_{max}\) を揃える。
+
+ELはstatic subsetのためretrieval \(E\) は使用しないが、agent generation側の出力・時間上限は他条件と合わせる。
+
+### 2.9 Privileged Selector / Controller
+
+Privileged条件は現実的retrieverではなくdiagnostic upper boundとして扱う。
+
+利用可能なevaluator-side signal：
+
+- GroundTruthDeltaが触れるentity
+- current \(G_g\) のsemantic locality
+- dependency graph distance
+- type definitions
+- fixed WorldProtocol
+- leakage検査済みvisible tests
+- source-level reference relation
+- Stage 1C以降では直近変更履歴
+
+Ground Truthそのものをworkerへ露出してはならない。
+
+ELとPRのrelevance policyは可能な限り共通化し、C3の差をrecoverabilityへ寄せる。
+
+### 2.10 世代の定義
+
+すべてのgeneration・すべての条件で**新規session・新規agent instance**を開始する。
+
+主体の連続性を独立変数にしない。
+
+条件差は、fresh agentへ何を入力として継承するか、artifactをどのように観測できるかのみで作る。
+
+**固定されるもの**：
+
+- WorldProtocol
+- model / model settings
+- task instruction style
+- context / inheritance conditionのルール
+- evaluator
+- hidden情報の境界
+- logging schema
+
+**世代ごとに変わるもの**：
+
+- task \(T_g\)
+- correct world \(G_g\)
+- hidden evaluator \(H(G_g)\)
+- artifact \(S_g\)
+- observable interaction record \(\mathcal{I}^{obs}_g\)
+
+実験は引き続き、
+
+\[
+G_g \xrightarrow{T_g} G_{g+1}
+\]
+
+\[
+S_g \xrightarrow{AI(T_g)} S_{g+1}
+\]
+
+の二trajectoryを並走させ、各世代で
+
+\[
+S_{g+1} \models G_{g+1}
+\]
+
+を外部評価する。
 
 ---
 
@@ -352,7 +745,7 @@ WorldProtocol自体にinvariant等のsemantic knowledgeを含めてはならな�
 experiment_id
 lineage_id
 generation
-condition                  # Full / Privileged-Selection Limited / Agent-Retrieved Limited
+condition                  # MOI / Artifact-Full / Exposure-Limited / Privileged-Retrieved / Agent-Retrieved
 model
 seed_architecture
 task_sequence_id
@@ -362,15 +755,29 @@ repository_before           # 完全snapshot
 repository_after             # 完全snapshot
 git_diff
 
-context_budget                # 割当トークン数
-actual_context_tokens          # 実際に使用されたトークン数
-context_contents               # workerに実際に渡された内容そのもの
-retrieval_queries               # Agent-Retrieved条件のみ
-retrieved_files
+inheritance_mode             # maximal-observable / artifact-only / exposure-limited
+observable_history_inherited   # MOIのみ。実際に継承した I^obs_{g-1}
+observable_history_tokens
+observable_history_schema_version
+working_set_budget            # bounded observation条件の B_work
+exploration_budget              # bounded条件の E_max
+working_set_peak_tokens         # 実際の最大同時保持量
+context_contents               # workerに実際に提示された内容
+retrieval_queries              # PR/AR
+retrieved_artifact_units
+evicted_artifact_units
+explicit_working_memory
+unique_observed_tokens
+total_retrieved_tokens
+retrieval_count
+eviction_count
+context_churn
 
 agent_prompt
 agent_response
 tool_calls
+observable_interaction_record   # generation g が次世代へ継承可能な I^obs_g
+explicit_working_note
 
 semantic_probe_results          # R^sem_B(S) 算出用
 hidden_test_results               # M_B(S) 算出用。H(G) はworker agentへ非露出、評価ハーネス側でのみ実行・記録する（1.7節）
@@ -389,11 +796,32 @@ cost
 
 以降、\(M_B(S)\) は潜在的な真の成功確率（\(P(\text{future modification succeeds} \mid S, B)\)）、\(\hat{M}_B(S)\) はheld-out task set \(\mathcal{T}_{\text{heldout}}\) から得る経験的推定量（4.1節 Stage 0.5の式）として区別する。同様に \(R^{sem}_B(S)\) は理論量、実際にsemantic probeから得る値は \(\hat{R}^{sem}_B(S)\) と表記する。以下の指標定義は理論量で記すが、実測はすべて推定量（\(\hat{M}_B, \hat{R}^{sem}_B\)）であることに注意する。統計モデル（4.1節 Stage 5）でも観測値は常に推定量として扱う。
 
+本研究では \(R^{sem}\) と \(M\) を一般的なsoftware quality全体とはみなさない。反復的に継承されるartifactとしての**継承品質（inheritance quality）**を、
+
+\[
+Q_B(S)
+=
+\left(
+R_B^{sem}(S),
+M_B(S)
+\right)
+\]
+
+という二次元量として操作的に捉える。単一スコアへ潰さず、両軸の組み合わせを解釈する。
+
+例えば、
+
+- \(R^{sem}\uparrow,\ M\uparrow\)：意味を再構成しやすく、変更も成功しやすい
+- \(R^{sem}\uparrow,\ M\rightarrow\)：理解しやすさは上がったが、変更成功にはまだ反映されていない
+- \(R^{sem}\downarrow,\ M\uparrow\)：全体意味の明示的再構成が弱くても、type/test/local pattern等によって変更しやすくなった可能性
+
+を区別できる。
+
 **主要指標（primary outcome）**
-- \(M_B(S)\)：固定context budgetのもとでの機能的継続可能性（隠しテストを回帰なく通す確率）。実測は \(\hat{M}_B(S)\)
+- \(M_B(S)\)：指定context条件・working-set budgetのもとでの機能的継続可能性（隠しテストを回帰なく通す確率）。実測は \(\hat{M}_B(S)\)
 - \(R^{sem}_B(S)\)：意味的再構成可能性（semantic probeの正答率。変更タスクの成否とは独立に測定）
 - 累積的な隠しテスト保持率
-- 目標成功確率に到達するための最小context量
+- 目標成功確率に到達するための最小working-context量、または必要観測量
 
 **副次指標（secondary outcome・構造的形質の候補、Stage 4で分析）**
 - 構造的劣化・複雑性の集中度
@@ -401,6 +829,7 @@ cost
 - 変更の局所性（change locality）
 - 依存関係の広がり（dependency breadth）
 - Spec・テスト・型への情報外在化率
+- successful modificationに必要なretrieval量・working-set churn・最小 \(B_{work}\)
 - **表面的局所性と意味的局所性の乖離度**：\(\text{Local}_{\text{surface}}(T)\)（visibleInstructionおよびGroundTruthDelta \(\Delta\) が直接言及するentityの集合）と \(\text{Local}_{\text{semantic}}(T)\)（正しく変更するために実際にどこまでsystemを理解する必要があるか）の乖離。**\(\text{Local}_{\text{semantic}}\) は \(\Delta\) 単体からではなく、\((G_g + \Delta_g)\) 全体のdependency/invariantグラフをsurface localityの起点entityからBFSで辿ることで機械的に算出する**（\(\Delta\) 自体には現れない既存のdistributed invariantやdependency連鎖まで理解が必要な場合があるため）。task typeラベル（local/cross_cutting等）は表面的な分類であり、実際に必要な知識の広さと乖離しうることがSynthetic World v0.1〜v0.3の構築過程で確認された（見た目はlocalなtaskの正解実装に他entityへの依存が必要だったケース。v0.3で乖離度を実測：\(\text{divergence} = |\text{semantic}| - |\text{surface}|\) が1〜2の範囲で複数taskに実在することを確認）。この乖離度と \(R^{sem}_B, M_B\) の関係を見ることで、Limited Context下で特に困難になるtaskの性質を特定できる可能性がある。
 
 ### 3.3 Semantic probeの形式（機械採点可能）
@@ -431,6 +860,7 @@ state transition prediction （例：この operation 実行後の状態はど�
 ### Stage 0.5：Measurement Calibration
 
 - 目的：\(R^{sem}_B\) と \(M_B\) が測定器として機能するかを確認する
+- **v2.0での位置づけ**：Stage 0.5で較正済みのstatic budget条件は、現在の用語では主としてExposure-Limited / static transmission型の較正に相当する。既存結果はhistorical calibrationとして保持するが、PR/ARのbounded working-set条件やMOIへそのまま転用しない。Stage 1事前準備でmodel移行後の再較正、balanced boolean probe、working-set dose-response、MOI history serialization preflightを追加する。
 - **設計上の注意**：固定完成系に対してそのままhidden testsを実行しても、それは既存機能の保持を確認しているに過ぎず、\(M_B(S)\)（機能的継続可能性＝*変更タスク*の成功確率）を測ったことにはならない。\(R^{sem}_B\) と \(M_B\) は独立した2系統の測定として設計する。
 - **前提条件（必須）**：\(S\) の元となる ground truth \(G\) 自体が自己無矛盾であること（\(S \models G\) が原理的に成立可能であること）を、held-out taskの \(\text{GroundTruthDelta}\) を含めて事前に機械検証する。具体的には、初期状態からの到達可能な全状態でinvariantが成立するかをBFS等で確認するmodel checkerを用い、\(G\) 本体だけでなく各held-out taskの \(G_g \to G_{g+1}\) delta適用後の世界についても検証する。Synthetic World v0の構築時、この検証によってground truth設計自体のバグ（明示的guardのないinvariantが実際に破られる到達可能状態、およびtask deltaがinvariantを壊すケース）が実際に検出された。この手順を経ずに次段階へ進まない。
 - 手順：
@@ -465,55 +895,331 @@ dose-response curveは「budgetに応じ滑らかに改善」パターンを満�
 参照ログ: `runs/stage0_5/stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T08-25-10/`
 参照文書: `docs/stage0_5_plan.md`、`docs/findings/stage0_5_findings.md`（F1〜F10）
 
-### Stage 1：Context Decomposition（診断実験）
+### Stage 1：Inheritance / Context Decomposition
 
-- 目的：性能差のうち「情報量」と「retrieval」がそれぞれどれだけ寄与するかを分離する
-- 条件：Full / Privileged-Selection Limited / Agent-Retrieved Limited の3条件
-- 規模：10〜15世代
-- 対比：
-  - \(\text{Full} - \text{Privileged Limited}\) → 情報量そのものの効果
-  - \(\text{Privileged Limited} - \text{Agent Limited}\) → retrievalの効果
-- 判定は**equivalence testing**で行う。有意差なし＝関係なし、とはしない。事前に実務上無視できる差 \(\Delta_M\)（機能的継続可能性用）と \(\Delta_{R}\)（意味的再構成可能性用）をそれぞれ定める。
+**目的**：5条件をlongitudinalに走らせる前に、各条件が意図したmechanismだけを操作できていることを診断する。
+
+重要：MOIは「固定artifactに対するcontext量」の条件ではなく、**世代間に何を継承するかというinheritance condition**である。したがってAF/EL/PR/ARと全く同じFixed-\(S_0\) experimentへ形式的に並べない。
+
+Stage 1は三つに分ける。
+
+#### Stage 1A：Fixed-S Observation Decomposition
+
+同一の完成artifact \(S_0\) に対して、次の4条件を比較する。
+
+- Artifact-Full（AF）
+- Exposure-Limited（EL）
+- Privileged-Retrieved Limited（PR）
+- Agent-Retrieved Limited（AR）
+
+同一probe set・held-out task set・model settingsを使い、
 
 \[
-|M_{\text{Privileged}} - M_{\text{Agent}}| < \Delta_M
-\quad \text{かつ} \quad
-|R^{sem}_{\text{Privileged}} - R^{sem}_{\text{Agent}}| < \Delta_{R}
+\hat R^{sem}_c(S_0),
+\qquad
+\hat M_c(S_0)
 \]
 
-の**両方**が信頼区間で支持された場合にのみ、Stage 5でAgent-Retrieved条件を落とす判断を行う。\(M\) のみでの判定は避ける。理由は、意味を部分的に取り損ねているが実装成功率には少ない世代数では現れていない、というケース（\(R^{sem}\) は異なるが \(M\) は同等）を見逃す可能性があるため。本研究の理論的中心は \(R^{sem}\) であり、\(M\) だけを主指標にしない。
+を測定する。
 
-- 分岐パターン：
+primary contrast：
 
-| パターン | 解釈 |
-|---|---|
-| Full ≈ Privileged ≈ Agent | bottleneck設定が弱すぎる可能性、domain再設計を検討 |
-| Full ≈ Privileged > Agent | 主因はretrieval |
-| Full > Privileged ≈ Agent | 主因は情報制約そのもの |
-| Full > Privileged > Agent | 両方が効く |
+\[
+D_{work}=Outcome_{AF}-Outcome_{PR}
+\]
 
-この結果はStage 5の条件数・予算配分を決定する。
+\[
+D_{retrieval}=Outcome_{PR}-Outcome_{AR}
+\]
+
+\[
+D_{recoverability}=Outcome_{PR}-Outcome_{EL}
+\]
+
+目的はC1〜C3をmechanistically cleanに較正することであり、trajectoryの結論は出さない。
+
+#### Stage 1B：One-Step Inheritance Diagnostic（MOI vs AF）
+
+MOIを診断するため、標準化されたpredecessor episodeを用意する。
+
+1. 共通の \(S_{pre}\) と task \(T_{pre}\) からgeneration \(g\) を一度実行する
+2. その結果として、同一の
+   - artifact \(S_{g+1}\)
+   - observable interaction record \(\mathcal{I}^{obs}_g\)
+   を固定する
+3. 次task \(T_{next}\) に対してfresh agentを2群用意する
+4. MOI群には
+   \[
+   (S_{g+1},\mathcal{I}^{obs}_g)
+   \]
+   を渡す
+5. AF群には
+   \[
+   S_{g+1}
+   \]
+   のみを渡す
+6. repository access、model、task、output budget等は同一にする
+
+これにより、
+
+\[
+D_{history}^{immediate}
+=
+Outcome_{MOI}
+-
+Outcome_{AF}
+\]
+
+を測定する。
+
+ここで測るのは**observable historyの直接的有用性**であり、Externalization Pressureそのものではない。
+
+Externalization Pressureはlongitudinal selection effectなので、Stage 2以降でMOI/AFのartifact trajectoryとcommon-environment evaluationを使って判断する。
+
+Stage 1Bでは複数のpredecessor episode / next-task pairを用意し、特定の1 historyに依存しないことを確認する。
+
+#### Stage 1C：Five-Condition Iterated Integration Run
+
+5条件それぞれ10〜15世代を実行する。
+
+- MOI
+- AF
+- EL
+- PR
+- AR
+
+目的は科学的trajectory結論ではなく、次を同一longitudinal harness上で安定動作させること。
+
+- fresh agent原則
+- \(\mathcal{I}^{obs}_g\) の生成・serialization・次世代継承
+- artifact-only inheritance
+- EL static exposure
+- PR/AR working-set paging
+- cumulative \(G_g/H(G_g)\)
+- repository snapshot / diff
+- retrieval / eviction raw logs
+- history inheritance logs
+- provider/model/cost provenance
+
+Stage 1Cでは10〜15世代の形状からartifact adaptationを主張しない。
+
+#### Stage 1事前準備で必要な修正
+
+Stage 0 / 0.5の既存成果は破棄しない。以下をPre-Stage 1として追加する。
+
+1. **理論・文書同期**
+   - `aidd_ilm_paper_v6.md`
+   - `docs/experiment_plan.md`
+   - `docs/stage1_plan.md`
+   - methodology findings
+
+2. **Model/API migration**
+   - Stage 0/0.5の既存model runはhistorical baselineとして保持
+   - Stage 1 primary modelをfreeze
+   - tool use / structured output / usage logging
+   - independent-request batch path
+   - model変更後に測定器を再較正
+
+3. **Observable Interaction Record**
+   - \(\mathcal{I}^{obs}_g\) schema
+   - serialization
+   - history token accounting
+   - visible/hidden境界
+   - 直前世代のみ継承するルール
+   - MOI prompt assembly
+   - history leakage audit
+
+4. **測定器修正**
+   - balanced boolean probes
+   - constant-answer baseline
+   - canonical token counter
+   - ArtifactUnit / chunk retrieval
+
+5. **Working-set runtime**
+   - \(B_{work}\) は同時保持量
+   - evict / re-read
+   - bounded explicit memory
+   - deterministic eviction
+   - \(E_{max}\) 分離
+
+6. **Repository access / isolation**
+   - provider-neutral RepositoryAccessor
+   - `list_files`, `search`, `read_file_chunk`
+   - Ground Truth / hidden evaluator / logsへのaccess禁止
+   - path traversal / symlink / write escape防止
+
+7. **Longitudinal evaluator**
+   - current taskだけでなく過去task-specific semanticsを累積評価
+   - 最低限 \(H(G_0)\) + \(T_1...T_g\) のtask-specific tests
+   - 将来はcurrent \(G_g\) からdynamic hidden evaluator生成
+
+8. **ログ拡張**
+   - inherited history
+   - generated interaction record
+   - working-set before/after
+   - retrieved / evicted units
+   - explicit memory
+   - unique / total observed tokens
+   - retrieval / eviction count
+   - API usage / actual cost
+
+#### Stage 1のゲート
+
+- 5条件すべてがfresh-agent原則を保って動く
+- MOIで同一session continuationが混入していない
+- \(\mathcal{I}^{obs}\) にhidden情報が混入していない
+- Stage 1AでC1〜C3を推定可能
+- Stage 1BでC0のimmediate history utilityを推定可能
+- PR/ARでfull artifactへ再アクセス可能
+- \(B_{work}\), \(E_{max}\), MOI history schemaがfreeze
+- equivalence / uncertainty methodがfreeze
+- Stage 1Cの5条件longitudinal harnessが安定
+
+Stage 1の結果だけを理由に、短期差が小さい条件を安易にStage 2から削除しない。主仮説はlongitudinal selection effectであり、短期performance equivalenceはtrajectory equivalenceを意味しない。
+
+---
+
 
 ### Stage 2：Longitudinal Pilot
 
-- 目的：trajectoryそのものに現象（特にcrossover）の兆候が現れるか
-- 規模：30〜50世代、各条件2〜3 lineageのみ（探索目的、統計検定はしない）
-- 手順：Stage 1の結果に基づき条件数を確定した上で世代数を伸ばす
-- **task bank構成（1.5.1節参照）**：構成A（暗黙ルールなし、通常taskのみ）と構成B（構成A + invariant-stressing task）を並行して走らせる。構成Aの結果が主指標（構造的副次指標の推移）、構成Bの結果は診断的な補助情報として扱う。両者を同数のlineageで走らせる必要はなく、構成Aに多めのlineageを割り当ててよい
-- 併せて \(R^{sem}_B(S)\) の簡易フルスケール版（Stage 0.5の較正済みprobeセット）をtrajectory全体に適用する
-- 判定：形状（単調・非単調・交差の兆候）が観察できればStage 3へ。完全にフラットでノイズのみの場合、対応はStage 0.5の結果次第で分岐する：
-  - Stage 0.5で測定感度（4.3節のdose-response curve）が確認済みであれば、「有限contextはtrajectoryに系統的差を生じさせない」という**null resultの候補**として保持し、Stage 3（対立仮説の排除）へ進める。差が出ないこと自体を実験失敗として扱わない。
-  - Stage 0.5の感度確認が不十分、または経過世代数が少なくdose-response自体が再現しない場合にのみ、Stage 0.5へ差し戻す。
+**目的**：5つのinheritance / observation conditionが、反復を通じてartifact trajectoryへ異なるselection pressureを与える兆候があるかを探索する。
+
+原則としてStage 2 pilotでは5条件を保持する。
+
+- MOI
+- Artifact-Full
+- Exposure-Limited
+- Privileged-Retrieved
+- Agent-Retrieved
+
+Stage 1で短期差がなかったという理由だけでは条件を落とさない。artifact adaptationは反復によって初めて現れる可能性があるためである。
+
+- 規模：30〜50世代、各条件2〜3 lineageを基本とする
+- 統計的確証は行わず、trajectory形状・effect sign・測定可能性を探索する
+- task bank構成A（通常task）をprimary、構成B（invariant-stressing含む）をdiagnosticとして並行運用する
+- \(R^{sem}\), \(M\), cumulative hidden preservationに加え、構造的副次指標を保存する
+- MOIでは各世代の \(\mathcal{I}^{obs}_g\) を保存し、次世代へ直前一世代分のみ継承する
+
+#### Stage 2A：Selection trajectory
+
+特に次を比較する。
+
+##### Externalization Pressure
+
+MOI vs AFで、
+
+- testへの意味移動
+- typeへの制約移動
+- interface contractの明示
+- namingの説明性
+- Spec / ADR / commentへの理由の外在化
+- artifact-onlyでのsemantic reconstructability
+
+のtrajectoryに系統差が生じるかを見る。
+
+MOIではhistoryが補助記憶として残るため、artifactへ情報を刻む圧力が弱まる可能性がある。
+
+AFではhistoryが失われるため、次世代に必要な意味をartifactへ残す圧力が強まる可能性がある。
+
+##### Reconstruction Pressure
+
+AF vs PR / ARで、
+
+- semantic locality
+- dependency breadth
+- local self-containment
+- interface discoverability
+- minimal \(B_{work}\) required for success
+- retrieval / context churn
+
+のtrajectoryに差が生じるかを見る。
+
+##### Irrecoverable Exposure
+
+EL vs PRで、同じ有限な一時観測量でも「後から取り直せるか」がtrajectoryを変えるかを見る。
+
+#### Stage 2B：Common-Environment Evaluation
+
+各lineageを育てた環境と、最終artifact自体の性質を分離するため、定期checkpointまたは最終世代でcommon-environment evaluationを行う。
+
+例：
+
+\[
+S^{MOI}_g,\;
+S^{AF}_g,\;
+S^{EL}_g,\;
+S^{PR}_g,\;
+S^{AR}_g
+\]
+
+をすべて同じ
+
+\[
+fresh\ agent
++
+artifact\ only
++
+fixed\ evaluation\ observation\ condition
+\]
+
+へ投入する。
+
+少なくとも一つの共通環境は**Artifact-Full evaluation**とする。
+
+必要に応じて、共通のfinite \(B_{work}\) 環境でも再評価する。
+
+これにより、
+
+> lineageが自分の育った条件でその場だけ有利なのか
+
+と、
+
+> その履歴によってartifactそのものが別条件でも継承しやすい構造へ変化したのか
+
+を区別する。
+
+特にMOI lineageについて、historyを除去したcommon environmentで性能が低下し、AF lineageが相対的に優位になるなら、
+
+> AFの履歴がartifact自体へのexternalizationを促した
+
+という仮説を支持する候補証拠になる。
+
+#### Crossover
+
+初期にはAFやMOIがbounded条件より有利でも、generationとともにPR/AR/EL lineageがその制約へ適応し、
+
+\[
+M_c(S_g) > M_{AF}(S_g)
+\]
+
+または
+
+\[
+R^{sem}_c(S_g) > R^{sem}_{AF}(S_g)
+\]
+
+となるcrossoverを探索する。
+
+ただし、adaptationを一般的品質向上と同一視せず、secondary structural costも併記する。
+
+#### Stage 2の判定
+
+- trajectoryに単調・非単調・交差・条件固有の形状があればStage 3へ
+- common-environment差があればartifact-level adaptation候補としてStage 3へ
+- 完全にフラットでも、Stage 1でmechanismと測定感度が確認済みならnull result候補としてStage 3へ
+- 測定器またはcondition implementationに問題がある場合のみStage 1 / 0.5へ差し戻す
+
 
 ### Stage 3：Alternative Explanations
 
-- 目的：observed trajectoryがcontext条件以外の要因で説明できないかを確認する
+- 目的：observed trajectoryがinheritance / observation条件以外の要因で説明できないかを確認する
 - 追加する変数：
   - model family（複数）
   - seed architecture（1.4節の複数構造）
   - prior baseline（Zhu & Griffiths型のiterated in-context elicitationによるゼロ世代測定）
   - **task sequence**（1.8節のcounterbalanced topological order、複数パターン）
   - **要求の質（requirement wording）**：1.9節で述べた通り、本研究は`visibleInstruction`の詳細度を独立変数として操作しないが、この統制が結果を歪めていないかを確認する頑健性チェックを行う。具体的には、observed trajectoryに現れた主要な現象（例：Stage 0のPhase 4で観測されたdistributed invariantの見落とし）に関与したtaskのうち1〜2件について、既存制約への明示的な言及を含む**詳細版のvisibleInstruction**を用意し、同一条件下で結果の方向性が反転しないか（見落としが解消される、または頻度が大きく変わるか）を確認する。反転する場合、observed trajectoryの解釈を「有限context下での意味的再構成の困難さ」ではなく「要求文の曖昧さ」に修正する必要がある。反転しない場合、要求の質は交絡要因として排除でき、有限context自体の効果として主張を維持できる。
+  - **MOI history schema robustness**：MOIで継承するobservable interaction recordの構成（例：tool result全文 vs structured summary、feedback有無）が結果を支配していないかを限定的に確認する。ただしhidden stateやprivate chain-of-thoughtは対象にしない。
   - **task bank構成**（1.5.1節の構成A/B）：Stage 2で観察された現象（構造的副次指標の推移）が、invariant-stressing taskを含まない構成Aだけでも同様に観察できるかを確認する。構成Bでのみ現れる現象は、「暗黙ルールという道具立てが引き起こした artifact」である可能性があり、構成Aで再現する現象こそが、より頑健な主張の根拠になる
 - **前提条件（必須、v1.6で位置づけ修正）**：使用するtask sequenceの各順列について、\(G_0 \xrightarrow{\Delta_1} G_1 \xrightarrow{\Delta_2} \cdots\) を累積的に適用しながら各世代でmodel checkerを通す（**累積validator**）。この検証の位置づけは「task順序による科学的現象の発見」ではなく、**「task同士を組み合わせたときに、単体検証（各taskを独立に\(G_0 + \Delta_i\)として検証）では見つからない相互作用上の設計ミスがないかを確認する品質保証」**である。単体では両方安全なdeltaが組み合わせでのみ矛盾を生むケースが実際にSynthetic World v0.3で構成・実証されている（`demo_interaction_only_bug.ts`：単体では両方OKの2 taskが、両方適用すると矛盾を生む）。
 
@@ -528,7 +1234,10 @@ dose-response curveは「budgetに応じ滑らかに改善」パターンを満�
 - 手順：Stage 0〜3で保存済みのraw trajectoryから、副次指標（3.2節）を事後的に抽出する
 - 分析の枠組みは \(\text{StructuralTrait} \rightarrow R^{sem}, M\) の関係を探索することであり、「Limitedだからmodularになるはずだ」という規範を先に埋め込まない
 - **構成Bとの突き合わせ**：構成B（invariant-stressing taskを含む）で観測された局所的な失敗イベント（特定世代でのdistributed invariant見落とし等）が、同時期の構造的副次指標（冗長性、局所化の進行等、構成Aの結果）と相関しているかを確認する。局所的な意味理解の失敗が、より広い構造的劣化の**予兆**として機能するのであれば、両者を橋渡しする形質（例：コメント密度、依存関係の可視性）を機序候補として優先的に検討する
-- 出力：Stage 6で操作対象とする有力な媒体候補（例：Spec、テスト、ADR、コメント）のリスト
+- **二種類の機序候補を分離**：
+  - Externalization mechanism：history lossがどの媒体への情報外在化を促したか
+  - Reconstruction mechanism：finite observationがどの構造的形質（semantic locality、dependency locality、discoverability等）を促したか
+- 出力：Stage 6で操作対象とする有力な媒体・構造候補（例：Spec、test、type、ADR、comment、module boundary）のリスト
 
 ### Stage 5：Confirmatory Experiment
 
@@ -536,20 +1245,35 @@ dose-response curveは「budgetに応じ滑らかに改善」パターンを満�
 - 事前登録：主仮説を確定してから実施。例えば
 
 \[
-Y_{i,g} = f(\text{Context}_i,\ \text{Generation}_g,\ \text{Context}_i \times \text{Generation}_g,\ \text{Model}_i,\ \text{Seed}_i,\ \text{Sequence}_i) + u_i + \epsilon_{i,g}
+Y_{i,g}
+=
+f(
+\text{Condition}_i,\,
+\text{Generation}_g,\,
+\text{Condition}_i \times \text{Generation}_g,\,
+\text{Model}_i,\,
+\text{Seed}_i,\,
+\text{Sequence}_i
+)
++
+u_i
++
+\epsilon_{i,g}
 \]
 
 - モデル形式はoutcomeに合わせる：hidden testの成功/失敗なら binomial GLMM、連続的なsemantic scoreなら LMM
 - lineageごとにrandom interceptに加え、Stage 2で観察された形状に応じて **random slope for generation** も検討する
-- 交互作用項 \(\beta_{\text{Context} \times \text{Generation}}\) が主要検定対象（crossover仮説の場合はより具体的な関数形を事前登録する）
-- 設計：Context × Model × Seed Architecture × Task Sequence の全数実施は組合せ爆発するため、Latin square的な部分計画、またはtask sequenceを固定少数パターン＋covariate化する形で予算を管理する
+- 交互作用項 \(\beta_{\text{Condition} \times \text{Generation}}\) が主要検定対象。confirmatory hypothesisではC0〜C3のうちStage 2/3で支持されたcontrastを事前指定する
+- 設計：5 Condition × Model × Seed Architecture × Task Sequence の全数実施は組合せ爆発するため、Stage 2/3で主要contrastを絞り、部分計画またはcovariate化で予算を管理する。ILM-coreとしてMOI/AF/EL、AIDD-extensionとしてAF/PR/ARという分析単位も保持する
 
 ### Stage 6：Mechanism Control
 
-- 目的：Stage 4で発見した媒体候補を実験的に操作し、因果を確認する
-- 条件例：Code only / Code + Tests / Code + Tests + Spec / Code + Tests + ADR
+- 目的：Stage 4で発見したexternalization / reconstructionの機序候補を実験的に操作し、因果を確認する
+- 媒体介入例：Code only / Code + Tests / Code + Tests + Spec / Code + Tests + ADR
+- 観測介入例：同一artifactに対してsemantic localityを人工的に高める/低める表現変更、retrieval-friendly indexの追加等
+- history介入例：MOI historyから特定情報種（理由・feedback等）のみを除去し、externalization trajectoryへの影響を確認する
 - 位置づけ：Stage 4が観察研究（相関）であるのに対し、Stage 6はその媒体を実際に操作する介入実験
-- この結果は、論文3節「外在化された文化的記憶としてのartifact」という理論的核心を実験的に検証する最終ピースとなる
+- この結果は、paper v6のExternalization Pressure / Reconstruction Pressureという二段階selection modelを実験的に検証する最終ピースとなる
 
 ---
 
@@ -561,7 +1285,7 @@ Y_{i,g} = f(\text{Context}_i,\ \text{Generation}_g,\ \text{Context}_i \times \te
 |---|---|---|---|
 | 1 | Ground truth \(G\) の形式スキーマ（TypeScript/JSON定義、実装schemaでの \(O/T\) 分離を含む） | 1.2 | 次アクション①で確定 |
 | 2 | 命名方式A（難読化）とB（虚構語彙）のどちらを採用するか | 1.3 | Stage 0.5で決定 |
-| 3 | Privileged Selectorのヒューリスティック仕様 | 2.2 | 未定 |
+| 3 | Privileged Selector / Controllerのヒューリスティック仕様 | 2.9 | 未定 |
 | 4 | Semantic probeの自動生成テンプレートと採点方式 | 3.3 | 次アクション④で確定 |
 | 5 | equivalence testing用の \(\Delta_M, \Delta_R\) | 4.1(Stage1) | 未定 |
 | 6 | Delayed-dependency taskの遅延世代数 \(k\) の具体値 | 1.5 | 仮置き：13〜16世代 |
@@ -573,10 +1297,28 @@ Y_{i,g} = f(\text{Context}_i,\ \text{Generation}_g,\ \text{Context}_i \times \te
 | 12 | ~~複合operation（1 operationが複数entityの状態を同時に変更する）をTransitionRule schemaでどう表現するか~~ | 1.2 | **解決済み（v1.5）**。`TransitionRule`を`effects: Effect[]`形式に拡張し、1 operationが複数entityへ同時に作用するケースを正確に表現できるようになった |
 | 13 | task sequenceの累積検証（`validate_sequence`相当）を、本番のtask bank生成パイプラインへどう組み込むか（自動実行のタイミング・失敗時のtask再設計フロー） | 4節 Stage 3 | 未定 |
 | 14 | 構成B（invariant-stressing task）のvisible testが、暗黙ルールの答えを漏らしていないかを、生成パイプラインでどう自動検証するか（F5参照） | 1.5.1, 4節 Stage 2/3/4 | 未定。task delta（GroundTruthDelta）と既存visible testの静的解析で、該当entityへの直接的なassertion有無をチェックする仕組みが候補 |
+| 15 | MOIのobservable interaction record \(\mathcal{I}^{obs}_g\) の確定schema | 2.3, Stage 1B/1C | **Stage 1着手前にfreeze**。task/response/tool/explicit note/diff/visible feedbackを候補とし、hidden情報は除外 |
+| 16 | MOI historyの最大サイズとoverflow時の扱い | 2.3 | 未定。全過去累積は禁止。一世代episodeの共通tool/output上限でbounded化し、overflowはinvalid run扱いまたは事前規則でtruncate |
+| 17 | Common-environment evaluationの標準条件 | Stage 2B | **Artifact-Full evaluationを必須候補**。finite-\(B_{work}\)共通環境を追加するかはStage 1較正後に確定 |
+| 18 | Externalization Pressureの主要structural outcomeをどこまで事前指定するか | Stage 2/4 | 未定。test/type/spec/interfaceへの情報外在化率を中心候補とし、過剰な事前規範化を避ける |
+
 
 ---
 
 ## 6. 次のアクション
+
+**v2.0時点の現在地**：Stage 0 / 0.5は完了済みであり、次の実装対象はStage 1である。以下の旧来の①〜⑥は研究装置を構築した履歴として保持するが、現在の実行順序は `docs/stage1_plan.md` のPre-Stage 1 → Stage 1A → 1B → 1Cを優先する。
+
+**Stage 1着手前の最優先追加事項**：
+
+1. MOI用 \(\mathcal{I}^{obs}_g\) schemaとhidden-information boundaryをfreeze
+2. five-condition型・logging schemaを実装
+3. AF/EL/PR/AR用working-set / retrieval runtimeを完成
+4. Stage 1AでC1〜C3を較正
+5. Stage 1BでMOI vs AFのone-step inheritance diagnosticを実施
+6. Stage 1Cで5条件10〜15世代integration
+7. Stage 2 common-environment evaluation用runnerを設計
+
 
 **方針**：generatorを最初から汎用化しない。1つの世界でprobe設計・測定パイプラインが失敗した場合、generatorごと作り直すコストを避けるため、まず手書きの最小構成（**Synthetic World v0**）で測定パイプライン全体を通してから、generator化に進む。
 
