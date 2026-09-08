@@ -1,6 +1,6 @@
 # Stage 1（Inheritance / Context Decomposition）実装計画
 
-**対象**：`docs/experiment_plan.md`（v2.5）の Stage 1「Inheritance / Context Decomposition」  
+**対象**：`docs/experiment_plan.md`（v2.6）の Stage 1「Inheritance / Context Decomposition」  
 **理論親文書**：`docs/aidd_ilm_paper.md`  
 **前提**：Stage 0（Harness Feasibility）・Stage 0.5（Measurement Calibration）は、それぞれ当時のoperationalizationに対してゲート達成済み  
 **Stage 1の役割**：`有限context` に混在していた複数のmechanismを、**inheritance / transmission** と **observation / retrieval** の二軸へ分解し、5条件が意図したmechanismだけを操作できる実験装置を完成させる  
@@ -388,7 +388,7 @@ Stage 1事前準備で追加較正する。
 本実装前に以下を同じ定義へ揃える。
 
 1. `docs/aidd_ilm_paper.md`
-2. `docs/experiment_plan.md`（v2.5）
+2. `docs/experiment_plan.md`（v2.6）
 3. `docs/stage1_plan.md`
 4. `docs/findings/` のmethodology note
 5. code側 `ContextCondition` / `InheritanceMode`
@@ -452,7 +452,7 @@ provider-neutral interfaceで少なくとも：
 
 を扱えるようにする。
 
-### 3.3 model freeze
+### 3.3 model / request freeze
 
 本run開始前に固定：
 
@@ -461,13 +461,19 @@ provider-neutral interfaceで少なくとも：
 - snapshot / dated modelが利用可能ならそのidentifier
 - reasoning effort
 - max output
-- structured-output schema
-- tool policy
+- structured-output schemaのversion / hash
+- system/common promptのversion / hash
+- tool policy / tool schema version
+- requested service tier（primary Sync runではproject setting依存の`auto`を避け、原則`default`を明示）
+- prompt-cache policy（implicit / explicit等）
 - retry policy
 - timeout
 - SDK version
+- store / truncation policy
 
-requested modelとAPI response上のactual model idを両方logする。
+requested modelとAPI response上のactual model id、requested / actual service tierを両方logする。
+
+**freeze必須fieldはraw config上で明示されていることを検査する。** `run.ts`等でdefaultを補った後に「値が存在する」ことだけを検査してはならない。これを許すと、設定ファイルに書かれていないprovider default / harness defaultがmain runへ混入してもfreeze済みと誤判定するためである。
 
 ### 3.4 Batch API：P1で実装必須
 
@@ -505,11 +511,25 @@ Batchを使わないprimary用途：
 
 したがってBatch / Syncは**研究条件ではなくexecution infrastructure**である。Batchによる50% discountや別rate-limit poolはexperiment throughput改善に利用するが、condition contrastへ混入させない。
 
+### 3.5 Failure semantics
+
+API / network / provider infrastructure failureとmodel-originated failureを分離する。
+
+- provider timeout、5xx、rate-limit exhaustion等：frozen retry policy後も解消しなければepisode / runをinvalidまたはcensoredとし、**有効なgenerationとしてlineageを進めない**
+- Responses `incomplete` / `failed` / refusal：response status / incomplete details / refusal情報を保存し、generic JSON parse failureへ潰さない
+- valid responseだがstructured mutationを満たさない、またはmutation/path validationに失敗：model-originated protocol outcomeとして別statusで記録する
+- harness内部例外：`provider-error`へ偽装せずharness/infrastructure errorとして停止する
+
+この区別は、外部API障害を有限context条件のtask failureとして誤計上しtrajectoryへ混入させないために必要である。
+
 **Gate P1**
 
 - selected OpenAI modelでSync one-shot structured outputが動く
 - function callingが動く
 - Sync pathでusage/model/error provenanceが取れる
+- raw config上でfreeze必須fieldの明示指定を検査できる
+- requested / actual service tier、prompt/schema version/hash、response incomplete/refusal detailsを記録できる
+- provider/infrastructure failureでlineageを有効generationとして進めない
 - independent tool-free requestをBatch JSONLへserializeできる
 - `/v1/responses` Batchをcreate / retrieve / output-error decodeできる
 - Batch resultを`custom_id`で元requestへ対応付け、usage/model/error/cost provenanceを正規化できる
@@ -571,6 +591,8 @@ interface ObservableInteractionRecord {
 ### 4.2 「observable」の機械的境界
 
 `ObservableInteractionRecord`はpost-hocに好きな情報を追加しない。
+
+また、`explicitWorkingNote`を生成させる場合、そのprompt wordingは全条件で共通かつneutralにする。workerへ「successorへのhandoff」「次世代へ渡るnote」等と伝えない。AF等で実際には継承されないchannelをworkerが利用可能だと誤認すると、artifactへの外在化行動そのものを変える可能性があるためである。workerには単に**observable episode note**として事実・依存・riskを短く記録させ、MOIだけが後段のinheritance conditionとしてそのrecordを継承する。
 
 原則：
 
@@ -802,7 +824,20 @@ PR / ARで有限なのは「一度でも読める総量」ではない。
 
 repository全体は常に再アクセス可能。
 
-ただし「再アクセス可能」と「provider会話履歴に過去artifactが残り続ける」は別である。working-setからevictしたchunkがAPI thread historyに残れば \(B_{work}\) 制約を迂回できるため、PR / ARでは各reasoning stepを**stateless request**として再構築する。入力はcurrent \(W_t\) + bounded explicit memory + current task + fixed system/tool schemaのみとし、`previous_response_id`、provider thread、暗黙のmessage history等でevicted artifact evidenceを保持しない。
+ただし「再アクセス可能」と「provider会話履歴に過去artifactが残り続ける」は別である。working-setからevictしたchunkがAPI thread historyまたはmodel-internal continuation stateに残れば \(B_{work}\) 制約を迂回できるため、PR / ARでは各reasoning stepを**research-stateless request**として再構築する。入力はcurrent \(W_t\) + bounded explicit memory + current task + fixed system/tool schemaのみとする。
+
+禁止するcontinuation stateには少なくとも以下を含む：
+
+- `previous_response_id`
+- provider conversation / thread
+- prior assistant message historyを無制限に再送すること
+- `reasoning.encrypted_content`
+- Responses compaction item
+- その他、modelのprior reasoning stateを次stepへ復元するopaque / persisted state
+
+OpenAI API上で`store=false`かつreturned output itemsを手動再送する方式はAPI運用上はstatelessと呼べるが、本研究では**encrypted reasoning等がevict済みartifact evidenceを内包しうるためresearch-statelessとはみなさない**。PR / ARでは各stepを新しいinferenceとして起動し、必要な継続情報は明示的memoryへ外在化して \(B_{work}\) に算入する。
+
+さらに、artifact evidenceのbudget enforcementはcondition runner / `WorkingSetManager`だけが行う。provider backendは受け取ったactive evidenceを勝手に再truncateしない。backend側の二重truncateは、selectorが選んだ \(W_t\) とmodelが実際に見た \(W_t\) をずらすため禁止する。
 
 ### 6.2 \(B_{work}\) に含める
 

@@ -1,8 +1,16 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.5
+**版**: v2.6
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.6での変更点（OpenAI Sync backend自己レビューによる内部妥当性hardening）**：
+- PR/ARの`stateless request`をAPI object非継承だけでなく**model-internal reasoning非継承**として精密化し、`previous_response_id` / conversationに加えて`reasoning.encrypted_content`、compaction item、その他persisted reasoning stateをreasoning step間で持ち越すことを禁止
+- bounded conditionではcondition runner / WorkingSetManagerをartifact evidenceの唯一のbudget authorityとし、provider backendによる二重truncateを禁止
+- main runのAPI freeze対象にrequested service tier、prompt-cache policy、prompt/schema version/hashを追加し、freeze必須fieldはdefault適用後ではなく**raw config上の明示指定**を検査する
+- provider/network/infrastructure failureはtask failureとして世代を進めず、frozen retry policyを使い切った後はrun/episodeをinvalidまたはcensoredとして扱う。model-originated output/mutation failureとは分離する
+- explicit working noteは全条件で同じneutral wordingにし、「successorへ渡る」とworkerへ示唆しない。MOIだけが後段で実際に継承する
+- Responses APIの`incomplete` / refusal等をgeneric output-parse failureと分離し、request-level status/detailsをprovenanceへ保存する方針を追加
 
 **v2.5での変更点（Batch APIをPre-Stage 1 P1の必須経路として明確化）**：
 - GPT-5.6 Lunaのcost efficiencyを活かすため、OpenAI Batch APIをP1完了条件として実装する
