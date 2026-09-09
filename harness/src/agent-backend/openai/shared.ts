@@ -9,12 +9,15 @@ import {
   ReasoningEffort,
   TokenUsage,
 } from "../../types";
-import { serializeObservableInteractionForSuccessor } from "../../context/observable-interaction";
+import {
+  OBSERVABLE_WORKING_NOTE_MAX_CHARS,
+  serializeObservableInteractionForSuccessor,
+} from "../../context/observable-interaction";
 import { AgentInput, AgentTool } from "../types";
 
 export const OPENAI_PROMPT_VERSION = "stage1-worker-v3-moi";
 export const OPENAI_MUTATION_SCHEMA_VERSION = "repository-mutation-v2";
-export const EXPLICIT_WORKING_NOTE_MAX_CHARS = 600;
+export const EXPLICIT_WORKING_NOTE_MAX_CHARS = OBSERVABLE_WORKING_NOTE_MAX_CHARS;
 
 export const OPENAI_SYSTEM_PROMPT = `You are an AI software engineer working on a TypeScript repository.
 Implement the requested change while preserving the public protocol contract.
