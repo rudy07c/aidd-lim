@@ -1,7 +1,149 @@
 // harness/src/types.ts
 // 共有型定義。Stage 0互換を維持しつつ、Stage 1 model/API provenanceを追加する。
 
-export type ContextCondition = "full" | "simple-limited";
+/**
+ * Config / log上で永続化するcondition identifier。
+ * Stage 0 historical configとの後方互換性のため legacy 2値を削除しない。
+ */
+export const CONTEXT_CONDITION_NAMES = [
+  "full",
+  "simple-limited",
+  "MOI",
+  "AF",
+  "EL",
+  "PR",
+  "AR",
+] as const;
+export type ContextConditionName = (typeof CONTEXT_CONDITION_NAMES)[number];
+export type LegacyContextConditionName = "full" | "simple-limited";
+export type Stage1ContextConditionName = "MOI" | "AF" | "EL" | "PR" | "AR";
+
+export type ContextConditionAxis =
+  | "axis-a-inheritance-transmission"
+  | "axis-b-observation-retrieval"
+  | "hub"
+  | "legacy";
+
+export type ContextInheritance =
+  | "artifact-only"
+  | "artifact-plus-observable-history";
+
+export type ContextRepositoryAccess = "full" | "static-subset";
+
+export type ContextBudget =
+  | { kind: "none"; finite: false }
+  | { kind: "observable-record"; finite: true }
+  | { kind: "static-exposure"; finite: true }
+  | { kind: "working-set"; finite: true }
+  | { kind: "legacy-static-exposure"; finite: true };
+
+/**
+ * Runtimeで参照するcondition descriptor。
+ * config上の識別子と、研究上のmechanism metadataを分離して保持する。
+ */
+export interface ContextCondition {
+  name: ContextConditionName;
+  axis: ContextConditionAxis;
+  inheritance: ContextInheritance;
+  inheritsObservableHistory: boolean;
+  repositoryAccess: ContextRepositoryAccess;
+  budget: ContextBudget;
+  legacy: boolean;
+}
+
+export const CONTEXT_CONDITIONS: Readonly<Record<ContextConditionName, ContextCondition>> = {
+  // Stage 0 historical conditions. Do not remove or silently reinterpret.
+  "full": {
+    name: "full",
+    axis: "legacy",
+    inheritance: "artifact-only",
+    inheritsObservableHistory: false,
+    repositoryAccess: "full",
+    budget: { kind: "none", finite: false },
+    legacy: true,
+  },
+  "simple-limited": {
+    name: "simple-limited",
+    axis: "legacy",
+    inheritance: "artifact-only",
+    inheritsObservableHistory: false,
+    repositoryAccess: "static-subset",
+    budget: { kind: "legacy-static-exposure", finite: true },
+    legacy: true,
+  },
+
+  // Stage 1: Axis A — Inheritance / Transmission.
+  MOI: {
+    name: "MOI",
+    axis: "axis-a-inheritance-transmission",
+    inheritance: "artifact-plus-observable-history",
+    inheritsObservableHistory: true,
+    repositoryAccess: "full",
+    // MOI has no B_work working-set limit, but its one-generation observable
+    // interaction record is operationally bounded by common episode/tool/output limits.
+    budget: { kind: "observable-record", finite: true },
+    legacy: false,
+  },
+  EL: {
+    name: "EL",
+    axis: "axis-a-inheritance-transmission",
+    inheritance: "artifact-only",
+    inheritsObservableHistory: false,
+    repositoryAccess: "static-subset",
+    budget: { kind: "static-exposure", finite: true },
+    legacy: false,
+  },
+
+  // Artifact-Full is the hub shared by both research axes.
+  AF: {
+    name: "AF",
+    axis: "hub",
+    inheritance: "artifact-only",
+    inheritsObservableHistory: false,
+    repositoryAccess: "full",
+    budget: { kind: "none", finite: false },
+    legacy: false,
+  },
+
+  // Stage 1: Axis B — Observation / Retrieval.
+  PR: {
+    name: "PR",
+    axis: "axis-b-observation-retrieval",
+    inheritance: "artifact-only",
+    inheritsObservableHistory: false,
+    repositoryAccess: "full",
+    budget: { kind: "working-set", finite: true },
+    legacy: false,
+  },
+  AR: {
+    name: "AR",
+    axis: "axis-b-observation-retrieval",
+    inheritance: "artifact-only",
+    inheritsObservableHistory: false,
+    repositoryAccess: "full",
+    budget: { kind: "working-set", finite: true },
+    legacy: false,
+  },
+};
+
+export const STAGE1_CONTEXT_CONDITION_NAMES: readonly Stage1ContextConditionName[] = [
+  "MOI",
+  "AF",
+  "EL",
+  "PR",
+  "AR",
+];
+
+export function getContextCondition(name: ContextConditionName): ContextCondition {
+  return CONTEXT_CONDITIONS[name];
+}
+
+export function isStage1ContextConditionName(
+  name: ContextConditionName
+): name is Stage1ContextConditionName {
+  return !CONTEXT_CONDITIONS[name].legacy;
+}
+
 export type BackendType = "mock-noop" | "mock-oracle" | "anthropic" | "openai";
 export type ModelProvider = "mock" | "anthropic" | "openai";
 export type ReasoningEffort = "none" | "low" | "medium" | "high" | "xhigh" | "max";
@@ -74,7 +216,8 @@ export interface RunConfig {
   /** runの科学的位置づけ。freeze gateはstage名ではなくこの値で判定する。 */
   runClass: RunClass;
   backend: BackendType;
-  condition: ContextCondition;
+  /** config/logにはstable identifierを保存し、runtime metadataはgetContextCondition()で参照する。 */
+  condition: ContextConditionName;
   /** 1世代あたりのtoken budget（"full"は全ファイルを渡す） */
   contextBudget: number | "full";
   generations: number;
@@ -160,7 +303,7 @@ export interface GenerationLog {
   experiment_id: string;
   lineage_id: string;
   generation: number;
-  condition: ContextCondition;
+  condition: ContextConditionName;
   model: string | null;
   model_provenance: ModelProvenance;
   task_id: string;
