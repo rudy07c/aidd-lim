@@ -13,7 +13,7 @@ import { serializeObservableInteractionForSuccessor } from "../../context/observ
 import { AgentInput, AgentTool } from "../types";
 
 export const OPENAI_PROMPT_VERSION = "stage1-worker-v3-moi";
-export const OPENAI_MUTATION_SCHEMA_VERSION = "repository-mutation-v3";
+export const OPENAI_MUTATION_SCHEMA_VERSION = "repository-mutation-v2";
 export const EXPLICIT_WORKING_NOTE_MAX_CHARS = 600;
 
 export const OPENAI_SYSTEM_PROMPT = `You are an AI software engineer working on a TypeScript repository.
@@ -74,7 +74,7 @@ export interface OpenAIStructuredOutputSpec {
 
 export const OPENAI_MUTATION_OUTPUT_SPEC: OpenAIStructuredOutputSpec = {
   instructions: OPENAI_SYSTEM_PROMPT,
-  schemaName: "repository_mutation_v3",
+  schemaName: "repository_mutation_v2",
   schema: OPENAI_MUTATION_SCHEMA as unknown as Record<string, unknown>,
 };
 
@@ -179,7 +179,7 @@ export function parseStructuredMutation(
     return { ok: false, error: `Invalid structured JSON: ${error instanceof Error ? error.message : String(error)}` };
   }
   if (!parsed || !Array.isArray(parsed.modifiedFiles) || typeof parsed.workingNote !== "string") {
-    return { ok: false, error: "Structured output does not match repository_mutation_v3" };
+    return { ok: false, error: "Structured output does not match repository_mutation_v2" };
   }
   if (parsed.workingNote.length > EXPLICIT_WORKING_NOTE_MAX_CHARS) {
     return {
