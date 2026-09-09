@@ -1,6 +1,7 @@
 // harness/src/agent-backend/types.ts
 // provider-neutral AgentBackend interface。
 
+import type { ObservableInteractionRecord } from "../context/observable-interaction";
 import {
   AgentExecutionStatus,
   ModelProvenance,
@@ -28,6 +29,8 @@ export interface AgentInput {
   /** condition runnerが最終的にmodelへ提示すると決めたartifact evidence。backendは再truncateしない。 */
   contextFiles: Record<string, string>;
   visibleInstruction: string;
+  /** MOIのみ。直前generation一世代分のobservable interaction record。 */
+  previousInteractionRecord?: ObservableInteractionRecord | null;
   /** historical backends向け。OpenAI Stage 1 backendはbudget authorityとして使用しない。 */
   contextBudget: number | "full";
   tools?: AgentTool[];
