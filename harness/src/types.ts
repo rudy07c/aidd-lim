@@ -1,6 +1,11 @@
 // harness/src/types.ts
 // 共有型定義。Stage 0互換を維持しつつ、Stage 1 model/API provenanceを追加する。
 
+import type {
+  ObservableInteractionRecord,
+  OperationalFullFeasibility,
+} from "./context/observable-interaction";
+
 /**
  * Config / log上で永続化するcondition identifier。
  * Stage 0 historical configとの後方互換性のため legacy 2値を削除しない。
@@ -318,6 +323,11 @@ export interface GenerationLog {
   observable_assistant_messages: string[];
   explicit_working_note: string | null;
   tool_calls: unknown[];
+  /** generation gで生成されたMOI候補record。全conditionで生成・保存する。 */
+  observable_interaction_record: ObservableInteractionRecord;
+  /** generation開始時に実際に継承した直前record。MOI以外は常にnull。 */
+  inherited_observable_interaction_hash: string | null;
+  operational_full_feasibility: OperationalFullFeasibility;
   agent_execution_status: AgentExecutionStatus;
   agent_error: NormalizedAgentError | null;
   visible_test_results: TestSuiteResult;
