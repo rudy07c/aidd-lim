@@ -67,7 +67,6 @@ for (const name of STAGE1_CONTEXT_CONDITION_NAMES) {
   assert.deepStrictEqual(mechanism, expected[name]);
 }
 
-// Explicit mechanism invariants from docs/stage1_plan.md v2.6.
 assert.strictEqual(getContextCondition("MOI").inheritsObservableHistory, true);
 for (const name of ["AF", "EL", "PR", "AR"] as const) {
   assert.strictEqual(getContextCondition(name).inheritsObservableHistory, false);
@@ -81,7 +80,6 @@ for (const name of ["MOI", "EL", "PR", "AR"] as const) {
   assert.strictEqual(getContextCondition(name).budget.finite, true);
 }
 
-// Stage 0 backward compatibility: legacy identifiers still resolve and execute.
 assert.strictEqual(getContextCondition("full").legacy, true);
 assert.strictEqual(getContextCondition("simple-limited").legacy, true);
 assert.strictEqual(isStage1ContextConditionName("full"), false);
@@ -93,11 +91,16 @@ const repository = {
 };
 assert.deepStrictEqual(assembleContext(repository, "full"), repository);
 assert.deepStrictEqual(assembleContext(repository, "AF"), repository);
+assert.deepStrictEqual(
+  assembleContext(repository, "MOI"),
+  repository,
+  "P2 MOI must receive the same full current artifact as AF; history is injected separately"
+);
 const legacyLimited = assembleContext(repository, "simple-limited");
 assert.ok(Object.values(legacyLimited).join("").length <= 6_000);
 
-// P0 must not silently approximate not-yet-implemented Stage 1 mechanisms.
-for (const name of ["MOI", "EL", "PR", "AR"] as const) {
+// P2 still must not silently approximate later finite-observation mechanisms.
+for (const name of ["EL", "PR", "AR"] as const) {
   assert.throws(
     () => assembleContext(repository, name),
     new RegExp(`Context condition ${name} is defined but its execution semantics are not implemented yet`)
@@ -108,4 +111,5 @@ console.log(JSON.stringify({
   status: "ok",
   legacy: ["full", "simple-limited"].map((name) => getContextCondition(name as "full" | "simple-limited")),
   stage1: STAGE1_CONTEXT_CONDITION_NAMES.map((name) => getContextCondition(name)),
+  p2Executable: ["AF", "MOI"],
 }, null, 2));
