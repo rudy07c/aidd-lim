@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/apply-batch-independent-request-guard.yml'
+      - 'harness/scripts/apply_batch_independent_guard.py'
 
 permissions:
   contents: write
@@ -21,185 +22,7 @@ jobs:
           cache: npm
           cache-dependency-path: harness/package-lock.json
       - name: Apply targeted guard
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          batch_path = Path('harness/src/agent-backend/openai/batch.ts')
-          text = batch_path.read_text()
-          start = text.index('/** Enforce the scientific request envelope even for generic probe bodies. */')
-          end = text.index('export function parseBatchJsonl', start)
-          replacement = r'''/**
-           * Scientific-calibration Batch requests use an allowlist, not a denylist.
-           * This prevents newly added or accidentally supplied Responses knobs from silently
-           * changing the calibration condition. Input is also restricted to one independent
-           * user text message so prior assistant/reasoning/tool state cannot be smuggled in.
-           */
-          const BATCH_ALLOWED_TOP_LEVEL_FIELDS = new Set([
-            "model",
-            "instructions",
-            "input",
-            "reasoning",
-            "max_output_tokens",
-            "store",
-            "truncation",
-            "include",
-            "service_tier",
-            "prompt_cache_options",
-            "tools",
-            "tool_choice",
-            "parallel_tool_calls",
-            "text",
-          ]);
-
-          export function assertFrozenBatchRequestBody(
-            body: Record<string, unknown>,
-            options: OpenAIRequestOptions
-          ): void {
-            const unexpectedFields = Object.keys(body).filter((key) => !BATCH_ALLOWED_TOP_LEVEL_FIELDS.has(key));
-            if (unexpectedFields.length > 0) {
-              throw new Error(`Batch request contains non-frozen top-level field(s): ${unexpectedFields.join(",")}`);
-            }
-
-            if (body.model !== options.model) {
-              throw new Error(`Batch request model must equal frozen model ${options.model}`);
-            }
-            if (typeof body.instructions !== "string") {
-              throw new Error("Batch request instructions must be an explicit string");
-            }
-
-            assertIndependentBatchInput(body.input);
-
-            const reasoning = isRecord(body.reasoning) ? body.reasoning : null;
-            if (!reasoning || Object.keys(reasoning).some((key) => key !== "effort")) {
-              throw new Error("Batch request reasoning may contain only the frozen effort field");
-            }
-            if (reasoning.effort !== options.reasoningEffort) {
-              throw new Error(`Batch request reasoning.effort must equal frozen value ${options.reasoningEffort}`);
-            }
-            if (body.max_output_tokens !== options.maxOutputTokens) {
-              throw new Error(`Batch request max_output_tokens must equal frozen value ${options.maxOutputTokens}`);
-            }
-            if (body.store !== options.storeResponses) {
-              throw new Error(`Batch request store must equal frozen value ${String(options.storeResponses)}`);
-            }
-            if (body.service_tier !== options.serviceTier) {
-              throw new Error(`Batch request service_tier must equal frozen value ${options.serviceTier}`);
-            }
-
-            const cache = isRecord(body.prompt_cache_options) ? body.prompt_cache_options : null;
-            if (!cache || Object.keys(cache).some((key) => key !== "mode" && key !== "ttl")) {
-              throw new Error("Batch request prompt_cache_options may contain only mode and ttl");
-            }
-            if (cache.mode !== options.promptCacheMode || cache.ttl !== "30m") {
-              throw new Error(
-                `Batch request prompt_cache_options must freeze mode=${options.promptCacheMode} and ttl=30m`
-              );
-            }
-            if (body.truncation !== "disabled") {
-              throw new Error('Batch request truncation must be "disabled"');
-            }
-
-            if (body.include !== undefined && body.include !== null) {
-              throw new Error("Batch calibration request must not request additional include payloads");
-            }
-            if (body.tools !== undefined && (!Array.isArray(body.tools) || body.tools.length > 0)) {
-              throw new Error("Stage 1 Batch runner only accepts independent tool-free requests");
-            }
-            if (body.tool_choice !== undefined && body.tool_choice !== null) {
-              throw new Error("Batch calibration request must not set tool_choice");
-            }
-            if (body.parallel_tool_calls !== false) {
-              throw new Error("Batch calibration request must freeze parallel_tool_calls=false");
-            }
-
-            const text = isRecord(body.text) ? body.text : null;
-            if (!text || Object.keys(text).some((key) => key !== "format")) {
-              throw new Error("Batch request text may contain only the structured-output format field");
-            }
-            const format = isRecord(text.format) ? text.format : null;
-            const formatAllowed = new Set(["type", "name", "strict", "schema"]);
-            if (!format || Object.keys(format).some((key) => !formatAllowed.has(key))) {
-              throw new Error("Batch request text.format contains an unsupported field");
-            }
-            if (
-              format.type !== "json_schema" ||
-              typeof format.name !== "string" ||
-              format.name.length === 0 ||
-              format.strict !== true ||
-              !isRecord(format.schema)
-            ) {
-              throw new Error("Batch request must use strict json_schema structured output");
-            }
-          }
-
-          function assertIndependentBatchInput(input: unknown): void {
-            if (!Array.isArray(input) || input.length !== 1) {
-              throw new Error("Batch calibration input must contain exactly one independent user message");
-            }
-            const item = input[0];
-            if (!isRecord(item)) {
-              throw new Error("Batch calibration input item must be a user message object");
-            }
-            const allowedKeys = new Set(["role", "content"]);
-            if (Object.keys(item).some((key) => !allowedKeys.has(key))) {
-              throw new Error("Batch calibration input item contains non-user-message state");
-            }
-            if (item.role !== "user" || typeof item.content !== "string") {
-              throw new Error("Batch calibration input must be a single user text message");
-            }
-          }
-
-          '''
-          batch_path.write_text(text[:start] + replacement + text[end:])
-
-          verify_path = Path('harness/verify-openai-batch.ts')
-          verify = verify_path.read_text()
-          anchor = '''  for (const [name, body] of frozenMutations) {\n    let rejected = false;\n    try { runner.createRequest(`bad-${name}`, body); } catch { rejected = true; }\n    assert(rejected, `Generic Batch request must reject frozen-field/state drift: ${name}`);\n  }\n'''
-          addition = anchor + r'''
-
-          const isolationMutations: Array<[string, Record<string, unknown>]> = [
-            ["unknown-top-level", { ...requestA.body, temperature: 0.7 }],
-            ["reasoning-extra", { ...requestA.body, reasoning: { effort: "medium", summary: "auto" } }],
-            ["cache-extra", {
-              ...requestA.body,
-              prompt_cache_options: { mode: "implicit", ttl: "30m", comparison_response_id: "resp_other" },
-            }],
-            ["text-extra", {
-              ...requestA.body,
-              text: { ...(requestA.body.text as Record<string, unknown>), verbosity: "high" },
-            }],
-            ["assistant-input", {
-              ...requestA.body,
-              input: [{ role: "assistant", content: "prior answer" }],
-            }],
-            ["reasoning-input", {
-              ...requestA.body,
-              input: [{ type: "reasoning", id: "rs_prior", encrypted_content: "opaque" }],
-            }],
-            ["multi-message-input", {
-              ...requestA.body,
-              input: [
-                { role: "user", content: "first" },
-                { role: "user", content: "second" },
-              ],
-            }],
-            ["typed-user-input", {
-              ...requestA.body,
-              input: [{ type: "message", role: "user", content: "hidden state shape" }],
-            }],
-          ];
-          for (const [name, body] of isolationMutations) {
-            let rejected = false;
-            try { runner.createRequest(`isolated-${name}`, body); } catch { rejected = true; }
-            assert(rejected, `Generic Batch request must reject non-allowlisted/stateful request shape: ${name}`);
-          }
-'''
-          if anchor not in verify:
-              raise SystemExit('verification insertion anchor not found')
-          verify_path.write_text(verify.replace(anchor, addition, 1))
-          PY
+        run: python harness/scripts/apply_batch_independent_guard.py
       - name: Install harness dependencies
         working-directory: harness
         run: npm ci
@@ -213,11 +36,11 @@ jobs:
         working-directory: harness
         run: npm run verify:openai
       - name: Commit applied change
-        shell: bash
         run: |
           rm .github/workflows/apply-batch-independent-request-guard.yml
+          rm harness/scripts/apply_batch_independent_guard.py
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add harness/src/agent-backend/openai/batch.ts harness/verify-openai-batch.ts .github/workflows/apply-batch-independent-request-guard.yml
+          git add harness/src/agent-backend/openai/batch.ts harness/verify-openai-batch.ts .github/workflows/apply-batch-independent-request-guard.yml harness/scripts/apply_batch_independent_guard.py
           git commit -m "fix: enforce independent Batch request envelope"
           git push
