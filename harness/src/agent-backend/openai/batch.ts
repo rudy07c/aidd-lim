@@ -378,16 +378,52 @@ export class OpenAIBatchRunner {
   }
 }
 
-/** Enforce the scientific request envelope even for generic probe bodies. */
+/**
+ * Scientific-calibration Batch requests use an allowlist, not a denylist.
+ * This prevents newly added or accidentally supplied Responses knobs from silently
+ * changing the calibration condition. Input is also restricted to one independent
+ * user text message so prior assistant/reasoning/tool state cannot be smuggled in.
+ */
+const BATCH_ALLOWED_TOP_LEVEL_FIELDS = new Set([
+  "model",
+  "instructions",
+  "input",
+  "reasoning",
+  "max_output_tokens",
+  "store",
+  "truncation",
+  "include",
+  "service_tier",
+  "prompt_cache_options",
+  "tools",
+  "tool_choice",
+  "parallel_tool_calls",
+  "text",
+]);
+
 export function assertFrozenBatchRequestBody(
   body: Record<string, unknown>,
   options: OpenAIRequestOptions
 ): void {
+  const unexpectedFields = Object.keys(body).filter((key) => !BATCH_ALLOWED_TOP_LEVEL_FIELDS.has(key));
+  if (unexpectedFields.length > 0) {
+    throw new Error(`Batch request contains non-frozen top-level field(s): ${unexpectedFields.join(",")}`);
+  }
+
   if (body.model !== options.model) {
     throw new Error(`Batch request model must equal frozen model ${options.model}`);
   }
+  if (typeof body.instructions !== "string") {
+    throw new Error("Batch request instructions must be an explicit string");
+  }
+
+  assertIndependentBatchInput(body.input);
+
   const reasoning = isRecord(body.reasoning) ? body.reasoning : null;
-  if (reasoning?.effort !== options.reasoningEffort) {
+  if (!reasoning || Object.keys(reasoning).some((key) => key !== "effort")) {
+    throw new Error("Batch request reasoning may contain only the frozen effort field");
+  }
+  if (reasoning.effort !== options.reasoningEffort) {
     throw new Error(`Batch request reasoning.effort must equal frozen value ${options.reasoningEffort}`);
   }
   if (body.max_output_tokens !== options.maxOutputTokens) {
@@ -399,8 +435,12 @@ export function assertFrozenBatchRequestBody(
   if (body.service_tier !== options.serviceTier) {
     throw new Error(`Batch request service_tier must equal frozen value ${options.serviceTier}`);
   }
+
   const cache = isRecord(body.prompt_cache_options) ? body.prompt_cache_options : null;
-  if (cache?.mode !== options.promptCacheMode || cache?.ttl !== "30m") {
+  if (!cache || Object.keys(cache).some((key) => key !== "mode" && key !== "ttl")) {
+    throw new Error("Batch request prompt_cache_options may contain only mode and ttl");
+  }
+  if (cache.mode !== options.promptCacheMode || cache.ttl !== "30m") {
     throw new Error(
       `Batch request prompt_cache_options must freeze mode=${options.promptCacheMode} and ttl=30m`
     );
@@ -408,18 +448,54 @@ export function assertFrozenBatchRequestBody(
   if (body.truncation !== "disabled") {
     throw new Error('Batch request truncation must be "disabled"');
   }
-  if (Array.isArray(body.tools) && body.tools.length > 0) {
+
+  if (body.include !== undefined && body.include !== null) {
+    throw new Error("Batch calibration request must not request additional include payloads");
+  }
+  if (body.tools !== undefined && (!Array.isArray(body.tools) || body.tools.length > 0)) {
     throw new Error("Stage 1 Batch runner only accepts independent tool-free requests");
   }
-  if (body.stream === true) throw new Error("Batch request must not set stream=true");
-  if (body.previous_response_id !== undefined && body.previous_response_id !== null) {
-    throw new Error("Batch calibration request must not carry previous_response_id");
+  if (body.tool_choice !== undefined && body.tool_choice !== null) {
+    throw new Error("Batch calibration request must not set tool_choice");
   }
-  if (body.conversation !== undefined && body.conversation !== null) {
-    throw new Error("Batch calibration request must not carry conversation state");
+  if (body.parallel_tool_calls !== false) {
+    throw new Error("Batch calibration request must freeze parallel_tool_calls=false");
   }
-  if (Array.isArray(body.include) && body.include.includes("reasoning.encrypted_content")) {
-    throw new Error("Batch calibration request must not carry encrypted reasoning state");
+
+  const text = isRecord(body.text) ? body.text : null;
+  if (!text || Object.keys(text).some((key) => key !== "format")) {
+    throw new Error("Batch request text may contain only the structured-output format field");
+  }
+  const format = isRecord(text.format) ? text.format : null;
+  const formatAllowed = new Set(["type", "name", "strict", "schema"]);
+  if (!format || Object.keys(format).some((key) => !formatAllowed.has(key))) {
+    throw new Error("Batch request text.format contains an unsupported field");
+  }
+  if (
+    format.type !== "json_schema" ||
+    typeof format.name !== "string" ||
+    format.name.length === 0 ||
+    format.strict !== true ||
+    !isRecord(format.schema)
+  ) {
+    throw new Error("Batch request must use strict json_schema structured output");
+  }
+}
+
+function assertIndependentBatchInput(input: unknown): void {
+  if (!Array.isArray(input) || input.length !== 1) {
+    throw new Error("Batch calibration input must contain exactly one independent user message");
+  }
+  const item = input[0];
+  if (!isRecord(item)) {
+    throw new Error("Batch calibration input item must be a user message object");
+  }
+  const allowedKeys = new Set(["role", "content"]);
+  if (Object.keys(item).some((key) => !allowedKeys.has(key))) {
+    throw new Error("Batch calibration input item contains non-user-message state");
+  }
+  if (item.role !== "user" || typeof item.content !== "string") {
+    throw new Error("Batch calibration input must be a single user text message");
   }
 }
 

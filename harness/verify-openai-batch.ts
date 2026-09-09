@@ -84,6 +84,44 @@ async function main(): Promise<void> {
     assert(rejected, `Generic Batch request must reject frozen-field/state drift: ${name}`);
   }
 
+
+  const isolationMutations: Array<[string, Record<string, unknown>]> = [
+    ["unknown-top-level", { ...requestA.body, temperature: 0.7 }],
+    ["reasoning-extra", { ...requestA.body, reasoning: { effort: "medium", summary: "auto" } }],
+    ["cache-extra", {
+      ...requestA.body,
+      prompt_cache_options: { mode: "implicit", ttl: "30m", comparison_response_id: "resp_other" },
+    }],
+    ["text-extra", {
+      ...requestA.body,
+      text: { ...(requestA.body.text as Record<string, unknown>), verbosity: "high" },
+    }],
+    ["assistant-input", {
+      ...requestA.body,
+      input: [{ role: "assistant", content: "prior answer" }],
+    }],
+    ["reasoning-input", {
+      ...requestA.body,
+      input: [{ type: "reasoning", id: "rs_prior", encrypted_content: "opaque" }],
+    }],
+    ["multi-message-input", {
+      ...requestA.body,
+      input: [
+        { role: "user", content: "first" },
+        { role: "user", content: "second" },
+      ],
+    }],
+    ["typed-user-input", {
+      ...requestA.body,
+      input: [{ type: "message", role: "user", content: "hidden state shape" }],
+    }],
+  ];
+  for (const [name, body] of isolationMutations) {
+    let rejected = false;
+    try { runner.createRequest(`isolated-${name}`, body); } catch { rejected = true; }
+    assert(rejected, `Generic Batch request must reject non-allowlisted/stateful request shape: ${name}`);
+  }
+
   let mainRejected = false;
   try {
     new OpenAIBatchRunner({ ...options, runClass: "scientific-main" });
