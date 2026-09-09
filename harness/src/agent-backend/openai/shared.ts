@@ -41,7 +41,10 @@ export const OPENAI_MUTATION_SCHEMA = {
         additionalProperties: false,
       },
     },
-    workingNote: { type: "string", maxLength: EXPLICIT_WORKING_NOTE_MAX_CHARS },
+    // Strict Structured Outputs supports only a subset of JSON Schema string keywords.
+    // The 600-character bound is therefore enforced by parseStructuredMutation below,
+    // not by an unsupported maxLength keyword in the API schema.
+    workingNote: { type: "string" },
   },
   required: ["modifiedFiles", "workingNote"],
   additionalProperties: false,
