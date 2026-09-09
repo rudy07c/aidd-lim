@@ -9,10 +9,12 @@ import {
   ReasoningEffort,
   TokenUsage,
 } from "../../types";
+import { serializeObservableInteractionForSuccessor } from "../../context/observable-interaction";
 import { AgentInput, AgentTool } from "../types";
 
-export const OPENAI_PROMPT_VERSION = "stage1-worker-v2";
-export const OPENAI_MUTATION_SCHEMA_VERSION = "repository-mutation-v2";
+export const OPENAI_PROMPT_VERSION = "stage1-worker-v3-moi";
+export const OPENAI_MUTATION_SCHEMA_VERSION = "repository-mutation-v3";
+export const EXPLICIT_WORKING_NOTE_MAX_CHARS = 600;
 
 export const OPENAI_SYSTEM_PROMPT = `You are an AI software engineer working on a TypeScript repository.
 Implement the requested change while preserving the public protocol contract.
@@ -21,7 +23,7 @@ CONSTRAINTS:
 1. src/protocol_adapter.ts exports protocol: WorldProtocol. The names/signatures reset, applyOperation, getEntityState, and toAbstractSnapshot must remain compatible.
 2. Internal structure may be refactored freely if the public protocol remains compatible.
 3. Return only files actually changed.
-4. The explicit working note is an observable episode note, not hidden chain-of-thought. Keep it concise (<= 600 characters) and state only implementation facts, invariants, dependencies, or current risks.
+4. The explicit working note is an observable episode note, not hidden chain-of-thought. Keep it concise (<= ${EXPLICIT_WORKING_NOTE_MAX_CHARS} characters) and state only implementation facts, invariants, dependencies, or current risks.
 5. When tools are available, use them only when useful for the task. Tool results are observable and may be logged.`;
 
 export const OPENAI_MUTATION_SCHEMA = {
@@ -39,7 +41,7 @@ export const OPENAI_MUTATION_SCHEMA = {
         additionalProperties: false,
       },
     },
-    workingNote: { type: "string" },
+    workingNote: { type: "string", maxLength: EXPLICIT_WORKING_NOTE_MAX_CHARS },
   },
   required: ["modifiedFiles", "workingNote"],
   additionalProperties: false,
@@ -69,7 +71,7 @@ export interface OpenAIStructuredOutputSpec {
 
 export const OPENAI_MUTATION_OUTPUT_SPEC: OpenAIStructuredOutputSpec = {
   instructions: OPENAI_SYSTEM_PROMPT,
-  schemaName: "repository_mutation_v2",
+  schemaName: "repository_mutation_v3",
   schema: OPENAI_MUTATION_SCHEMA as unknown as Record<string, unknown>,
 };
 
@@ -78,14 +80,25 @@ export interface StructuredMutation {
   workingNote: string;
 }
 
+/**
+ * Common AF/MOI user-prompt structure. The only intended difference is the presence of
+ * PREVIOUS OBSERVABLE INTERACTION RECORD for MOI. Repository ordering is deterministic.
+ */
 export function buildOpenAIUserMessage(input: AgentInput): string {
-  const lines: string[] = ["REPOSITORY FILES:"];
+  const lines: string[] = [
+    `CURRENT TASK:\n${input.visibleInstruction}`,
+  ];
+  if (input.previousInteractionRecord) {
+    lines.push(
+      `\nPREVIOUS OBSERVABLE INTERACTION RECORD:\n${serializeObservableInteractionForSuccessor(input.previousInteractionRecord)}`
+    );
+  }
+  lines.push("\nCURRENT REPOSITORY:");
   // contextFiles are already the condition runner's final evidence set.
   // Do not apply a second token/character budget here.
   for (const filePath of Object.keys(input.contextFiles).sort()) {
     lines.push(`\n--- ${filePath} ---\n${input.contextFiles[filePath]}\n`);
   }
-  lines.push(`\nTASK:\n${input.visibleInstruction}`);
   lines.push("\nImplement the change and return the structured repository mutation.");
   return lines.join("");
 }
@@ -163,7 +176,13 @@ export function parseStructuredMutation(
     return { ok: false, error: `Invalid structured JSON: ${error instanceof Error ? error.message : String(error)}` };
   }
   if (!parsed || !Array.isArray(parsed.modifiedFiles) || typeof parsed.workingNote !== "string") {
-    return { ok: false, error: "Structured output does not match repository_mutation_v2" };
+    return { ok: false, error: "Structured output does not match repository_mutation_v3" };
+  }
+  if (parsed.workingNote.length > EXPLICIT_WORKING_NOTE_MAX_CHARS) {
+    return {
+      ok: false,
+      error: `workingNote exceeds ${EXPLICIT_WORKING_NOTE_MAX_CHARS} characters`,
+    };
   }
   const files: Record<string, string> = {};
   for (const item of parsed.modifiedFiles) {
