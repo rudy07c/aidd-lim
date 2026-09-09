@@ -5,6 +5,7 @@ import * as path from "path";
 import { AgentBackend, AgentInput, AgentResult } from "./src/agent-backend/types";
 import { buildOpenAIUserMessage, parseStructuredMutation } from "./src/agent-backend/openai";
 import {
+  OBSERVABLE_WORKING_NOTE_MAX_CHARS,
   buildObservableInteractionRecord,
   evaluateOperationalFullFeasibility,
   serializeObservableInteractionForSuccessor,
@@ -110,6 +111,11 @@ async function verifyOrchestratorInheritance(): Promise<void> {
       assert.ok(fs.existsSync(gen0RecordPath) && fs.existsSync(gen1RecordPath), "record must be persisted every generation");
       const gen0Record = JSON.parse(fs.readFileSync(gen0RecordPath, "utf8"));
       validateObservableInteractionRecord(gen0Record);
+      assert.deepStrictEqual(
+        gen0Record.observableAssistantMessages,
+        [],
+        "fully redundant successful structured mutation must not be inherited twice"
+      );
 
       const gen1Meta = JSON.parse(fs.readFileSync(path.join(result.logDirs[1], "meta.json"), "utf8"));
       if (condition === "MOI") {
@@ -127,11 +133,15 @@ async function verifyOrchestratorInheritance(): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  const workingNote = "Invariant X remains required; src/a.ts now uses value 2.";
   const record = buildObservableInteractionRecord({
     generation: 3,
     taskId: "T-example",
     visibleInstruction: "Change the example without breaking the contract.",
-    observableAssistantMessages: [JSON.stringify({ modifiedFiles: [{ path: "src/a.ts", content: "export const a = 2;" }] })],
+    observableAssistantMessages: [JSON.stringify({
+      modifiedFiles: [{ path: "src/a.ts", content: "export const a = 2;" }],
+      workingNote,
+    })],
     toolEvents: [{
       callId: "call-1",
       toolName: "read_repository_chunk",
@@ -139,7 +149,7 @@ async function main(): Promise<void> {
       result: "export const a = 1;",
       ok: true,
     }],
-    explicitWorkingNote: "Invariant X remains required; src/a.ts now uses value 2.",
+    explicitWorkingNote: workingNote,
     repositoryBefore: { "src/a.ts": "export const a = 1;" },
     repositoryAfter: { "src/a.ts": "export const a = 2;" },
     appliedDiff: "--- a/src/a.ts\n+++ b/src/a.ts\n-export const a = 1;\n+export const a = 2;",
@@ -149,7 +159,11 @@ async function main(): Promise<void> {
   validateObservableInteractionRecord(record);
   assert.strictEqual(record.schemaVersion, "observable-interaction-v1");
   assert.strictEqual(record.visibleInstruction.source, "task-feedback");
-  assert.strictEqual(record.observableAssistantMessages[0].source, "artifact-redundant");
+  assert.deepStrictEqual(
+    record.observableAssistantMessages,
+    [],
+    "successful structured mutation envelope is redundant with repository/diff/note and must be omitted"
+  );
   assert.strictEqual(record.toolEvents[0].source, "artifact-redundant");
   assert.strictEqual(record.explicitWorkingNote?.source, "ephemeral-rationale");
   assert.strictEqual(record.appliedChanges[0].source, "mutation-metadata");
@@ -160,6 +174,42 @@ async function main(): Promise<void> {
     "source breakdown must sum to total"
   );
   assert.match(record.contentHash, /^[a-f0-9]{64}$/);
+
+  // A structured mutation that did not reach repositoryAfter remains scientifically relevant
+  // mutation metadata, but its already-separated working note is not duplicated.
+  const failedAttempt = buildObservableInteractionRecord({
+    generation: 4,
+    taskId: "T-invalid-attempt",
+    visibleInstruction: "Attempt a change.",
+    observableAssistantMessages: [JSON.stringify({
+      modifiedFiles: [{ path: "../forbidden.ts", content: "bad" }],
+      workingNote: "Attempted forbidden path.",
+    })],
+    toolEvents: [],
+    explicitWorkingNote: "Attempted forbidden path.",
+    repositoryBefore: { "src/a.ts": "export const a = 2;" },
+    repositoryAfter: { "src/a.ts": "export const a = 2;" },
+    appliedDiff: "",
+    visibleFeedback: [],
+  });
+  assert.strictEqual(failedAttempt.observableAssistantMessages.length, 1);
+  assert.strictEqual(failedAttempt.observableAssistantMessages[0].source, "mutation-metadata");
+  assert.ok(failedAttempt.observableAssistantMessages[0].content.includes("../forbidden.ts"));
+  assert.ok(!failedAttempt.observableAssistantMessages[0].content.includes("Attempted forbidden path"));
+
+  const narrative = buildObservableInteractionRecord({
+    generation: 5,
+    taskId: "T-narrative",
+    visibleInstruction: "Inspect only.",
+    observableAssistantMessages: ["Observed a non-artifact risk in the current interaction."],
+    toolEvents: [],
+    explicitWorkingNote: null,
+    repositoryBefore: {},
+    repositoryAfter: {},
+    appliedDiff: "",
+    visibleFeedback: [],
+  });
+  assert.strictEqual(narrative.observableAssistantMessages[0].source, "ephemeral-rationale");
 
   // Fail closed if evaluator-only/post-hoc fields are appended to the record.
   assert.throws(
@@ -173,6 +223,7 @@ async function main(): Promise<void> {
 
   const successorPayload = serializeObservableInteractionForSuccessor(record);
   assert.ok(successorPayload.includes("Invariant X remains required"));
+  assert.ok(successorPayload.includes('"observableAssistantMessages":[]'));
   assert.ok(!successorPayload.includes("sourceBreakdown"), "analysis metadata must not be shown to successor");
   assert.ok(!successorPayload.includes(record.contentHash), "record hash must not become successor evidence");
 
@@ -195,9 +246,25 @@ async function main(): Promise<void> {
 
   const oversizedNote = parseStructuredMutation(JSON.stringify({
     modifiedFiles: [],
-    workingNote: "x".repeat(601),
+    workingNote: "x".repeat(OBSERVABLE_WORKING_NOTE_MAX_CHARS + 1),
   }));
-  assert.strictEqual(oversizedNote.ok, false, "working note bound must be mechanically enforced");
+  assert.strictEqual(oversizedNote.ok, false, "OpenAI parser must enforce working note bound");
+  assert.throws(
+    () => buildObservableInteractionRecord({
+      generation: 6,
+      taskId: "T-too-long-note",
+      visibleInstruction: "task",
+      observableAssistantMessages: [],
+      toolEvents: [],
+      explicitWorkingNote: "x".repeat(OBSERVABLE_WORKING_NOTE_MAX_CHARS + 1),
+      repositoryBefore: {},
+      repositoryAfter: {},
+      appliedDiff: "",
+      visibleFeedback: [],
+    }),
+    /working note exceeds/,
+    "provider-neutral record builder must enforce the same working note bound"
+  );
 
   const feasible = evaluateOperationalFullFeasibility({
     applicable: true,
@@ -231,9 +298,11 @@ async function main(): Promise<void> {
       "record-build-and-hash",
       "forbidden-field-guard",
       "source-tagging",
+      "successful-structured-mutation-dedup",
+      "failed-mutation-attempt-preservation",
       "successor-serialization",
       "AF-vs-MOI-prompt-difference",
-      "working-note-bound",
+      "provider-neutral-working-note-bound",
       "operational-full-feasibility",
       "fresh-backend-per-generation",
       "MOI-immediate-predecessor-only",
