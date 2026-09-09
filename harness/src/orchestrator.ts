@@ -3,13 +3,23 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { RunConfig, GenerationLog, AgentExecutionStatus } from "./types";
+import {
+  RunConfig,
+  GenerationLog,
+  AgentExecutionStatus,
+  getContextCondition,
+} from "./types";
 import { AgentBackend } from "./agent-backend/types";
 import { MockNoopBackend } from "./agent-backend/mock-noop";
 import { MockOracleBackend } from "./agent-backend/mock-oracle";
 import { AnthropicBackend } from "./agent-backend/anthropic";
 import { OpenAIBackend } from "./agent-backend/openai";
 import { assembleContext, estimateTokenCount } from "./context/assembler";
+import {
+  ObservableInteractionRecord,
+  buildObservableInteractionRecord,
+  evaluateOperationalFullFeasibility,
+} from "./context/observable-interaction";
 import { runScoring } from "./scoring";
 import { writeGenerationLog, generateDiff } from "./logging";
 import { validateModifiedFiles } from "./repository/path-guard";
@@ -23,7 +33,18 @@ export interface OrchestratorResult {
 
 interface HeldOutTask { taskId: string; visibleInstruction: string; taskSpecificTestCode?: string; }
 
-export async function runGenerationLoop(config: RunConfig): Promise<OrchestratorResult> {
+export type AgentBackendFactory = (
+  config: RunConfig,
+  taskId: string,
+  generation: number
+) => AgentBackend;
+
+const GPT_5_6_LUNA_CONTEXT_CAPACITY_TOKENS = 1_050_000;
+
+export async function runGenerationLoop(
+  config: RunConfig,
+  backendFactory: AgentBackendFactory = createBackend
+): Promise<OrchestratorResult> {
   console.log(`[orchestrator] Starting experiment "${config.experimentId}" / lineage "${config.lineageId}"`);
   console.log(`[orchestrator] Backend: ${config.backend}, Condition: ${config.condition}, Generations: ${config.generations}`);
   const tasksPath = path.join(config.syntheticWorldDir, "heldout_tasks.json");
@@ -35,13 +56,26 @@ export async function runGenerationLoop(config: RunConfig): Promise<Orchestrator
   let currentFiles = loadRepositoryFiles(repositoryDir);
   const logDirs: string[] = [];
   let completedGenerations = 0;
+  // Disk may contain the full lineage for analysis, but successor input only receives this
+  // single immediate-predecessor record. It is overwritten after every valid generation.
+  let previousInteractionRecord: ObservableInteractionRecord | null = null;
 
   for (let gen = 0; gen < config.generations; gen++) {
     const taskId = config.tasks[gen % config.tasks.length];
     const task = taskMap.get(taskId)!;
     try {
-      const { logDir, repositoryAfter } = await runOneGeneration(config, gen, taskId, task.visibleInstruction, task.taskSpecificTestCode, currentFiles);
+      const { logDir, repositoryAfter, interactionRecord } = await runOneGeneration(
+        config,
+        gen,
+        taskId,
+        task.visibleInstruction,
+        task.taskSpecificTestCode,
+        currentFiles,
+        previousInteractionRecord,
+        backendFactory
+      );
       currentFiles = repositoryAfter;
+      previousInteractionRecord = interactionRecord;
       logDirs.push(logDir);
       completedGenerations++;
     } catch (e) {
@@ -57,15 +91,52 @@ async function runOneGeneration(
   taskId: string,
   visibleInstruction: string,
   taskSpecificTestCode: string | undefined,
-  currentFiles: Record<string, string>
-): Promise<{ logDir: string; repositoryAfter: Record<string, string> }> {
+  currentFiles: Record<string, string>,
+  previousInteractionRecord: ObservableInteractionRecord | null,
+  backendFactory: AgentBackendFactory
+): Promise<{
+  logDir: string;
+  repositoryAfter: Record<string, string>;
+  interactionRecord: ObservableInteractionRecord;
+}> {
   const repositoryBefore = { ...currentFiles };
   const contextFiles = assembleContext(currentFiles, config.condition);
   const actualContextTokens = estimateTokenCount(contextFiles);
-  const agentPromptSummary = buildAgentPromptSummary(contextFiles, visibleInstruction);
+  const inheritedInteractionRecord = selectInheritedInteractionRecord(
+    config.condition,
+    previousInteractionRecord
+  );
 
-  const backend = createBackend(config, taskId);
-  const agentResult = await backend.run({ contextFiles, visibleInstruction, contextBudget: config.contextBudget });
+  const feasibility = evaluateOperationalFullFeasibility({
+    applicable: config.condition === "AF" || config.condition === "MOI",
+    contextFiles,
+    visibleInstruction,
+    previousInteractionRecord: inheritedInteractionRecord,
+    reservedOutputTokens: config.maxOutputTokens ?? 8192,
+    contextCapacityTokens: contextCapacityTokensFor(config),
+  });
+  if (feasibility.checked && feasibility.feasible === false) {
+    throw new Error(
+      `Operational-Full feasibility invariant failed for ${config.condition}: ` +
+      `input_upper_bound=${feasibility.conservativeInputUpperBoundTokens}, ` +
+      `reserved_output=${feasibility.reservedOutputTokens}, capacity=${feasibility.contextCapacityTokens}`
+    );
+  }
+
+  const agentPromptSummary = buildAgentPromptSummary(
+    contextFiles,
+    visibleInstruction,
+    inheritedInteractionRecord
+  );
+
+  // Factory is invoked inside every generation: no provider/backend instance is inherited.
+  const backend = backendFactory(config, taskId, generation);
+  const agentResult = await backend.run({
+    contextFiles,
+    visibleInstruction,
+    previousInteractionRecord: inheritedInteractionRecord,
+    contextBudget: config.contextBudget,
+  });
 
   // Provider/network failures are infrastructure failures, not software-evolution outcomes.
   // Do not score or advance the lineage after the SDK's frozen retry policy is exhausted.
@@ -84,6 +155,24 @@ async function runOneGeneration(
   }
 
   const repositoryAfter: Record<string, string> = { ...currentFiles, ...validatedModifiedFiles };
+  const gitDiff = generateDiff(repositoryBefore, repositoryAfter);
+
+  // Build the record before scoring. Hidden/visible evaluator outputs therefore cannot be
+  // accidentally copied into MOI history. visibleFeedback remains empty until a future repair
+  // loop actually presents feedback to the worker.
+  const interactionRecord = buildObservableInteractionRecord({
+    generation,
+    taskId,
+    visibleInstruction,
+    observableAssistantMessages: agentResult.observableAssistantMessages,
+    toolEvents: agentResult.toolEvents,
+    explicitWorkingNote: agentResult.explicitWorkingNote,
+    repositoryBefore,
+    repositoryAfter,
+    appliedDiff: gitDiff,
+    visibleFeedback: [],
+  });
+
   const scoring = await runScoring(repositoryAfter, config.syntheticWorldDir, taskSpecificTestCode);
   const taskSpecificPassed = scoring.taskSpecificTests === null || scoring.taskSpecificTests.passed;
   const functionalTaskResult = executionStatus === "ok" && scoring.visibleTests.passed && scoring.hiddenTests.passed && taskSpecificPassed;
@@ -98,7 +187,7 @@ async function runOneGeneration(
     task_id: taskId,
     repository_before: repositoryBefore,
     repository_after: repositoryAfter,
-    git_diff: generateDiff(repositoryBefore, repositoryAfter),
+    git_diff: gitDiff,
     context_budget: config.contextBudget,
     actual_context_tokens: actualContextTokens,
     context_contents: contextFiles,
@@ -107,6 +196,9 @@ async function runOneGeneration(
     observable_assistant_messages: agentResult.observableAssistantMessages,
     explicit_working_note: agentResult.explicitWorkingNote,
     tool_calls: agentResult.toolEvents,
+    observable_interaction_record: interactionRecord,
+    inherited_observable_interaction_hash: inheritedInteractionRecord?.contentHash ?? null,
+    operational_full_feasibility: feasibility,
     agent_execution_status: executionStatus,
     agent_error: agentResult.error,
     visible_test_results: scoring.visibleTests,
@@ -122,10 +214,25 @@ async function runOneGeneration(
   };
 
   const logDir = writeGenerationLog(log, config.runsDir);
-  return { logDir, repositoryAfter };
+  return { logDir, repositoryAfter, interactionRecord };
 }
 
-function createBackend(config: RunConfig, taskId: string): AgentBackend {
+/** Exactly one previous record is eligible, and only MOI receives it. */
+export function selectInheritedInteractionRecord(
+  conditionName: RunConfig["condition"],
+  previousInteractionRecord: ObservableInteractionRecord | null
+): ObservableInteractionRecord | null {
+  const condition = getContextCondition(conditionName);
+  return condition.inheritsObservableHistory ? previousInteractionRecord : null;
+}
+
+function contextCapacityTokensFor(config: RunConfig): number | null {
+  if (config.backend !== "openai") return null;
+  const model = config.model ?? "gpt-5.6-luna";
+  return model === "gpt-5.6-luna" ? GPT_5_6_LUNA_CONTEXT_CAPACITY_TOKENS : null;
+}
+
+function createBackend(config: RunConfig, taskId: string, _generation: number): AgentBackend {
   switch (config.backend) {
     case "mock-noop": return new MockNoopBackend();
     case "mock-oracle": {
@@ -159,10 +266,16 @@ function loadDirRecursive(baseDir: string, currentDir: string, result: Record<st
     else if (entry.isFile()) result[path.relative(baseDir, fullPath).replace(/\\/g, "/")] = fs.readFileSync(fullPath, "utf8");
   }
 }
-function buildAgentPromptSummary(contextFiles: Record<string, string>, visibleInstruction: string): string {
-  return `[Context files: ${Object.keys(contextFiles).sort().join(", ")}]\n\nTask:\n${visibleInstruction}`;
+function buildAgentPromptSummary(
+  contextFiles: Record<string, string>,
+  visibleInstruction: string,
+  inheritedInteractionRecord: ObservableInteractionRecord | null
+): string {
+  const history = inheritedInteractionRecord
+    ? `[Previous observable interaction: ${inheritedInteractionRecord.contentHash}]\n`
+    : "[Previous observable interaction: none]\n";
+  return `${history}[Context files: ${Object.keys(contextFiles).sort().join(", ")}]\n\nTask:\n${visibleInstruction}`;
 }
-
 
 const CENSORED_AGENT_STATUSES = new Set<AgentExecutionStatus>([
   "provider-error",
