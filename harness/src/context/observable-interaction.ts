@@ -6,6 +6,7 @@ import * as crypto from "crypto";
 
 export const OBSERVABLE_INTERACTION_SCHEMA_VERSION = "observable-interaction-v1" as const;
 export const OBSERVABLE_TOKEN_COUNT_METHOD = "utf8-bytes-div4-v1" as const;
+export const OBSERVABLE_WORKING_NOTE_MAX_CHARS = 600;
 
 export type ObservableInteractionSource =
   | "ephemeral-rationale"
@@ -91,6 +92,11 @@ export interface OperationalFullFeasibility {
   reservedOutputTokens: number | null;
 }
 
+interface StructuredMutationEnvelope {
+  modifiedFiles: Array<{ path: string; content: string }>;
+  workingNote: string;
+}
+
 const SOURCE_KEYS: ObservableInteractionSource[] = [
   "ephemeral-rationale",
   "task-feedback",
@@ -122,13 +128,20 @@ export function buildObservableInteractionRecord(
     throw new Error("ObservableInteractionRecord generation must be a non-negative integer");
   }
   if (input.taskId.length === 0) throw new Error("ObservableInteractionRecord taskId must be non-empty");
+  if (
+    input.explicitWorkingNote !== null &&
+    input.explicitWorkingNote.length > OBSERVABLE_WORKING_NOTE_MAX_CHARS
+  ) {
+    throw new Error(
+      `Observable explicit working note exceeds ${OBSERVABLE_WORKING_NOTE_MAX_CHARS} characters`
+    );
+  }
 
   const visibleInstruction = textItem("task-feedback", input.visibleInstruction);
-  // OpenAI's observable assistant message is the structured mutation payload, so it is
-  // intentionally tagged artifact-redundant rather than ephemeral rationale. The explicit
-  // working note is captured separately as the observable rationale-like channel.
-  const observableAssistantMessages = input.observableAssistantMessages.map((content) =>
-    textItem("artifact-redundant", content)
+  const observableAssistantMessages = normalizeAssistantMessages(
+    input.observableAssistantMessages,
+    input.repositoryAfter,
+    input.explicitWorkingNote
   );
   const toolEvents: ObservableToolEventItem[] = input.toolEvents.map((event) => {
     const payload = {
@@ -199,6 +212,75 @@ export function buildObservableInteractionRecord(
 }
 
 /**
+ * Avoid an MOI-only repetition/salience confound. A successful Structured Mutation contains
+ * complete file contents plus the same working note that are already represented by the current
+ * repository, applied diff and explicitWorkingNote. That envelope is therefore omitted from the
+ * inherited record while remaining available in the ordinary raw response log.
+ *
+ * If a mutation was not fully applied (for example path validation failed), preserve only the
+ * attempted modifiedFiles as mutation-metadata. If the envelope's note is not preserved by the
+ * explicit working-note channel, preserve that note separately as ephemeral rationale. Other
+ * assistant text is retained verbatim as ephemeral rationale.
+ */
+function normalizeAssistantMessages(
+  messages: string[],
+  repositoryAfter: Record<string, string>,
+  explicitWorkingNote: string | null
+): ObservableTextItem[] {
+  const normalized: ObservableTextItem[] = [];
+  for (const content of messages) {
+    const mutation = parseStructuredMutationEnvelope(content);
+    if (mutation === null) {
+      normalized.push(textItem("ephemeral-rationale", content));
+      continue;
+    }
+
+    const filesFullyApplied = mutation.modifiedFiles.every(
+      (file) => repositoryAfter[file.path] === file.content
+    );
+    const notePreserved = explicitWorkingNote === mutation.workingNote;
+
+    if (!filesFullyApplied && mutation.modifiedFiles.length > 0) {
+      normalized.push(
+        textItem(
+          "mutation-metadata",
+          stableStringify({ modifiedFiles: mutation.modifiedFiles })
+        )
+      );
+    }
+    if (!notePreserved && mutation.workingNote.length > 0) {
+      normalized.push(textItem("ephemeral-rationale", mutation.workingNote));
+    }
+  }
+  return normalized;
+}
+
+function parseStructuredMutationEnvelope(content: string): StructuredMutationEnvelope | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    return null;
+  }
+  if (!isRecord(parsed)) return null;
+  const keys = Object.keys(parsed).sort();
+  if (keys.length !== 2 || keys[0] !== "modifiedFiles" || keys[1] !== "workingNote") return null;
+  if (!Array.isArray(parsed.modifiedFiles) || typeof parsed.workingNote !== "string") return null;
+  const files: Array<{ path: string; content: string }> = [];
+  const seen = new Set<string>();
+  for (const item of parsed.modifiedFiles) {
+    if (!isRecord(item)) return null;
+    const itemKeys = Object.keys(item).sort();
+    if (itemKeys.length !== 2 || itemKeys[0] !== "content" || itemKeys[1] !== "path") return null;
+    if (typeof item.path !== "string" || typeof item.content !== "string") return null;
+    if (seen.has(item.path)) return null;
+    seen.add(item.path);
+    files.push({ path: item.path, content: item.content });
+  }
+  return { modifiedFiles: files, workingNote: parsed.workingNote };
+}
+
+/**
  * Fail-closed schema validator. Exact record keys prevent evaluator-only fields from being
  * appended post-hoc. Opaque tool arguments/results are allowed because they are data that was
  * actually shown through a worker-visible tool; P5 owns hidden-data isolation for tool access.
@@ -211,12 +293,23 @@ export function validateObservableInteractionRecord(
   if (value.schemaVersion !== OBSERVABLE_INTERACTION_SCHEMA_VERSION) throw new Error("Unsupported ObservableInteractionRecord schemaVersion");
   if (!Number.isInteger(value.generation) || (value.generation as number) < 0) throw new Error("Invalid ObservableInteractionRecord generation");
   if (typeof value.taskId !== "string" || value.taskId.length === 0) throw new Error("Invalid ObservableInteractionRecord taskId");
-  validateTextItem(value.visibleInstruction, "task-feedback", "visibleInstruction");
-  validateArray(value.observableAssistantMessages, (item, index) => validateTextItem(item, "artifact-redundant", `observableAssistantMessages[${index}]`));
+  validateTextItem(value.visibleInstruction, new Set(["task-feedback"]), "visibleInstruction");
+  validateArray(value.observableAssistantMessages, (item, index) =>
+    validateTextItem(
+      item,
+      new Set<ObservableInteractionSource>(["ephemeral-rationale", "mutation-metadata"]),
+      `observableAssistantMessages[${index}]`
+    )
+  );
   validateArray(value.toolEvents, validateToolEvent);
-  if (value.explicitWorkingNote !== null) validateTextItem(value.explicitWorkingNote, "ephemeral-rationale", "explicitWorkingNote");
+  if (value.explicitWorkingNote !== null) {
+    validateTextItem(value.explicitWorkingNote, new Set(["ephemeral-rationale"]), "explicitWorkingNote");
+    if ((value.explicitWorkingNote as ObservableTextItem).content.length > OBSERVABLE_WORKING_NOTE_MAX_CHARS) {
+      throw new Error("explicitWorkingNote exceeds configured bound");
+    }
+  }
   validateArray(value.appliedChanges, validateAppliedChange);
-  if (value.appliedDiff !== null) validateTextItem(value.appliedDiff, "mutation-metadata", "appliedDiff");
+  if (value.appliedDiff !== null) validateTextItem(value.appliedDiff, new Set(["mutation-metadata"]), "appliedDiff");
   validateArray(value.visibleFeedback, validateVisibleFeedback);
   if (!Number.isInteger(value.tokenCount) || (value.tokenCount as number) < 0) throw new Error("Invalid ObservableInteractionRecord tokenCount");
   if (value.tokenCountMethod !== OBSERVABLE_TOKEN_COUNT_METHOD) throw new Error("Invalid ObservableInteractionRecord tokenCountMethod");
@@ -343,10 +436,16 @@ function addTokens(
   breakdown[source] += count;
 }
 
-function validateTextItem(value: unknown, source: ObservableInteractionSource, label: string): void {
+function validateTextItem(
+  value: unknown,
+  allowedSources: ReadonlySet<ObservableInteractionSource>,
+  label: string
+): void {
   if (!isRecord(value)) throw new Error(`${label} must be an object`);
   assertExactKeys(value, new Set(["source", "content", "tokenCount"]), label);
-  if (value.source !== source) throw new Error(`${label}.source must be ${source}`);
+  if (!allowedSources.has(value.source as ObservableInteractionSource)) {
+    throw new Error(`${label}.source is not allowed: ${String(value.source)}`);
+  }
   if (typeof value.content !== "string") throw new Error(`${label}.content must be a string`);
   if (!Number.isInteger(value.tokenCount) || (value.tokenCount as number) < 0) throw new Error(`${label}.tokenCount must be non-negative integer`);
   if (value.tokenCount !== estimateObservableTokens(value.content)) throw new Error(`${label}.tokenCount mismatch`);
