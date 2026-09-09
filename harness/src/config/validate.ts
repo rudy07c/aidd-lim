@@ -1,6 +1,7 @@
 import {
   BackendType,
-  ContextCondition,
+  CONTEXT_CONDITION_NAMES,
+  ContextConditionName,
   OpenAIServiceTier,
   PromptCacheMode,
   RunClass,
@@ -8,7 +9,7 @@ import {
 } from "../types";
 
 const BACKENDS: BackendType[] = ["mock-noop", "mock-oracle", "anthropic", "openai"];
-const CONDITIONS: ContextCondition[] = ["full", "simple-limited"];
+const CONDITIONS: readonly ContextConditionName[] = CONTEXT_CONDITION_NAMES;
 const SERVICE_TIERS: OpenAIServiceTier[] = ["auto", "default", "flex", "fast", "priority", "ultrafast"];
 const CACHE_MODES: PromptCacheMode[] = ["implicit", "explicit"];
 const RUN_CLASSES: RunClass[] = ["historical", "smoke", "scientific-calibration", "scientific-main"];
