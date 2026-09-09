@@ -27,15 +27,14 @@ export function assembleContext(
     case "simple-limited":
       return assembleSimpleLimited(repositoryFiles);
 
-    // AF already has complete semantics at the assembler layer: artifact-only,
-    // full repository visibility, no artificial context budget.
+    // AF and MOI both receive the complete current artifact. P2 adds only the
+    // previous observable interaction record to MOI at AgentInput assembly time.
     case "AF":
+    case "MOI":
       return assembleFull(repositoryFiles);
 
     // These Stage 1 identifiers are intentionally recognized but not silently
     // approximated. Their mechanism-specific runtimes are introduced later.
-    case "MOI":
-      throw stage1RuntimeNotImplemented("MOI", "P2 ObservableInteractionRecord / inheritance injection");
     case "EL":
       throw stage1RuntimeNotImplemented("EL", "static exposure selector / B_expose runtime");
     case "PR":
@@ -48,7 +47,7 @@ export function assembleContext(
 function stage1RuntimeNotImplemented(condition: string, dependency: string): Error {
   return new Error(
     `Context condition ${condition} is defined but its execution semantics are not implemented yet (${dependency}). ` +
-    `P0 only exposes the condition metadata; refusing to fall back to a legacy context mode.`
+    `Refusing to fall back to a legacy context mode.`
   );
 }
 
