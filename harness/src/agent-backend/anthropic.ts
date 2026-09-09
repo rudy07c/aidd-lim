@@ -2,6 +2,7 @@
 // Historical Anthropic backend retained for Stage 0 / robustness comparison.
 
 import Anthropic from "@anthropic-ai/sdk";
+import { serializeObservableInteractionForSuccessor } from "../context/observable-interaction";
 import { AgentBackend, AgentInput, AgentResult } from "./types";
 
 const SYSTEM_PROMPT = `You are an AI software engineer working on a TypeScript repository.
@@ -30,7 +31,10 @@ export class AnthropicBackend implements AgentBackend {
 
     try {
       const contextSection = formatContextFiles(input.contextFiles, input.contextBudget);
-      const userMessage = `${contextSection}\n\nTASK:\n${input.visibleInstruction}\n\nImplement this change. Output only modified files in <modified_files> JSON tags.`;
+      const historySection = input.previousInteractionRecord
+        ? `\n\nPREVIOUS OBSERVABLE INTERACTION RECORD:\n${serializeObservableInteractionForSuccessor(input.previousInteractionRecord)}`
+        : "";
+      const userMessage = `CURRENT TASK:\n${input.visibleInstruction}${historySection}\n\n${contextSection}\n\nImplement this change. Output only modified files in <modified_files> JSON tags.`;
       const response = await this.client.messages.create({
         model: this.model,
         max_tokens: 8192,
@@ -103,7 +107,7 @@ function historicalProvenance(requestedModel: string, actualModel: string | null
 }
 
 function formatContextFiles(files: Record<string, string>, budget: number | "full"): string {
-  const lines: string[] = ["REPOSITORY FILES:"];
+  const lines: string[] = ["CURRENT REPOSITORY:"];
   let totalChars = 0;
   const budgetChars = budget === "full" ? Infinity : budget * 4;
   for (const filePath of Object.keys(files).sort()) {
