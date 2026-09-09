@@ -51,6 +51,9 @@ jobs:
       - name: Verify Stage 1 context condition metadata
         working-directory: harness
         run: npm run verify:context-conditions
+      - name: Verify P2 observable interaction runtime
+        working-directory: harness
+        run: npm run verify:observable-interaction
       - name: Verify run validity semantics
         working-directory: harness
         run: npm run verify:run-validity
