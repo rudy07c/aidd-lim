@@ -1,19 +1,10 @@
 // harness/src/context/assembler.ts
 //
-// Full / 単純Limited の context 構築。（docs/harness_stage0_plan.md 2.3節）
-//
-// Stage 0では2条件のみ：
-// - full: repository/ 配下の全ファイルをそのまま contextへ含める
-// - simple-limited: ナイーブな固定ルールで一部ファイルを省略する
-//                  （実装ファイルを先頭 N 文字で打ち切り、総文字数も制限する）
-//                  ※ tests/・型定義ファイルは除外せず全文を含める
-//                    （理由は assembleSimpleLimited のコメント参照）
-//
-// このLimited条件の「巧拙は問わない」（計画書2.3節）。
-// Stage 1で導入する Privileged Selector / Agent-Retrieved の設計はここでは不要。
-// 目的は「context条件によって挙動を変えられる構造になっているか」の確認のみ。
+// Stage 0の legacy Full / simple-limited context 構築と、Stage 1 condition dispatch。
+// Stage 1のcondition固有runtimeは段階的に実装するため、未実装conditionを
+// legacy挙動へ黙ってfallbackさせず fail-closed にする。
 
-import { ContextCondition } from "../types";
+import { ContextConditionName, getContextCondition } from "../types";
 
 // simple-limited での実装ファイル1ファイルあたりの最大文字数（rough: 約300 tokens相当）
 // priorityFiles（tests・型定義・固定契約ファイル）はこの制限の対象外
@@ -25,14 +16,40 @@ const SIMPLE_LIMITED_MAX_TOTAL_CHARS = 6000;
 
 export function assembleContext(
   repositoryFiles: Record<string, string>,
-  condition: ContextCondition
+  conditionName: ContextConditionName
 ): Record<string, string> {
-  switch (condition) {
+  const condition = getContextCondition(conditionName);
+
+  switch (condition.name) {
+    // Stage 0 historical compatibility.
     case "full":
       return assembleFull(repositoryFiles);
     case "simple-limited":
       return assembleSimpleLimited(repositoryFiles);
+
+    // AF already has complete semantics at the assembler layer: artifact-only,
+    // full repository visibility, no artificial context budget.
+    case "AF":
+      return assembleFull(repositoryFiles);
+
+    // These Stage 1 identifiers are intentionally recognized but not silently
+    // approximated. Their mechanism-specific runtimes are introduced later.
+    case "MOI":
+      throw stage1RuntimeNotImplemented("MOI", "P2 ObservableInteractionRecord / inheritance injection");
+    case "EL":
+      throw stage1RuntimeNotImplemented("EL", "static exposure selector / B_expose runtime");
+    case "PR":
+      throw stage1RuntimeNotImplemented("PR", "P4/P5 WorkingSetManager + privileged retrieval");
+    case "AR":
+      throw stage1RuntimeNotImplemented("AR", "P4/P5 WorkingSetManager + agent retrieval");
   }
+}
+
+function stage1RuntimeNotImplemented(condition: string, dependency: string): Error {
+  return new Error(
+    `Context condition ${condition} is defined but its execution semantics are not implemented yet (${dependency}). ` +
+    `P0 only exposes the condition metadata; refusing to fall back to a legacy context mode.`
+  );
 }
 
 /**
@@ -43,7 +60,7 @@ function assembleFull(repositoryFiles: Record<string, string>): Record<string, s
 }
 
 /**
- * 単純Limited条件:
+ * Stage 0 単純Limited条件:
  * 1. testsファイル・型定義ファイルを優先して総枠に収める（per-file cap なし: 全文を渡す）
  * 2. 残り枠で実装ファイルを追加する（per-file cap あり: SIMPLE_LIMITED_MAX_CHARS_PER_FILE）
  * 3. 総文字数は SIMPLE_LIMITED_MAX_TOTAL_CHARS で打ち切る
