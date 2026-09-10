@@ -1,0 +1,82 @@
+{
+  "experiment_id": "p2-live-af-1789043621722",
+  "lineage_id": "lineage-0",
+  "generation": 0,
+  "condition": "AF",
+  "model": "gpt-5.6-luna",
+  "model_provenance": {
+    "provider": "openai",
+    "requestedModel": "gpt-5.6-luna",
+    "actualModel": "gpt-5.6-luna",
+    "responseId": "resp_03a5dff11143173f016aa2a3a5f89087d081edecf3f617a1ae",
+    "responseStatus": "completed",
+    "endpoint": "responses",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 8192,
+    "structuredOutput": true,
+    "storeResponses": false,
+    "requestedServiceTier": "default",
+    "actualServiceTier": "default",
+    "promptCacheMode": "implicit",
+    "promptVersion": "stage1-worker-v3-moi",
+    "promptHash": "20414dd374223bfacc16338877af9905d19501ea635752e04f34edc657560a51",
+    "schemaVersion": "repository-mutation-v2",
+    "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+    "pricingMode": "sync",
+    "continuationState": "none",
+    "incompleteReason": null,
+    "refusal": null,
+    "providerErrorCode": null,
+    "sdkVersion": null,
+    "retryPolicy": {
+      "maxRetries": 2,
+      "timeoutMs": 120000
+    }
+  },
+  "task_id": "T-local-1",
+  "context_budget": "full",
+  "actual_context_tokens": 2862,
+  "observable_interaction": {
+    "schema_version": "observable-interaction-v1",
+    "content_hash": "c575669ba904db0ad4be0dea3e742a876133f331828bb72b8b63a7427ac69950",
+    "token_count": 3467,
+    "token_count_method": "utf8-bytes-div4-v1",
+    "source_breakdown": {
+      "ephemeral-rationale": 47,
+      "task-feedback": 35,
+      "artifact-redundant": 1202,
+      "mutation-metadata": 2183
+    },
+    "inherited_previous_hash": null
+  },
+  "operational_full_feasibility": {
+    "checked": true,
+    "feasible": true,
+    "method": "utf8-byte-upper-bound-v1",
+    "contextCapacityTokens": 1050000,
+    "conservativeInputUpperBoundTokens": 17333,
+    "reservedOutputTokens": 8192
+  },
+  "functional_task_result": false,
+  "agent_execution_status": "ok",
+  "agent_error": null,
+  "explicit_working_note": "Added forceAdvanceVok as a guarded immutable nim→dor transition and registered it in the protocol operation table. Existing operations and protocol method signatures remain unchanged.",
+  "task_specific_test_result": {
+    "passed": false,
+    "numPassed": 2,
+    "numFailed": 1
+  },
+  "latency_ms": 13409,
+  "token_usage": {
+    "input": 4324,
+    "output": 1544,
+    "cachedInput": 4321,
+    "cacheWriteInput": 0,
+    "reasoningOutput": 81,
+    "total": 5868
+  },
+  "cost": 0.0019398199999999999,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

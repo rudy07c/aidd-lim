@@ -1,0 +1,82 @@
+{
+  "experiment_id": "p2-live-af-1789043621722",
+  "lineage_id": "lineage-0",
+  "generation": 1,
+  "condition": "AF",
+  "model": "gpt-5.6-luna",
+  "model_provenance": {
+    "provider": "openai",
+    "requestedModel": "gpt-5.6-luna",
+    "actualModel": "gpt-5.6-luna",
+    "responseId": "resp_077d8f0cb5001139016aa2a3b7705887d0ba3b9204fc19a43c",
+    "responseStatus": "completed",
+    "endpoint": "responses",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 8192,
+    "structuredOutput": true,
+    "storeResponses": false,
+    "requestedServiceTier": "default",
+    "actualServiceTier": "default",
+    "promptCacheMode": "implicit",
+    "promptVersion": "stage1-worker-v3-moi",
+    "promptHash": "20414dd374223bfacc16338877af9905d19501ea635752e04f34edc657560a51",
+    "schemaVersion": "repository-mutation-v2",
+    "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+    "pricingMode": "sync",
+    "continuationState": "none",
+    "incompleteReason": null,
+    "refusal": null,
+    "providerErrorCode": null,
+    "sdkVersion": null,
+    "retryPolicy": {
+      "maxRetries": 2,
+      "timeoutMs": 120000
+    }
+  },
+  "task_id": "T-crosscut-1",
+  "context_budget": "full",
+  "actual_context_tokens": 2944,
+  "observable_interaction": {
+    "schema_version": "observable-interaction-v1",
+    "content_hash": "be0d1593595e44a5afc08402ac3786ac696149cb04f032a514b3e933dbdabd6e",
+    "token_count": 2884,
+    "token_count_method": "utf8-bytes-div4-v1",
+    "source_breakdown": {
+      "ephemeral-rationale": 54,
+      "task-feedback": 24,
+      "artifact-redundant": 1025,
+      "mutation-metadata": 1781
+    },
+    "inherited_previous_hash": null
+  },
+  "operational_full_feasibility": {
+    "checked": true,
+    "feasible": true,
+    "method": "utf8-byte-upper-bound-v1",
+    "contextCapacityTokens": 1050000,
+    "conservativeInputUpperBoundTokens": 17619,
+    "reservedOutputTokens": 8192
+  },
+  "functional_task_result": true,
+  "agent_execution_status": "ok",
+  "agent_error": null,
+  "explicit_working_note": "Added atomic kindleBoth operation. It validates that Zef and Tal are both nim before returning an immutable state with both set to pex, preventing partial advancement; the operation is registered in protocol_adapter.",
+  "task_specific_test_result": {
+    "passed": true,
+    "numPassed": 3,
+    "numFailed": 0
+  },
+  "latency_ms": 13282,
+  "token_usage": {
+    "input": 4405,
+    "output": 1394,
+    "cachedInput": 0,
+    "cacheWriteInput": 4402,
+    "reasoningOutput": 185,
+    "total": 5799
+  },
+  "cost": 0.0027738999999999997,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

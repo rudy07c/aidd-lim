@@ -1,0 +1,3 @@
+{
+  "prompt": "[Previous observable interaction: 21975ff029c45d4437f8679f8ead4ae9ad19b47c266f4b0f17f3692fa9806364]\n[Context files: src/fen/rules.ts, src/fen/state.ts, src/osk/rules.ts, src/osk/state.ts, src/protocol_adapter.ts, src/tal/rules.ts, src/vok/rules.ts, src/vok/state.ts, src/world.ts, src/zef/rules.ts, tests/rules.visible.test.ts]\n\nTask:\nZef と Tal を同時に 'pex' へ進める新しい operation 'kindleBoth' を追加せよ。"
+}
