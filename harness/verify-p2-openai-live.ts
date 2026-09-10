@@ -4,9 +4,9 @@ import * as path from "path";
 import { validateResolvedRunConfig } from "./src/config/validate";
 import { validateObservableInteractionRecord } from "./src/context/observable-interaction";
 import { runGenerationLoop } from "./src/orchestrator";
-import { RunConfig, Stage1ContextConditionName } from "./src/types";
+import { RunConfig } from "./src/types";
 
-const CONDITIONS: readonly Stage1ContextConditionName[] = ["MOI", "AF"];
+const CONDITIONS: readonly ("MOI" | "AF")[] = ["MOI", "AF"];
 const MODEL = "gpt-5.6-luna";
 
 interface LiveConditionSummary {
