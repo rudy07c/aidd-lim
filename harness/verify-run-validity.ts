@@ -1,6 +1,6 @@
 import { shouldCensorGeneration } from "./src/orchestrator";
 import { validateRawRunConfig, validateResolvedRunConfig } from "./src/config/validate";
-import { RunConfig } from "./src/types";
+import { ContextConditionName, RunConfig } from "./src/types";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -54,14 +54,20 @@ assert(missingRunClassRejected, "runClass must be explicit in raw config");
 
 validateRawRunConfig({ runClass: "historical", backend: "mock-noop", stage: "stage1-looking-name" });
 
-function makeResolvedConfig(runClass: RunConfig["runClass"], tasks: string[], generations: number): RunConfig {
+function makeResolvedConfig(
+  runClass: RunConfig["runClass"],
+  tasks: string[],
+  generations: number,
+  condition: ContextConditionName = "AF",
+  contextBudget: RunConfig["contextBudget"] = "full"
+): RunConfig {
   return {
     experimentId: "verify-run-class",
     lineageId: "lineage-0",
     runClass,
     backend: "openai",
-    condition: "full",
-    contextBudget: "full",
+    condition,
+    contextBudget,
     generations,
     tasks,
     model: "gpt-5.6-luna",
@@ -80,6 +86,43 @@ function makeResolvedConfig(runClass: RunConfig["runClass"], tasks: string[], ge
 
 // Calibration may intentionally repeat the same task to estimate variance / floor behavior.
 validateResolvedRunConfig(makeResolvedConfig("scientific-calibration", ["T-local-1", "T-local-1"], 2));
+
+// Scientific runs must use the formal Stage 1 condition names, never historical aliases.
+for (const runClass of ["scientific-calibration", "scientific-main"] as const) {
+  for (const legacyCondition of ["full", "simple-limited"] as const) {
+    let rejected = false;
+    try {
+      validateResolvedRunConfig(
+        makeResolvedConfig(runClass, ["T-local-1"], 1, legacyCondition, "full")
+      );
+    } catch {
+      rejected = true;
+    }
+    assert(rejected, `${runClass} must reject legacy condition ${legacyCondition}`);
+  }
+}
+
+// Historical/smoke compatibility remains intact for Stage 0 and regression runs.
+validateResolvedRunConfig(makeResolvedConfig("historical", ["T-local-1"], 1, "full", "full"));
+validateResolvedRunConfig(makeResolvedConfig("historical", ["T-local-1"], 1, "simple-limited", 1000));
+validateResolvedRunConfig(makeResolvedConfig("smoke", ["T-local-1"], 1, "full", "full"));
+validateResolvedRunConfig(makeResolvedConfig("smoke", ["T-local-1"], 1, "simple-limited", 1000));
+
+// Operational-Full conditions cannot carry a numeric budget label that disagrees with runtime.
+for (const condition of ["AF", "MOI"] as const) {
+  validateResolvedRunConfig(
+    makeResolvedConfig("scientific-calibration", ["T-local-1"], 1, condition, "full")
+  );
+  let rejected = false;
+  try {
+    validateResolvedRunConfig(
+      makeResolvedConfig("scientific-calibration", ["T-local-1"], 1, condition, 1000)
+    );
+  } catch {
+    rejected = true;
+  }
+  assert(rejected, `${condition} must reject numeric contextBudget`);
+}
 
 let mainDuplicateRejected = false;
 try {
