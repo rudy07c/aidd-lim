@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import {
   EntityId,
   GroundTruth,
@@ -106,12 +108,7 @@ export function auditStage1ProbeBank(probes: GeneratedProbe[]): Stage1ProbeAudit
   const alwaysTrueCorrect = booleanProbes.filter((p) => scoreProbe(p, "true").correct).length;
   const alwaysFalseCorrect = booleanProbes.filter((p) => scoreProbe(p, "false").correct).length;
   const denominator = booleanProbes.length || 1;
-
-  // f5Warning is a conservative visible-test leakage heuristic from Stage 0.5.
   const f5Warnings = probes.filter((p) => p.f5Warning).map((p) => p.probeId);
-
-  // Raw GT IDs are evaluator-side vocabulary and must not appear in worker-facing prompts.
-  // Named repository vocabulary such as Vok/Zef is allowed; only E#/O#/I# identifiers are scanned.
   const rawGroundTruthIdLeakage = probes
     .filter((p) => /\b(?:E|O|I)\d+\b/.test(p.prompt))
     .map((p) => p.probeId);
@@ -150,4 +147,23 @@ export function assertStage1ProbeBankValid(probes: GeneratedProbe[]): Stage1Prob
     throw new Error(`Stage 1 prompts leak raw ground-truth ids: ${audit.rawGroundTruthIdLeakage.join(", ")}`);
   }
   return audit;
+}
+
+if (require.main === module) {
+  const swDir = path.join(__dirname, "../../synthetic-world");
+  const groundTruth: GroundTruth = JSON.parse(
+    fs.readFileSync(path.join(swDir, "ground_truth.json"), "utf8")
+  );
+  const schemes: NamingScheme[] = JSON.parse(
+    fs.readFileSync(path.join(swDir, "naming_schemes.json"), "utf8")
+  );
+  const scheme = schemes.find((candidate) => candidate.schemeId === "A-obfuscated");
+  if (!scheme) throw new Error("A-obfuscated naming scheme not found");
+
+  const visibleTestPath = path.join(swDir, "repository/tests/rules.visible.test.ts");
+  const probes = generateStage1Probes(groundTruth, scheme, visibleTestPath);
+  const audit = assertStage1ProbeBankValid(probes);
+  const outputPath = path.join(__dirname, "../fixtures/probe-bank-stage1.json");
+  fs.writeFileSync(outputPath, JSON.stringify(probes, null, 2) + "\n", "utf8");
+  console.log(JSON.stringify({ outputPath, audit }, null, 2));
 }
