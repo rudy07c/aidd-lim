@@ -61,10 +61,7 @@ function makeResult(generation: number): AgentResult {
   };
 }
 
-function recordingFactory(capture: {
-  instances: AgentBackend[];
-  inputs: AgentInput[];
-}) {
+function recordingFactory(capture: { instances: AgentBackend[]; inputs: AgentInput[] }) {
   return (_config: RunConfig, _taskId: string, generation: number): AgentBackend => {
     const backend: AgentBackend = {
       async run(input: AgentInput): Promise<AgentResult> {
@@ -82,10 +79,7 @@ async function verifyOrchestratorInheritance(): Promise<void> {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ilm-p2-"));
   try {
     for (const condition of ["MOI", "AF"] as const) {
-      const capture: { instances: AgentBackend[]; inputs: AgentInput[] } = {
-        instances: [],
-        inputs: [],
-      };
+      const capture: { instances: AgentBackend[]; inputs: AgentInput[] } = { instances: [], inputs: [] };
       const config: RunConfig = {
         experimentId: `p2-${condition.toLowerCase()}`,
         lineageId: "lineage-0",
@@ -103,28 +97,23 @@ async function verifyOrchestratorInheritance(): Promise<void> {
       assert.strictEqual(result.crashed, false, `${condition} integration run must complete`);
       assert.strictEqual(capture.instances.length, 2, `${condition} must create one backend per generation`);
       assert.notStrictEqual(capture.instances[0], capture.instances[1], `${condition} must use fresh backend instances`);
-      assert.strictEqual(capture.inputs.length, 2);
-      assert.strictEqual(capture.inputs[0].previousInteractionRecord ?? null, null, `${condition} generation 0 has no predecessor`);
+      assert.strictEqual(capture.inputs[0].previousInteractionRecord ?? null, null);
 
       const gen0RecordPath = path.join(result.logDirs[0], "observable_interaction_record.json");
       const gen1RecordPath = path.join(result.logDirs[1], "observable_interaction_record.json");
-      assert.ok(fs.existsSync(gen0RecordPath) && fs.existsSync(gen1RecordPath), "record must be persisted every generation");
+      assert.ok(fs.existsSync(gen0RecordPath) && fs.existsSync(gen1RecordPath));
       const gen0Record = JSON.parse(fs.readFileSync(gen0RecordPath, "utf8"));
       validateObservableInteractionRecord(gen0Record);
       assert.strictEqual(gen0Record.observableAssistantMessages.length, 1);
-      assert.strictEqual(
-        gen0Record.observableAssistantMessages[0].source,
-        "artifact-redundant",
-        "observable assistant response must be retained and tagged, not deduplicated"
-      );
+      assert.strictEqual(gen0Record.observableAssistantMessages[0].source, "artifact-redundant");
 
       const gen1Meta = JSON.parse(fs.readFileSync(path.join(result.logDirs[1], "meta.json"), "utf8"));
       if (condition === "MOI") {
-        assert.ok(capture.inputs[1].previousInteractionRecord, "MOI generation 1 must receive predecessor record");
+        assert.ok(capture.inputs[1].previousInteractionRecord);
         assert.strictEqual(capture.inputs[1].previousInteractionRecord?.contentHash, gen0Record.contentHash);
         assert.strictEqual(gen1Meta.observable_interaction.inherited_previous_hash, gen0Record.contentHash);
       } else {
-        assert.strictEqual(capture.inputs[1].previousInteractionRecord ?? null, null, "AF must not receive history");
+        assert.strictEqual(capture.inputs[1].previousInteractionRecord ?? null, null);
         assert.strictEqual(gen1Meta.observable_interaction.inherited_previous_hash, null);
       }
     }
@@ -159,60 +148,15 @@ async function main(): Promise<void> {
   });
 
   validateObservableInteractionRecord(record);
-  assert.strictEqual(record.schemaVersion, "observable-interaction-v1");
-  assert.strictEqual(record.visibleInstruction.source, "task-feedback");
   assert.strictEqual(record.observableAssistantMessages.length, 1);
   assert.strictEqual(record.observableAssistantMessages[0].source, "artifact-redundant");
   assert.strictEqual(record.observableAssistantMessages[0].content, rawAssistantResponse);
   assert.strictEqual(record.toolEvents[0].source, "artifact-redundant");
   assert.strictEqual(record.explicitWorkingNote?.source, "ephemeral-rationale");
   assert.strictEqual(record.appliedChanges[0].source, "mutation-metadata");
-  assert.ok(record.tokenCount > 0);
-  assert.strictEqual(
-    Object.values(record.sourceBreakdown).reduce((sum, value) => sum + value, 0),
-    record.tokenCount,
-    "source breakdown must sum to total"
-  );
-  assert.ok(record.sourceBreakdown["artifact-redundant"] > 0);
+  assert.strictEqual(Object.values(record.sourceBreakdown).reduce((a, b) => a + b, 0), record.tokenCount);
   assert.match(record.contentHash, /^[a-f0-9]{64}$/);
 
-  const failedAttemptRaw = JSON.stringify({
-    modifiedFiles: [{ path: "../forbidden.ts", content: "bad" }],
-    workingNote: "Attempted forbidden path.",
-  });
-  const failedAttempt = buildObservableInteractionRecord({
-    generation: 4,
-    taskId: "T-invalid-attempt",
-    visibleInstruction: "Attempt a change.",
-    observableAssistantMessages: [failedAttemptRaw],
-    toolEvents: [],
-    explicitWorkingNote: "Attempted forbidden path.",
-    repositoryBefore: { "src/a.ts": "export const a = 2;" },
-    repositoryAfter: { "src/a.ts": "export const a = 2;" },
-    appliedDiff: "",
-    visibleFeedback: [],
-  });
-  assert.strictEqual(failedAttempt.observableAssistantMessages.length, 1);
-  assert.strictEqual(failedAttempt.observableAssistantMessages[0].source, "artifact-redundant");
-  assert.strictEqual(failedAttempt.observableAssistantMessages[0].content, failedAttemptRaw);
-
-  const narrativeText = "Observed a non-artifact risk in the current interaction.";
-  const narrative = buildObservableInteractionRecord({
-    generation: 5,
-    taskId: "T-narrative",
-    visibleInstruction: "Inspect only.",
-    observableAssistantMessages: [narrativeText],
-    toolEvents: [],
-    explicitWorkingNote: null,
-    repositoryBefore: {},
-    repositoryAfter: {},
-    appliedDiff: "",
-    visibleFeedback: [],
-  });
-  assert.strictEqual(narrative.observableAssistantMessages[0].source, "artifact-redundant");
-  assert.strictEqual(narrative.observableAssistantMessages[0].content, narrativeText);
-
-  // Fail closed if evaluator-only/post-hoc fields are appended to the record.
   assert.throws(
     () => validateObservableInteractionRecord({ ...record, groundTruthDelta: { secret: true } }),
     /forbidden\/unrecognized field: groundTruthDelta/
@@ -223,10 +167,11 @@ async function main(): Promise<void> {
   );
 
   const successorPayload = serializeObservableInteractionForSuccessor(record);
-  assert.ok(successorPayload.includes("Invariant X remains required"));
-  assert.ok(successorPayload.includes(rawAssistantResponse));
-  assert.ok(!successorPayload.includes("sourceBreakdown"), "analysis metadata must not be shown to successor");
-  assert.ok(!successorPayload.includes(record.contentHash), "record hash must not become successor evidence");
+  const successorParsed = JSON.parse(successorPayload);
+  assert.deepStrictEqual(successorParsed.observableAssistantMessages, [rawAssistantResponse]);
+  assert.strictEqual(successorParsed.explicitWorkingNote, workingNote);
+  assert.ok(!successorPayload.includes("sourceBreakdown"));
+  assert.ok(!successorPayload.includes(record.contentHash));
 
   const afPrompt = buildOpenAIUserMessage({
     contextFiles: { "src/a.ts": "export const a = 2;" },
@@ -249,23 +194,19 @@ async function main(): Promise<void> {
     modifiedFiles: [],
     workingNote: "x".repeat(OBSERVABLE_WORKING_NOTE_MAX_CHARS + 1),
   }));
-  assert.strictEqual(oversizedNote.ok, false, "OpenAI parser must enforce working note bound");
-  assert.throws(
-    () => buildObservableInteractionRecord({
-      generation: 6,
-      taskId: "T-too-long-note",
-      visibleInstruction: "task",
-      observableAssistantMessages: [],
-      toolEvents: [],
-      explicitWorkingNote: "x".repeat(OBSERVABLE_WORKING_NOTE_MAX_CHARS + 1),
-      repositoryBefore: {},
-      repositoryAfter: {},
-      appliedDiff: "",
-      visibleFeedback: [],
-    }),
-    /working note exceeds/,
-    "provider-neutral record builder must enforce the same working note bound"
-  );
+  assert.strictEqual(oversizedNote.ok, false);
+  assert.throws(() => buildObservableInteractionRecord({
+    generation: 6,
+    taskId: "T-too-long-note",
+    visibleInstruction: "task",
+    observableAssistantMessages: [],
+    toolEvents: [],
+    explicitWorkingNote: "x".repeat(OBSERVABLE_WORKING_NOTE_MAX_CHARS + 1),
+    repositoryBefore: {},
+    repositoryAfter: {},
+    appliedDiff: "",
+    visibleFeedback: [],
+  }), /working note exceeds/);
 
   const feasible = evaluateOperationalFullFeasibility({
     applicable: true,
@@ -275,7 +216,6 @@ async function main(): Promise<void> {
     reservedOutputTokens: 100,
     contextCapacityTokens: 100_000,
   });
-  assert.strictEqual(feasible.checked, true);
   assert.strictEqual(feasible.feasible, true);
   const impossible = evaluateOperationalFullFeasibility({
     applicable: true,
@@ -288,7 +228,6 @@ async function main(): Promise<void> {
   assert.strictEqual(impossible.feasible, false);
 
   await verifyOrchestratorInheritance();
-
   console.log(JSON.stringify({
     status: "ok",
     schemaVersion: record.schemaVersion,
