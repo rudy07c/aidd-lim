@@ -61,7 +61,6 @@ jobs:
               '  console.log(`  budgets: ${budgets.join(", ")}`);\n  console.log(`  probe bank: ${probeBank}`);\n')
           rep('  runCalibration({ backend, model, budgets, taskFilter: taskFilter ?? undefined }).then((result) => {\n',
               '  runCalibration({ backend, model, budgets, taskFilter: taskFilter ?? undefined, probeBank }).then((result) => {\n')
-
           p.write_text(s)
 
           p = Path('calibration/src/calibration-logging.ts')
@@ -72,12 +71,15 @@ jobs:
               if actual != count:
                   raise SystemExit(f'logging: expected {count}, got {actual}: {old[:80]!r}')
               s = s.replace(old, new, count)
+
           repl('    backend: result.backend,\n    timestamp,\n',
                '    backend: result.backend,\n    probeBank: result.probeBank,\n    timestamp,\n')
           repl('      contextTokens: s1.contextTokens,\n',
-               '      contextTokens: s1.contextTokens,\n      canonicalContextTokens: s1.canonicalContextTokens,\n', 2)
+               '      contextTokens: s1.contextTokens,\n      canonicalContextTokens: s1.canonicalContextTokens,\n')
+          repl('    contextTokens: s1.contextTokens,\n',
+               '    contextTokens: s1.contextTokens,\n    canonicalContextTokens: s1.canonicalContextTokens,\n')
           repl('      contextTokens: s2.contextTokens,\n',
-               '      contextTokens: s2.contextTokens,\n      canonicalContextTokens: s2.canonicalContextTokens,\n', 1)
+               '      contextTokens: s2.contextTokens,\n      canonicalContextTokens: s2.canonicalContextTokens,\n')
           repl('    contextTokens: s2.contextTokens,\n    passRate: s2.passRate,\n',
                '    contextTokens: s2.contextTokens,\n    canonicalContextTokens: s2.canonicalContextTokens,\n    passRate: s2.passRate,\n')
           p.write_text(s)
