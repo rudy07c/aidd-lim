@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "js-tiktoken": "^1.0.21"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",
