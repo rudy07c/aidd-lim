@@ -10,6 +10,15 @@ import {
 import { GeneratedProbe, generateProbes } from "./probe-generator";
 import { scoreProbe } from "./probe-scorer";
 
+/** Must match the current calibration runner batching when auditing positional balance. */
+export const STAGE1_PROBE_BATCH_SIZE = 20;
+
+export interface Stage1ProbeBatchAudit {
+  batchIndex: number;
+  booleanTrue: number;
+  booleanFalse: number;
+}
+
 export interface Stage1ProbeAudit {
   total: number;
   booleanTotal: number;
@@ -18,6 +27,7 @@ export interface Stage1ProbeAudit {
   matchedNegativeCount: number;
   alwaysTrueAccuracy: number;
   alwaysFalseAccuracy: number;
+  batchBooleanBalance: Stage1ProbeBatchAudit[];
   f5Warnings: string[];
   rawGroundTruthIdLeakage: string[];
 }
@@ -32,8 +42,9 @@ function sName(scheme: NamingScheme, entityId: EntityId, stateId: StateId): stri
 
 /**
  * Build the Stage 1 bank without mutating Stage 0.5's historical generator/fixture.
- * The old generator's positive boolean probes are retained, and each receives a
- * mechanically matched negative probe grounded in the same invariant.
+ * Every historical positive boolean probe is immediately followed by a mechanically
+ * matched negative grounded in the same invariant. Pair adjacency prevents the
+ * runner's 20-probe API batching from correlating boolean label with batch position.
  */
 export function generateStage1Probes(
   groundTruth: GroundTruth,
@@ -41,60 +52,69 @@ export function generateStage1Probes(
   visibleTestPath?: string
 ): GeneratedProbe[] {
   const legacySafe = generateProbes(groundTruth, scheme, visibleTestPath).filter((p) => !p.f5Warning);
-  const result: GeneratedProbe[] = [...legacySafe];
   const invariantById = new Map(groundTruth.invariants.map((inv) => [inv.id, inv]));
+  const result: GeneratedProbe[] = [];
 
-  for (const positive of legacySafe.filter((p) => p.type === "boolean" && p.correctAnswer === true)) {
-    const invariantId = String(positive.derivedFrom.invariantId ?? "");
-    const inv = invariantById.get(invariantId);
-    if (!inv) throw new Error(`Stage 1 probe ${positive.probeId} references unknown invariant ${invariantId}`);
-
-    const condEntity = eName(scheme, inv.condition.entity);
-    const condState = sName(scheme, inv.condition.entity, inv.condition.state);
-    const reqEntity = eName(scheme, inv.requires.entity);
-    const reqState = sName(scheme, inv.requires.entity, inv.requires.state);
-    const kind = String(positive.derivedFrom.kind ?? "");
-
-    if (kind === "invariant_violation_check") {
-      result.push({
-        probeId: `${positive.probeId}-matched-negative`,
-        type: "boolean",
-        namingScheme: scheme.schemeId,
-        prompt: `${condEntity} が '${condState}' で、${reqEntity} が '${reqState}' である状態は、この世界のinvariantに違反するか？`,
-        correctAnswer: false,
-        derivedFrom: {
-          kind: "invariant_violation_check_matched_negative",
-          invariantId: inv.id,
-          encoding: inv.encoding,
-          matchedPositiveProbeId: positive.probeId,
-        },
-        note: "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。",
-      });
-      continue;
+  for (const probe of legacySafe) {
+    result.push(probe);
+    if (probe.type === "boolean" && probe.correctAnswer === true) {
+      result.push(buildMatchedNegative(probe, groundTruth, scheme, invariantById));
     }
+  }
+  return result;
+}
 
-    if (kind === "invariant_stress_reasoning") {
-      result.push({
-        probeId: `${positive.probeId}-matched-negative`,
-        type: "boolean",
-        namingScheme: scheme.schemeId,
-        prompt: `もし新しいoperationが追加され、${reqEntity} が '${reqState}' である場合に限って ${condEntity} を '${condState}' へ遷移させられる場合、このoperationは ${condEntity} と ${reqEntity} のこのinvariantに違反する状態を新たに作るか？`,
-        correctAnswer: false,
-        derivedFrom: {
-          kind: "invariant_stress_reasoning_matched_negative",
-          invariantId: inv.id,
-          encoding: inv.encoding,
-          matchedPositiveProbeId: positive.probeId,
-        },
-        note: "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。",
-      });
-      continue;
-    }
+function buildMatchedNegative(
+  positive: GeneratedProbe,
+  _groundTruth: GroundTruth,
+  scheme: NamingScheme,
+  invariantById: Map<string, GroundTruth["invariants"][number]>
+): GeneratedProbe {
+  const invariantId = String(positive.derivedFrom.invariantId ?? "");
+  const inv = invariantById.get(invariantId);
+  if (!inv) throw new Error(`Stage 1 probe ${positive.probeId} references unknown invariant ${invariantId}`);
 
-    throw new Error(`Unsupported Stage 1 boolean probe kind: ${kind}`);
+  const condEntity = eName(scheme, inv.condition.entity);
+  const condState = sName(scheme, inv.condition.entity, inv.condition.state);
+  const reqEntity = eName(scheme, inv.requires.entity);
+  const reqState = sName(scheme, inv.requires.entity, inv.requires.state);
+  const kind = String(positive.derivedFrom.kind ?? "");
+
+  if (kind === "invariant_violation_check") {
+    return {
+      probeId: `${positive.probeId}-matched-negative`,
+      type: "boolean",
+      namingScheme: scheme.schemeId,
+      prompt: `${condEntity} が '${condState}' で、${reqEntity} が '${reqState}' である状態は、この世界のinvariantに違反するか？`,
+      correctAnswer: false,
+      derivedFrom: {
+        kind: "invariant_violation_check_matched_negative",
+        invariantId: inv.id,
+        encoding: inv.encoding,
+        matchedPositiveProbeId: positive.probeId,
+      },
+      note: "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。",
+    };
   }
 
-  return result;
+  if (kind === "invariant_stress_reasoning") {
+    return {
+      probeId: `${positive.probeId}-matched-negative`,
+      type: "boolean",
+      namingScheme: scheme.schemeId,
+      prompt: `もし新しいoperationが追加され、${reqEntity} が '${reqState}' である場合に限って ${condEntity} を '${condState}' へ遷移させられる場合、このoperationは ${condEntity} と ${reqEntity} のこのinvariantに違反する状態を新たに作るか？`,
+      correctAnswer: false,
+      derivedFrom: {
+        kind: "invariant_stress_reasoning_matched_negative",
+        invariantId: inv.id,
+        encoding: inv.encoding,
+        matchedPositiveProbeId: positive.probeId,
+      },
+      note: "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。",
+    };
+  }
+
+  throw new Error(`Unsupported Stage 1 boolean probe kind: ${kind}`);
 }
 
 export function auditStage1ProbeBank(probes: GeneratedProbe[]): Stage1ProbeAudit {
@@ -108,6 +128,17 @@ export function auditStage1ProbeBank(probes: GeneratedProbe[]): Stage1ProbeAudit
   const alwaysTrueCorrect = booleanProbes.filter((p) => scoreProbe(p, "true").correct).length;
   const alwaysFalseCorrect = booleanProbes.filter((p) => scoreProbe(p, "false").correct).length;
   const denominator = booleanProbes.length || 1;
+
+  const batchBooleanBalance: Stage1ProbeBatchAudit[] = [];
+  for (let start = 0, batchIndex = 0; start < probes.length; start += STAGE1_PROBE_BATCH_SIZE, batchIndex++) {
+    const booleans = probes.slice(start, start + STAGE1_PROBE_BATCH_SIZE).filter((p) => p.type === "boolean");
+    batchBooleanBalance.push({
+      batchIndex,
+      booleanTrue: booleans.filter((p) => p.correctAnswer === true).length,
+      booleanFalse: booleans.filter((p) => p.correctAnswer === false).length,
+    });
+  }
+
   const f5Warnings = probes.filter((p) => p.f5Warning).map((p) => p.probeId);
   const rawGroundTruthIdLeakage = probes
     .filter((p) => /\b(?:E|O|I)\d+\b/.test(p.prompt))
@@ -121,6 +152,7 @@ export function auditStage1ProbeBank(probes: GeneratedProbe[]): Stage1ProbeAudit
     matchedNegativeCount,
     alwaysTrueAccuracy: alwaysTrueCorrect / denominator,
     alwaysFalseAccuracy: alwaysFalseCorrect / denominator,
+    batchBooleanBalance,
     f5Warnings,
     rawGroundTruthIdLeakage,
   };
@@ -139,6 +171,14 @@ export function assertStage1ProbeBankValid(probes: GeneratedProbe[]): Stage1Prob
     throw new Error(
       `Constant-answer baseline too strong: alwaysTrue=${audit.alwaysTrueAccuracy}, alwaysFalse=${audit.alwaysFalseAccuracy}`
     );
+  }
+  for (const batch of audit.batchBooleanBalance) {
+    if (batch.booleanTrue !== batch.booleanFalse) {
+      throw new Error(
+        `Stage 1 boolean labels are positionally imbalanced in API batch ${batch.batchIndex}: ` +
+        `true=${batch.booleanTrue}, false=${batch.booleanFalse}`
+      );
+    }
   }
   if (audit.f5Warnings.length > 0) {
     throw new Error(`Stage 1 probe bank contains F5 leakage warnings: ${audit.f5Warnings.join(", ")}`);
