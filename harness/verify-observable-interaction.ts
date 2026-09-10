@@ -111,10 +111,11 @@ async function verifyOrchestratorInheritance(): Promise<void> {
       assert.ok(fs.existsSync(gen0RecordPath) && fs.existsSync(gen1RecordPath), "record must be persisted every generation");
       const gen0Record = JSON.parse(fs.readFileSync(gen0RecordPath, "utf8"));
       validateObservableInteractionRecord(gen0Record);
-      assert.deepStrictEqual(
-        gen0Record.observableAssistantMessages,
-        [],
-        "fully redundant successful structured mutation must not be inherited twice"
+      assert.strictEqual(gen0Record.observableAssistantMessages.length, 1);
+      assert.strictEqual(
+        gen0Record.observableAssistantMessages[0].source,
+        "artifact-redundant",
+        "observable assistant response must be retained and tagged, not deduplicated"
       );
 
       const gen1Meta = JSON.parse(fs.readFileSync(path.join(result.logDirs[1], "meta.json"), "utf8"));
@@ -134,14 +135,15 @@ async function verifyOrchestratorInheritance(): Promise<void> {
 
 async function main(): Promise<void> {
   const workingNote = "Invariant X remains required; src/a.ts now uses value 2.";
+  const rawAssistantResponse = JSON.stringify({
+    modifiedFiles: [{ path: "src/a.ts", content: "export const a = 2;" }],
+    workingNote,
+  });
   const record = buildObservableInteractionRecord({
     generation: 3,
     taskId: "T-example",
     visibleInstruction: "Change the example without breaking the contract.",
-    observableAssistantMessages: [JSON.stringify({
-      modifiedFiles: [{ path: "src/a.ts", content: "export const a = 2;" }],
-      workingNote,
-    })],
+    observableAssistantMessages: [rawAssistantResponse],
     toolEvents: [{
       callId: "call-1",
       toolName: "read_repository_chunk",
@@ -159,11 +161,9 @@ async function main(): Promise<void> {
   validateObservableInteractionRecord(record);
   assert.strictEqual(record.schemaVersion, "observable-interaction-v1");
   assert.strictEqual(record.visibleInstruction.source, "task-feedback");
-  assert.deepStrictEqual(
-    record.observableAssistantMessages,
-    [],
-    "successful structured mutation envelope is redundant with repository/diff/note and must be omitted"
-  );
+  assert.strictEqual(record.observableAssistantMessages.length, 1);
+  assert.strictEqual(record.observableAssistantMessages[0].source, "artifact-redundant");
+  assert.strictEqual(record.observableAssistantMessages[0].content, rawAssistantResponse);
   assert.strictEqual(record.toolEvents[0].source, "artifact-redundant");
   assert.strictEqual(record.explicitWorkingNote?.source, "ephemeral-rationale");
   assert.strictEqual(record.appliedChanges[0].source, "mutation-metadata");
@@ -173,18 +173,18 @@ async function main(): Promise<void> {
     record.tokenCount,
     "source breakdown must sum to total"
   );
+  assert.ok(record.sourceBreakdown["artifact-redundant"] > 0);
   assert.match(record.contentHash, /^[a-f0-9]{64}$/);
 
-  // A structured mutation that did not reach repositoryAfter remains scientifically relevant
-  // mutation metadata, but its already-separated working note is not duplicated.
+  const failedAttemptRaw = JSON.stringify({
+    modifiedFiles: [{ path: "../forbidden.ts", content: "bad" }],
+    workingNote: "Attempted forbidden path.",
+  });
   const failedAttempt = buildObservableInteractionRecord({
     generation: 4,
     taskId: "T-invalid-attempt",
     visibleInstruction: "Attempt a change.",
-    observableAssistantMessages: [JSON.stringify({
-      modifiedFiles: [{ path: "../forbidden.ts", content: "bad" }],
-      workingNote: "Attempted forbidden path.",
-    })],
+    observableAssistantMessages: [failedAttemptRaw],
     toolEvents: [],
     explicitWorkingNote: "Attempted forbidden path.",
     repositoryBefore: { "src/a.ts": "export const a = 2;" },
@@ -193,15 +193,15 @@ async function main(): Promise<void> {
     visibleFeedback: [],
   });
   assert.strictEqual(failedAttempt.observableAssistantMessages.length, 1);
-  assert.strictEqual(failedAttempt.observableAssistantMessages[0].source, "mutation-metadata");
-  assert.ok(failedAttempt.observableAssistantMessages[0].content.includes("../forbidden.ts"));
-  assert.ok(!failedAttempt.observableAssistantMessages[0].content.includes("Attempted forbidden path"));
+  assert.strictEqual(failedAttempt.observableAssistantMessages[0].source, "artifact-redundant");
+  assert.strictEqual(failedAttempt.observableAssistantMessages[0].content, failedAttemptRaw);
 
+  const narrativeText = "Observed a non-artifact risk in the current interaction.";
   const narrative = buildObservableInteractionRecord({
     generation: 5,
     taskId: "T-narrative",
     visibleInstruction: "Inspect only.",
-    observableAssistantMessages: ["Observed a non-artifact risk in the current interaction."],
+    observableAssistantMessages: [narrativeText],
     toolEvents: [],
     explicitWorkingNote: null,
     repositoryBefore: {},
@@ -209,7 +209,8 @@ async function main(): Promise<void> {
     appliedDiff: "",
     visibleFeedback: [],
   });
-  assert.strictEqual(narrative.observableAssistantMessages[0].source, "ephemeral-rationale");
+  assert.strictEqual(narrative.observableAssistantMessages[0].source, "artifact-redundant");
+  assert.strictEqual(narrative.observableAssistantMessages[0].content, narrativeText);
 
   // Fail closed if evaluator-only/post-hoc fields are appended to the record.
   assert.throws(
@@ -223,7 +224,7 @@ async function main(): Promise<void> {
 
   const successorPayload = serializeObservableInteractionForSuccessor(record);
   assert.ok(successorPayload.includes("Invariant X remains required"));
-  assert.ok(successorPayload.includes('"observableAssistantMessages":[]'));
+  assert.ok(successorPayload.includes(rawAssistantResponse));
   assert.ok(!successorPayload.includes("sourceBreakdown"), "analysis metadata must not be shown to successor");
   assert.ok(!successorPayload.includes(record.contentHash), "record hash must not become successor evidence");
 
@@ -298,8 +299,7 @@ async function main(): Promise<void> {
       "record-build-and-hash",
       "forbidden-field-guard",
       "source-tagging",
-      "successful-structured-mutation-dedup",
-      "failed-mutation-attempt-preservation",
+      "maximal-observable-assistant-retention",
       "successor-serialization",
       "AF-vs-MOI-prompt-difference",
       "provider-neutral-working-note-bound",
