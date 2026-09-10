@@ -13,6 +13,7 @@
     "verify:openai-batch": "ts-node verify-openai-batch.ts",
     "verify:openai-live": "ts-node verify-openai-live.ts",
     "verify:openai-batch-live": "ts-node verify-openai-batch-live.ts",
+    "verify:p2-openai-live": "ts-node verify-p2-openai-live.ts",
     "verify:run-validity": "ts-node verify-run-validity.ts"
   },
   "dependencies": {
