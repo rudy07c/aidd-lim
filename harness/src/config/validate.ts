@@ -6,6 +6,7 @@ import {
   PromptCacheMode,
   RunClass,
   RunConfig,
+  isStage1ContextConditionName,
 } from "../types";
 
 const BACKENDS: BackendType[] = ["mock-noop", "mock-oracle", "anthropic", "openai"];
@@ -90,6 +91,17 @@ export function validateResolvedRunConfig(config: RunConfig): void {
   if (config.tasks.length === 0) throw new Error("tasks must contain at least one task id");
   if (config.tasks.some((taskId) => taskId.length === 0)) throw new Error("task ids must be non-empty strings");
 
+  const requiresScientificFreeze =
+    config.runClass === "scientific-calibration" || config.runClass === "scientific-main";
+  if (requiresScientificFreeze && !isStage1ContextConditionName(config.condition)) {
+    throw new Error(
+      `Scientific Stage 1/2 runs require a Stage 1 condition (MOI/AF/EL/PR/AR); legacy condition ${config.condition} is historical/smoke-only`
+    );
+  }
+  if ((config.condition === "AF" || config.condition === "MOI") && config.contextBudget !== "full") {
+    throw new Error(`${config.condition} requires contextBudget="full"; numeric context budgets would misrepresent Operational-Full semantics`);
+  }
+
   const reasoningEfforts = new Set(["none", "low", "medium", "high", "xhigh", "max"]);
   if (config.reasoningEffort !== undefined && !reasoningEfforts.has(config.reasoningEffort)) {
     throw new Error(`Unsupported reasoningEffort: ${config.reasoningEffort}`);
@@ -109,8 +121,6 @@ export function validateResolvedRunConfig(config: RunConfig): void {
     if (value !== undefined && (!Number.isInteger(value) || value < min)) throw new Error(`${key} must be an integer >= ${min}`);
   }
 
-  const requiresScientificFreeze =
-    config.runClass === "scientific-calibration" || config.runClass === "scientific-main";
   if (requiresScientificFreeze && config.backend === "openai") {
     if (!config.model) throw new Error("Stage 1/2 OpenAI run must explicitly freeze model");
     if (!config.reasoningEffort) throw new Error("Stage 1/2 OpenAI run must explicitly freeze reasoningEffort");
