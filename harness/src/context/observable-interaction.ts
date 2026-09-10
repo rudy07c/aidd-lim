@@ -92,11 +92,6 @@ export interface OperationalFullFeasibility {
   reservedOutputTokens: number | null;
 }
 
-interface StructuredMutationEnvelope {
-  modifiedFiles: Array<{ path: string; content: string }>;
-  workingNote: string;
-}
-
 const SOURCE_KEYS: ObservableInteractionSource[] = [
   "ephemeral-rationale",
   "task-feedback",
@@ -138,11 +133,16 @@ export function buildObservableInteractionRecord(
   }
 
   const visibleInstruction = textItem("task-feedback", input.visibleInstruction);
-  const observableAssistantMessages = normalizeAssistantMessages(
-    input.observableAssistantMessages,
-    input.repositoryAfter,
-    input.explicitWorkingNote
+
+  // MOI is Maximal Observable Inheritance: do not make a post-hoc semantic decision about
+  // whether an observable assistant response is redundant enough to discard. Structured
+  // mutation responses often repeat information that is also present in repositoryAfter,
+  // appliedDiff, and explicitWorkingNote; keep them verbatim and tag that channel as
+  // artifact-redundant so later analysis/ablation can include or exclude it explicitly.
+  const observableAssistantMessages = input.observableAssistantMessages.map((content) =>
+    textItem("artifact-redundant", content)
   );
+
   const toolEvents: ObservableToolEventItem[] = input.toolEvents.map((event) => {
     const payload = {
       callId: event.callId,
@@ -158,6 +158,7 @@ export function buildObservableInteractionRecord(
       tokenCount: estimateObservableTokens(stableStringify(payload)),
     };
   });
+
   const explicitWorkingNote = input.explicitWorkingNote === null
     ? null
     : textItem("ephemeral-rationale", input.explicitWorkingNote);
@@ -212,75 +213,6 @@ export function buildObservableInteractionRecord(
 }
 
 /**
- * Avoid an MOI-only repetition/salience confound. A successful Structured Mutation contains
- * complete file contents plus the same working note that are already represented by the current
- * repository, applied diff and explicitWorkingNote. That envelope is therefore omitted from the
- * inherited record while remaining available in the ordinary raw response log.
- *
- * If a mutation was not fully applied (for example path validation failed), preserve only the
- * attempted modifiedFiles as mutation-metadata. If the envelope's note is not preserved by the
- * explicit working-note channel, preserve that note separately as ephemeral rationale. Other
- * assistant text is retained verbatim as ephemeral rationale.
- */
-function normalizeAssistantMessages(
-  messages: string[],
-  repositoryAfter: Record<string, string>,
-  explicitWorkingNote: string | null
-): ObservableTextItem[] {
-  const normalized: ObservableTextItem[] = [];
-  for (const content of messages) {
-    const mutation = parseStructuredMutationEnvelope(content);
-    if (mutation === null) {
-      normalized.push(textItem("ephemeral-rationale", content));
-      continue;
-    }
-
-    const filesFullyApplied = mutation.modifiedFiles.every(
-      (file) => repositoryAfter[file.path] === file.content
-    );
-    const notePreserved = explicitWorkingNote === mutation.workingNote;
-
-    if (!filesFullyApplied && mutation.modifiedFiles.length > 0) {
-      normalized.push(
-        textItem(
-          "mutation-metadata",
-          stableStringify({ modifiedFiles: mutation.modifiedFiles })
-        )
-      );
-    }
-    if (!notePreserved && mutation.workingNote.length > 0) {
-      normalized.push(textItem("ephemeral-rationale", mutation.workingNote));
-    }
-  }
-  return normalized;
-}
-
-function parseStructuredMutationEnvelope(content: string): StructuredMutationEnvelope | null {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return null;
-  }
-  if (!isRecord(parsed)) return null;
-  const keys = Object.keys(parsed).sort();
-  if (keys.length !== 2 || keys[0] !== "modifiedFiles" || keys[1] !== "workingNote") return null;
-  if (!Array.isArray(parsed.modifiedFiles) || typeof parsed.workingNote !== "string") return null;
-  const files: Array<{ path: string; content: string }> = [];
-  const seen = new Set<string>();
-  for (const item of parsed.modifiedFiles) {
-    if (!isRecord(item)) return null;
-    const itemKeys = Object.keys(item).sort();
-    if (itemKeys.length !== 2 || itemKeys[0] !== "content" || itemKeys[1] !== "path") return null;
-    if (typeof item.path !== "string" || typeof item.content !== "string") return null;
-    if (seen.has(item.path)) return null;
-    seen.add(item.path);
-    files.push({ path: item.path, content: item.content });
-  }
-  return { modifiedFiles: files, workingNote: parsed.workingNote };
-}
-
-/**
  * Fail-closed schema validator. Exact record keys prevent evaluator-only fields from being
  * appended post-hoc. Opaque tool arguments/results are allowed because they are data that was
  * actually shown through a worker-visible tool; P5 owns hidden-data isolation for tool access.
@@ -295,11 +227,7 @@ export function validateObservableInteractionRecord(
   if (typeof value.taskId !== "string" || value.taskId.length === 0) throw new Error("Invalid ObservableInteractionRecord taskId");
   validateTextItem(value.visibleInstruction, new Set(["task-feedback"]), "visibleInstruction");
   validateArray(value.observableAssistantMessages, (item, index) =>
-    validateTextItem(
-      item,
-      new Set<ObservableInteractionSource>(["ephemeral-rationale", "mutation-metadata"]),
-      `observableAssistantMessages[${index}]`
-    )
+    validateTextItem(item, new Set(["artifact-redundant"]), `observableAssistantMessages[${index}]`)
   );
   validateArray(value.toolEvents, validateToolEvent);
   if (value.explicitWorkingNote !== null) {
