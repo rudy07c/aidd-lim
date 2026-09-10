@@ -57,6 +57,9 @@ jobs:
       - name: Verify P3 measurement repair
         working-directory: calibration
         run: npm run verify:p3
+      - name: Smoke Stage 1 calibration probe bank
+        working-directory: calibration
+        run: npx ts-node src/calibration-runner.ts --backend=mock-noop --budgets=0 --tasks=T-local-1 --probe-bank=stage1
       - name: Verify run validity semantics
         working-directory: harness
         run: npm run verify:run-validity
