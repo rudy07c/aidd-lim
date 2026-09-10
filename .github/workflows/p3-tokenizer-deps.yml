@@ -1,4 +1,4 @@
-name: P3 Tokenizer Dependency Update
+name: P3 Stage 1 Probe Fixture
 
 on:
   push:
@@ -9,27 +9,33 @@ permissions:
   contents: write
 
 jobs:
-  update-locks:
+  generate-fixture:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Add canonical tokenizer to harness
+      - name: Install harness dependencies
         working-directory: harness
-        run: npm install js-tiktoken@1.0.21 --save
-      - name: Add canonical tokenizer to calibration
+        run: npm ci
+      - name: Install calibration dependencies
         working-directory: calibration
-        run: npm install js-tiktoken@1.0.21 --save
-      - name: Commit generated manifests and lockfiles
+        run: npm ci
+      - name: Generate balanced Stage 1 probe bank
+        working-directory: calibration
+        run: npm run generate-probes:stage1
+      - name: Verify P3 measurement gate
+        working-directory: calibration
+        run: npm run verify:p3
+      - name: Commit generated Stage 1 fixture
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add harness/package.json harness/package-lock.json calibration/package.json calibration/package-lock.json
+          git add calibration/fixtures/probe-bank-stage1.json
           if git diff --cached --quiet; then
-            echo "No dependency changes needed."
+            echo "Fixture already up to date."
             exit 0
           fi
-          git commit -m "chore: add canonical tokenizer dependency"
+          git commit -m "test: add balanced Stage 1 probe bank fixture"
           git push
