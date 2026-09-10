@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "generate-probes": "ts-node src/probe-generator.ts"
+    "generate-probes": "ts-node src/probe-generator.ts",
+    "generate-probes:stage1": "ts-node src/stage1-probes.ts",
+    "verify:p3": "ts-node verify-p3-measurement.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
