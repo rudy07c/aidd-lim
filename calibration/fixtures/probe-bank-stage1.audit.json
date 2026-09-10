@@ -1,0 +1,42 @@
+{
+  "fixture": "probe-bank-stage1.json",
+  "generatorCommit": "bd07ce1da703114cc6a97e8439de4d246fdec825",
+  "fixtureCommit": "d8b52c055c42df25a39e66169f4e90eee3188676",
+  "regenerationWorkflowRun": "https://github.com/rudy07c/aidd-lim/actions/runs/34482576681",
+  "generatedAt": "2026-09-10T13:26:01Z",
+  "audit": {
+    "total": 45,
+    "booleanTotal": 24,
+    "booleanTrue": 12,
+    "booleanFalse": 12,
+    "matchedNegativeCount": 12,
+    "alwaysTrueAccuracy": 0.5,
+    "alwaysFalseAccuracy": 0.5,
+    "batchBooleanBalance": [
+      {
+        "batchIndex": 0,
+        "booleanTrue": 6,
+        "booleanFalse": 6
+      },
+      {
+        "batchIndex": 1,
+        "booleanTrue": 6,
+        "booleanFalse": 6
+      },
+      {
+        "batchIndex": 2,
+        "booleanTrue": 0,
+        "booleanFalse": 0
+      }
+    ],
+    "f5Warnings": [],
+    "rawGroundTruthIdLeakage": []
+  },
+  "booleanLabelOrder": [
+    "true", "false", "true", "false", "true", "false",
+    "true", "false", "true", "false", "true", "false",
+    "true", "false", "true", "false", "true", "false",
+    "true", "false", "true", "false", "true", "false"
+  ],
+  "interleaveVerified": true
+}
