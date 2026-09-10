@@ -59,6 +59,7 @@ export function writeCalibrationLog(
   writeJson(runDir, "run_meta.json", {
     runId,
     backend: result.backend,
+    probeBank: result.probeBank,
     timestamp,
     ...options.meta,
   });
@@ -68,6 +69,7 @@ export function writeCalibrationLog(
     system1: result.system1.map((s1) => ({
       budget: s1.budget,
       contextTokens: s1.contextTokens,
+      canonicalContextTokens: s1.canonicalContextTokens,
       // 主指標: boolean型プローブのみ（mc/stpはreference。F9参照）
       boolAccuracy: s1.boolAccuracy,
       boolNumCorrect: s1.boolNumCorrect,
@@ -83,6 +85,7 @@ export function writeCalibrationLog(
     system2: result.system2.map((s2) => ({
       budget: s2.budget,
       contextTokens: s2.contextTokens,
+      canonicalContextTokens: s2.canonicalContextTokens,
       passRate: s2.passRate,
       numPassed: s2.numPassed,
       numTotal: s2.numTotal,
@@ -128,6 +131,7 @@ function writeSystem1BudgetLog(runDir: string, s1: System1BudgetResult): void {
   writeJson(dir, "meta.json", {
     budget: s1.budget,
     contextTokens: s1.contextTokens,
+    canonicalContextTokens: s1.canonicalContextTokens,
     // 主指標: boolean型プローブのみ（mc/stpはreference。F9参照）
     boolAccuracy: s1.boolAccuracy,
     boolNumCorrect: s1.boolNumCorrect,
@@ -170,6 +174,7 @@ function writeSystem2BudgetLog(runDir: string, s2: System2BudgetResult): void {
   writeJson(budgetDir, "summary.json", {
     budget: s2.budget,
     contextTokens: s2.contextTokens,
+    canonicalContextTokens: s2.canonicalContextTokens,
     passRate: s2.passRate,
     numPassed: s2.numPassed,
     numTotal: s2.numTotal,

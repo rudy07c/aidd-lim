@@ -40,6 +40,7 @@ import type { TestCaseResult } from "../../harness/src/types";
 // ---- 公開型 ----
 
 export type CalibrationBackend = "mock-noop" | "mock-oracle" | "anthropic";
+export type ProbeBankMode = "legacy" | "stage1";
 
 export interface CalibrationOptions {
   backend: CalibrationBackend;
@@ -48,6 +49,8 @@ export interface CalibrationOptions {
   model?: string;
   /** 実行するtaskIdのリスト。省略時は全タスク */
   taskFilter?: string[];
+  /** legacy keeps Stage 0.5 reproducibility; Stage 1/P6 must explicitly select stage1. */
+  probeBank?: ProbeBankMode;
 }
 
 export interface System1TaskResult {
@@ -61,7 +64,10 @@ export interface System1TaskResult {
 
 export interface System1BudgetResult {
   budget: BudgetValue;
+  /** Stage 0.5 historical char/4 approximation. */
   contextTokens: number;
+  /** Stage 1 canonical o200k_base content tokens. */
+  canonicalContextTokens: number;
   numCorrect: number;
   numTotal: number;
   accuracy: number;
@@ -116,7 +122,10 @@ export interface System2TaskResult {
 
 export interface System2BudgetResult {
   budget: BudgetValue;
+  /** Stage 0.5 historical char/4 approximation. */
   contextTokens: number;
+  /** Stage 1 canonical o200k_base content tokens. */
+  canonicalContextTokens: number;
   passRate: number;
   numPassed: number;
   numTotal: number;
@@ -125,6 +134,7 @@ export interface System2BudgetResult {
 
 export interface CalibrationRunResult {
   backend: CalibrationBackend;
+  probeBank: ProbeBankMode;
   system1: System1BudgetResult[];
   system2: System2BudgetResult[];
 }
@@ -391,6 +401,7 @@ async function runSystem1(
   return {
     budget,
     contextTokens: ctx.totalTokens,
+    canonicalContextTokens: ctx.canonicalTokens,
     numCorrect: summary.correct,
     numTotal: summary.total,
     accuracy: summary.accuracy,
@@ -557,6 +568,7 @@ async function runSystem2(
 ): Promise<System2BudgetResult> {
   const ctx = assembleContext(repositoryFiles, budget);
   const contextTokens = ctx.totalTokens;
+  const canonicalContextTokens = ctx.canonicalTokens;
 
   const taskResults: System2TaskResult[] = [];
 
@@ -589,6 +601,7 @@ async function runSystem2(
   return {
     budget,
     contextTokens,
+    canonicalContextTokens,
     passRate: tasks.length > 0 ? numPassed / tasks.length : 0,
     numPassed,
     numTotal: tasks.length,
@@ -652,7 +665,7 @@ function checkNamingSchemeAlignment(
 export async function runCalibration(
   options: CalibrationOptions
 ): Promise<CalibrationRunResult> {
-  const { backend, budgets = ALL_BUDGETS, model = "claude-haiku-4-5-20251001", taskFilter } = options;
+  const { backend, budgets = ALL_BUDGETS, model = "claude-haiku-4-5-20251001", taskFilter, probeBank = "legacy" } = options;
 
   const calibrationDir = path.join(__dirname, "..");
   const swDir = path.join(calibrationDir, "../synthetic-world");
@@ -662,8 +675,9 @@ export async function runCalibration(
   const repositoryFiles: Record<string, string> = {};
   loadDirRecursive(repositoryDir, repositoryDir, repositoryFiles);
 
+  const probeBankFile = probeBank === "stage1" ? "probe-bank-stage1.json" : "probe-bank.json";
   const probes: GeneratedProbe[] = JSON.parse(
-    fs.readFileSync(path.join(calibrationDir, "fixtures/probe-bank.json"), "utf8")
+    fs.readFileSync(path.join(calibrationDir, "fixtures", probeBankFile), "utf8")
   );
   let tasks: HeldOutTask[] = JSON.parse(
     fs.readFileSync(path.join(swDir, "heldout_tasks.json"), "utf8")
@@ -695,7 +709,7 @@ export async function runCalibration(
     system2.push(s2);
   }
 
-  return { backend, system1, system2 };
+  return { backend, probeBank, system1, system2 };
 }
 
 // ---- CLI エントリポイント ----
@@ -718,12 +732,14 @@ if (require.main === module) {
   const modelArg = getArg("model");
   const budgetsArg = getArg("budgets");
   const tasksArg = getArg("tasks");
+  const probeBankArg = getArg("probe-bank");
 
   const backend: CalibrationBackend =
     backendArg === "mock-oracle" ? "mock-oracle"
     : backendArg === "anthropic" ? "anthropic"
     : "mock-noop";
   const model = modelArg ?? "claude-haiku-4-5-20251001";
+  const probeBank: ProbeBankMode = probeBankArg === "stage1" ? "stage1" : probeBankArg === undefined || probeBankArg === "legacy" ? "legacy" : (() => { throw new Error(`Invalid probe-bank: ${probeBankArg}`); })();
 
   // --budgets=0,1000,full など。省略時は ALL_BUDGETS
   let budgets: BudgetValue[] = ALL_BUDGETS;
@@ -745,10 +761,11 @@ if (require.main === module) {
   console.log(`\n====================================================`);
   console.log(`  Calibration Runner: backend=${backend}${backend === "anthropic" ? ` model=${model}` : ""}`);
   console.log(`  budgets: ${budgets.join(", ")}`);
+  console.log(`  probe bank: ${probeBank}`);
   if (taskFilter) console.log(`  tasks (filtered): ${taskFilter.join(", ")}`);
   console.log(`====================================================\n`);
 
-  runCalibration({ backend, model, budgets, taskFilter: taskFilter ?? undefined }).then((result) => {
+  runCalibration({ backend, model, budgets, taskFilter: taskFilter ?? undefined, probeBank }).then((result) => {
     // ── 系統2 ──
     console.log("┌─ 系統2 (M̂_B): 機能的継続テスト\n│");
     for (const s2 of result.system2) {
