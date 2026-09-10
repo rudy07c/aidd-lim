@@ -1,11 +1,15 @@
-// Stage 1 P2: observable interaction record used by MOI inheritance.
+// Stage 1 P2/P3: observable interaction record used by MOI inheritance.
 // The builder accepts only worker-visible/worker-generated inputs; evaluator-only data is
 // deliberately absent from its input contract.
 
 import * as crypto from "crypto";
+import {
+  CANONICAL_TOKEN_COUNT_METHOD,
+  countCanonicalTokens,
+} from "../measurement/token-counter";
 
-export const OBSERVABLE_INTERACTION_SCHEMA_VERSION = "observable-interaction-v1" as const;
-export const OBSERVABLE_TOKEN_COUNT_METHOD = "utf8-bytes-div4-v1" as const;
+export const OBSERVABLE_INTERACTION_SCHEMA_VERSION = "observable-interaction-v2" as const;
+export const OBSERVABLE_TOKEN_COUNT_METHOD = CANONICAL_TOKEN_COUNT_METHOD;
 export const OBSERVABLE_WORKING_NOTE_MAX_CHARS = 600;
 
 export type ObservableInteractionSource =
@@ -284,10 +288,14 @@ export function serializeObservableInteractionForSuccessor(record: ObservableInt
 }
 
 export function estimateObservableTokens(value: string): number {
-  return Math.ceil(Buffer.byteLength(value, "utf8") / 4);
+  return countCanonicalTokens(value);
 }
 
-/** Conservative byte-level upper bound used until P3 introduces canonical token counting. */
+/**
+ * Conservative byte-level upper bound for the hard Operational-Full capacity invariant.
+ * This intentionally remains more conservative than canonical accounting: P3 canonical tokens
+ * are used for measurements/budgets, while this guard must fail closed rather than underestimate.
+ */
 export function evaluateOperationalFullFeasibility(args: {
   applicable: boolean;
   contextFiles: Record<string, string>;
