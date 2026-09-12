@@ -8,6 +8,8 @@ import {
   countCanonicalTokens,
 } from "../measurement/token-counter";
 
+export const WORKING_SET_EVICTION_POLICY = "fifo-v1" as const;
+
 export interface ExplicitWorkingMemory {
   content: string;
   tokenCount: number;
@@ -19,6 +21,10 @@ export interface WorkingSetEvictionRecord {
   sequence: number;
   unitId: string;
   tokenCount: number;
+  admissionSequence: number;
+  policy: typeof WORKING_SET_EVICTION_POLICY | "explicit";
+  trigger: "artifact-admission" | "explicit-memory-update" | "explicit-request";
+  triggerUnitId: string | null;
   reason: string;
   usageBefore: number;
   usageAfter: number;
@@ -27,38 +33,57 @@ export interface WorkingSetEvictionRecord {
 export interface WorkingSetSnapshot {
   budgetTokens: number;
   activeUnits: ArtifactUnit[];
+  activeUnitAdmissionOrder: Array<{
+    unitId: string;
+    admissionSequence: number;
+  }>;
   explicitMemory: ExplicitWorkingMemory | null;
   artifactTokens: number;
   memoryTokens: number;
   currentTokenUsage: number;
   remainingBudget: number;
   cumulativeUnitAdmissionTokens: number;
+  evictionPolicy: typeof WORKING_SET_EVICTION_POLICY;
   evictionHistory: WorkingSetEvictionRecord[];
   tokenCountMethod: typeof CANONICAL_TOKEN_COUNT_METHOD;
+}
+
+interface ActiveUnitEntry {
+  unit: ArtifactUnit;
+  admissionSequence: number;
 }
 
 /**
  * Stage 1 P4 working-set budget authority for PR/AR.
  *
  * B_work counts model-visible artifact evidence, not content-only tokens. For
- * ArtifactUnit this means the canonical path + line-range + content serialization
- * defined by serializeArtifactUnitForWorkingSet(). Explicit memory is counted by
- * the same canonical tokenizer. Backend/provider truncation is not a second budget
+ * ArtifactUnit this means the canonical serialization defined by
+ * serializeArtifactUnitForWorkingSet(). Explicit memory is counted by the same
+ * canonical tokenizer. Backend/provider truncation is not a second budget
  * authority and must remain disabled for this evidence.
  *
- * Scope of this first implementation slice:
- * - explicit ArtifactUnit admission/removal
- * - canonical B_work enforcement
- * - bounded explicit working memory
+ * P4 step 4 freezes one common deterministic eviction policy for PR/AR:
+ * FIFO-v1. When a new ArtifactUnit would overflow B_work, the oldest admitted
+ * active ArtifactUnit(s) are evicted until the incoming unit fits. Explicit
+ * working memory is persistent/pinned: it counts against B_work but is never an
+ * eviction victim. Increasing explicit memory may deterministically evict FIFO
+ * artifact units to preserve the same invariant.
  *
- * It intentionally does NOT implement an automatic/deterministic eviction policy,
- * retrieval, reread policy, E_max, or an episodic runner. Those remain later P4/P5 work.
+ * An incoming unit that cannot fit even after evicting every active artifact
+ * unit (because the unit + pinned memory alone exceeds B_work) is rejected before
+ * any eviction occurs. Likewise, explicit memory whose own token count exceeds
+ * B_work is rejected atomically.
+ *
+ * Reread/re-admission semantics, E_max, retrieval, and the episodic runner remain
+ * intentionally out of scope until later P4/P5 steps.
  */
 export class WorkingSetManager {
-  private readonly activeUnits = new Map<string, ArtifactUnit>();
+  private readonly activeUnits = new Map<string, ActiveUnitEntry>();
+  private readonly everAdmittedUnitIds = new Set<string>();
   private explicitMemory: ExplicitWorkingMemory | null = null;
   private readonly evictionHistory: WorkingSetEvictionRecord[] = [];
   private cumulativeUnitAdmissionTokens = 0;
+  private nextAdmissionSequence = 0;
 
   constructor(readonly budgetTokens: number) {
     if (!Number.isInteger(budgetTokens) || budgetTokens <= 0) {
@@ -66,37 +91,59 @@ export class WorkingSetManager {
     }
   }
 
+  /**
+   * Scientific admission path. Capacity pressure is resolved only by FIFO-v1.
+   * A previously evicted id cannot be re-admitted yet; step 5 will define reread
+   * semantics explicitly rather than inheriting them accidentally from addUnit().
+   */
   addUnit(unit: ArtifactUnit): void {
     this.assertArtifactUnitCanonical(unit);
     if (this.activeUnits.has(unit.id)) {
       throw new Error(`ArtifactUnit already active: ${unit.id}`);
     }
-    this.assertFits(unit.tokenCount, `ArtifactUnit ${unit.id}`);
-    this.activeUnits.set(unit.id, cloneUnit(unit));
+    if (this.everAdmittedUnitIds.has(unit.id)) {
+      throw new Error(
+        `ArtifactUnit was previously admitted: ${unit.id}; reread semantics are not enabled before P4 step 5`
+      );
+    }
+
+    const irreducibleUsage = this.memoryTokens + unit.tokenCount;
+    if (irreducibleUsage > this.budgetTokens) {
+      throw new Error(
+        `B_work cannot fit ArtifactUnit ${unit.id} with pinned explicit memory: ` +
+        `required=${irreducibleUsage}, budget=${this.budgetTokens}`
+      );
+    }
+
+    const victims = this.planFifoEvictions(this.currentTokenUsage + unit.tokenCount);
+    this.applyFifoEvictions(victims, "artifact-admission", unit.id);
+
+    const entry: ActiveUnitEntry = {
+      unit: cloneUnit(unit),
+      admissionSequence: this.nextAdmissionSequence,
+    };
+    this.nextAdmissionSequence += 1;
+    this.activeUnits.set(unit.id, entry);
+    this.everAdmittedUnitIds.add(unit.id);
     this.cumulativeUnitAdmissionTokens += unit.tokenCount;
     this.assertInvariant();
   }
 
   /**
-   * Explicit eviction primitive only. P4 step 4 will define the deterministic
-   * policy that decides which unit(s) should be evicted automatically.
+   * Harness/controller-only explicit primitive retained for diagnostics. It is
+   * not the scientific PR/AR eviction policy and must not be exposed as an
+   * agent-selectable victim choice. Scientific capacity pressure uses FIFO-v1.
    */
   evictUnit(unitId: string, reason = "explicit-request"): ArtifactUnit {
-    const unit = this.activeUnits.get(unitId);
-    if (!unit) throw new Error(`Cannot evict inactive ArtifactUnit: ${unitId}`);
-    const usageBefore = this.currentTokenUsage;
-    this.activeUnits.delete(unitId);
-    const usageAfter = this.currentTokenUsage;
-    this.evictionHistory.push({
-      sequence: this.evictionHistory.length,
-      unitId,
-      tokenCount: unit.tokenCount,
-      reason,
-      usageBefore,
-      usageAfter,
-    });
-    this.assertInvariant();
-    return cloneUnit(unit);
+    const entry = this.activeUnits.get(unitId);
+    if (!entry) throw new Error(`Cannot evict inactive ArtifactUnit: ${unitId}`);
+    return this.removeActiveEntry(
+      entry,
+      "explicit",
+      "explicit-request",
+      null,
+      reason
+    );
   }
 
   setExplicitMemory(content: string | null): void {
@@ -110,20 +157,26 @@ export class WorkingSetManager {
         `Explicit working memory exceeds ${OBSERVABLE_WORKING_NOTE_MAX_CHARS} characters`
       );
     }
+
     const tokenCount = countCanonicalTokens(content);
-    const existingTokens = this.explicitMemory?.tokenCount ?? 0;
-    const proposedUsage = this.currentTokenUsage - existingTokens + tokenCount;
-    if (proposedUsage > this.budgetTokens) {
+    if (tokenCount > this.budgetTokens) {
       throw new Error(
-        `B_work exceeded by explicit memory: proposed=${proposedUsage}, budget=${this.budgetTokens}`
+        `B_work cannot fit explicit memory: required=${tokenCount}, budget=${this.budgetTokens}`
       );
     }
-    this.explicitMemory = {
+
+    const nextMemory: ExplicitWorkingMemory = {
       content,
       tokenCount,
       tokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
       maxChars: OBSERVABLE_WORKING_NOTE_MAX_CHARS,
     };
+    const victims = this.planFifoEvictions(this.artifactTokens + tokenCount);
+
+    // Install the validated/pinned memory before recording evictions so
+    // usageBefore/usageAfter reflect the effective state that triggered them.
+    this.explicitMemory = nextMemory;
+    this.applyFifoEvictions(victims, "explicit-memory-update", null);
     this.assertInvariant();
   }
 
@@ -133,7 +186,7 @@ export class WorkingSetManager {
 
   get artifactTokens(): number {
     let total = 0;
-    for (const unit of this.activeUnits.values()) total += unit.tokenCount;
+    for (const entry of this.activeUnits.values()) total += entry.unit.tokenCount;
     return total;
   }
 
@@ -151,27 +204,92 @@ export class WorkingSetManager {
 
   snapshot(): WorkingSetSnapshot {
     this.assertInvariant();
+    const orderedEntries = this.orderedActiveEntries();
     return {
       budgetTokens: this.budgetTokens,
-      activeUnits: [...this.activeUnits.values()].map(cloneUnit),
+      activeUnits: orderedEntries.map((entry) => cloneUnit(entry.unit)),
+      activeUnitAdmissionOrder: orderedEntries.map((entry) => ({
+        unitId: entry.unit.id,
+        admissionSequence: entry.admissionSequence,
+      })),
       explicitMemory: this.explicitMemory ? { ...this.explicitMemory } : null,
       artifactTokens: this.artifactTokens,
       memoryTokens: this.memoryTokens,
       currentTokenUsage: this.currentTokenUsage,
       remainingBudget: this.remainingBudget,
       cumulativeUnitAdmissionTokens: this.cumulativeUnitAdmissionTokens,
+      evictionPolicy: WORKING_SET_EVICTION_POLICY,
       evictionHistory: this.evictionHistory.map((entry) => ({ ...entry })),
       tokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
     };
   }
 
-  private assertFits(additionalTokens: number, label: string): void {
-    const proposedUsage = this.currentTokenUsage + additionalTokens;
-    if (proposedUsage > this.budgetTokens) {
+  private planFifoEvictions(projectedUsage: number): ActiveUnitEntry[] {
+    if (projectedUsage <= this.budgetTokens) return [];
+    let tokensToFree = projectedUsage - this.budgetTokens;
+    const victims: ActiveUnitEntry[] = [];
+    for (const entry of this.orderedActiveEntries()) {
+      victims.push(entry);
+      tokensToFree -= entry.unit.tokenCount;
+      if (tokensToFree <= 0) break;
+    }
+    if (tokensToFree > 0) {
       throw new Error(
-        `B_work exceeded by ${label}: proposed=${proposedUsage}, budget=${this.budgetTokens}`
+        `WorkingSetManager could not free enough FIFO artifact capacity: remaining=${tokensToFree}`
       );
     }
+    return victims;
+  }
+
+  private applyFifoEvictions(
+    victims: ActiveUnitEntry[],
+    trigger: "artifact-admission" | "explicit-memory-update",
+    triggerUnitId: string | null
+  ): void {
+    for (const victim of victims) {
+      this.removeActiveEntry(
+        victim,
+        WORKING_SET_EVICTION_POLICY,
+        trigger,
+        triggerUnitId,
+        `fifo-capacity:${trigger}`
+      );
+    }
+  }
+
+  private removeActiveEntry(
+    entry: ActiveUnitEntry,
+    policy: typeof WORKING_SET_EVICTION_POLICY | "explicit",
+    trigger: "artifact-admission" | "explicit-memory-update" | "explicit-request",
+    triggerUnitId: string | null,
+    reason: string
+  ): ArtifactUnit {
+    const current = this.activeUnits.get(entry.unit.id);
+    if (!current || current.admissionSequence !== entry.admissionSequence) {
+      throw new Error(`WorkingSetManager eviction target drifted: ${entry.unit.id}`);
+    }
+    const usageBefore = this.currentTokenUsage;
+    this.activeUnits.delete(entry.unit.id);
+    const usageAfter = this.currentTokenUsage;
+    this.evictionHistory.push({
+      sequence: this.evictionHistory.length,
+      unitId: entry.unit.id,
+      tokenCount: entry.unit.tokenCount,
+      admissionSequence: entry.admissionSequence,
+      policy,
+      trigger,
+      triggerUnitId,
+      reason,
+      usageBefore,
+      usageAfter,
+    });
+    return cloneUnit(entry.unit);
+  }
+
+  private orderedActiveEntries(): ActiveUnitEntry[] {
+    return [...this.activeUnits.values()].sort(
+      (a, b) => a.admissionSequence - b.admissionSequence
+    );
   }
 
   private assertArtifactUnitCanonical(unit: ArtifactUnit): void {
@@ -193,7 +311,19 @@ export class WorkingSetManager {
         throw new Error("Explicit working memory tokenCount mismatch");
       }
     }
-    for (const unit of this.activeUnits.values()) this.assertArtifactUnitCanonical(unit);
+
+    const seenAdmissionSequences = new Set<number>();
+    for (const entry of this.activeUnits.values()) {
+      this.assertArtifactUnitCanonical(entry.unit);
+      if (seenAdmissionSequences.has(entry.admissionSequence)) {
+        throw new Error("WorkingSetManager duplicate admission sequence");
+      }
+      seenAdmissionSequences.add(entry.admissionSequence);
+      if (!this.everAdmittedUnitIds.has(entry.unit.id)) {
+        throw new Error(`WorkingSetManager active unit missing admission history: ${entry.unit.id}`);
+      }
+    }
+
     if (this.currentTokenUsage > this.budgetTokens) {
       throw new Error(
         `WorkingSetManager invariant violated: usage=${this.currentTokenUsage}, budget=${this.budgetTokens}`
