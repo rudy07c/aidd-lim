@@ -54,7 +54,7 @@ jobs:
       - name: Verify P2 observable interaction runtime
         working-directory: harness
         run: npm run verify:observable-interaction
-      - name: Verify P4 WorkingSetManager steps 1-3
+      - name: Verify P4 WorkingSetManager steps 1-4
         working-directory: harness
         run: npm run verify:working-set
       - name: Verify P3 measurement repair
