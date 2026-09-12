@@ -1,5 +1,9 @@
 import assert from "assert";
-import { createArtifactUnit, ArtifactUnit } from "./src/measurement/artifact-unit";
+import {
+  createArtifactUnit,
+  ArtifactUnit,
+  serializeArtifactUnitForWorkingSet,
+} from "./src/measurement/artifact-unit";
 import {
   CANONICAL_TOKEN_COUNT_METHOD,
   countCanonicalTokens,
@@ -18,8 +22,9 @@ function exactTokenText(tokens: number): string {
   throw new Error(`Unable to construct deterministic ${tokens}-token verification fixture`);
 }
 
-function unit(id: string, tokens: number): ArtifactUnit {
-  const content = exactTokenText(tokens);
+function unit(id: string, contentTokens: number): ArtifactUnit {
+  const content = exactTokenText(contentTokens);
+  assert.strictEqual(countCanonicalTokens(content), contentTokens);
   return createArtifactUnit({
     id,
     path: `src/${id}.ts`,
@@ -36,46 +41,81 @@ function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
   const u200 = unit("u200", 200);
   const u700 = unit("u700", 700);
 
+  const initialEvidenceTokens = u600.tokenCount + u200.tokenCount;
+  const finalEvidenceTokens = u200.tokenCount + u700.tokenCount;
+  const cumulativeEvidenceTokens = u600.tokenCount + u200.tokenCount + u700.tokenCount;
+
+  assert.ok(u600.tokenCount > 600, "path/line framing must be counted in B_work");
+  assert.ok(u200.tokenCount > 200, "path/line framing must be counted in B_work");
+  assert.ok(u700.tokenCount > 700, "path/line framing must be counted in B_work");
+  assert.ok(initialEvidenceTokens <= 1000, "initial evidence fixture must fit B_work");
+  assert.ok(initialEvidenceTokens + u700.tokenCount > 1000, "third unit must overflow before eviction");
+  assert.ok(finalEvidenceTokens <= 1000, "third unit must fit after explicit eviction");
+
   manager.addUnit(u600);
   manager.addUnit(u200);
-  assert.strictEqual(manager.currentTokenUsage, 800);
-  assert.strictEqual(manager.remainingBudget, 200);
+  assert.strictEqual(manager.currentTokenUsage, initialEvidenceTokens);
+  assert.strictEqual(manager.remainingBudget, 1000 - initialEvidenceTokens);
   assert.throws(() => manager.addUnit(u700), /B_work exceeded/);
 
   manager.evictUnit("u600", "verification-explicit-eviction");
-  assert.strictEqual(manager.currentTokenUsage, 200);
+  assert.strictEqual(manager.currentTokenUsage, u200.tokenCount);
   manager.addUnit(u700);
 
   const snapshot = manager.snapshot();
-  assert.strictEqual(snapshot.currentTokenUsage, 900);
-  assert.strictEqual(snapshot.remainingBudget, 100);
-  assert.strictEqual(snapshot.cumulativeUnitAdmissionTokens, 1500);
+  assert.strictEqual(snapshot.currentTokenUsage, finalEvidenceTokens);
+  assert.strictEqual(snapshot.remainingBudget, 1000 - finalEvidenceTokens);
+  assert.strictEqual(snapshot.cumulativeUnitAdmissionTokens, cumulativeEvidenceTokens);
   assert.ok(snapshot.cumulativeUnitAdmissionTokens > snapshot.budgetTokens);
   assert.ok(snapshot.currentTokenUsage <= snapshot.budgetTokens);
   assert.deepStrictEqual(snapshot.activeUnits.map((item) => item.id), ["u200", "u700"]);
   assert.deepStrictEqual(snapshot.evictionHistory, [{
     sequence: 0,
     unitId: "u600",
-    tokenCount: 600,
+    tokenCount: u600.tokenCount,
     reason: "verification-explicit-eviction",
-    usageBefore: 800,
-    usageAfter: 200,
+    usageBefore: initialEvidenceTokens,
+    usageAfter: u200.tokenCount,
   }]);
+
+  for (const item of [u600, u200, u700]) {
+    const serialized = serializeArtifactUnitForWorkingSet(item);
+    assert.strictEqual(item.tokenCount, countCanonicalTokens(serialized));
+    assert.ok(serialized.includes(`\"path\":\"${item.path}\"`));
+    assert.ok(serialized.includes(`\"lines\":[${item.startLine},${item.endLine}]`));
+    assert.ok(!serialized.includes("\"kind\""));
+  }
 
   return {
     budget: snapshot.budgetTokens,
-    initialActiveTokens: 800,
-    explicitlyEvictedTokens: 600,
-    finalAddedTokens: 700,
-    cumulativeAdmissionTokens: snapshot.cumulativeUnitAdmissionTokens,
-    finalActiveTokens: snapshot.currentTokenUsage,
+    accounting: "canonical tokens of model-visible path + line range + content serialization",
+    contentTokenTargets: {
+      first: 600,
+      retained: 200,
+      final: 700,
+    },
+    modelVisibleEvidenceTokens: {
+      first: u600.tokenCount,
+      retained: u200.tokenCount,
+      final: u700.tokenCount,
+      initialActive: initialEvidenceTokens,
+      afterEviction: u200.tokenCount,
+      finalActive: snapshot.currentTokenUsage,
+      cumulativeAdmissions: snapshot.cumulativeUnitAdmissionTokens,
+    },
+    framingOverheadTokens: {
+      first: u600.tokenCount - 600,
+      retained: u200.tokenCount - 200,
+      final: u700.tokenCount - 700,
+    },
     remainingBudget: snapshot.remainingBudget,
   };
 }
 
 function verifyExplicitMemory(): Record<string, unknown> {
   const manager = new WorkingSetManager(1000);
-  manager.addUnit(unit("artifact-800", 800));
+  const artifact = unit("artifact-800", 800);
+  manager.addUnit(artifact);
 
   const note = "a".repeat(600);
   assert.strictEqual(note.length, OBSERVABLE_WORKING_NOTE_MAX_CHARS);
@@ -83,7 +123,7 @@ function verifyExplicitMemory(): Record<string, unknown> {
   manager.setExplicitMemory(note);
   const snapshot = manager.snapshot();
   assert.strictEqual(snapshot.memoryTokens, noteTokens);
-  assert.strictEqual(snapshot.currentTokenUsage, 800 + noteTokens);
+  assert.strictEqual(snapshot.currentTokenUsage, artifact.tokenCount + noteTokens);
   assert.strictEqual(snapshot.explicitMemory?.tokenCountMethod, CANONICAL_TOKEN_COUNT_METHOD);
   assert.strictEqual(snapshot.explicitMemory?.maxChars, OBSERVABLE_WORKING_NOTE_MAX_CHARS);
 
@@ -115,6 +155,8 @@ function verifyExplicitMemory(): Record<string, unknown> {
     maxChars: OBSERVABLE_WORKING_NOTE_MAX_CHARS,
     noteChars: note.length,
     noteTokens,
+    artifactContentTokenTarget: 800,
+    artifactModelVisibleEvidenceTokens: artifact.tokenCount,
     tokenCountMethod: snapshot.tokenCountMethod,
     combinedUsage: snapshot.currentTokenUsage,
   };
@@ -136,14 +178,23 @@ function main(): void {
 
   console.log(JSON.stringify({
     status: "ok",
-    p4Slice: "steps-1-3",
+    p4Slice: "steps-1-3-accounting-contract-frozen",
+    artifactEvidenceSerialization: {
+      modelVisibleFields: ["path", "lines", "content"],
+      kindModelVisible: false,
+      tokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
+    },
     workingSetScenario,
     explicitMemory,
     verified: [
       "ArtifactUnit-as-working-set-unit",
+      "B_work-counts-model-visible-artifact-evidence-not-content-only",
+      "path-and-line-range-included-in-canonical-accounting",
+      "kind-remains-harness-only-provenance",
       "canonical-o200k-B_work-enforcement",
       "budget-overflow-fail-closed",
-      "800-read-600-evict-700-read-cumulative-over-budget-active-within-budget",
+      "600-plus-200-plus-700-content-token-scenario-with-model-visible-framing",
+      "cumulative-admission-over-budget-active-within-budget",
       "explicit-memory-counted-in-B_work",
       "600-char-working-note-bound-shared-with-P2",
       "P2-and-P4-working-note-use-same-canonical-tokenizer",
