@@ -57,6 +57,9 @@ jobs:
       - name: Verify P4 WorkingSetManager steps 1-4 FIFO-v1
         working-directory: harness
         run: npm run verify:working-set
+      - name: Verify P4 WorkingSetManager step 5 reread
+        working-directory: harness
+        run: npm run verify:working-set-reread
       - name: Verify P3 measurement repair
         working-directory: calibration
         run: npm run verify:p3
