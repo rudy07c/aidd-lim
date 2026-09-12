@@ -10,6 +10,12 @@ import {
 
 export const WORKING_SET_EVICTION_POLICY = "fifo-v1" as const;
 
+type WorkingSetEvictionTrigger =
+  | "artifact-admission"
+  | "artifact-reread"
+  | "explicit-memory-update"
+  | "explicit-request";
+
 export interface ExplicitWorkingMemory {
   content: string;
   tokenCount: number;
@@ -23,7 +29,7 @@ export interface WorkingSetEvictionRecord {
   tokenCount: number;
   admissionSequence: number;
   policy: typeof WORKING_SET_EVICTION_POLICY | "explicit";
-  trigger: "artifact-admission" | "explicit-memory-update" | "explicit-request";
+  trigger: WorkingSetEvictionTrigger;
   triggerUnitId: string | null;
   reason: string;
   usageBefore: number;
@@ -43,6 +49,10 @@ export interface WorkingSetSnapshot {
   currentTokenUsage: number;
   remainingBudget: number;
   cumulativeUnitAdmissionTokens: number;
+  uniqueAdmittedUnitCount: number;
+  totalAdmissionCount: number;
+  rereadCount: number;
+  cumulativeRereadTokens: number;
   evictionPolicy: typeof WORKING_SET_EVICTION_POLICY;
   evictionHistory: WorkingSetEvictionRecord[];
   tokenCountMethod: typeof CANONICAL_TOKEN_COUNT_METHOD;
@@ -69,20 +79,30 @@ interface ActiveUnitEntry {
  * eviction victim. Increasing explicit memory may deterministically evict FIFO
  * artifact units to preserve the same invariant.
  *
+ * P4 step 5 enables explicit reread/re-admission through rereadUnit(). A reread
+ * is legal only for a previously admitted, currently inactive ArtifactUnit whose
+ * identity/evidence exactly matches its first admission. Successful reread gets
+ * a fresh admission sequence and therefore becomes the newest FIFO entry. It
+ * counts again toward cumulative admission/retrieval tokens but does not create
+ * a new unique unit. Rereading an already-active unit is rejected and does not
+ * refresh FIFO age.
+ *
  * An incoming unit that cannot fit even after evicting every active artifact
  * unit (because the unit + pinned memory alone exceeds B_work) is rejected before
  * any eviction occurs. Likewise, explicit memory whose own token count exceeds
  * B_work is rejected atomically.
  *
- * Reread/re-admission semantics, E_max, retrieval, and the episodic runner remain
- * intentionally out of scope until later P4/P5 steps.
+ * E_max, repository retrieval, and the episodic runner remain intentionally out
+ * of scope until later P4/P5 steps.
  */
 export class WorkingSetManager {
   private readonly activeUnits = new Map<string, ActiveUnitEntry>();
-  private readonly everAdmittedUnitIds = new Set<string>();
+  private readonly everAdmittedUnits = new Map<string, ArtifactUnit>();
   private explicitMemory: ExplicitWorkingMemory | null = null;
   private readonly evictionHistory: WorkingSetEvictionRecord[] = [];
   private cumulativeUnitAdmissionTokens = 0;
+  private rereadCount = 0;
+  private cumulativeRereadTokens = 0;
   private nextAdmissionSequence = 0;
 
   constructor(readonly budgetTokens: number) {
@@ -92,40 +112,61 @@ export class WorkingSetManager {
   }
 
   /**
-   * Scientific admission path. Capacity pressure is resolved only by FIFO-v1.
-   * A previously evicted id cannot be re-admitted yet; step 5 will define reread
-   * semantics explicitly rather than inheriting them accidentally from addUnit().
+   * First-exposure admission path. Capacity pressure is resolved only by FIFO-v1.
+   * Previously admitted ids stay rejected here so first exposure and reread remain
+   * mechanically distinct; use rereadUnit() for re-exposure after eviction.
    */
   addUnit(unit: ArtifactUnit): void {
     this.assertArtifactUnitCanonical(unit);
     if (this.activeUnits.has(unit.id)) {
       throw new Error(`ArtifactUnit already active: ${unit.id}`);
     }
-    if (this.everAdmittedUnitIds.has(unit.id)) {
+    if (this.everAdmittedUnits.has(unit.id)) {
       throw new Error(
-        `ArtifactUnit was previously admitted: ${unit.id}; reread semantics are not enabled before P4 step 5`
+        `ArtifactUnit was previously admitted: ${unit.id}; ` +
+        "reread semantics are not enabled before P4 step 5 on addUnit(); use rereadUnit() for Step 5 re-exposure"
       );
     }
 
-    const irreducibleUsage = this.memoryTokens + unit.tokenCount;
-    if (irreducibleUsage > this.budgetTokens) {
-      throw new Error(
-        `B_work cannot fit ArtifactUnit ${unit.id} with pinned explicit memory: ` +
-        `required=${irreducibleUsage}, budget=${this.budgetTokens}`
-      );
-    }
-
+    this.assertFitsWithPinnedMemory(unit);
     const victims = this.planFifoEvictions(this.currentTokenUsage + unit.tokenCount);
     this.applyFifoEvictions(victims, "artifact-admission", unit.id);
-
-    const entry: ActiveUnitEntry = {
-      unit: cloneUnit(unit),
-      admissionSequence: this.nextAdmissionSequence,
-    };
-    this.nextAdmissionSequence += 1;
-    this.activeUnits.set(unit.id, entry);
-    this.everAdmittedUnitIds.add(unit.id);
+    this.installActiveUnit(unit);
+    this.everAdmittedUnits.set(unit.id, cloneUnit(unit));
     this.cumulativeUnitAdmissionTokens += unit.tokenCount;
+    this.assertInvariant();
+  }
+
+  /**
+   * Step 5 reread path for evidence that was observed earlier in the episode and
+   * has since been evicted. Reread is re-exposure, not a first read: unknown ids
+   * are rejected. The same id must resolve to exactly the same ArtifactUnit
+   * evidence within an episode; repository/content drift must start a new unit or
+   * episode rather than silently aliasing an old id.
+   */
+  rereadUnit(unit: ArtifactUnit): void {
+    this.assertArtifactUnitCanonical(unit);
+    if (this.activeUnits.has(unit.id)) {
+      throw new Error(
+        `Cannot reread active ArtifactUnit: ${unit.id}; active reread does not refresh FIFO admission age`
+      );
+    }
+
+    const firstAdmission = this.everAdmittedUnits.get(unit.id);
+    if (!firstAdmission) {
+      throw new Error(
+        `Cannot reread ArtifactUnit before first admission: ${unit.id}; use addUnit() for first exposure`
+      );
+    }
+    this.assertRereadIdentity(firstAdmission, unit);
+    this.assertFitsWithPinnedMemory(unit);
+
+    const victims = this.planFifoEvictions(this.currentTokenUsage + unit.tokenCount);
+    this.applyFifoEvictions(victims, "artifact-reread", unit.id);
+    this.installActiveUnit(unit);
+    this.cumulativeUnitAdmissionTokens += unit.tokenCount;
+    this.rereadCount += 1;
+    this.cumulativeRereadTokens += unit.tokenCount;
     this.assertInvariant();
   }
 
@@ -218,10 +259,33 @@ export class WorkingSetManager {
       currentTokenUsage: this.currentTokenUsage,
       remainingBudget: this.remainingBudget,
       cumulativeUnitAdmissionTokens: this.cumulativeUnitAdmissionTokens,
+      uniqueAdmittedUnitCount: this.everAdmittedUnits.size,
+      totalAdmissionCount: this.nextAdmissionSequence,
+      rereadCount: this.rereadCount,
+      cumulativeRereadTokens: this.cumulativeRereadTokens,
       evictionPolicy: WORKING_SET_EVICTION_POLICY,
       evictionHistory: this.evictionHistory.map((entry) => ({ ...entry })),
       tokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
     };
+  }
+
+  private installActiveUnit(unit: ArtifactUnit): void {
+    const entry: ActiveUnitEntry = {
+      unit: cloneUnit(unit),
+      admissionSequence: this.nextAdmissionSequence,
+    };
+    this.nextAdmissionSequence += 1;
+    this.activeUnits.set(unit.id, entry);
+  }
+
+  private assertFitsWithPinnedMemory(unit: ArtifactUnit): void {
+    const irreducibleUsage = this.memoryTokens + unit.tokenCount;
+    if (irreducibleUsage > this.budgetTokens) {
+      throw new Error(
+        `B_work cannot fit ArtifactUnit ${unit.id} with pinned explicit memory: ` +
+        `required=${irreducibleUsage}, budget=${this.budgetTokens}`
+      );
+    }
   }
 
   private planFifoEvictions(projectedUsage: number): ActiveUnitEntry[] {
@@ -243,7 +307,7 @@ export class WorkingSetManager {
 
   private applyFifoEvictions(
     victims: ActiveUnitEntry[],
-    trigger: "artifact-admission" | "explicit-memory-update",
+    trigger: "artifact-admission" | "artifact-reread" | "explicit-memory-update",
     triggerUnitId: string | null
   ): void {
     for (const victim of victims) {
@@ -260,7 +324,7 @@ export class WorkingSetManager {
   private removeActiveEntry(
     entry: ActiveUnitEntry,
     policy: typeof WORKING_SET_EVICTION_POLICY | "explicit",
-    trigger: "artifact-admission" | "explicit-memory-update" | "explicit-request",
+    trigger: WorkingSetEvictionTrigger,
     triggerUnitId: string | null,
     reason: string
   ): ArtifactUnit {
@@ -301,6 +365,25 @@ export class WorkingSetManager {
     }
   }
 
+  private assertRereadIdentity(firstAdmission: ArtifactUnit, reread: ArtifactUnit): void {
+    const fields: Array<keyof ArtifactUnit> = [
+      "id",
+      "path",
+      "startLine",
+      "endLine",
+      "content",
+      "tokenCount",
+      "kind",
+    ];
+    for (const field of fields) {
+      if (firstAdmission[field] !== reread[field]) {
+        throw new Error(
+          `ArtifactUnit reread identity mismatch for ${reread.id}: field=${field}`
+        );
+      }
+    }
+  }
+
   private assertInvariant(): void {
     if (this.explicitMemory) {
       if (this.explicitMemory.content.length > OBSERVABLE_WORKING_NOTE_MAX_CHARS) {
@@ -319,11 +402,19 @@ export class WorkingSetManager {
         throw new Error("WorkingSetManager duplicate admission sequence");
       }
       seenAdmissionSequences.add(entry.admissionSequence);
-      if (!this.everAdmittedUnitIds.has(entry.unit.id)) {
+      const firstAdmission = this.everAdmittedUnits.get(entry.unit.id);
+      if (!firstAdmission) {
         throw new Error(`WorkingSetManager active unit missing admission history: ${entry.unit.id}`);
       }
+      this.assertRereadIdentity(firstAdmission, entry.unit);
     }
 
+    if (this.rereadCount < 0 || this.cumulativeRereadTokens < 0) {
+      throw new Error("WorkingSetManager reread accounting invariant violated");
+    }
+    if (this.rereadCount > this.nextAdmissionSequence) {
+      throw new Error("WorkingSetManager reread count exceeds total admissions");
+    }
     if (this.currentTokenUsage > this.budgetTokens) {
       throw new Error(
         `WorkingSetManager invariant violated: usage=${this.currentTokenUsage}, budget=${this.budgetTokens}`
