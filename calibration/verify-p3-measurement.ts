@@ -19,6 +19,7 @@ import {
 import {
   chunkArtifactFile,
   repositoryToArtifactUnits,
+  serializeArtifactUnitForWorkingSet,
 } from "../harness/src/measurement/artifact-unit";
 import { OBSERVABLE_TOKEN_COUNT_METHOD } from "../harness/src/context/observable-interaction";
 import type { GroundTruth, NamingScheme } from "../synthetic-world/schema";
@@ -131,12 +132,21 @@ function verifyLegacyRegression(repositoryFiles: Record<string, string>): void {
 
 function verifyArtifactUnits(repositoryFiles: Record<string, string>): void {
   const sample = "first line\n" + "x".repeat(180) + "\nlast line\n";
-  const chunks = chunkArtifactFile("src\\sample.ts", sample, 8);
+  const sampleBudget = 32;
+  const chunks = chunkArtifactFile("src\\sample.ts", sample, sampleBudget);
   assert.strictEqual(chunks.map((unit) => unit.content).join(""), sample, "ArtifactUnit chunking must be lossless");
   assert.ok(chunks.length > 1, "small working-set budget must produce multiple units");
-  assert.ok(chunks.every((unit) => unit.tokenCount <= 8), "every ArtifactUnit must obey its token cap");
+  assert.ok(chunks.every((unit) => unit.tokenCount <= sampleBudget), "every ArtifactUnit must obey its complete model-visible evidence token cap");
   assert.ok(chunks.every((unit) => unit.path === "src/sample.ts"), "ArtifactUnit paths must be normalized");
-  assert.deepStrictEqual(chunkArtifactFile("src/sample.ts", sample, 8), chunks, "chunking must be deterministic");
+  assert.deepStrictEqual(chunkArtifactFile("src/sample.ts", sample, sampleBudget), chunks, "chunking must be deterministic");
+
+  for (const unit of chunks) {
+    const serialized = serializeArtifactUnitForWorkingSet(unit);
+    assert.strictEqual(unit.tokenCount, countCanonicalTokens(serialized));
+    assert.ok(serialized.includes(`\"path\":\"${unit.path}\"`));
+    assert.ok(serialized.includes(`\"lines\":[${unit.startLine},${unit.endLine}]`));
+    assert.ok(!serialized.includes("\"kind\""), "harness-side ArtifactUnit kind must not become model-visible evidence");
+  }
 
   const repoUnits = repositoryToArtifactUnits(repositoryFiles, 128);
   assert.ok(repoUnits.length > 0);
@@ -211,7 +221,7 @@ function main(): void {
       "boolean-parse-robustness",
       "canonical-o200k-token-counter",
       "observable-history-canonical-accounting",
-      "ArtifactUnit-lossless-bounded-chunking",
+      "ArtifactUnit-lossless-bounded-model-visible-evidence-chunking",
       "legacy-probe-bank-regression",
       "legacy-static-budget-regression",
     ],
