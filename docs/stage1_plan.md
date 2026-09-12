@@ -785,7 +785,9 @@ interface ArtifactUnit {
 }
 ```
 
-大きな1 fileだけで \(B_{work}\) を超えることを避けるためchunk readを前提にする。
+`ArtifactUnit.tokenCount` はcontent単体ではなく、**modelへ実際に提示するartifact evidence全体**をcanonical tokenizerで数えた値とする。model-visible serializationは `serializeArtifactUnitForWorkingSet(unit)` に一元化し、初版では `path + line range + content` を提示する。`kind` はharness側のprovenance / selector metadataでありmodel-visible evidenceには含めない。
+
+大きな1 fileだけで \(B_{work}\) を超えることを避けるためchunk readを前提にする。chunk capも同じmodel-visible serialization全体に対して適用する。
 
 ### 5.5 shared utilities
 
@@ -841,10 +843,14 @@ OpenAI API上で`store=false`かつreturned output itemsを手動再送する方
 
 ### 6.2 \(B_{work}\) に含める
 
-- active artifact chunks
-- retained search/listing artifact evidence
+\(B_{work}\) は**model-visible artifact evidence tokens**として定義する。artifact contentだけを数えるのではなく、modelがevidenceを解釈するため実際に提示されるrepository-derived framingも含める。`ArtifactUnit`では `serializeArtifactUnitForWorkingSet(unit)` を唯一の会計・提示形式とし、初版は `path + line range + content` をcanonical token countする。`kind` はmodelへ提示しないharness-side provenanceなので算入しない。
+
+- active artifact chunks（path + line range + contentのmodel-visible serialization全体）
+- retained search/listing artifact evidence（modelへ提示されるserialization全体）
 - explicit working note / summary
 - task遂行のためagentがpersistentに保持する明示的repository-derived memory
+
+`WorkingSetManager`はこの会計の唯一のbudget authorityとし、`ArtifactUnit.tokenCount`の自己申告値も同じserializationから再計算して検証する。provider backendによる二重truncateは引き続き禁止する。
 
 ### 6.3 原則として \(B_{work}\) から除外
 
