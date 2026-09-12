@@ -21,21 +21,26 @@ type ModelVisibleArtifactUnit = Pick<ArtifactUnit, "path" | "startLine" | "endLi
  * Canonical model-visible representation for one working-set artifact unit.
  *
  * B_work is defined over the exact artifact evidence shown to the model, not over
- * content alone. The path and line range are repository-derived evidence and are
- * therefore budgeted together with content. `kind` is deliberately excluded: it
- * is harness-side provenance/selector metadata and exposing it would add an
- * artificial cue that is not part of the repository evidence itself.
+ * content alone. Repository-derived path and line range are serialized as one
+ * compact JSON metadata line; the source content is appended raw after a single
+ * newline and is never JSON-escaped. This avoids making quote/backslash/newline
+ * density an artificial working-set cost while still budgeting the framing that
+ * the model actually sees.
  *
- * P4/P5 prompt construction must reuse this function rather than inventing a
- * second framing format, otherwise measured B_work and model-visible evidence
- * would diverge.
+ * `kind` is deliberately excluded: it is harness-side provenance/selector
+ * metadata and exposing it would add an artificial cue that is not part of the
+ * repository evidence itself.
+ *
+ * P4/P5 prompt construction must reuse the returned string verbatim rather than
+ * inventing a second framing format. The string passed to countCanonicalTokens()
+ * and the string shown to the model must remain identical.
  */
 export function serializeArtifactUnitForWorkingSet(unit: ModelVisibleArtifactUnit): string {
-  return JSON.stringify({
+  const metadata = JSON.stringify({
     path: normalizeRepositoryPath(unit.path),
     lines: [unit.startLine, unit.endLine],
-    content: unit.content,
   });
+  return `${metadata}\n${unit.content}`;
 }
 
 export function countArtifactUnitWorkingSetTokens(unit: ModelVisibleArtifactUnit): number {
@@ -67,7 +72,7 @@ export function createArtifactUnit(args: {
  * Deterministically split one repository file into units whose complete
  * model-visible evidence serialization fits maxTokens. Line boundaries are
  * preferred. If a single line itself exceeds the budget, it is split by the
- * largest character prefix whose path + line range + content representation fits.
+ * largest character prefix whose path + line range + raw-content representation fits.
  * The resulting segment keeps the source line number for both startLine/endLine.
  */
 export function chunkArtifactFile(
