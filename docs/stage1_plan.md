@@ -888,7 +888,13 @@ PR / AR共通のdeterministic policyとして **FIFO-v1** をfreezeする。
 - incoming unit + pinned memoryだけで `B_{work}` を超える場合は、既存unitをevictする前にatomic rejectする
 - explicit memory単体が `B_{work}` を超える場合もatomic rejectする
 - manual victim指定はharness/controller diagnostic専用であり、PR / AR workerへagent-selectable policyとして公開しない
-- reread / re-admission semanticsはStep 5で別途freezeし、Step 4では以前evictした同一unit IDの再admissionを許可しない
+- Step 5以降、rereadは**以前admit済みかつ現在inactiveな同一 `ArtifactUnit`** に限って許可する
+- reread成功時はfresh admission sequenceを付与し、FIFO上は最も新しいentryとして再admitする
+- already-active unitのrereadはFIFO ageをrefreshせずrejectする
+- reread evidenceはcumulative retrieved / admission tokensへ再度算入するが、unique observed unit数は増やさない
+- 同一unit IDでpath / line range / content / kind等が変化したevidenceはepisode内aliasingを避けるためrejectする
+- reread自体がcapacity pressureを起こす場合も同じFIFO-v1でevictし、incoming reread + pinned memoryだけで `B_{work}` を超える場合はatomic rejectする
+- reread回数・累積探索量の上限はStep 6の `E_{max}` で別途freezeする
 
 FIFOを選ぶ理由は、LRUのように「access / touch」を何とみなすかをStep 5より前に定義せずに済み、retrieval policyとeviction policyを分離しやすいためである。
 
