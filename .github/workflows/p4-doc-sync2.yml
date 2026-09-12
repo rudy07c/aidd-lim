@@ -1,0 +1,29 @@
+name: P4 FIFO Policy Doc Sync 2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p4-doc-sync2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Freeze FIFO-v1 in Stage 1 plan
+        run: >-
+          python -c 'from pathlib import Path; p=Path("docs/stage1_plan.md"); t=p.read_text(); s=t.index("### 6.5 eviction\n"); e=t.index("\n### 6.6 exploration resource", s); n="### 6.5 eviction\n\nStage 1ではeviction policyを研究変数にしない。\n\nPR / AR共通のdeterministic policyとして **FIFO-v1** をfreezeする。\n\n- capacity pressure時は、admission sequenceが最も古いactive `ArtifactUnit`から必要量だけevictする\n- explicit working memoryはpersistent / pinnedとし、`B_{work}`へ算入するがeviction victimにはしない\n- explicit memory増加がcapacity pressureを生む場合も、artifact unit側へ同じFIFO-v1を適用する\n- incoming unit + pinned memoryだけで `B_{work}` を超える場合は、既存unitをevictする前にatomic rejectする\n- explicit memory単体が `B_{work}` を超える場合もatomic rejectする\n- manual victim指定はharness/controller diagnostic専用であり、PR / AR workerへagent-selectable policyとして公開しない\n- reread / re-admission semanticsはStep 5で別途freezeし、Step 4では以前evictした同一unit IDの再admissionを許可しない\n\nFIFOを選ぶ理由は、LRUのように「access / touch」を何とみなすかをStep 5より前に定義せずに済み、retrieval policyとeviction policyを分離しやすいためである。\n\nPR / ARは**同一のFIFO-v1**を用い、C2ではretrieval policyだけを変える。\n"; p.write_text(t[:s]+n+t[e:])'
+      - name: Remove temporary workflow and commit
+        run: |
+          rm .github/workflows/p4-doc-sync2.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/stage1_plan.md .github/workflows/p4-doc-sync2.yml
+          git commit -m 'docs: freeze FIFO-v1 working-set eviction policy'
+          git push
