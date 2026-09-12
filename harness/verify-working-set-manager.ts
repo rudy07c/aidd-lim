@@ -12,7 +12,10 @@ import {
   OBSERVABLE_WORKING_NOTE_MAX_CHARS,
   buildObservableInteractionRecord,
 } from "./src/context/observable-interaction";
-import { WorkingSetManager } from "./src/context/working-set-manager";
+import {
+  WORKING_SET_EVICTION_POLICY,
+  WorkingSetManager,
+} from "./src/context/working-set-manager";
 
 function exactTokenText(tokens: number): string {
   for (const atom of [" a", " x", " z", " 0"]) {
@@ -54,7 +57,7 @@ function verifyRawSerializationImprovement(): Record<string, unknown> {
     '}',
     '',
   ].join("\n");
-  const unit = createArtifactUnit({
+  const artifact = createArtifactUnit({
     id: "serialization-comparison",
     path: "src/example.ts",
     startLine: 10,
@@ -64,20 +67,20 @@ function verifyRawSerializationImprovement(): Record<string, unknown> {
   });
 
   const legacyWholeJson = JSON.stringify({
-    path: unit.path,
-    lines: [unit.startLine, unit.endLine],
-    content: unit.content,
+    path: artifact.path,
+    lines: [artifact.startLine, artifact.endLine],
+    content: artifact.content,
   });
-  const current = serializeArtifactUnitForWorkingSet(unit);
+  const current = serializeArtifactUnitForWorkingSet(artifact);
   const { metadata, rawContent } = splitSerializedArtifact(current);
 
   assert.ok(
     current.startsWith('{"path":"src/example.ts","lines":[10,16]}\n'),
     "working-set serialization format must remain compact JSON metadata + newline + raw content"
   );
-  assert.deepStrictEqual(metadata, { path: unit.path, lines: [unit.startLine, unit.endLine] });
+  assert.deepStrictEqual(metadata, { path: artifact.path, lines: [artifact.startLine, artifact.endLine] });
   assert.strictEqual(rawContent, content, "working-set content must be preserved byte-for-byte after metadata newline");
-  assert.strictEqual(unit.tokenCount, countCanonicalTokens(current));
+  assert.strictEqual(artifact.tokenCount, countCanonicalTokens(current));
 
   const contentOnlyTokens = countCanonicalTokens(content);
   const legacyWholeJsonTokens = countCanonicalTokens(legacyWholeJson);
@@ -101,7 +104,7 @@ function verifyRawSerializationImprovement(): Record<string, unknown> {
   };
 }
 
-function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
+function verifyWorkingSetIsNotCumulativeCapWithFifo(): Record<string, unknown> {
   const manager = new WorkingSetManager(1000);
   const u600 = unit("u600", 600);
   const u200 = unit("u200", 200);
@@ -115,34 +118,46 @@ function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
   assert.ok(u200.tokenCount > 200, "path/line framing must be counted in B_work");
   assert.ok(u700.tokenCount > 700, "path/line framing must be counted in B_work");
   assert.ok(initialEvidenceTokens <= 1000, "initial evidence fixture must fit B_work");
-  assert.ok(initialEvidenceTokens + u700.tokenCount > 1000, "third unit must overflow before eviction");
-  assert.ok(finalEvidenceTokens <= 1000, "third unit must fit after explicit eviction");
+  assert.ok(initialEvidenceTokens + u700.tokenCount > 1000, "third unit must overflow before FIFO eviction");
+  assert.ok(finalEvidenceTokens <= 1000, "third unit must fit after FIFO eviction");
 
   manager.addUnit(u600);
   manager.addUnit(u200);
   assert.strictEqual(manager.currentTokenUsage, initialEvidenceTokens);
-  assert.strictEqual(manager.remainingBudget, 1000 - initialEvidenceTokens);
-  assert.throws(() => manager.addUnit(u700), /B_work exceeded/);
 
-  manager.evictUnit("u600", "verification-explicit-eviction");
-  assert.strictEqual(manager.currentTokenUsage, u200.tokenCount);
+  // Step 4: admission itself deterministically evicts the oldest active unit.
   manager.addUnit(u700);
 
   const snapshot = manager.snapshot();
+  assert.strictEqual(snapshot.evictionPolicy, WORKING_SET_EVICTION_POLICY);
   assert.strictEqual(snapshot.currentTokenUsage, finalEvidenceTokens);
   assert.strictEqual(snapshot.remainingBudget, 1000 - finalEvidenceTokens);
   assert.strictEqual(snapshot.cumulativeUnitAdmissionTokens, cumulativeEvidenceTokens);
   assert.ok(snapshot.cumulativeUnitAdmissionTokens > snapshot.budgetTokens);
   assert.ok(snapshot.currentTokenUsage <= snapshot.budgetTokens);
   assert.deepStrictEqual(snapshot.activeUnits.map((item) => item.id), ["u200", "u700"]);
+  assert.deepStrictEqual(snapshot.activeUnitAdmissionOrder, [
+    { unitId: "u200", admissionSequence: 1 },
+    { unitId: "u700", admissionSequence: 2 },
+  ]);
   assert.deepStrictEqual(snapshot.evictionHistory, [{
     sequence: 0,
     unitId: "u600",
     tokenCount: u600.tokenCount,
-    reason: "verification-explicit-eviction",
+    admissionSequence: 0,
+    policy: WORKING_SET_EVICTION_POLICY,
+    trigger: "artifact-admission",
+    triggerUnitId: "u700",
+    reason: "fifo-capacity:artifact-admission",
     usageBefore: initialEvidenceTokens,
     usageAfter: u200.tokenCount,
   }]);
+
+  assert.throws(
+    () => manager.addUnit(u600),
+    /reread semantics are not enabled before P4 step 5/,
+    "step 4 must not silently define reread semantics"
+  );
 
   for (const item of [u600, u200, u700]) {
     const serialized = serializeArtifactUnitForWorkingSet(item);
@@ -154,6 +169,7 @@ function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
 
   return {
     budget: snapshot.budgetTokens,
+    policy: snapshot.evictionPolicy,
     accounting: "canonical tokens of exact model-visible metadata-line + raw-content serialization",
     contentTokenTargets: {
       first: 600,
@@ -165,7 +181,7 @@ function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
       retained: u200.tokenCount,
       final: u700.tokenCount,
       initialActive: initialEvidenceTokens,
-      afterEviction: u200.tokenCount,
+      automaticallyEvicted: u600.tokenCount,
       finalActive: snapshot.currentTokenUsage,
       cumulativeAdmissions: snapshot.cumulativeUnitAdmissionTokens,
     },
@@ -175,6 +191,45 @@ function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
       final: u700.tokenCount - 700,
     },
     remainingBudget: snapshot.remainingBudget,
+    evictionOrder: snapshot.evictionHistory.map((entry) => entry.unitId),
+  };
+}
+
+function verifyDeterministicMultiVictimFifo(): Record<string, unknown> {
+  const run = () => {
+    const manager = new WorkingSetManager(500);
+    const a = unit("a", 150);
+    const b = unit("b", 150);
+    const c = unit("c", 150);
+    const d = unit("d", 300);
+
+    assert.ok(a.tokenCount + b.tokenCount + c.tokenCount <= 500, "three FIFO seed units must fit");
+    assert.ok(
+      b.tokenCount + c.tokenCount + d.tokenCount > 500,
+      "evicting only the first unit must remain insufficient"
+    );
+    assert.ok(c.tokenCount + d.tokenCount <= 500, "evicting two oldest units must be sufficient");
+
+    manager.addUnit(a);
+    manager.addUnit(b);
+    manager.addUnit(c);
+    manager.addUnit(d);
+    return manager.snapshot();
+  };
+
+  const first = run();
+  const second = run();
+  assert.deepStrictEqual(second, first, "identical admission sequence must produce identical FIFO state/history");
+  assert.deepStrictEqual(first.evictionHistory.map((entry) => entry.unitId), ["a", "b"]);
+  assert.ok(first.evictionHistory.every((entry) => entry.policy === WORKING_SET_EVICTION_POLICY));
+  assert.deepStrictEqual(first.activeUnits.map((item) => item.id), ["c", "d"]);
+
+  return {
+    budget: first.budgetTokens,
+    evictionOrder: first.evictionHistory.map((entry) => entry.unitId),
+    survivors: first.activeUnits.map((item) => item.id),
+    finalUsage: first.currentTokenUsage,
+    deterministicReplayEqual: true,
   };
 }
 
@@ -213,10 +268,6 @@ function verifyExplicitMemory(): Record<string, unknown> {
   );
   assert.strictEqual(manager.snapshot().explicitMemory?.content, note);
 
-  const tight = new WorkingSetManager(50);
-  assert.throws(() => tight.setExplicitMemory(exactTokenText(51)), /B_work exceeded/);
-  assert.strictEqual(tight.currentTokenUsage, 0, "failed memory update must be atomic");
-
   return {
     maxChars: OBSERVABLE_WORKING_NOTE_MAX_CHARS,
     noteChars: note.length,
@@ -228,24 +279,89 @@ function verifyExplicitMemory(): Record<string, unknown> {
   };
 }
 
-function verifyFailClosedAccounting(): void {
+function verifyMemoryGrowthUsesSameFifoPolicy(): Record<string, unknown> {
+  const manager = new WorkingSetManager(1000);
+  const u600 = unit("memory-u600", 600);
+  const u200 = unit("memory-u200", 200);
+  const note = exactTokenText(200);
+  assert.ok(note.length <= OBSERVABLE_WORKING_NOTE_MAX_CHARS);
+  assert.strictEqual(countCanonicalTokens(note), 200);
+
+  manager.addUnit(u600);
+  manager.addUnit(u200);
+  const artifactUsageBeforeMemory = manager.currentTokenUsage;
+  assert.ok(artifactUsageBeforeMemory + 200 > 1000, "memory growth must create capacity pressure");
+
+  manager.setExplicitMemory(note);
+  const snapshot = manager.snapshot();
+  assert.deepStrictEqual(snapshot.activeUnits.map((item) => item.id), ["memory-u200"]);
+  assert.strictEqual(snapshot.memoryTokens, 200);
+  assert.strictEqual(snapshot.currentTokenUsage, u200.tokenCount + 200);
+  assert.deepStrictEqual(snapshot.evictionHistory.map((entry) => ({
+    unitId: entry.unitId,
+    policy: entry.policy,
+    trigger: entry.trigger,
+  })), [{
+    unitId: "memory-u600",
+    policy: WORKING_SET_EVICTION_POLICY,
+    trigger: "explicit-memory-update",
+  }]);
+
+  return {
+    artifactUsageBeforeMemory,
+    memoryTokens: snapshot.memoryTokens,
+    evicted: snapshot.evictionHistory[0]?.unitId,
+    finalUsage: snapshot.currentTokenUsage,
+    remainingBudget: snapshot.remainingBudget,
+  };
+}
+
+function verifyFailClosedAccountingAndAtomicRejection(): void {
   const manager = new WorkingSetManager(1000);
   const valid = unit("valid", 10);
   const forged = { ...valid, id: "forged", tokenCount: valid.tokenCount - 1 };
   assert.throws(() => manager.addUnit(forged), /tokenCount mismatch/);
   assert.strictEqual(manager.currentTokenUsage, 0);
   assert.throws(() => new WorkingSetManager(0), /positive integer/);
+
+  const bounded = new WorkingSetManager(500);
+  bounded.addUnit(unit("kept", 100));
+  const beforeTooLarge = bounded.snapshot();
+  assert.throws(
+    () => bounded.addUnit(unit("too-large", 600)),
+    /B_work cannot fit ArtifactUnit/
+  );
+  assert.deepStrictEqual(
+    bounded.snapshot(),
+    beforeTooLarge,
+    "irreducibly oversized admission must not evict existing units"
+  );
+
+  const tight = new WorkingSetManager(50);
+  tight.addUnit(unit("tiny", 10));
+  const beforeMemoryFailure = tight.snapshot();
+  assert.throws(
+    () => tight.setExplicitMemory(exactTokenText(51)),
+    /B_work cannot fit explicit memory/
+  );
+  assert.deepStrictEqual(
+    tight.snapshot(),
+    beforeMemoryFailure,
+    "irreducibly oversized explicit memory must be rejected atomically"
+  );
 }
 
 function main(): void {
   const serializationComparison = verifyRawSerializationImprovement();
-  const workingSetScenario = verifyWorkingSetIsNotCumulativeCap();
+  const workingSetScenario = verifyWorkingSetIsNotCumulativeCapWithFifo();
+  const deterministicMultiVictimFifo = verifyDeterministicMultiVictimFifo();
   const explicitMemory = verifyExplicitMemory();
-  verifyFailClosedAccounting();
+  const memoryGrowthFifo = verifyMemoryGrowthUsesSameFifoPolicy();
+  verifyFailClosedAccountingAndAtomicRejection();
 
   console.log(JSON.stringify({
     status: "ok",
-    p4Slice: "steps-1-3-accounting-contract-frozen-raw-content",
+    p4Slice: "steps-1-4-deterministic-fifo",
     artifactEvidenceSerialization: {
       format: "compact JSON metadata line + newline + raw content",
       modelVisibleMetadataFields: ["path", "lines"],
@@ -254,25 +370,37 @@ function main(): void {
       tokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
       invariant: "counted serialization === model-visible serialization",
     },
+    evictionPolicy: {
+      name: WORKING_SET_EVICTION_POLICY,
+      sharedBy: ["PR", "AR"],
+      victims: "oldest-admitted active ArtifactUnit first",
+      explicitMemoryEvictable: false,
+      rereadEnabled: false,
+    },
     serializationComparison,
     workingSetScenario,
+    deterministicMultiVictimFifo,
     explicitMemory,
+    memoryGrowthFifo,
     verified: [
       "ArtifactUnit-as-working-set-unit",
       "B_work-counts-model-visible-artifact-evidence-not-content-only",
       "path-and-line-range-included-in-canonical-accounting",
       "raw-content-preserved-without-JSON-escaping",
-      "JSON-escape-overhead-reduced-on-representative-code",
       "kind-remains-harness-only-provenance",
       "canonical-o200k-B_work-enforcement",
-      "budget-overflow-fail-closed",
-      "600-plus-200-plus-700-content-token-scenario-with-model-visible-framing",
+      "FIFO-v1-oldest-admission-first",
+      "FIFO-v1-multiple-victim-order",
+      "FIFO-v1-deterministic-replay",
+      "explicit-memory-pinned-and-capacity-producing",
+      "oversized-admission-atomic-rejection",
+      "oversized-memory-atomic-rejection",
+      "600-plus-200-plus-700-content-token-scenario-with-automatic-FIFO",
       "cumulative-admission-over-budget-active-within-budget",
       "explicit-memory-counted-in-B_work",
       "600-char-working-note-bound-shared-with-P2",
       "P2-and-P4-working-note-use-same-canonical-tokenizer",
-      "eviction-history-recording-without-policy",
-      "no-automatic-deterministic-eviction-yet",
+      "reread-explicitly-deferred-to-step-5",
     ],
   }, null, 2));
 }
