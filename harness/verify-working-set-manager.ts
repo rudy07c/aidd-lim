@@ -71,6 +71,10 @@ function verifyRawSerializationImprovement(): Record<string, unknown> {
   const current = serializeArtifactUnitForWorkingSet(unit);
   const { metadata, rawContent } = splitSerializedArtifact(current);
 
+  assert.ok(
+    current.startsWith('{"path":"src/example.ts","lines":[10,16]}\n'),
+    "working-set serialization format must remain compact JSON metadata + newline + raw content"
+  );
   assert.deepStrictEqual(metadata, { path: unit.path, lines: [unit.startLine, unit.endLine] });
   assert.strictEqual(rawContent, content, "working-set content must be preserved byte-for-byte after metadata newline");
   assert.strictEqual(unit.tokenCount, countCanonicalTokens(current));
