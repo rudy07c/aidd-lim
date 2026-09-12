@@ -880,14 +880,19 @@ multi-turn pagingでagentが以前の観測を統合できるよう、
 
 Stage 1ではeviction policyを研究変数にしない。
 
-PR / AR共通のdeterministic policyをfreezeする。
+PR / AR共通のdeterministic policyとして **FIFO-v1** をfreezeする。
 
-候補：
+- capacity pressure時は、admission sequenceが最も古いactive `ArtifactUnit`から必要量だけevictする
+- explicit working memoryはpersistent / pinnedとし、`B_{work}`へ算入するがeviction victimにはしない
+- explicit memory増加がcapacity pressureを生む場合も、artifact unit側へ同じFIFO-v1を適用する
+- incoming unit + pinned memoryだけで `B_{work}` を超える場合は、既存unitをevictする前にatomic rejectする
+- explicit memory単体が `B_{work}` を超える場合もatomic rejectする
+- manual victim指定はharness/controller diagnostic専用であり、PR / AR workerへagent-selectable policyとして公開しない
+- reread / re-admission semanticsはStep 5で別途freezeし、Step 4では以前evictした同一unit IDの再admissionを許可しない
 
-- LRU
-- FIFO
+FIFOを選ぶ理由は、LRUのように「access / touch」を何とみなすかをStep 5より前に定義せずに済み、retrieval policyとeviction policyを分離しやすいためである。
 
-重要なのは**同一policy**であること。
+PR / ARは**同一のFIFO-v1**を用い、C2ではretrieval policyだけを変える。
 
 ### 6.6 exploration resource
 
