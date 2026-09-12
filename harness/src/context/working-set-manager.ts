@@ -173,10 +173,10 @@ export class WorkingSetManager {
     };
     const victims = this.planFifoEvictions(this.artifactTokens + tokenCount);
 
-    // Install the validated/pinned memory before recording evictions so
-    // usageBefore/usageAfter reflect the effective state that triggered them.
-    this.explicitMemory = nextMemory;
+    // Evict before installing larger memory so the manager never exposes or logs
+    // a transient state above B_work. All validation/planning is completed first.
     this.applyFifoEvictions(victims, "explicit-memory-update", null);
+    this.explicitMemory = nextMemory;
     this.assertInvariant();
   }
 
