@@ -9,8 +9,37 @@ export interface ArtifactUnit {
   startLine: number;
   endLine: number;
   content: string;
+  /** Canonical tokens of serializeArtifactUnitForWorkingSet(this), not content-only tokens. */
   tokenCount: number;
+  /** Harness-side provenance only; intentionally not exposed in the model-visible serialization. */
   kind: ArtifactUnitKind;
+}
+
+type ModelVisibleArtifactUnit = Pick<ArtifactUnit, "path" | "startLine" | "endLine" | "content">;
+
+/**
+ * Canonical model-visible representation for one working-set artifact unit.
+ *
+ * B_work is defined over the exact artifact evidence shown to the model, not over
+ * content alone. The path and line range are repository-derived evidence and are
+ * therefore budgeted together with content. `kind` is deliberately excluded: it
+ * is harness-side provenance/selector metadata and exposing it would add an
+ * artificial cue that is not part of the repository evidence itself.
+ *
+ * P4/P5 prompt construction must reuse this function rather than inventing a
+ * second framing format, otherwise measured B_work and model-visible evidence
+ * would diverge.
+ */
+export function serializeArtifactUnitForWorkingSet(unit: ModelVisibleArtifactUnit): string {
+  return JSON.stringify({
+    path: normalizeRepositoryPath(unit.path),
+    lines: [unit.startLine, unit.endLine],
+    content: unit.content,
+  });
+}
+
+export function countArtifactUnitWorkingSetTokens(unit: ModelVisibleArtifactUnit): number {
+  return countCanonicalTokens(serializeArtifactUnitForWorkingSet(unit));
 }
 
 export function createArtifactUnit(args: {
@@ -24,18 +53,22 @@ export function createArtifactUnit(args: {
   if (!args.id) throw new Error("ArtifactUnit id must be non-empty");
   if (!Number.isInteger(args.startLine) || args.startLine < 0) throw new Error("ArtifactUnit startLine must be a non-negative integer");
   if (!Number.isInteger(args.endLine) || args.endLine < args.startLine) throw new Error("ArtifactUnit endLine must be >= startLine");
-  return {
+  const normalized = {
     ...args,
     path: normalizeRepositoryPath(args.path),
-    tokenCount: countCanonicalTokens(args.content),
+  };
+  return {
+    ...normalized,
+    tokenCount: countArtifactUnitWorkingSetTokens(normalized),
   };
 }
 
 /**
- * Deterministically split one repository file into units whose content fits maxTokens.
- * Line boundaries are preferred. If a single line itself exceeds the budget, it is
- * split by the largest character prefix that fits. The resulting segment keeps the
- * source line number for both startLine/endLine.
+ * Deterministically split one repository file into units whose complete
+ * model-visible evidence serialization fits maxTokens. Line boundaries are
+ * preferred. If a single line itself exceeds the budget, it is split by the
+ * largest character prefix whose path + line range + content representation fits.
+ * The resulting segment keeps the source line number for both startLine/endLine.
  */
 export function chunkArtifactFile(
   filePath: string,
@@ -47,14 +80,20 @@ export function chunkArtifactFile(
   }
   const normalizedPath = normalizeRepositoryPath(filePath);
   if (content.length === 0) {
-    return [createArtifactUnit({
+    const empty = createArtifactUnit({
       id: `${normalizedPath}:L1-L1:C0`,
       path: normalizedPath,
       startLine: 1,
       endLine: 1,
       content: "",
       kind: "chunk",
-    })];
+    });
+    if (empty.tokenCount > maxTokens) {
+      throw new Error(
+        `ArtifactUnit metadata alone exceeds maxTokens=${maxTokens} for ${normalizedPath}`
+      );
+    }
+    return [empty];
   }
 
   const lines = content.split(/(?<=\n)/);
@@ -71,19 +110,32 @@ export function chunkArtifactFile(
   };
 
   for (const line of lines) {
-    if (countCanonicalTokens(line) > maxTokens) {
+    if (evidenceTokens(normalizedPath, lineNo, lineNo, line) > maxTokens) {
       flush();
       let remaining = line;
       while (remaining.length > 0) {
-        const length = largestPrefixWithinBudget(remaining, maxTokens);
-        if (length <= 0) throw new Error(`Unable to split ArtifactUnit line within maxTokens=${maxTokens}`);
+        const length = largestPrefixWithinBudget(
+          remaining,
+          maxTokens,
+          normalizedPath,
+          lineNo
+        );
+        if (length <= 0) {
+          throw new Error(
+            `Unable to split ArtifactUnit line within maxTokens=${maxTokens}; ` +
+            `model-visible metadata leaves no room for content (${normalizedPath}:${lineNo})`
+          );
+        }
         const piece = remaining.slice(0, length);
         pieces.push({ content: piece, startLine: lineNo, endLine: lineNo });
         remaining = remaining.slice(length);
       }
     } else {
       const candidate = current + line;
-      if (current.length > 0 && countCanonicalTokens(candidate) > maxTokens) {
+      if (
+        current.length > 0 &&
+        evidenceTokens(normalizedPath, currentStart, lineNo, candidate) > maxTokens
+      ) {
         flush();
         currentStart = lineNo;
         current = line;
@@ -98,7 +150,7 @@ export function chunkArtifactFile(
   }
   flush();
 
-  return pieces.map((piece, index) => createArtifactUnit({
+  const units = pieces.map((piece, index) => createArtifactUnit({
     id: `${normalizedPath}:L${piece.startLine}-L${piece.endLine}:C${index}`,
     path: normalizedPath,
     startLine: piece.startLine,
@@ -106,6 +158,14 @@ export function chunkArtifactFile(
     content: piece.content,
     kind: "chunk",
   }));
+  for (const unit of units) {
+    if (unit.tokenCount > maxTokens) {
+      throw new Error(
+        `ArtifactUnit working-set serialization exceeded maxTokens=${maxTokens}: ${unit.id}`
+      );
+    }
+  }
+  return units;
 }
 
 export function repositoryToArtifactUnits(
@@ -117,17 +177,31 @@ export function repositoryToArtifactUnits(
     .flatMap(([filePath, content]) => chunkArtifactFile(filePath, content, maxTokensPerUnit));
 }
 
+function evidenceTokens(
+  path: string,
+  startLine: number,
+  endLine: number,
+  content: string
+): number {
+  return countArtifactUnitWorkingSetTokens({ path, startLine, endLine, content });
+}
+
 function countNewlines(value: string): number {
   return (value.match(/\n/g) ?? []).length || 1;
 }
 
-function largestPrefixWithinBudget(value: string, maxTokens: number): number {
+function largestPrefixWithinBudget(
+  value: string,
+  maxTokens: number,
+  path: string,
+  lineNo: number
+): number {
   let low = 1;
   let high = value.length;
   let best = 0;
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    if (countCanonicalTokens(value.slice(0, mid)) <= maxTokens) {
+    if (evidenceTokens(path, lineNo, lineNo, value.slice(0, mid)) <= maxTokens) {
       best = mid;
       low = mid + 1;
     } else {
