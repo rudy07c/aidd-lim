@@ -1,5 +1,8 @@
 import { OBSERVABLE_WORKING_NOTE_MAX_CHARS } from "./observable-interaction";
-import { ArtifactUnit } from "../measurement/artifact-unit";
+import {
+  ArtifactUnit,
+  countArtifactUnitWorkingSetTokens,
+} from "../measurement/artifact-unit";
 import {
   CANONICAL_TOKEN_COUNT_METHOD,
   countCanonicalTokens,
@@ -36,6 +39,12 @@ export interface WorkingSetSnapshot {
 
 /**
  * Stage 1 P4 working-set budget authority for PR/AR.
+ *
+ * B_work counts model-visible artifact evidence, not content-only tokens. For
+ * ArtifactUnit this means the canonical path + line-range + content serialization
+ * defined by serializeArtifactUnitForWorkingSet(). Explicit memory is counted by
+ * the same canonical tokenizer. Backend/provider truncation is not a second budget
+ * authority and must remain disabled for this evidence.
  *
  * Scope of this first implementation slice:
  * - explicit ArtifactUnit admission/removal
@@ -166,7 +175,7 @@ export class WorkingSetManager {
   }
 
   private assertArtifactUnitCanonical(unit: ArtifactUnit): void {
-    const canonical = countCanonicalTokens(unit.content);
+    const canonical = countArtifactUnitWorkingSetTokens(unit);
     if (unit.tokenCount !== canonical) {
       throw new Error(
         `ArtifactUnit tokenCount mismatch for ${unit.id}: declared=${unit.tokenCount}, canonical=${canonical}`
