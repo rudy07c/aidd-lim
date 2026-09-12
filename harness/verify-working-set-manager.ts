@@ -35,6 +35,68 @@ function unit(id: string, contentTokens: number): ArtifactUnit {
   });
 }
 
+function splitSerializedArtifact(serialized: string): { metadata: unknown; rawContent: string } {
+  const delimiter = serialized.indexOf("\n");
+  assert.ok(delimiter >= 0, "artifact serialization must separate metadata and raw content with newline");
+  return {
+    metadata: JSON.parse(serialized.slice(0, delimiter)),
+    rawContent: serialized.slice(delimiter + 1),
+  };
+}
+
+function verifyRawSerializationImprovement(): Record<string, unknown> {
+  const content = [
+    'import path from "node:path";',
+    'const windowsPath = "C:\\\\temp\\\\artifact";',
+    'const quoted = "say \\"hello\\" and keep \\\\slashes\\\\";',
+    'export function render(input: string): string {',
+    '  return `${input}\\n${windowsPath}\\n${quoted}`;',
+    '}',
+    '',
+  ].join("\n");
+  const unit = createArtifactUnit({
+    id: "serialization-comparison",
+    path: "src/example.ts",
+    startLine: 10,
+    endLine: 16,
+    content,
+    kind: "chunk",
+  });
+
+  const legacyWholeJson = JSON.stringify({
+    path: unit.path,
+    lines: [unit.startLine, unit.endLine],
+    content: unit.content,
+  });
+  const current = serializeArtifactUnitForWorkingSet(unit);
+  const { metadata, rawContent } = splitSerializedArtifact(current);
+
+  assert.deepStrictEqual(metadata, { path: unit.path, lines: [unit.startLine, unit.endLine] });
+  assert.strictEqual(rawContent, content, "working-set content must be preserved byte-for-byte after metadata newline");
+  assert.strictEqual(unit.tokenCount, countCanonicalTokens(current));
+
+  const contentOnlyTokens = countCanonicalTokens(content);
+  const legacyWholeJsonTokens = countCanonicalTokens(legacyWholeJson);
+  const rawContentSerializationTokens = countCanonicalTokens(current);
+  assert.ok(
+    legacyWholeJsonTokens > rawContentSerializationTokens,
+    "raw-content serialization must reduce JSON-escape overhead on representative code"
+  );
+  assert.ok(rawContentSerializationTokens > contentOnlyTokens, "path/line framing must remain budgeted");
+
+  return {
+    contentOnlyTokens,
+    legacyWholeJsonTokens,
+    rawContentSerializationTokens,
+    legacyEscapeOverheadVsContent: legacyWholeJsonTokens - contentOnlyTokens,
+    rawFramingOverheadVsContent: rawContentSerializationTokens - contentOnlyTokens,
+    tokensSavedVsLegacyWholeJson: legacyWholeJsonTokens - rawContentSerializationTokens,
+    percentSavedVsLegacyWholeJson: Number(
+      (((legacyWholeJsonTokens - rawContentSerializationTokens) / legacyWholeJsonTokens) * 100).toFixed(2)
+    ),
+  };
+}
+
 function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
   const manager = new WorkingSetManager(1000);
   const u600 = unit("u600", 600);
@@ -80,15 +142,15 @@ function verifyWorkingSetIsNotCumulativeCap(): Record<string, unknown> {
 
   for (const item of [u600, u200, u700]) {
     const serialized = serializeArtifactUnitForWorkingSet(item);
+    const { metadata, rawContent } = splitSerializedArtifact(serialized);
     assert.strictEqual(item.tokenCount, countCanonicalTokens(serialized));
-    assert.ok(serialized.includes(`\"path\":\"${item.path}\"`));
-    assert.ok(serialized.includes(`\"lines\":[${item.startLine},${item.endLine}]`));
-    assert.ok(!serialized.includes("\"kind\""));
+    assert.deepStrictEqual(metadata, { path: item.path, lines: [item.startLine, item.endLine] });
+    assert.strictEqual(rawContent, item.content);
   }
 
   return {
     budget: snapshot.budgetTokens,
-    accounting: "canonical tokens of model-visible path + line range + content serialization",
+    accounting: "canonical tokens of exact model-visible metadata-line + raw-content serialization",
     contentTokenTargets: {
       first: 600,
       retained: 200,
@@ -172,24 +234,31 @@ function verifyFailClosedAccounting(): void {
 }
 
 function main(): void {
+  const serializationComparison = verifyRawSerializationImprovement();
   const workingSetScenario = verifyWorkingSetIsNotCumulativeCap();
   const explicitMemory = verifyExplicitMemory();
   verifyFailClosedAccounting();
 
   console.log(JSON.stringify({
     status: "ok",
-    p4Slice: "steps-1-3-accounting-contract-frozen",
+    p4Slice: "steps-1-3-accounting-contract-frozen-raw-content",
     artifactEvidenceSerialization: {
-      modelVisibleFields: ["path", "lines", "content"],
+      format: "compact JSON metadata line + newline + raw content",
+      modelVisibleMetadataFields: ["path", "lines"],
+      contentJsonEscaped: false,
       kindModelVisible: false,
       tokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
+      invariant: "counted serialization === model-visible serialization",
     },
+    serializationComparison,
     workingSetScenario,
     explicitMemory,
     verified: [
       "ArtifactUnit-as-working-set-unit",
       "B_work-counts-model-visible-artifact-evidence-not-content-only",
       "path-and-line-range-included-in-canonical-accounting",
+      "raw-content-preserved-without-JSON-escaping",
+      "JSON-escape-overhead-reduced-on-representative-code",
       "kind-remains-harness-only-provenance",
       "canonical-o200k-B_work-enforcement",
       "budget-overflow-fail-closed",
