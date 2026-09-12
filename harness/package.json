@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "verify:context-conditions": "ts-node verify-context-conditions.ts",
     "verify:observable-interaction": "ts-node verify-observable-interaction.ts",
+    "verify:working-set": "ts-node verify-working-set-manager.ts",
     "verify:openai": "ts-node verify-openai-backend.ts",
     "verify:openai-batch": "ts-node verify-openai-batch.ts",
     "verify:openai-live": "ts-node verify-openai-live.ts",
