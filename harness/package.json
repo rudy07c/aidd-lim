@@ -16,6 +16,7 @@
     "verify:repository-accessor": "ts-node verify-repository-accessor.ts",
     "verify:agent-retrieved-runtime": "ts-node verify-agent-retrieved-runtime.ts",
     "verify:privileged-retrieval": "ts-node verify-privileged-retrieval-controller.ts",
+    "verify:pr-ar-runtime-parity": "ts-node verify-pr-ar-runtime-parity.ts",
     "verify:openai": "ts-node verify-openai-backend.ts",
     "verify:openai-batch": "ts-node verify-openai-batch.ts",
     "verify:openai-live": "ts-node verify-openai-live.ts",
