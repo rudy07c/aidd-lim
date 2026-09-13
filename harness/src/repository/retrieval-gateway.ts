@@ -10,11 +10,13 @@ import {
 } from "./repository-accessor";
 
 export const RETRIEVAL_GATEWAY_SCHEMA_VERSION = "retrieval-gateway-v1" as const;
+export type RetrievalGatewayPhase = "begin" | "access" | "complete" | "admit";
 
 export interface BudgetedRetrievalRecord {
   sequence: number;
   operation: RepositoryAccessOperation;
   label: string;
+  phaseTrace: RetrievalGatewayPhase[];
   candidateResultHash: string | null;
   candidateUnitIds: string[];
   exposedUnitIds: string[];
@@ -33,7 +35,6 @@ export interface BudgetedRetrievalRecord {
 export interface BudgetedRetrievalResult {
   schemaVersion: typeof RETRIEVAL_GATEWAY_SCHEMA_VERSION;
   operation: RepositoryAccessOperation;
-  /** Canonical model-visible evidence admitted/re-admitted into W_t by this retrieval. */
   evidence: string[];
   record: BudgetedRetrievalRecord;
 }
@@ -105,19 +106,23 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
   ): Promise<BudgetedRetrievalResult> {
     const label = `repository:${operation}:${this.history.length}`;
     const workingBefore = this.workingSet.snapshot();
+    const phaseTrace: RetrievalGatewayPhase[] = [];
+
     this.explorationBudget.beginRetrieval(label);
+    phaseTrace.push("begin");
 
     let candidate: Awaited<ReturnType<InMemoryRepositoryAccessor["listFiles"]>>;
     try {
       candidate = await access();
+      phaseTrace.push("access");
     } catch (error) {
-      // Failed repository attempts still consume one retrieval operation but expose
-      // zero evidence, so close the pending E_max transaction before propagating.
       this.explorationBudget.completeRetrieval(0, label);
+      phaseTrace.push("complete");
       const snapshot = this.explorationBudget.snapshot();
       this.pushRecord({
         operation,
         label,
+        phaseTrace,
         candidateResultHash: null,
         candidateUnitIds: [],
         exposedUnitIds: [],
@@ -141,13 +146,12 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
       .map((unit) => unit.id);
     const exposable = candidate.units.filter((unit) => !activeIds.has(unit.id));
 
-    // A unit that cannot ever coexist with pinned explicit memory is not exposable.
-    // Close this retrieval as zero evidence rather than mutating E_max/W_t partially.
     const impossible = exposable.find(
       (unit) => unit.tokenCount + workingBefore.memoryTokens > workingBefore.budgetTokens
     );
     if (impossible) {
       this.explorationBudget.completeRetrieval(0, label);
+      phaseTrace.push("complete");
       const snapshot = this.explorationBudget.snapshot();
       const message =
         `B_work cannot admit retrieved ArtifactUnit ${impossible.id}: ` +
@@ -156,6 +160,7 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
       this.pushRecord({
         operation,
         label,
+        phaseTrace,
         candidateResultHash: candidate.resultHash,
         candidateUnitIds: candidate.units.map((unit) => unit.id),
         exposedUnitIds: [],
@@ -178,10 +183,8 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
     const selected = deterministicTokenPrefix(exposable, remainingRetrievalTokens);
     const exposedTokens = selected.reduce((sum, unit) => sum + unit.tokenCount, 0);
 
-    // E_max evidence accounting is finalized before any W_t mutation. Because the
-    // prefix is selected from the current remaining budget, this completion cannot
-    // exceed the cumulative token cap.
     this.explorationBudget.completeRetrieval(exposedTokens, label);
+    phaseTrace.push("complete");
 
     const admittedUnitIds: string[] = [];
     const rereadUnitIds: string[] = [];
@@ -194,12 +197,14 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
         admittedUnitIds.push(unit.id);
       }
     }
+    phaseTrace.push("admit");
 
     const workingAfter = this.workingSet.snapshot();
     const explorationAfter = this.explorationBudget.snapshot();
     const record = this.pushRecord({
       operation,
       label,
+      phaseTrace,
       candidateResultHash: candidate.resultHash,
       candidateUnitIds: candidate.units.map((unit) => unit.id),
       exposedUnitIds: selected.map((unit) => unit.id),
@@ -252,6 +257,7 @@ function deterministicTokenPrefix<T extends { tokenCount: number }>(
 function cloneRecord(record: BudgetedRetrievalRecord): BudgetedRetrievalRecord {
   return {
     ...record,
+    phaseTrace: [...record.phaseTrace],
     candidateUnitIds: [...record.candidateUnitIds],
     exposedUnitIds: [...record.exposedUnitIds],
     admittedUnitIds: [...record.admittedUnitIds],
