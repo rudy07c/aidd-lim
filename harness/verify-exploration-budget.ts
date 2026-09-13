@@ -140,7 +140,21 @@ function verifyTokenOverflowDoesNotRefundOperation(): Record<string, unknown> {
   );
   assert.throws(
     () => budget.beginRetrieval("must-not-start-new-access"),
-    /another retrieval is pending/
+    /retrieval is pending/
+  );
+  const pendingBeforeBlockedInference = budget.snapshot();
+  assert.throws(
+    () => budget.recordModelCall("must-not-infer-unbudgeted-candidate"),
+    /Cannot start a model call while retrieval is pending/
+  );
+  assert.throws(
+    () => budget.recordDecisionRound("must-not-advance-unbudgeted-candidate"),
+    /Cannot start a decision round while retrieval is pending/
+  );
+  assert.deepStrictEqual(
+    budget.snapshot(),
+    pendingBeforeBlockedInference,
+    "pending retrieval must block inference/next-round without consuming additional E_max"
   );
 
   // Trim the already-fetched candidate to the remaining exposable budget.
@@ -154,6 +168,7 @@ function verifyTokenOverflowDoesNotRefundOperation(): Record<string, unknown> {
   return {
     usedAfterRejectedEvidence: afterRejectedEvidence.used,
     pendingAfterRejectedEvidence: afterRejectedEvidence.pendingRetrieval !== null,
+    pendingBlockedInferenceAndNextRound: true,
     finalUsed: final.used,
     exhausted: final.exhausted,
     operationRefundedOnTokenOverflow: false,
@@ -328,6 +343,7 @@ function main(): void {
       retrievalAccounting: "two-phase: operation before repository access; evidence tokens before worker exposure",
       failedOrEmptyRetrieval: "operation remains consumed; completion with zero evidence tokens",
       tokenOverflow: "does not refund retrieval operation; pending candidate may be trimmed or discarded",
+      pendingBoundary: "model calls and next decision rounds are blocked until pending retrieval is budgeted/closed",
       rejection: "each counter mutation is fail-closed; already-spent retrieval operations are deliberately not rolled back",
       prAr: "same ExplorationLimits; retrieval policy remains the intended C2 difference",
     },
@@ -347,6 +363,7 @@ function main(): void {
       "failed-empty-retrieval-is-not-free",
       "token-overflow-does-not-refund-retrieval-operation",
       "pending-retrieval-prevents-new-free-access",
+      "pending-retrieval-blocks-model-call-and-next-decision-round",
       "same-candidate-can-be-trimmed-without-new-repository-operation",
       "PR-AR-share-identical-resource-contract",
       "same-sequence-deterministic-replay",
