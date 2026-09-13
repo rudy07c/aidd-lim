@@ -60,6 +60,9 @@ jobs:
       - name: Verify P4 WorkingSetManager step 5 reread
         working-directory: harness
         run: npm run verify:working-set-reread
+      - name: Verify P4 step 6 E_max exploration budget
+        working-directory: harness
+        run: npm run verify:exploration-budget
       - name: Verify P3 measurement repair
         working-directory: calibration
         run: npm run verify:p3
