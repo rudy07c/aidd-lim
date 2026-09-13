@@ -1,4 +1,5 @@
 import {
+  ResearchStatelessEpisodeTelemetry,
   ResearchStatelessStepExecutorFactory,
 } from "./research-stateless-episode";
 import {
@@ -34,7 +35,7 @@ export type AgentRetrievedDecision<TFinal = unknown> =
 export interface AgentRetrievedEpisodeResult<TFinal = unknown> {
   schemaVersion: typeof AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION;
   final: TFinal;
-  telemetry: Awaited<ReturnType<AgentRetrievedEpisode<TFinal>["runShared"]>>["telemetry"];
+  telemetry: ResearchStatelessEpisodeTelemetry;
   retrievals: BudgetedRetrievalRecord[];
 }
 
@@ -57,7 +58,7 @@ export interface AgentRetrievedEpisodeOptions<TFinal = unknown> {
 export class AgentRetrievedEpisode<TFinal = unknown> {
   private readonly runtime: RetrievedEpisodeRuntime<AgentRetrievedDecision<TFinal>, TFinal>;
 
-  constructor(private readonly options: AgentRetrievedEpisodeOptions<TFinal>) {
+  constructor(options: AgentRetrievedEpisodeOptions<TFinal>) {
     this.runtime = new RetrievedEpisodeRuntime({
       condition: "AR",
       taskId: options.taskId,
@@ -85,16 +86,12 @@ export class AgentRetrievedEpisode<TFinal = unknown> {
   }
 
   async run(): Promise<AgentRetrievedEpisodeResult<TFinal>> {
-    const result = await this.runShared();
+    const result = await this.runtime.run();
     return {
       schemaVersion: AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION,
       final: result.final,
       telemetry: result.telemetry,
       retrievals: result.retrievals,
     };
-  }
-
-  private runShared() {
-    return this.runtime.run();
   }
 }
