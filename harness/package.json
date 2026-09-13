@@ -14,6 +14,7 @@
     "verify:exploration-budget": "ts-node verify-exploration-budget.ts",
     "verify:research-stateless-episode": "ts-node verify-research-stateless-episode.ts",
     "verify:repository-accessor": "ts-node verify-repository-accessor.ts",
+    "verify:agent-retrieved-runtime": "ts-node verify-agent-retrieved-runtime.ts",
     "verify:openai": "ts-node verify-openai-backend.ts",
     "verify:openai-batch": "ts-node verify-openai-batch.ts",
     "verify:openai-live": "ts-node verify-openai-live.ts",
