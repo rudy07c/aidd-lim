@@ -906,26 +906,22 @@ PR / ARは**同一のFIFO-v1**を用い、C2ではretrieval policyだけを変�
 E_{max}
 \]
 
-を別に定義する。
+は `B_{work}` とは独立したepisode-level exploration / compute guardrailとして実装する。`B_{work}` が同時保持できるmodel-visible evidence量を制約するのに対し、`E_{max}` は有限working setを無制限pagingで実質的に回避することを防ぐ。
 
-候補：
+Stage 1ではPR / AR共通のdeterministic resource vectorとして次を用いる。
 
-- max retrieval turns
-- max tool calls
-- max API calls
-- max wall-clock
+- `maxRetrievalOperations`: repository evidence取得試行数。空結果・失敗試行も1回として消費し、free retryを許さない
+- `maxCumulativeRetrievedTokens`: episode中にworkerへ実際に提示されたmodel-visible evidenceの延べcanonical token数。rereadは再度加算する
+- `maxModelCalls`: provider / model inference call試行数
+- `maxDecisionRounds`: high-level decision round数
 
-\(E_{max}\) はPR / ARで同一。
+wall-clockはrunner負荷・provider latencyを実験変数にし得るためbindingなscientific resourceには用いず、必要ならprovenanceとして別途logする。literal tool-call数もPRとARでmechanismが異なり得るためprimary共通budgetにはせず、P5以降でtelemetryとして記録してよい。
 
-通常taskで容易にはbindingにならない値へ較正する。
+`E_{max}` のconsumeはfail-closed / atomicとする。model call・decision roundは外部操作の前にconsumeする。repository retrievalはtrusted accessorが候補結果を内部生成してもよいが、workerへ結果を露出する前にretrieval operationとcanonical retrieved tokensのbudget checkを通す。
 
-actual：
+PR / ARには同一の `E_{max}` resource contractとfreeze済みlimit値を与え、C2で変えるのはretrieval policyだけとする。Step 6ではmechanismを実装し、main scientific valueはP6 recalibrationで通常taskでは容易にbindingにならない範囲へ較正・freezeする。
 
-\[
-E_{used}
-\]
-
-をlogする。
+actual usage \(E_{used}\) として、各dimensionのused / remaining / event historyをlogする。
 
 ### 6.7 AF / PR / ARのdecision opportunity統制
 
