@@ -62,6 +62,7 @@ async function verifyIntegratedARLoop(): Promise<Record<string, unknown>> {
 
   const seenInputs: ResearchStatelessModelInput[] = [];
   const toolSchemaNames: string[][] = [];
+  let strictSchemasVerified = false;
   let step = 0;
 
   const episode = new AgentRetrievedEpisode<{ modifiedFiles: Record<string, string> }>({
@@ -74,6 +75,20 @@ async function verifyIntegratedARLoop(): Promise<Record<string, unknown>> {
     executorFactory: (args: Readonly<ResearchStatelessExecutorFactoryArgs>) => {
       assert.strictEqual(args.condition, "AR");
       toolSchemaNames.push(args.toolDefinitions.map((tool) => tool.name));
+      for (const tool of args.toolDefinitions) {
+        const schema = tool.parameters as {
+          properties?: Record<string, unknown>;
+          required?: string[];
+          additionalProperties?: boolean;
+        };
+        assert.strictEqual(schema.additionalProperties, false);
+        assert.deepStrictEqual(
+          [...(schema.required ?? [])].sort(),
+          Object.keys(schema.properties ?? {}).sort(),
+          `${tool.name} strict schema must require every declared property`
+        );
+      }
+      strictSchemasVerified = true;
       const invocation = step++;
       return {
         async runFresh(input) {
@@ -84,7 +99,10 @@ async function verifyIntegratedARLoop(): Promise<Record<string, unknown>> {
           });
           const decision: AgentRetrievedDecision<{ modifiedFiles: Record<string, string> }> =
             invocation === 0
-              ? { kind: "retrieve", call: { toolName: "list_files", arguments: {} } }
+              ? {
+                  kind: "retrieve",
+                  call: { toolName: "list_files", arguments: { directory: null } },
+                }
               : invocation === 1
                 ? {
                     kind: "retrieve",
@@ -132,6 +150,7 @@ async function verifyIntegratedARLoop(): Promise<Record<string, unknown>> {
     ),
     "all fresh executors must receive the same fixed AR tool schemas"
   );
+  assert.ok(strictSchemasVerified);
 
   const working = workingSet.snapshot();
   const used = exploration.snapshot().used;
@@ -154,6 +173,7 @@ async function verifyIntegratedARLoop(): Promise<Record<string, unknown>> {
     evictionCount: working.evictionHistory.length,
     phaseTraces: result.retrievals.map((record) => record.phaseTrace),
     freshModelCalls: used.modelCalls,
+    strictSchemasVerified,
   };
 }
 
@@ -186,21 +206,15 @@ async function verifyFailedAccessConsumesOperationAndClosesPending(): Promise<Re
 
 function verifyNoScientificRuntimeBypassesGateway(): Record<string, unknown> {
   const srcDir = path.join(__dirname, "src");
-  const allowedImporter = path.normalize(
-    path.join(srcDir, "repository", "retrieval-gateway.ts")
-  );
+  const allowed = new Set([
+    path.normalize(path.join(srcDir, "repository", "repository-accessor.ts")),
+    path.normalize(path.join(srcDir, "repository", "retrieval-gateway.ts")),
+  ]);
   const violations: string[] = [];
 
   walkTs(srcDir, (filePath, content) => {
-    if (path.normalize(filePath) === allowedImporter) return;
-    if (
-      content.includes('from "./repository-accessor"') ||
-      content.includes('from "../repository/repository-accessor"') ||
-      content.includes('from "../../repository/repository-accessor"') ||
-      content.includes("from './repository-accessor'") ||
-      content.includes("from '../repository/repository-accessor'") ||
-      content.includes("from '../../repository/repository-accessor'")
-    ) {
+    if (allowed.has(path.normalize(filePath))) return;
+    if (content.includes("repository-accessor")) {
       violations.push(path.relative(srcDir, filePath));
     }
   });
@@ -208,11 +222,11 @@ function verifyNoScientificRuntimeBypassesGateway(): Record<string, unknown> {
   assert.deepStrictEqual(
     violations,
     [],
-    `scientific runtime imports raw RepositoryAccessor outside gateway: ${violations.join(", ")}`
+    `scientific runtime references raw RepositoryAccessor outside gateway: ${violations.join(", ")}`
   );
   return {
-    rawAccessorAllowedImporter: path.relative(srcDir, allowedImporter),
-    bypassImports: violations,
+    rawAccessorAllowedFiles: [...allowed].map((file) => path.relative(srcDir, file)).sort(),
+    bypassReferences: violations,
   };
 }
 
@@ -241,11 +255,11 @@ async function main(): Promise<void> {
         failedAccess,
         bypassGuard,
         verified: [
-          "AR-fixed-function-tool-schemas-visible-to-every-fresh-executor",
+          "AR-fixed-strict-function-tool-schemas-visible-to-every-fresh-executor",
           "AR-tool-call-dispatched-only-through-budgeted-gateway",
           "begin-access-complete-admit-order",
           "failed-access-consumes-retrieval-operation-with-zero-evidence",
-          "raw-accessor-not-imported-by-scientific-src-outside-gateway",
+          "raw-accessor-not-referenced-by-scientific-src-outside-accessor-and-gateway",
           "active-working-set-never-exceeds-B_work",
           "cumulative-retrieval-can-exceed-B_work",
           "FIFO-eviction-still-applies-through-accessor-path",
