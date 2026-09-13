@@ -16,6 +16,11 @@ export interface AgentRetrievalTool {
 /**
  * AR-only function tool surface. These tools never own repository access directly;
  * every execution delegates to BudgetedRepositoryGateway so E_max/B_work cannot be bypassed.
+ *
+ * Schemas follow strict function-calling discipline: every declared property is in
+ * `required`; semantically optional values are represented as nullable. This keeps
+ * the production OpenAI adapter compatible with strict tool schemas without giving
+ * the provider a different tool contract than the offline integration verifier.
  */
 export function createAgentRetrievalTools(
   gateway: BudgetedRepositoryGateway
@@ -24,17 +29,20 @@ export function createAgentRetrievalTools(
     {
       definition: {
         name: "list_files",
-        description: "List repository-relative files recursively, optionally under one directory.",
+        description: "List repository-relative files recursively. Pass null for the repository root.",
         parameters: {
           type: "object",
-          properties: { directory: { type: "string" } },
+          properties: {
+            directory: { type: ["string", "null"] },
+          },
+          required: ["directory"],
           additionalProperties: false,
         },
       },
       execute: async (value: unknown) => {
         const args = asObject(value);
-        const directory = optionalString(args.directory, "directory");
-        return gateway.listFiles(directory === undefined ? {} : { directory });
+        const directory = nullableString(args.directory, "directory");
+        return gateway.listFiles(directory === null ? {} : { directory });
       },
     },
     {
@@ -45,7 +53,6 @@ export function createAgentRetrievalTools(
           type: "object",
           properties: {
             query: { type: "string" },
-            maxResults: { type: "integer", minimum: 1, maximum: 100 },
           },
           required: ["query"],
           additionalProperties: false,
@@ -54,31 +61,34 @@ export function createAgentRetrievalTools(
       execute: async (value: unknown) => {
         const args = asObject(value);
         const query = requiredString(args.query, "query");
-        const maxResults = optionalInteger(args.maxResults, "maxResults");
-        return gateway.search(maxResults === undefined ? { query } : { query, maxResults });
+        return gateway.search({ query });
       },
     },
     {
       definition: {
         name: "read_chunk",
-        description: "Read an inclusive line range from one repository-relative file.",
+        description: "Read an inclusive line range from one repository-relative file. Pass null bounds to read from the start/to the end.",
         parameters: {
           type: "object",
           properties: {
             path: { type: "string" },
-            startLine: { type: "integer", minimum: 1 },
-            endLine: { type: "integer", minimum: 1 },
+            startLine: { type: ["integer", "null"], minimum: 1 },
+            endLine: { type: ["integer", "null"], minimum: 1 },
           },
-          required: ["path"],
+          required: ["path", "startLine", "endLine"],
           additionalProperties: false,
         },
       },
       execute: async (value: unknown) => {
         const args = asObject(value);
         const path = requiredString(args.path, "path");
-        const startLine = optionalInteger(args.startLine, "startLine");
-        const endLine = optionalInteger(args.endLine, "endLine");
-        return gateway.readChunk({ path, startLine, endLine });
+        const startLine = nullableInteger(args.startLine, "startLine");
+        const endLine = nullableInteger(args.endLine, "endLine");
+        return gateway.readChunk({
+          path,
+          startLine: startLine === null ? undefined : startLine,
+          endLine: endLine === null ? undefined : endLine,
+        });
       },
     },
   ] satisfies AgentRetrievalTool[]);
@@ -87,7 +97,14 @@ export function createAgentRetrievalTools(
 export function getAgentRetrievalToolDefinitions(
   tools: readonly AgentRetrievalTool[]
 ): readonly ResearchStatelessToolDefinition[] {
-  return Object.freeze(tools.map((tool) => Object.freeze({ ...tool.definition })));
+  return Object.freeze(
+    tools.map((tool) =>
+      Object.freeze({
+        ...tool.definition,
+        parameters: Object.freeze({ ...tool.definition.parameters }),
+      })
+    )
+  );
 }
 
 export async function executeAgentRetrievalToolCall(
@@ -113,13 +130,15 @@ function requiredString(value: unknown, label: string): string {
   return value;
 }
 
-function optionalString(value: unknown, label: string): string | undefined {
-  if (value === undefined) return undefined;
+function nullableString(value: unknown, label: string): string | null {
+  if (value === null) return null;
   return requiredString(value, label);
 }
 
-function optionalInteger(value: unknown, label: string): number | undefined {
-  if (value === undefined) return undefined;
-  if (!Number.isInteger(value)) throw new Error(`${label} must be an integer`);
+function nullableInteger(value: unknown, label: string): number | null {
+  if (value === null) return null;
+  if (!Number.isInteger(value) || (value as number) < 1) {
+    throw new Error(`${label} must be null or a positive integer`);
+  }
   return value as number;
 }
