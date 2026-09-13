@@ -1,4 +1,4 @@
-export const EXPLORATION_BUDGET_SCHEMA_VERSION = "exploration-budget-v1" as const;
+export const EXPLORATION_BUDGET_SCHEMA_VERSION = "exploration-budget-v2" as const;
 
 export interface ExplorationLimits {
   /** Comparable PR/AR repository evidence acquisition attempts. */
@@ -19,7 +19,8 @@ export interface ExplorationUsage {
 }
 
 export type ExplorationEventKind =
-  | "retrieval-attempt"
+  | "retrieval-operation"
+  | "retrieved-evidence"
   | "model-call"
   | "decision-round";
 
@@ -32,12 +33,18 @@ export interface ExplorationEvent {
   usageAfter: ExplorationUsage;
 }
 
+export interface PendingRetrieval {
+  label: string | null;
+  operationSequence: number;
+}
+
 export interface ExplorationBudgetSnapshot {
   schemaVersion: typeof EXPLORATION_BUDGET_SCHEMA_VERSION;
   limits: ExplorationLimits;
   used: ExplorationUsage;
   remaining: ExplorationUsage;
   exhausted: Array<keyof ExplorationUsage>;
+  pendingRetrieval: PendingRetrieval | null;
   events: ExplorationEvent[];
 }
 
@@ -60,15 +67,20 @@ const ZERO_USAGE: ExplorationUsage = {
  * a binding E_max dimension because machine/provider latency would become an
  * experimental variable; latency may still be logged separately as provenance.
  *
- * Retrieval accounting is defined over attempts that are about to become
- * model-visible. A trusted repository accessor may construct a candidate result
- * internally, but recordRetrievalAttempt() must succeed before that result is
- * exposed to the worker. Failed/empty retrievals pass retrievedTokens=0 and still
- * consume one retrieval operation, preventing free retries.
+ * Retrieval accounting is intentionally two-phase:
+ *   1. beginRetrieval() consumes one retrieval operation BEFORE repository access.
+ *   2. completeRetrieval() consumes canonical evidence tokens AFTER a trusted
+ *      accessor has produced a candidate result but BEFORE any result is exposed
+ *      to the worker.
+ * This means failed/empty retrievals still cost an operation, and a candidate
+ * result that exceeds the cumulative-token budget cannot create a free retry.
+ * The pending operation remains consumed until it is completed with an exposable
+ * token count (possibly zero if nothing is shown).
  *
  * Model-call and decision-round counters are consumed before the corresponding
- * external inference/round begins. All updates are fail-closed and atomic: if any
- * dimension would exceed its limit, no E_max state is changed.
+ * external inference/round begins. Every individual consume is fail-closed and
+ * atomic. A failed evidence-token completion does NOT roll back the already-spent
+ * retrieval operation; that asymmetry is deliberate and prevents retry leakage.
  *
  * Numeric scientific limits are intentionally not hard-coded here. P6
  * recalibration freezes values that are normally non-binding while remaining the
@@ -77,28 +89,63 @@ const ZERO_USAGE: ExplorationUsage = {
 export class ExplorationBudget {
   private usage: ExplorationUsage = { ...ZERO_USAGE };
   private readonly events: ExplorationEvent[] = [];
+  private pendingRetrieval: PendingRetrieval | null = null;
 
   constructor(readonly limits: ExplorationLimits) {
     validateLimits(limits);
   }
 
-  /**
-   * Count one repository-evidence acquisition attempt plus the evidence tokens
-   * that will actually be exposed to the worker. retrievedTokens must use the
-   * same canonical model-visible accounting contract as ArtifactUnit/B_work.
-   */
-  recordRetrievalAttempt(retrievedTokens: number, label?: string): void {
-    assertNonNegativeInteger(retrievedTokens, "retrievedTokens");
+  /** Consume before starting one trusted repository evidence acquisition. */
+  beginRetrieval(label?: string): void {
+    if (this.pendingRetrieval) {
+      throw new Error(
+        `Cannot begin retrieval while another retrieval is pending: ` +
+        `${this.pendingRetrieval.label ?? "<unlabeled>"}`
+      );
+    }
     this.consume(
-      "retrieval-attempt",
+      "retrieval-operation",
       {
         retrievalOperations: 1,
-        cumulativeRetrievedTokens: retrievedTokens,
+        cumulativeRetrievedTokens: 0,
         modelCalls: 0,
         decisionRounds: 0,
       },
       label
     );
+    this.pendingRetrieval = {
+      label: label ?? null,
+      operationSequence: this.events.length - 1,
+    };
+  }
+
+  /**
+   * Complete the currently pending retrieval before exposing its result.
+   * retrievedTokens must use the same canonical model-visible accounting contract
+   * as ArtifactUnit/B_work. Passing zero records a failed/empty/non-exposed result.
+   *
+   * If the token cap would be exceeded, the completion is rejected atomically but
+   * the retrieval operation remains spent and pending. The trusted controller may
+   * trim the same candidate result to a smaller exposable subset, or complete with
+   * zero; starting another repository access requires a new operation.
+   */
+  completeRetrieval(retrievedTokens: number, label?: string): void {
+    assertNonNegativeInteger(retrievedTokens, "retrievedTokens");
+    if (!this.pendingRetrieval) {
+      throw new Error("Cannot complete retrieval without a pending retrieval operation");
+    }
+    const effectiveLabel = label ?? this.pendingRetrieval.label ?? undefined;
+    this.consume(
+      "retrieved-evidence",
+      {
+        retrievalOperations: 0,
+        cumulativeRetrievedTokens: retrievedTokens,
+        modelCalls: 0,
+        decisionRounds: 0,
+      },
+      effectiveLabel
+    );
+    this.pendingRetrieval = null;
   }
 
   /** Consume before issuing a provider/model inference call. */
@@ -147,6 +194,7 @@ export class ExplorationBudget {
       used,
       remaining,
       exhausted,
+      pendingRetrieval: this.pendingRetrieval ? { ...this.pendingRetrieval } : null,
       events: this.events.map((event) => ({
         ...event,
         delta: cloneUsage(event.delta),
@@ -168,7 +216,6 @@ export class ExplorationBudget {
     };
     this.assertWithinLimits(after, kind);
 
-    // Mutation happens only after every dimension has passed validation.
     this.usage = after;
     this.events.push({
       sequence: this.events.length,
