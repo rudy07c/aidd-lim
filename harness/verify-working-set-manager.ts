@@ -124,8 +124,6 @@ function verifyWorkingSetIsNotCumulativeCapWithFifo(): Record<string, unknown> {
   manager.addUnit(u600);
   manager.addUnit(u200);
   assert.strictEqual(manager.currentTokenUsage, initialEvidenceTokens);
-
-  // Step 4: admission itself deterministically evicts the oldest active unit.
   manager.addUnit(u700);
 
   const snapshot = manager.snapshot();
@@ -155,8 +153,8 @@ function verifyWorkingSetIsNotCumulativeCapWithFifo(): Record<string, unknown> {
 
   assert.throws(
     () => manager.addUnit(u600),
-    /reread semantics are not enabled before P4 step 5/,
-    "step 4 must not silently define reread semantics"
+    /previously admitted.*rereadUnit/,
+    "addUnit must not silently re-admit previously observed evidence; rereadUnit is the explicit path"
   );
 
   for (const item of [u600, u200, u700]) {
@@ -171,11 +169,7 @@ function verifyWorkingSetIsNotCumulativeCapWithFifo(): Record<string, unknown> {
     budget: snapshot.budgetTokens,
     policy: snapshot.evictionPolicy,
     accounting: "canonical tokens of exact model-visible metadata-line + raw-content serialization",
-    contentTokenTargets: {
-      first: 600,
-      retained: 200,
-      final: 700,
-    },
+    contentTokenTargets: { first: 600, retained: 200, final: 700 },
     modelVisibleEvidenceTokens: {
       first: u600.tokenCount,
       retained: u200.tokenCount,
@@ -202,14 +196,9 @@ function verifyDeterministicMultiVictimFifo(): Record<string, unknown> {
     const b = unit("b", 150);
     const c = unit("c", 150);
     const d = unit("d", 300);
-
     assert.ok(a.tokenCount + b.tokenCount + c.tokenCount <= 500, "three FIFO seed units must fit");
-    assert.ok(
-      b.tokenCount + c.tokenCount + d.tokenCount > 500,
-      "evicting only the first unit must remain insufficient"
-    );
+    assert.ok(b.tokenCount + c.tokenCount + d.tokenCount > 500, "evicting only the first unit must remain insufficient");
     assert.ok(c.tokenCount + d.tokenCount <= 500, "evicting two oldest units must be sufficient");
-
     manager.addUnit(a);
     manager.addUnit(b);
     manager.addUnit(c);
@@ -297,11 +286,7 @@ function verifyMemoryGrowthUsesSameFifoPolicy(): Record<string, unknown> {
   assert.deepStrictEqual(snapshot.activeUnits.map((item) => item.id), ["memory-u200"]);
   assert.strictEqual(snapshot.memoryTokens, 200);
   assert.strictEqual(snapshot.currentTokenUsage, u200.tokenCount + 200);
-  assert.deepStrictEqual(snapshot.evictionHistory.map((entry) => ({
-    unitId: entry.unitId,
-    policy: entry.policy,
-    trigger: entry.trigger,
-  })), [{
+  assert.deepStrictEqual(snapshot.evictionHistory.map((entry) => ({ unitId: entry.unitId, policy: entry.policy, trigger: entry.trigger })), [{
     unitId: "memory-u600",
     policy: WORKING_SET_EVICTION_POLICY,
     trigger: "explicit-memory-update",
@@ -327,28 +312,14 @@ function verifyFailClosedAccountingAndAtomicRejection(): void {
   const bounded = new WorkingSetManager(500);
   bounded.addUnit(unit("kept", 100));
   const beforeTooLarge = bounded.snapshot();
-  assert.throws(
-    () => bounded.addUnit(unit("too-large", 600)),
-    /B_work cannot fit ArtifactUnit/
-  );
-  assert.deepStrictEqual(
-    bounded.snapshot(),
-    beforeTooLarge,
-    "irreducibly oversized admission must not evict existing units"
-  );
+  assert.throws(() => bounded.addUnit(unit("too-large", 600)), /B_work cannot fit ArtifactUnit/);
+  assert.deepStrictEqual(bounded.snapshot(), beforeTooLarge, "irreducibly oversized admission must not evict existing units");
 
   const tight = new WorkingSetManager(50);
   tight.addUnit(unit("tiny", 10));
   const beforeMemoryFailure = tight.snapshot();
-  assert.throws(
-    () => tight.setExplicitMemory(exactTokenText(51)),
-    /B_work cannot fit explicit memory/
-  );
-  assert.deepStrictEqual(
-    tight.snapshot(),
-    beforeMemoryFailure,
-    "irreducibly oversized explicit memory must be rejected atomically"
-  );
+  assert.throws(() => tight.setExplicitMemory(exactTokenText(51)), /B_work cannot fit explicit memory/);
+  assert.deepStrictEqual(tight.snapshot(), beforeMemoryFailure, "irreducibly oversized explicit memory must be rejected atomically");
 }
 
 function main(): void {
