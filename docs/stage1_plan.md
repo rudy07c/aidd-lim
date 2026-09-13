@@ -917,7 +917,7 @@ Stage 1ではPR / AR共通のdeterministic resource vectorとして次を用い�
 
 wall-clockはrunner負荷・provider latencyを実験変数にし得るためbindingなscientific resourceには用いず、必要ならprovenanceとして別途logする。literal tool-call数もPRとARでmechanismが異なり得るためprimary共通budgetにはせず、P5以降でtelemetryとして記録してよい。
 
-`E_{max}` のconsumeはfail-closedにする。model call・decision roundは外部操作の前にconsumeする。repository retrievalは**二段階会計**とし、(1) repository accessを開始する前にretrieval operationを1回consumeし、(2) trusted accessorが候補結果を得た後、workerへ露出する前にcanonical model-visible evidence tokensをconsumeする。空結果・取得失敗でも(1)は返金せず、(2)を0 tokenでcloseする。候補結果がtoken上限を超えて(2)でrejectされた場合も既消費のretrieval operationは返金せず、その同一候補をremaining budget内へtrimするか0 tokenでdiscardしてpending retrievalをcloseする。これによりoversized retrievalをfree retryとして反復できない。
+`E_{max}` のconsumeはfail-closedにする。model call・decision roundは外部操作の前にconsumeする。repository retrievalは**二段階会計**とし、(1) repository accessを開始する前にretrieval operationを1回consumeし、(2) trusted accessorが候補結果を得た後、workerへ露出する前にcanonical model-visible evidence tokensをconsumeする。空結果・取得失敗でも(1)は返金せず、(2)を0 tokenでcloseする。候補結果がtoken上限を超えて(2)でrejectされた場合も既消費のretrieval operationは返金せず、その同一候補をremaining budget内へtrimするか0 tokenでdiscardしてpending retrievalをcloseする。pending retrievalが残る間は新規retrievalだけでなくmodel call・次decision roundも開始できないfail-closed境界とする。これによりoversized retrievalをfree retryとして反復したり、未会計candidateを推論へ持ち込んだりできない。
 
 PR / ARには同一の `E_{max}` resource contractとfreeze済みlimit値を与え、C2で変えるのはretrieval policyだけとする。Step 6ではmechanismを実装し、main scientific valueはP6 recalibrationで通常taskでは容易にbindingにならない範囲へ較正・freezeする。
 
