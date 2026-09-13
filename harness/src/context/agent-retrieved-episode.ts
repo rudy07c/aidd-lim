@@ -1,21 +1,21 @@
 import {
-  ResearchStatelessEpisodeRunner,
   ResearchStatelessStepExecutorFactory,
-  ResearchStatelessEpisodeTelemetry,
 } from "./research-stateless-episode";
+import {
+  RetrievedEpisodeRuntime,
+} from "./retrieved-episode-runtime";
 import { ExplorationBudget } from "./exploration-budget";
 import { WorkingSetManager } from "./working-set-manager";
 import {
-  AgentRetrievalTool,
   AgentRetrievalToolCall,
   createAgentRetrievalTools,
   executeAgentRetrievalToolCall,
   getAgentRetrievalToolDefinitions,
 } from "../repository/agent-retrieval-tools";
-import { BudgetedRepositoryGateway } from "../repository/retrieval-gateway";
+import { BudgetedRetrievalRecord } from "../repository/retrieval-gateway";
 
 export const AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION =
-  "agent-retrieved-episode-v1" as const;
+  "agent-retrieved-episode-v2-shared-runtime" as const;
 
 export interface AgentRetrievedFinalizeDecision<TFinal = unknown> {
   kind: "finalize";
@@ -34,57 +34,67 @@ export type AgentRetrievedDecision<TFinal = unknown> =
 export interface AgentRetrievedEpisodeResult<TFinal = unknown> {
   schemaVersion: typeof AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION;
   final: TFinal;
-  telemetry: ResearchStatelessEpisodeTelemetry;
-  retrievals: ReturnType<BudgetedRepositoryGateway["records"]>;
+  telemetry: Awaited<ReturnType<AgentRetrievedEpisode<TFinal>["runShared"]>>["telemetry"];
+  retrievals: BudgetedRetrievalRecord[];
 }
 
 export interface AgentRetrievedEpisodeOptions<TFinal = unknown> {
   taskId: string;
   visibleInstruction: string;
   protocolId: string;
+  repositoryFiles: Readonly<Record<string, string>>;
   workingSet: WorkingSetManager;
   explorationBudget: ExplorationBudget;
-  gateway: BudgetedRepositoryGateway;
   executorFactory: ResearchStatelessStepExecutorFactory<AgentRetrievedDecision<TFinal>>;
 }
 
 /**
- * P5 AR controller. The model chooses only a function name/arguments. The
- * controller executes that choice through BudgetedRepositoryGateway, then starts
- * a completely fresh reasoning step whose only repository-derived state is W_t.
- * No provider tool-result/history continuation is used.
+ * Thin AR policy adapter over the single P5 Step 6 RetrievedEpisodeRuntime.
+ * AR contributes only the retrieval decision source: model-selected function
+ * name/arguments. E_max, B_work, FIFO/reread and research-stateless inference are
+ * owned by the shared runtime/gateway path.
  */
 export class AgentRetrievedEpisode<TFinal = unknown> {
-  private readonly tools: readonly AgentRetrievalTool[];
-  private readonly runner: ResearchStatelessEpisodeRunner<AgentRetrievedDecision<TFinal>>;
+  private readonly runtime: RetrievedEpisodeRuntime<AgentRetrievedDecision<TFinal>, TFinal>;
 
   constructor(private readonly options: AgentRetrievedEpisodeOptions<TFinal>) {
-    this.tools = createAgentRetrievalTools(options.gateway);
-    this.runner = new ResearchStatelessEpisodeRunner({
+    this.runtime = new RetrievedEpisodeRuntime({
       condition: "AR",
       taskId: options.taskId,
       visibleInstruction: options.visibleInstruction,
       protocolId: options.protocolId,
-      toolDefinitions: getAgentRetrievalToolDefinitions(this.tools),
+      repositoryFiles: options.repositoryFiles,
       workingSet: options.workingSet,
       explorationBudget: options.explorationBudget,
       executorFactory: options.executorFactory,
+      policyFactory: (gateway) => {
+        const tools = createAgentRetrievalTools(gateway);
+        return {
+          condition: "AR" as const,
+          toolDefinitions: getAgentRetrievalToolDefinitions(tools),
+          async resolve(decision: AgentRetrievedDecision<TFinal>) {
+            if (decision.kind === "finalize") {
+              return { kind: "finalize" as const, value: decision.value };
+            }
+            await executeAgentRetrievalToolCall(tools, decision.call);
+            return { kind: "retrieved" as const };
+          },
+        };
+      },
     });
   }
 
   async run(): Promise<AgentRetrievedEpisodeResult<TFinal>> {
-    while (true) {
-      const step = await this.runner.runStep();
-      if (step.decision.kind === "finalize") {
-        return {
-          schemaVersion: AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION,
-          final: step.decision.value,
-          telemetry: this.runner.telemetry(),
-          retrievals: this.options.gateway.records(),
-        };
-      }
+    const result = await this.runShared();
+    return {
+      schemaVersion: AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION,
+      final: result.final,
+      telemetry: result.telemetry,
+      retrievals: result.retrievals,
+    };
+  }
 
-      await executeAgentRetrievalToolCall(this.tools, step.decision.call);
-    }
+  private runShared() {
+    return this.runtime.run();
   }
 }
