@@ -16,7 +16,10 @@ import {
   ResearchStatelessExecutorFactoryArgs,
   ResearchStatelessTransportAttestation,
 } from "./src/context/research-stateless-episode";
-import { RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION } from "./src/context/retrieved-episode-runtime";
+import {
+  RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
+  SHARED_RETRIEVAL_PHASE_CONTRACT,
+} from "./src/context/retrieved-episode-runtime";
 import { CANONICAL_TOKEN_COUNT_METHOD } from "./src/measurement/token-counter";
 import { WORKING_SET_EVICTION_POLICY } from "./src/context/working-set-manager";
 
@@ -86,7 +89,9 @@ function validTransport(protocolId = PROTOCOL_ID): ResearchStatelessTransportAtt
 function firstTarget(record: { candidateUnitIds: string[] }): string {
   const first = record.candidateUnitIds[0];
   assert.ok(first, "retrieval must expose at least one candidate unit id");
-  return first.replace(/:L\d+-L\d+:C\d+$/, "").replace(/:L\d+-L\d+$/, "");
+  const match = /^read:(.+):L\d+-L\d+:[^:]+$/.exec(first);
+  assert.ok(match, `expected read-chunk ArtifactUnit id, got ${first}`);
+  return match[1];
 }
 
 async function runParityEpisodes(repositoryFiles: Record<string, string>) {
@@ -169,7 +174,7 @@ async function runParityEpisodes(repositoryFiles: Record<string, string>) {
   assert.strictEqual(prResult.retrievals.length, 1);
   assert.strictEqual(arResult.retrievals.length, 1);
 
-  const expectedPhases = ["begin", "access", "complete", "admit"];
+  const expectedPhases = [...SHARED_RETRIEVAL_PHASE_CONTRACT];
   assert.deepStrictEqual(prResult.retrievals[0].phaseTrace, expectedPhases);
   assert.deepStrictEqual(arResult.retrievals[0].phaseTrace, expectedPhases);
 
