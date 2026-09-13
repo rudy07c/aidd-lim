@@ -27,6 +27,15 @@ function unit(id: string, contentTokens: number): ArtifactUnit {
   });
 }
 
+function exposeRetrieval(
+  budget: ExplorationBudget,
+  tokens: number,
+  label: string
+): void {
+  budget.beginRetrieval(label);
+  budget.completeRetrieval(tokens, label);
+}
+
 function verifyDeterministicResourceCounters(): Record<string, unknown> {
   const limits: ExplorationLimits = {
     maxRetrievalOperations: 3,
@@ -38,19 +47,19 @@ function verifyDeterministicResourceCounters(): Record<string, unknown> {
 
   budget.recordDecisionRound("round-1");
   budget.recordModelCall("model-1");
-  budget.recordRetrievalAttempt(100, "read-a");
-  budget.recordRetrievalAttempt(0, "failed-search");
-  budget.recordRetrievalAttempt(200, "read-b");
+  exposeRetrieval(budget, 100, "read-a");
+  exposeRetrieval(budget, 0, "failed-search");
+  exposeRetrieval(budget, 200, "read-b");
 
   const beforeRejectedRetrieval = budget.snapshot();
   assert.throws(
-    () => budget.recordRetrievalAttempt(1, "free-retry-must-fail"),
-    /E_max exceeded by retrieval-attempt: retrievalOperations=4\/3/
+    () => budget.beginRetrieval("free-retry-must-fail"),
+    /E_max exceeded by retrieval-operation: retrievalOperations=4\/3/
   );
   assert.deepStrictEqual(
     budget.snapshot(),
     beforeRejectedRetrieval,
-    "rejected retrieval must not partially mutate E_max state"
+    "rejected new repository access must not partially mutate E_max state"
   );
 
   budget.recordDecisionRound("round-2");
@@ -63,18 +72,19 @@ function verifyDeterministicResourceCounters(): Record<string, unknown> {
     modelCalls: 2,
     decisionRounds: 2,
   });
+  assert.strictEqual(exhausted.pendingRetrieval, null);
   assert.ok(exhausted.exhausted.includes("retrievalOperations"));
   assert.ok(exhausted.exhausted.includes("modelCalls"));
   assert.ok(exhausted.exhausted.includes("decisionRounds"));
-  assert.strictEqual(
-    exhausted.events.find((event) => event.label === "failed-search")?.delta.retrievalOperations,
-    1,
-    "empty/failed retrieval attempts must still consume an operation"
+
+  const failedOperation = exhausted.events.find(
+    (event) => event.kind === "retrieval-operation" && event.label === "failed-search"
   );
-  assert.strictEqual(
-    exhausted.events.find((event) => event.label === "failed-search")?.delta.cumulativeRetrievedTokens,
-    0
+  const failedEvidence = exhausted.events.find(
+    (event) => event.kind === "retrieved-evidence" && event.label === "failed-search"
   );
+  assert.strictEqual(failedOperation?.delta.retrievalOperations, 1);
+  assert.strictEqual(failedEvidence?.delta.cumulativeRetrievedTokens, 0);
 
   const beforeRejectedModel = budget.snapshot();
   assert.throws(() => budget.recordModelCall("model-3"), /modelCalls=3\/2/);
@@ -90,37 +100,64 @@ function verifyDeterministicResourceCounters(): Record<string, unknown> {
     remaining: exhausted.remaining,
     exhausted: exhausted.exhausted,
     emptyRetrievalConsumedOperation: true,
-    rejectedUpdatesAtomic: true,
+    rejectedNewOperationsAtomic: true,
   };
 }
 
-function verifyCumulativeTokenCapIsIndependent(): Record<string, unknown> {
+function verifyTokenOverflowDoesNotRefundOperation(): Record<string, unknown> {
   const budget = new ExplorationBudget({
-    maxRetrievalOperations: 10,
+    maxRetrievalOperations: 3,
     maxCumulativeRetrievedTokens: 250,
     maxModelCalls: 10,
     maxDecisionRounds: 10,
   });
-  budget.recordRetrievalAttempt(200, "first");
-  const before = budget.snapshot();
+
+  exposeRetrieval(budget, 200, "first");
+  budget.beginRetrieval("oversized-candidate");
+  const afterOperationSpent = budget.snapshot();
+  assert.deepStrictEqual(afterOperationSpent.used, {
+    retrievalOperations: 2,
+    cumulativeRetrievedTokens: 200,
+    modelCalls: 0,
+    decisionRounds: 0,
+  });
+  assert.ok(afterOperationSpent.pendingRetrieval);
+
   assert.throws(
-    () => budget.recordRetrievalAttempt(51, "would-overflow-cumulative-tokens"),
+    () => budget.completeRetrieval(51, "oversized-candidate"),
     /cumulativeRetrievedTokens=251\/250/
   );
+  const afterRejectedEvidence = budget.snapshot();
   assert.deepStrictEqual(
-    budget.snapshot(),
-    before,
-    "token-overflow rejection must not consume even the retrieval-operation dimension"
+    afterRejectedEvidence.used,
+    afterOperationSpent.used,
+    "token-overflow must not add evidence tokens or refund the already-spent operation"
   );
-  budget.recordRetrievalAttempt(50, "fills-token-budget");
+  assert.deepStrictEqual(
+    afterRejectedEvidence.pendingRetrieval,
+    afterOperationSpent.pendingRetrieval,
+    "same retrieval must remain pending so the trusted controller may trim/discard its candidate result"
+  );
+  assert.throws(
+    () => budget.beginRetrieval("must-not-start-new-access"),
+    /another retrieval is pending/
+  );
+
+  // Trim the already-fetched candidate to the remaining exposable budget.
+  budget.completeRetrieval(50, "oversized-candidate-trimmed");
   const final = budget.snapshot();
+  assert.strictEqual(final.pendingRetrieval, null);
   assert.strictEqual(final.used.retrievalOperations, 2);
   assert.strictEqual(final.used.cumulativeRetrievedTokens, 250);
   assert.ok(final.exhausted.includes("cumulativeRetrievedTokens"));
+
   return {
-    used: final.used,
+    usedAfterRejectedEvidence: afterRejectedEvidence.used,
+    pendingAfterRejectedEvidence: afterRejectedEvidence.pendingRetrieval !== null,
+    finalUsed: final.used,
     exhausted: final.exhausted,
-    multiDimensionUpdateAtomic: true,
+    operationRefundedOnTokenOverflow: false,
+    sameCandidateTrimmedWithoutNewOperation: true,
   };
 }
 
@@ -136,7 +173,7 @@ function runPagingScenario(limits: ExplorationLimits): {
   const c = unit("emax-c", 120);
 
   const exposeFirst = (artifact: ArtifactUnit, label: string) => {
-    budget.recordRetrievalAttempt(artifact.tokenCount, label);
+    exposeRetrieval(budget, artifact.tokenCount, label);
     manager.addUnit(artifact);
   };
   exposeFirst(a, "a-first");
@@ -144,7 +181,7 @@ function runPagingScenario(limits: ExplorationLimits): {
   exposeFirst(c, "c-first");
 
   assert.ok(!manager.hasUnit(a.id), "FIFO must evict a before reread scenario");
-  budget.recordRetrievalAttempt(a.tokenCount, "a-reread");
+  exposeRetrieval(budget, a.tokenCount, "a-reread");
   manager.rereadUnit(a);
 
   return {
@@ -179,10 +216,11 @@ function verifyEmaxAndBworkAreDistinct(): Record<string, unknown> {
   assert.strictEqual(first.workingSet.budgetTokens, 300);
   assert.strictEqual(first.exploration.used.retrievalOperations, 4);
   assert.strictEqual(first.exploration.used.cumulativeRetrievedTokens, cumulative);
+  assert.strictEqual(first.exploration.pendingRetrieval, null);
   assert.strictEqual(
     first.exploration.used.cumulativeRetrievedTokens,
     first.workingSet.cumulativeUnitAdmissionTokens,
-    "when every admitted/reread unit comes from one retrieval operation, E_max exposure tokens and working-set admission accounting must agree"
+    "when every exposed retrieval is admitted/reread, E_max exposure tokens and working-set admission accounting must agree"
   );
   assert.strictEqual(first.workingSet.uniqueAdmittedUnitCount, 3);
   assert.strictEqual(first.workingSet.rereadCount, 1);
@@ -216,7 +254,7 @@ function verifyPrArShareSameResourceContract(): Record<string, unknown> {
 
   for (const budget of [pr, ar]) {
     budget.recordDecisionRound("common-round");
-    budget.recordRetrievalAttempt(123, "common-retrieval");
+    exposeRetrieval(budget, 123, "common-retrieval");
     budget.recordModelCall("common-model-call");
   }
   assert.deepStrictEqual(pr.snapshot(), ar.snapshot());
@@ -237,15 +275,27 @@ function verifyValidation(): void {
     }),
     /maxRetrievalOperations must be a positive integer/
   );
+
   const budget = new ExplorationBudget({
     maxRetrievalOperations: 1,
     maxCumulativeRetrievedTokens: 1,
     maxModelCalls: 1,
     maxDecisionRounds: 1,
   });
-  assert.throws(() => budget.recordRetrievalAttempt(-1), /retrievedTokens must be a non-negative integer/);
+  assert.throws(
+    () => budget.completeRetrieval(0),
+    /without a pending retrieval operation/
+  );
+  budget.beginRetrieval("validation");
+  const afterBegin = budget.snapshot();
+  assert.throws(
+    () => budget.completeRetrieval(-1),
+    /retrievedTokens must be a non-negative integer/
+  );
+  assert.deepStrictEqual(budget.snapshot(), afterBegin);
+  budget.completeRetrieval(0);
   assert.deepStrictEqual(budget.snapshot().used, {
-    retrievalOperations: 0,
+    retrievalOperations: 1,
     cumulativeRetrievedTokens: 0,
     modelCalls: 0,
     decisionRounds: 0,
@@ -254,14 +304,14 @@ function verifyValidation(): void {
 
 function main(): void {
   const deterministicCounters = verifyDeterministicResourceCounters();
-  const cumulativeTokenCap = verifyCumulativeTokenCapIsIndependent();
+  const tokenOverflowNoRefund = verifyTokenOverflowDoesNotRefundOperation();
   const bWorkSeparation = verifyEmaxAndBworkAreDistinct();
   const prArParity = verifyPrArShareSameResourceContract();
   verifyValidation();
 
   console.log(JSON.stringify({
     status: "ok",
-    p4Slice: "step-6-e-max",
+    p4Slice: "step-6-e-max-two-phase-retrieval",
     schemaVersion: EXPLORATION_BUDGET_SCHEMA_VERSION,
     bindingDimensions: [
       "retrievalOperations",
@@ -275,23 +325,29 @@ function main(): void {
     semantics: {
       bWork: "simultaneous model-visible retained evidence",
       eMax: "episode-level exploration / compute opportunity",
-      failedOrEmptyRetrieval: "consumes one retrieval operation with zero retrieved tokens",
-      rejection: "fail-closed and atomic across all E_max dimensions",
+      retrievalAccounting: "two-phase: operation before repository access; evidence tokens before worker exposure",
+      failedOrEmptyRetrieval: "operation remains consumed; completion with zero evidence tokens",
+      tokenOverflow: "does not refund retrieval operation; pending candidate may be trimmed or discarded",
+      rejection: "each counter mutation is fail-closed; already-spent retrieval operations are deliberately not rolled back",
       prAr: "same ExplorationLimits; retrieval policy remains the intended C2 difference",
     },
     deterministicCounters,
-    cumulativeTokenCap,
+    tokenOverflowNoRefund,
     bWorkSeparation,
     prArParity,
     verified: [
       "E_max-is-independent-from-B_work",
       "cumulative-observation-can-exceed-B_work",
+      "retrieval-operation-consumed-before-repository-access",
+      "retrieved-evidence-tokens-consumed-before-worker-exposure",
       "retrieval-operation-limit",
       "cumulative-retrieved-token-limit",
       "model-call-limit",
       "decision-round-limit",
       "failed-empty-retrieval-is-not-free",
-      "multi-dimension-rejection-is-atomic",
+      "token-overflow-does-not-refund-retrieval-operation",
+      "pending-retrieval-prevents-new-free-access",
+      "same-candidate-can-be-trimmed-without-new-repository-operation",
       "PR-AR-share-identical-resource-contract",
       "same-sequence-deterministic-replay",
       "wall-clock-not-a-binding-scientific-resource",
