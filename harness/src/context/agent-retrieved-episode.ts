@@ -59,7 +59,7 @@ export class AgentRetrievedEpisode<TFinal = unknown> {
   private readonly runtime: RetrievedEpisodeRuntime<AgentRetrievedDecision<TFinal>, TFinal>;
 
   constructor(options: AgentRetrievedEpisodeOptions<TFinal>) {
-    this.runtime = new RetrievedEpisodeRuntime({
+    this.runtime = new RetrievedEpisodeRuntime<AgentRetrievedDecision<TFinal>, TFinal>({
       condition: "AR",
       taskId: options.taskId,
       visibleInstruction: options.visibleInstruction,
