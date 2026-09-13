@@ -91,9 +91,6 @@ interface ActiveUnitEntry {
  * unit (because the unit + pinned memory alone exceeds B_work) is rejected before
  * any eviction occurs. Likewise, explicit memory whose own token count exceeds
  * B_work is rejected atomically.
- *
- * E_max, repository retrieval, and the episodic runner remain intentionally out
- * of scope until later P4/P5 steps.
  */
 export class WorkingSetManager {
   private readonly activeUnits = new Map<string, ActiveUnitEntry>();
@@ -111,11 +108,7 @@ export class WorkingSetManager {
     }
   }
 
-  /**
-   * First-exposure admission path. Capacity pressure is resolved only by FIFO-v1.
-   * Previously admitted ids stay rejected here so first exposure and reread remain
-   * mechanically distinct; use rereadUnit() for re-exposure after eviction.
-   */
+  /** First exposure of an ArtifactUnit. */
   addUnit(unit: ArtifactUnit): void {
     this.assertArtifactUnitCanonical(unit);
     if (this.activeUnits.has(unit.id)) {
@@ -123,8 +116,7 @@ export class WorkingSetManager {
     }
     if (this.everAdmittedUnits.has(unit.id)) {
       throw new Error(
-        `ArtifactUnit was previously admitted: ${unit.id}; ` +
-        "reread semantics are not enabled before P4 step 5 on addUnit(); use rereadUnit() for Step 5 re-exposure"
+        `ArtifactUnit was previously admitted: ${unit.id}; use rereadUnit() for re-exposure`
       );
     }
 
@@ -137,13 +129,7 @@ export class WorkingSetManager {
     this.assertInvariant();
   }
 
-  /**
-   * Step 5 reread path for evidence that was observed earlier in the episode and
-   * has since been evicted. Reread is re-exposure, not a first read: unknown ids
-   * are rejected. The same id must resolve to exactly the same ArtifactUnit
-   * evidence within an episode; repository/content drift must start a new unit or
-   * episode rather than silently aliasing an old id.
-   */
+  /** Re-exposure of previously admitted evidence after eviction. */
   rereadUnit(unit: ArtifactUnit): void {
     this.assertArtifactUnitCanonical(unit);
     if (this.activeUnits.has(unit.id)) {
@@ -214,8 +200,6 @@ export class WorkingSetManager {
     };
     const victims = this.planFifoEvictions(this.artifactTokens + tokenCount);
 
-    // Evict before installing larger memory so the manager never exposes or logs
-    // a transient state above B_work. All validation/planning is completed first.
     this.applyFifoEvictions(victims, "explicit-memory-update", null);
     this.explicitMemory = nextMemory;
     this.assertInvariant();
@@ -223,6 +207,15 @@ export class WorkingSetManager {
 
   hasUnit(unitId: string): boolean {
     return this.activeUnits.has(unitId);
+  }
+
+  /**
+   * Read-only history query for the P5 retrieval gateway. This does not expose
+   * evidence contents; it only lets the gateway route a repository observation
+   * through addUnit() versus rereadUnit() without exception-driven control flow.
+   */
+  wasEverAdmitted(unitId: string): boolean {
+    return this.everAdmittedUnits.has(unitId);
   }
 
   get artifactTokens(): number {
@@ -419,6 +412,13 @@ export class WorkingSetManager {
       throw new Error(
         `WorkingSetManager invariant violated: usage=${this.currentTokenUsage}, budget=${this.budgetTokens}`
       );
+    }
+    if (this.remainingBudget !== this.budgetTokens - this.currentTokenUsage) {
+      throw new Error("WorkingSetManager remaining-budget invariant violated");
+    }
+    for (const [id, unit] of this.everAdmittedUnits.entries()) {
+      if (id !== unit.id) throw new Error("WorkingSetManager admission history key drifted");
+      this.assertArtifactUnitCanonical(unit);
     }
   }
 }
