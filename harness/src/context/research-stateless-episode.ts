@@ -17,13 +17,20 @@ export const RESEARCH_STATELESS_EPISODE_SCHEMA_VERSION =
 
 export type ResearchStatelessCondition = "PR" | "AR";
 
+/** Fixed function/tool schema visible to each fresh inference step. */
+export interface ResearchStatelessToolDefinition {
+  name: string;
+  description: string;
+  parameters: Readonly<Record<string, unknown>>;
+}
+
 /**
  * The complete variable model input for one PR/AR reasoning step.
  *
- * Fixed system/tool/output schemas are bound by protocolId in the executor factory,
- * not carried forward from a prior response. Deliberately absent fields include
- * prior assistant messages, response ids, provider threads, reasoning items, and
- * any opaque continuation handle.
+ * Fixed system/tool/output schemas are bound by protocolId/toolDefinitions in the
+ * executor factory, not carried forward from a prior response. Deliberately absent
+ * fields include prior assistant messages, response ids, provider threads,
+ * reasoning items, and any opaque continuation handle.
  */
 export interface ResearchStatelessModelInput {
   visibleInstruction: string;
@@ -31,11 +38,6 @@ export interface ResearchStatelessModelInput {
   explicitMemory: string | null;
 }
 
-/**
- * Provider adapter attestation checked after every inference. P5 provider adapters
- * must populate these from the request path they actually used. All persisted /
- * replayed continuation-state flags are forbidden for PR/AR.
- */
 export interface ResearchStatelessTransportAttestation {
   protocolId: string;
   previousResponseIdUsed: boolean;
@@ -47,11 +49,6 @@ export interface ResearchStatelessTransportAttestation {
   responseStored: boolean;
 }
 
-/**
- * The runner interprets only explicitMemoryUpdate. `decision` is intentionally
- * opaque here; P5 condition-specific controllers define retrieval/finalization
- * semantics without changing the research-stateless inference boundary.
- */
 export interface ResearchStatelessStepResult<TDecision = unknown> {
   decision: TDecision;
   rawResponse: string;
@@ -69,6 +66,8 @@ export interface ResearchStatelessStepExecutor<TDecision = unknown> {
 export interface ResearchStatelessExecutorFactoryArgs {
   condition: ResearchStatelessCondition;
   protocolId: string;
+  /** Fixed schemas only; execution is owned by the P5 controller/gateway. */
+  toolDefinitions: readonly ResearchStatelessToolDefinition[];
 }
 
 export type ResearchStatelessStepExecutorFactory<TDecision = unknown> = (
@@ -129,36 +128,20 @@ export interface ResearchStatelessEpisodeOptions<TDecision = unknown> {
   visibleInstruction: string;
   /** Frozen identity for the fixed system/tool/output schema used by every step. */
   protocolId: string;
+  /** Fixed function schemas visible to every fresh step; no executable closures here. */
+  toolDefinitions?: readonly ResearchStatelessToolDefinition[];
   workingSet: WorkingSetManager;
   explorationBudget: ExplorationBudget;
   executorFactory: ResearchStatelessStepExecutorFactory<TDecision>;
 }
 
-/**
- * P4 Step 7 research-stateless inference boundary for PR/AR.
- *
- * The class deliberately does NOT implement repository access or retrieval policy;
- * those belong to P5. It does establish the common episodic state machine boundary:
- *
- *   current W_t + bounded explicit memory + current task
- *       -> fresh executor / fresh inference
- *       -> optional explicit-memory replacement (counted by B_work)
- *       -> next step rebuilt from current W_t again
- *
- * No raw response or model decision is stored as successor input. The only model-
- * generated state that this runner can persist is explicitMemoryUpdate, which is
- * immediately passed through WorkingSetManager and therefore consumes B_work.
- *
- * The executor factory is called for every step and must return a new executor
- * object. This prevents accidental local conversation state from being inherited
- * through a long-lived backend instance. Provider-specific adapters must also
- * attest that no server/API continuation mechanism was used.
- */
+/** P4 Step 7 research-stateless inference boundary for PR/AR. */
 export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
   private readonly condition: ResearchStatelessCondition;
   private readonly taskId: string;
   private readonly visibleInstruction: string;
   private readonly protocolId: string;
+  private readonly toolDefinitions: readonly ResearchStatelessToolDefinition[];
   private readonly workingSet: WorkingSetManager;
   private readonly explorationBudget: ExplorationBudget;
   private readonly executorFactory: ResearchStatelessStepExecutorFactory<TDecision>;
@@ -178,6 +161,15 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
     this.taskId = options.taskId;
     this.visibleInstruction = options.visibleInstruction;
     this.protocolId = options.protocolId;
+    this.toolDefinitions = Object.freeze(
+      (options.toolDefinitions ?? []).map((tool) =>
+        Object.freeze({
+          name: tool.name,
+          description: tool.description,
+          parameters: Object.freeze({ ...tool.parameters }),
+        })
+      )
+    );
     this.workingSet = options.workingSet;
     this.explorationBudget = options.explorationBudget;
     this.executorFactory = options.executorFactory;
@@ -196,12 +188,10 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
     );
     const modelInputHash = hashModelInput(modelInput);
 
-    // Factory construction is local harness work and occurs only after E_max
-    // preflight. It must return a fresh object so no local backend conversation
-    // can silently survive between research-stateless steps.
     const executor = this.executorFactory({
       condition: this.condition,
       protocolId: this.protocolId,
+      toolDefinitions: this.toolDefinitions,
     });
     if (executor === this.previousExecutor) {
       throw new Error(
@@ -210,9 +200,6 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
     }
     this.previousExecutor = executor;
 
-    // Preflight above makes this pair atomic for the single-threaded episode
-    // runner: neither dimension is consumed if either limit is already unable to
-    // admit the next inference opportunity.
     this.explorationBudget.recordDecisionRound(label);
     this.explorationBudget.recordModelCall(label);
     this.nextStepIndex += 1;
@@ -240,9 +227,6 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
     };
     this.stepTelemetry.push(telemetry);
 
-    // rawResponse/decision are returned to the caller for immediate controller
-    // handling only. They are intentionally not retained in this runner and are
-    // never included when the next model input is rebuilt.
     return {
       decision: result.decision,
       rawResponse: result.rawResponse,
