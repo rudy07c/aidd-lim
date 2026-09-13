@@ -10,11 +10,14 @@ import { WorkingSetManager } from "./working-set-manager";
 import {
   BudgetedRepositoryGateway,
   BudgetedRetrievalRecord,
+  RetrievalGatewayPhase,
   createBudgetedRepositoryGateway,
 } from "../repository/retrieval-gateway";
 
 export const RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION =
   "retrieved-episode-runtime-v1" as const;
+export const SHARED_RETRIEVAL_PHASE_CONTRACT: readonly RetrievalGatewayPhase[] =
+  Object.freeze(["begin", "access", "complete", "admit"] as const);
 
 export interface RetrievedEpisodeFinalize<TFinal = unknown> {
   kind: "finalize";
@@ -113,19 +116,51 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
   async run(): Promise<RetrievedEpisodeRuntimeResult<TFinal>> {
     while (true) {
       const step = await this.runner.runStep();
+      const recordsBefore = this.gateway.records().length;
       const outcome = await this.policy.resolve(step.decision);
+      const recordsAfter = this.gateway.records();
+
       if (outcome.kind === "finalize") {
+        if (recordsAfter.length !== recordsBefore) {
+          throw new Error(
+            "Retrieved episode policy performed repository access while finalizing"
+          );
+        }
         return {
           schemaVersion: RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
           condition: this.options.condition,
           final: outcome.value,
           telemetry: this.runner.telemetry(),
-          retrievals: this.gateway.records(),
+          retrievals: recordsAfter,
         };
       }
-      // A retrieval must be fully closed by the policy/gateway before the next
-      // runStep(). ResearchStatelessEpisodeRunner independently fail-closes if a
-      // policy ever leaves ExplorationBudget.pendingRetrieval open.
+
+      if (recordsAfter.length !== recordsBefore + 1) {
+        throw new Error(
+          `Retrieved episode policy must perform exactly one gateway retrieval per retrieve decision: ` +
+          `before=${recordsBefore}, after=${recordsAfter.length}`
+        );
+      }
+      const record = recordsAfter[recordsAfter.length - 1];
+      if (!samePhaseTrace(record.phaseTrace, SHARED_RETRIEVAL_PHASE_CONTRACT)) {
+        throw new Error(
+          `Retrieved episode gateway phase drift: ${record.phaseTrace.join("->")}`
+        );
+      }
+      if (this.options.explorationBudget.snapshot().pendingRetrieval !== null) {
+        throw new Error(
+          "Retrieved episode policy returned before pending retrieval was closed"
+        );
+      }
+      // The next inference therefore starts only after the shared gateway has
+      // completed E_max accounting and B_work admission.
     }
   }
+}
+
+function samePhaseTrace(
+  actual: readonly RetrievalGatewayPhase[],
+  expected: readonly RetrievalGatewayPhase[]
+): boolean {
+  return actual.length === expected.length && actual.every((phase, index) => phase === expected[index]);
 }
