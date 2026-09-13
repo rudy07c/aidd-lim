@@ -78,7 +78,7 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
 
   constructor(options: PrivilegedRetrievedEpisodeOptions<TFinal>) {
     let controller!: PrivilegedRetrievalController;
-    this.runtime = new RetrievedEpisodeRuntime({
+    this.runtime = new RetrievedEpisodeRuntime<PrivilegedRetrievedDecision<TFinal>, TFinal>({
       condition: "PR",
       taskId: options.taskId,
       visibleInstruction: options.visibleInstruction,
