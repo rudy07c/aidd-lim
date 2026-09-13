@@ -69,6 +69,9 @@ jobs:
       - name: Verify P5 step 1 provider-neutral repository accessor
         working-directory: harness
         run: npm run verify:repository-accessor
+      - name: Verify P5 AR budgeted retrieval integration
+        working-directory: harness
+        run: npm run verify:agent-retrieved-runtime
       - name: Verify P3 measurement repair
         working-directory: calibration
         run: npm run verify:p3
