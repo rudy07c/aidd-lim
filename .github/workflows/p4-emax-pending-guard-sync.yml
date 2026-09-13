@@ -1,0 +1,82 @@
+name: P4 Emax Pending Guard Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/p4-emax-pending-guard-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add pending-retrieval inference guards to verifier and docs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          verifier = Path('harness/verify-exploration-budget.ts')
+          text = verifier.read_text()
+          old = '''  assert.throws(
+            () => budget.beginRetrieval("must-not-start-new-access"),
+            /another retrieval is pending/
+          );
+
+          // Trim the already-fetched candidate to the remaining exposable budget.
+'''
+          new = '''  assert.throws(
+            () => budget.beginRetrieval("must-not-start-new-access"),
+            /retrieval is pending/
+          );
+          const pendingBeforeBlockedInference = budget.snapshot();
+          assert.throws(
+            () => budget.recordModelCall("must-not-infer-unbudgeted-candidate"),
+            /Cannot start a model call while retrieval is pending/
+          );
+          assert.throws(
+            () => budget.recordDecisionRound("must-not-advance-unbudgeted-candidate"),
+            /Cannot start a decision round while retrieval is pending/
+          );
+          assert.deepStrictEqual(
+            budget.snapshot(),
+            pendingBeforeBlockedInference,
+            "pending retrieval must block inference/next-round without consuming additional E_max"
+          );
+
+          // Trim the already-fetched candidate to the remaining exposable budget.
+'''
+          assert old in text, 'verifier insertion point not found'
+          text = text.replace(old, new, 1)
+          text = text.replace(
+            '      tokenOverflow: "does not refund retrieval operation; pending candidate may be trimmed or discarded",\n',
+            '      tokenOverflow: "does not refund retrieval operation; pending candidate may be trimmed or discarded",\n      pendingBoundary: "model calls and next decision rounds are blocked until pending retrieval is budgeted/closed",\n',
+            1,
+          )
+          text = text.replace(
+            '      "pending-retrieval-prevents-new-free-access",\n',
+            '      "pending-retrieval-prevents-new-free-access",\n      "pending-retrieval-blocks-model-call-and-next-decision-round",\n',
+            1,
+          )
+          verifier.write_text(text)
+
+          doc = Path('docs/stage1_plan.md')
+          text = doc.read_text()
+          old = 'その同一候補をremaining budget内へtrimするか0 tokenでdiscardしてpending retrievalをcloseする。これによりoversized retrievalをfree retryとして反復できない。'
+          new = 'その同一候補をremaining budget内へtrimするか0 tokenでdiscardしてpending retrievalをcloseする。pending retrievalが残る間は新規retrievalだけでなくmodel call・次decision roundも開始できないfail-closed境界とする。これによりoversized retrievalをfree retryとして反復したり、未会計candidateを推論へ持ち込んだりできない。'
+          assert old in text, 'docs insertion point not found'
+          doc.write_text(text.replace(old, new, 1))
+          PY
+      - name: Remove temporary workflow and commit
+        run: |
+          rm .github/workflows/p4-emax-pending-guard-sync.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add harness/verify-exploration-budget.ts docs/stage1_plan.md .github/workflows/p4-emax-pending-guard-sync.yml
+          git commit -m 'test: enforce pending E_max retrieval boundary'
+          git push
