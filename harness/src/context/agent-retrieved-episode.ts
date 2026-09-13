@@ -6,6 +6,7 @@ import {
 import { ExplorationBudget } from "./exploration-budget";
 import { WorkingSetManager } from "./working-set-manager";
 import {
+  AgentRetrievalTool,
   AgentRetrievalToolCall,
   createAgentRetrievalTools,
   executeAgentRetrievalToolCall,
@@ -54,7 +55,7 @@ export interface AgentRetrievedEpisodeOptions<TFinal = unknown> {
  * No provider tool-result/history continuation is used.
  */
 export class AgentRetrievedEpisode<TFinal = unknown> {
-  private readonly tools;
+  private readonly tools: readonly AgentRetrievalTool[];
   private readonly runner: ResearchStatelessEpisodeRunner<AgentRetrievedDecision<TFinal>>;
 
   constructor(private readonly options: AgentRetrievedEpisodeOptions<TFinal>) {
@@ -84,8 +85,6 @@ export class AgentRetrievedEpisode<TFinal = unknown> {
       }
 
       await executeAgentRetrievalToolCall(this.tools, step.decision.call);
-      // The next loop iteration is a new inference. The raw tool result is not
-      // replayed through provider history; admitted evidence appears via current W_t.
     }
   }
 }
