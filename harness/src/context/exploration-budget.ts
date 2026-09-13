@@ -77,6 +77,10 @@ const ZERO_USAGE: ExplorationUsage = {
  * The pending operation remains consumed until it is completed with an exposable
  * token count (possibly zero if nothing is shown).
  *
+ * While a retrieval is pending, another retrieval, model call, or decision round
+ * is rejected. This makes the accounting boundary fail-closed: the controller
+ * must budget/close the candidate evidence before inference can proceed.
+ *
  * Model-call and decision-round counters are consumed before the corresponding
  * external inference/round begins. Every individual consume is fail-closed and
  * atomic. A failed evidence-token completion does NOT roll back the already-spent
@@ -97,12 +101,7 @@ export class ExplorationBudget {
 
   /** Consume before starting one trusted repository evidence acquisition. */
   beginRetrieval(label?: string): void {
-    if (this.pendingRetrieval) {
-      throw new Error(
-        `Cannot begin retrieval while another retrieval is pending: ` +
-        `${this.pendingRetrieval.label ?? "<unlabeled>"}`
-      );
-    }
+    this.assertNoPendingRetrieval("begin another retrieval");
     this.consume(
       "retrieval-operation",
       {
@@ -150,6 +149,7 @@ export class ExplorationBudget {
 
   /** Consume before issuing a provider/model inference call. */
   recordModelCall(label?: string): void {
+    this.assertNoPendingRetrieval("start a model call");
     this.consume(
       "model-call",
       {
@@ -164,6 +164,7 @@ export class ExplorationBudget {
 
   /** Consume before starting a high-level decision round. */
   recordDecisionRound(label?: string): void {
+    this.assertNoPendingRetrieval("start a decision round");
     this.consume(
       "decision-round",
       {
@@ -202,6 +203,15 @@ export class ExplorationBudget {
         usageAfter: cloneUsage(event.usageAfter),
       })),
     };
+  }
+
+  private assertNoPendingRetrieval(action: string): void {
+    if (this.pendingRetrieval) {
+      throw new Error(
+        `Cannot ${action} while retrieval is pending: ` +
+        `${this.pendingRetrieval.label ?? "<unlabeled>"}`
+      );
+    }
   }
 
   private consume(kind: ExplorationEventKind, delta: ExplorationUsage, label?: string): void {
