@@ -22,20 +22,14 @@ import {
   responseFailureDetails,
 } from "./shared";
 import type { AgentTool } from "../types";
+import { workingNoteFromAgentRetrievalArguments } from "../../repository/agent-retrieval-tools";
 
 export interface OpenAIResearchStatelessAROptions extends OpenAIRequestOptions {
   requestTimeoutMs: number;
   maxRetries: number;
 }
 
-/**
- * One fresh OpenAI Responses call for one AR reasoning step.
- *
- * It may either emit one function call or the final structured mutation. It never
- * executes the function call inside the provider conversation and never replays a
- * prior response/output item. The caller/controller executes the tool through the
- * budgeted retrieval gateway and starts a brand-new executor for the next step.
- */
+/** One fresh OpenAI Responses call for one AR reasoning step. */
 export class OpenAIResearchStatelessARExecutor
   implements ResearchStatelessStepExecutor<AgentRetrievedDecision<{ modifiedFiles: Record<string, string> }>>
 {
@@ -111,6 +105,7 @@ export class OpenAIResearchStatelessARExecutor
           },
         },
         rawResponse: response.output_text ?? "",
+        explicitMemoryUpdate: workingNoteFromAgentRetrievalArguments(argumentsValue),
         transport: statelessTransport(this.protocolId),
         providerTelemetry,
       };
@@ -159,7 +154,7 @@ export function buildARUserMessage(input: Readonly<ResearchStatelessModelInput>)
   }
   lines.push(`\nEXPLICIT MEMORY:\n${input.explicitMemory ?? "<none>"}`);
   lines.push(
-    "\nUse one retrieval function if more repository evidence is needed. Otherwise return the final structured repository mutation."
+    "\nIf more repository evidence is needed, call exactly one retrieval function and include a concise workingNote (or null) in that function call. Otherwise return the final structured repository mutation."
   );
   return lines.join("");
 }
