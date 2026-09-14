@@ -1,0 +1,283 @@
+import type { TokenUsage } from "../types";
+import type { AgentRetrievedEpisodeResult } from "./agent-retrieved-episode";
+import type { PrivilegedRetrievedEpisodeResult } from "./privileged-retrieved-episode";
+import type { PrivilegedRetrievalPlan } from "./privileged-retrieval-controller";
+import type {
+  ResearchStatelessCondition,
+  ResearchStatelessEpisodeTelemetry,
+} from "./research-stateless-episode";
+import {
+  RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
+} from "./retrieved-episode-runtime";
+import type { BudgetedRetrievalRecord } from "../repository/retrieval-gateway";
+
+export const RETRIEVED_GENERATION_LOG_SCHEMA_VERSION =
+  "retrieved-generation-log-v1" as const;
+export const AGENT_RETRIEVAL_POLICY_VERSION = "agent-function-tools-v1" as const;
+
+export interface RetrievedGenerationPolicyLog {
+  source: "privileged-controller" | "agent-function-tools";
+  version: string;
+}
+
+export interface RetrievedGenerationApiSummary {
+  providerTelemetryComplete: boolean;
+  providerCallsLogged: number;
+  tokenUsage: TokenUsage | null;
+  latencyMs: number | null;
+  costUsd: number | null;
+}
+
+export interface RetrievedGenerationSummary {
+  bWork: number;
+  peakWorkingSetTokens: number;
+  finalWorkingSetTokens: number;
+  uniqueObservedUnitCount: number;
+  /** Unique first-exposure tokens. Reread tokens are excluded. */
+  uniqueObservedTokens: number;
+  cumulativeAdmissionTokens: number;
+  rereadCount: number;
+  cumulativeRereadTokens: number;
+  retrievalCount: number;
+  totalRetrievedTokens: number;
+  evictionCount: number;
+  modelCalls: number;
+  decisionRounds: number;
+  tokenCountMethod: string;
+  evictionPolicy: string;
+  api: RetrievedGenerationApiSummary;
+}
+
+/**
+ * Canonical P5 per-generation log payload for PR/AR.
+ *
+ * It deliberately stores the full research-stateless step telemetry and the full
+ * gateway transaction trace. Together with repository_before, these are enough to
+ * reconstruct which repository request was issued, which ArtifactUnits were
+ * exposed/admitted/reread, the active W_t before/after each retrieval/inference,
+ * every FIFO eviction, explicit memory contents, and E_max event history.
+ */
+export interface RetrievedGenerationLog {
+  schemaVersion: typeof RETRIEVED_GENERATION_LOG_SCHEMA_VERSION;
+  runtimeSchemaVersion: typeof RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION;
+  condition: ResearchStatelessCondition;
+  retrievalPolicy: RetrievedGenerationPolicyLog;
+  episode: ResearchStatelessEpisodeTelemetry;
+  retrievals: BudgetedRetrievalRecord[];
+  privilegedRetrievalPlan: PrivilegedRetrievalPlan | null;
+  summary: RetrievedGenerationSummary;
+}
+
+export function buildAgentRetrievedGenerationLog<TFinal>(
+  result: AgentRetrievedEpisodeResult<TFinal>
+): RetrievedGenerationLog {
+  return buildRetrievedGenerationLog({
+    condition: "AR",
+    policy: {
+      source: "agent-function-tools",
+      version: AGENT_RETRIEVAL_POLICY_VERSION,
+    },
+    episode: result.telemetry,
+    retrievals: result.retrievals,
+    privilegedRetrievalPlan: null,
+  });
+}
+
+export function buildPrivilegedRetrievedGenerationLog<TFinal>(
+  result: PrivilegedRetrievedEpisodeResult<TFinal>
+): RetrievedGenerationLog {
+  return buildRetrievedGenerationLog({
+    condition: "PR",
+    policy: {
+      source: "privileged-controller",
+      version: result.retrievalPlan.policyVersion,
+    },
+    episode: result.telemetry,
+    retrievals: result.retrievals,
+    privilegedRetrievalPlan: result.retrievalPlan,
+  });
+}
+
+function buildRetrievedGenerationLog(args: {
+  condition: ResearchStatelessCondition;
+  policy: RetrievedGenerationPolicyLog;
+  episode: ResearchStatelessEpisodeTelemetry;
+  retrievals: BudgetedRetrievalRecord[];
+  privilegedRetrievalPlan: PrivilegedRetrievalPlan | null;
+}): RetrievedGenerationLog {
+  if (args.episode.condition !== args.condition) {
+    throw new Error(
+      `Retrieved generation log condition mismatch: ${args.episode.condition} != ${args.condition}`
+    );
+  }
+  if (args.episode.explorationBudget.pendingRetrieval !== null) {
+    throw new Error("Cannot persist retrieved generation log with pending retrieval");
+  }
+  if (
+    args.episode.explorationBudget.used.retrievalOperations !== args.retrievals.length
+  ) {
+    throw new Error(
+      `Retrieval trace/accounting mismatch: records=${args.retrievals.length}, ` +
+      `E_max=${args.episode.explorationBudget.used.retrievalOperations}`
+    );
+  }
+
+  let exposedTokenSum = 0;
+  for (let index = 0; index < args.retrievals.length; index++) {
+    const record = args.retrievals[index];
+    if (record.sequence !== index) {
+      throw new Error(`Retrieval sequence drift at ${index}: ${record.sequence}`);
+    }
+    if (record.error !== null) {
+      throw new Error(`Completed retrieved episode contains failed retrieval ${index}: ${record.error}`);
+    }
+    if (record.phaseTrace.join(",") !== "begin,access,complete,admit") {
+      throw new Error(
+        `Successful retrieval ${index} has invalid phase trace: ${record.phaseTrace.join(",")}`
+      );
+    }
+    if (!record.request || typeof record.request !== "object") {
+      throw new Error(`Retrieval ${index} is missing canonical request arguments`);
+    }
+    exposedTokenSum += record.exposedTokens;
+  }
+  if (
+    exposedTokenSum !== args.episode.explorationBudget.used.cumulativeRetrievedTokens
+  ) {
+    throw new Error(
+      `Retrieved evidence token accounting mismatch: trace=${exposedTokenSum}, ` +
+      `E_max=${args.episode.explorationBudget.used.cumulativeRetrievedTokens}`
+    );
+  }
+
+  const working = args.episode.workingSet;
+  if (working.currentTokenUsage > working.budgetTokens) {
+    throw new Error(
+      `Cannot persist B_work violation: ${working.currentTokenUsage}/${working.budgetTokens}`
+    );
+  }
+  const uniqueObservedTokens =
+    working.cumulativeUnitAdmissionTokens - working.cumulativeRereadTokens;
+  if (uniqueObservedTokens < 0) {
+    throw new Error("Unique observed token accounting became negative");
+  }
+
+  const peakCandidates = [working.currentTokenUsage];
+  for (const step of args.episode.steps) {
+    peakCandidates.push(step.workingSetTokensBefore, step.workingSetTokensAfter);
+  }
+  for (const retrieval of args.retrievals) {
+    peakCandidates.push(
+      retrieval.workingSetTokensBefore,
+      retrieval.workingSetTokensAfter
+    );
+  }
+
+  const result: RetrievedGenerationLog = {
+    schemaVersion: RETRIEVED_GENERATION_LOG_SCHEMA_VERSION,
+    runtimeSchemaVersion: RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
+    condition: args.condition,
+    retrievalPolicy: { ...args.policy },
+    episode: cloneEpisode(args.episode),
+    retrievals: args.retrievals.map(cloneRetrievalRecord),
+    privilegedRetrievalPlan: args.privilegedRetrievalPlan
+      ? clonePrivilegedPlan(args.privilegedRetrievalPlan)
+      : null,
+    summary: {
+      bWork: working.budgetTokens,
+      peakWorkingSetTokens: Math.max(...peakCandidates),
+      finalWorkingSetTokens: working.currentTokenUsage,
+      uniqueObservedUnitCount: working.uniqueAdmittedUnitCount,
+      uniqueObservedTokens,
+      cumulativeAdmissionTokens: working.cumulativeUnitAdmissionTokens,
+      rereadCount: working.rereadCount,
+      cumulativeRereadTokens: working.cumulativeRereadTokens,
+      retrievalCount: args.retrievals.length,
+      totalRetrievedTokens:
+        args.episode.explorationBudget.used.cumulativeRetrievedTokens,
+      evictionCount: working.evictionHistory.length,
+      modelCalls: args.episode.explorationBudget.used.modelCalls,
+      decisionRounds: args.episode.explorationBudget.used.decisionRounds,
+      tokenCountMethod: working.tokenCountMethod,
+      evictionPolicy: working.evictionPolicy,
+      api: summarizeProviderTelemetry(args.episode),
+    },
+  };
+  return result;
+}
+
+function summarizeProviderTelemetry(
+  episode: ResearchStatelessEpisodeTelemetry
+): RetrievedGenerationApiSummary {
+  const providerRows = episode.steps
+    .map((step) => step.providerTelemetry)
+    .filter((row) => row !== null);
+  const complete = providerRows.length === episode.steps.length;
+  if (providerRows.length === 0) {
+    return {
+      providerTelemetryComplete: false,
+      providerCallsLogged: 0,
+      tokenUsage: null,
+      latencyMs: null,
+      costUsd: null,
+    };
+  }
+
+  const aggregate: TokenUsage = {
+    input: 0,
+    output: 0,
+    cachedInput: 0,
+    cacheWriteInput: 0,
+    reasoningOutput: 0,
+    total: 0,
+  };
+  let usageComplete = true;
+  let latencyComplete = true;
+  let costComplete = true;
+  let latency = 0;
+  let cost = 0;
+  for (const row of providerRows) {
+    if (!row) continue;
+    if (!row.tokenUsage) {
+      usageComplete = false;
+    } else {
+      aggregate.input += row.tokenUsage.input;
+      aggregate.output += row.tokenUsage.output;
+      aggregate.cachedInput = (aggregate.cachedInput ?? 0) + (row.tokenUsage.cachedInput ?? 0);
+      aggregate.cacheWriteInput =
+        (aggregate.cacheWriteInput ?? 0) + (row.tokenUsage.cacheWriteInput ?? 0);
+      aggregate.reasoningOutput =
+        (aggregate.reasoningOutput ?? 0) + (row.tokenUsage.reasoningOutput ?? 0);
+      aggregate.total = (aggregate.total ?? 0) +
+        (row.tokenUsage.total ?? row.tokenUsage.input + row.tokenUsage.output);
+    }
+    if (row.latencyMs === null) latencyComplete = false;
+    else latency += row.latencyMs;
+    if (row.costUsd === null) costComplete = false;
+    else cost += row.costUsd;
+  }
+
+  return {
+    providerTelemetryComplete: complete,
+    providerCallsLogged: providerRows.length,
+    tokenUsage: complete && usageComplete ? aggregate : null,
+    latencyMs: complete && latencyComplete ? latency : null,
+    costUsd: complete && costComplete ? cost : null,
+  };
+}
+
+function cloneEpisode(
+  episode: ResearchStatelessEpisodeTelemetry
+): ResearchStatelessEpisodeTelemetry {
+  return JSON.parse(JSON.stringify(episode)) as ResearchStatelessEpisodeTelemetry;
+}
+
+function cloneRetrievalRecord(
+  record: BudgetedRetrievalRecord
+): BudgetedRetrievalRecord {
+  return JSON.parse(JSON.stringify(record)) as BudgetedRetrievalRecord;
+}
+
+function clonePrivilegedPlan(plan: PrivilegedRetrievalPlan): PrivilegedRetrievalPlan {
+  return JSON.parse(JSON.stringify(plan)) as PrivilegedRetrievalPlan;
+}
