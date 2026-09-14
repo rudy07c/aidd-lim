@@ -15,7 +15,7 @@ import {
 } from "../repository/retrieval-gateway";
 
 export const RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION =
-  "retrieved-episode-runtime-v2-observable-step-log" as const;
+  "retrieved-episode-runtime-v3-failure-trace" as const;
 export const SHARED_RETRIEVAL_PHASE_CONTRACT: readonly RetrievalGatewayPhase[] =
   Object.freeze(["begin", "access", "complete", "admit"] as const);
 
@@ -32,11 +32,6 @@ export type RetrievedEpisodePolicyOutcome<TFinal = unknown> =
   | RetrievedEpisodeFinalize<TFinal>
   | RetrievedEpisodeContinue;
 
-/**
- * Observable application-side record of one fresh reasoning step. This is stored
- * for post-hoc generation logging only; it is never replayed into the next model
- * input. Therefore retaining it does not weaken the research-stateless boundary.
- */
 export interface RetrievedEpisodeObservableStep<TDecision = unknown> {
   stepIndex: number;
   rawResponse: string;
@@ -44,14 +39,6 @@ export interface RetrievedEpisodeObservableStep<TDecision = unknown> {
   explicitMemoryUpdate: string | null | undefined;
 }
 
-/**
- * The only condition-specific seam in the PR/AR episode loop.
- *
- * The policy may decide which retrieval to perform, but it receives only the
- * BudgetedRepositoryGateway created by this runtime. Therefore PR and AR share
- * the exact same E_max -> RepositoryAccessor -> B_work path and cannot install a
- * second repository/budget implementation.
- */
 export interface RetrievedEpisodePolicy<TDecision, TFinal = unknown> {
   readonly condition: ResearchStatelessCondition;
   readonly toolDefinitions: readonly ResearchStatelessToolDefinition[];
@@ -83,20 +70,30 @@ export interface RetrievedEpisodeRuntimeResult<TDecision = unknown, TFinal = unk
   observableSteps: RetrievedEpisodeObservableStep<TDecision>[];
 }
 
-/**
- * P5 Step 6 common PR/AR episode runner.
- *
- * Runtime structure is intentionally condition-invariant:
- *   fresh research-stateless inference
- *     -> condition-specific retrieval-decision policy
- *     -> one shared BudgetedRepositoryGateway
- *     -> next fresh inference
- *
- * The gateway is constructed here from the same WorkingSetManager and
- * ExplorationBudget instances given to ResearchStatelessEpisodeRunner. This is
- * the structural parity guarantee: condition code can choose *what* to retrieve,
- * but cannot choose a different E_max/B_work/gateway implementation.
- */
+/** Partial, persistable trace when retrieval-policy execution fails after inference. */
+export class RetrievedEpisodeRuntimeFailure<TDecision = unknown> extends Error {
+  readonly condition: ResearchStatelessCondition;
+  readonly telemetry: ResearchStatelessEpisodeTelemetry;
+  readonly retrievals: BudgetedRetrievalRecord[];
+  readonly observableSteps: RetrievedEpisodeObservableStep<TDecision>[];
+
+  constructor(args: {
+    condition: ResearchStatelessCondition;
+    message: string;
+    telemetry: ResearchStatelessEpisodeTelemetry;
+    retrievals: BudgetedRetrievalRecord[];
+    observableSteps: RetrievedEpisodeObservableStep<TDecision>[];
+  }) {
+    super(args.message);
+    this.name = "RetrievedEpisodeRuntimeFailure";
+    this.condition = args.condition;
+    this.telemetry = args.telemetry;
+    this.retrievals = args.retrievals.map((record) => JSON.parse(JSON.stringify(record)) as BudgetedRetrievalRecord);
+    this.observableSteps = args.observableSteps.map((record) => ({ ...record }));
+  }
+}
+
+/** P5 common PR/AR episode runner. */
 export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
   private readonly gateway: BudgetedRepositoryGateway;
   private readonly policy: RetrievedEpisodePolicy<TDecision, TFinal>;
@@ -137,44 +134,54 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
         explicitMemoryUpdate: step.explicitMemoryUpdate,
       });
       const recordsBefore = this.gateway.records().length;
-      const outcome = await this.policy.resolve(step.decision);
-      const recordsAfter = this.gateway.records();
 
-      if (outcome.kind === "finalize") {
-        if (recordsAfter.length !== recordsBefore) {
+      try {
+        const outcome = await this.policy.resolve(step.decision);
+        const recordsAfter = this.gateway.records();
+
+        if (outcome.kind === "finalize") {
+          if (recordsAfter.length !== recordsBefore) {
+            throw new Error(
+              "Retrieved episode policy performed repository access while finalizing"
+            );
+          }
+          return {
+            schemaVersion: RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
+            condition: this.options.condition,
+            final: outcome.value,
+            telemetry: this.runner.telemetry(),
+            retrievals: recordsAfter,
+            observableSteps: this.observableSteps.map((record) => ({ ...record })),
+          };
+        }
+
+        if (recordsAfter.length !== recordsBefore + 1) {
           throw new Error(
-            "Retrieved episode policy performed repository access while finalizing"
+            `Retrieved episode policy must perform exactly one gateway retrieval per retrieve decision: ` +
+            `before=${recordsBefore}, after=${recordsAfter.length}`
           );
         }
-        return {
-          schemaVersion: RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
+        const record = recordsAfter[recordsAfter.length - 1];
+        if (!samePhaseTrace(record.phaseTrace, SHARED_RETRIEVAL_PHASE_CONTRACT)) {
+          throw new Error(
+            `Retrieved episode gateway phase drift: ${record.phaseTrace.join("->")}`
+          );
+        }
+        if (this.options.explorationBudget.snapshot().pendingRetrieval !== null) {
+          throw new Error(
+            "Retrieved episode policy returned before pending retrieval was closed"
+          );
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new RetrievedEpisodeRuntimeFailure<TDecision>({
           condition: this.options.condition,
-          final: outcome.value,
+          message,
           telemetry: this.runner.telemetry(),
-          retrievals: recordsAfter,
-          observableSteps: this.observableSteps.map((record) => ({ ...record })),
-        };
+          retrievals: this.gateway.records(),
+          observableSteps: this.observableSteps,
+        });
       }
-
-      if (recordsAfter.length !== recordsBefore + 1) {
-        throw new Error(
-          `Retrieved episode policy must perform exactly one gateway retrieval per retrieve decision: ` +
-          `before=${recordsBefore}, after=${recordsAfter.length}`
-        );
-      }
-      const record = recordsAfter[recordsAfter.length - 1];
-      if (!samePhaseTrace(record.phaseTrace, SHARED_RETRIEVAL_PHASE_CONTRACT)) {
-        throw new Error(
-          `Retrieved episode gateway phase drift: ${record.phaseTrace.join("->")}`
-        );
-      }
-      if (this.options.explorationBudget.snapshot().pendingRetrieval !== null) {
-        throw new Error(
-          "Retrieved episode policy returned before pending retrieval was closed"
-        );
-      }
-      // The next inference therefore starts only after the shared gateway has
-      // completed E_max accounting and B_work admission.
     }
   }
 }
