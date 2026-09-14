@@ -58,7 +58,6 @@ export interface ContextCondition {
 }
 
 export const CONTEXT_CONDITIONS: Readonly<Record<ContextConditionName, ContextCondition>> = {
-  // Stage 0 historical conditions. Do not remove or silently reinterpret.
   "full": {
     name: "full",
     axis: "legacy",
@@ -77,16 +76,12 @@ export const CONTEXT_CONDITIONS: Readonly<Record<ContextConditionName, ContextCo
     budget: { kind: "legacy-static-exposure", finite: true },
     legacy: true,
   },
-
-  // Stage 1: Axis A — Inheritance / Transmission.
   MOI: {
     name: "MOI",
     axis: "axis-a-inheritance-transmission",
     inheritance: "artifact-plus-observable-history",
     inheritsObservableHistory: true,
     repositoryAccess: "full",
-    // MOI has no B_work working-set limit, but its one-generation observable
-    // interaction record is operationally bounded by common episode/tool/output limits.
     budget: { kind: "observable-record", finite: true },
     legacy: false,
   },
@@ -99,8 +94,6 @@ export const CONTEXT_CONDITIONS: Readonly<Record<ContextConditionName, ContextCo
     budget: { kind: "static-exposure", finite: true },
     legacy: false,
   },
-
-  // Artifact-Full is the hub shared by both research axes.
   AF: {
     name: "AF",
     axis: "hub",
@@ -110,8 +103,6 @@ export const CONTEXT_CONDITIONS: Readonly<Record<ContextConditionName, ContextCo
     budget: { kind: "none", finite: false },
     legacy: false,
   },
-
-  // Stage 1: Axis B — Observation / Retrieval.
   PR: {
     name: "PR",
     axis: "axis-b-observation-retrieval",
@@ -214,48 +205,34 @@ export interface NormalizedAgentError {
   retryable: boolean | null;
 }
 
-// ---- 設定 ----
-
 export interface RunConfig {
   experimentId: string;
   lineageId: string;
-  /** runの科学的位置づけ。freeze gateはstage名ではなくこの値で判定する。 */
   runClass: RunClass;
   backend: BackendType;
-  /** config/logにはstable identifierを保存し、runtime metadataはgetContextCondition()で参照する。 */
   condition: ContextConditionName;
-  /** 1世代あたりのtoken budget（"full"は全ファイルを渡す） */
+  /** AF/MOI/legacy context budget or PR/AR B_work. */
   contextBudget: number | "full";
   generations: number;
-  /** 使用するtask IDのリスト。Stage 1/2 scientific runでは循環再利用しない */
   tasks: string[];
-  /** requested model identifier */
   model?: string;
-  /** OpenAI reasoning effort。Stage 1 OpenAI runでは明示freezeする */
   reasoningEffort?: ReasoningEffort;
-  /** responseあたりのmax output（reasoning tokensを含む） */
   maxOutputTokens?: number;
-  /** provider SDK timeout */
   requestTimeoutMs?: number;
-  /** provider SDK retry回数 */
   maxRetries?: number;
-  /** OpenAI Responsesをserver-side storeするか。Stage 1ではfalse固定 */
   storeResponses?: boolean;
-  /** 1 episode内のfunction-tool continuation上限 */
   maxToolRounds?: number;
-  /** requested service tier。primary Sync runではdefaultを明示する */
   serviceTier?: OpenAIServiceTier;
-  /** GPT-5.6 prompt caching mode。Stage 1では明示freezeする */
   promptCacheMode?: PromptCacheMode;
-  /** Stageディレクトリ名（例: "stage0"）。runs/<stage>/ 配下に出力する */
+  /** PR/AR E_max vector. Scientific values are calibrated in P6 and then frozen in config. */
+  maxRetrievalOperations?: number;
+  maxCumulativeRetrievedTokens?: number;
+  maxModelCalls?: number;
+  maxDecisionRounds?: number;
   stage?: string;
-  /** synthetic-world ディレクトリへの絶対パス */
   syntheticWorldDir: string;
-  /** runs/ ディレクトリへの絶対パス */
   runsDir: string;
 }
-
-// ---- テスト結果 ----
 
 export interface TestCaseResult {
   testName: string;
@@ -268,13 +245,9 @@ export interface TestSuiteResult {
   numPassed: number;
   numFailed: number;
   testCases: TestCaseResult[];
-  /** jest が出力した生のJSON */
   rawJestOutput: unknown;
-  /** テスト実行そのものに失敗した場合のエラー（jest起動失敗等） */
   executionError?: string;
 }
-
-// ---- エージェント結果 ----
 
 export interface AgentOutput {
   modifiedFiles: Record<string, string>;
@@ -289,8 +262,6 @@ export interface AgentOutput {
   error: NormalizedAgentError | null;
 }
 
-// ---- Stage 0.5 測定結果型 ----
-
 export interface SemanticProbeResult {
   probeId: string;
   correct: boolean;
@@ -302,8 +273,6 @@ export interface SemanticElementTrace {
   syntactic: Record<string, boolean>;
   behavioral: Record<string, boolean>;
 }
-
-// ---- 1世代分のログ ----
 
 export interface GenerationLog {
   experiment_id: string;
@@ -324,15 +293,9 @@ export interface GenerationLog {
   observable_assistant_messages: string[];
   explicit_working_note: string | null;
   tool_calls: unknown[];
-  /** generation gで生成されたMOI候補record。全conditionで生成・保存する。 */
   observable_interaction_record: ObservableInteractionRecord;
-  /** generation開始時に実際に継承した直前record。MOI以外は常にnull。 */
   inherited_observable_interaction_hash: string | null;
   operational_full_feasibility: OperationalFullFeasibility;
-  /**
-   * PR/ARだけが持つP5 research-stateless retrieval trace。AF/MOI/EL/legacyはnull。
-   * repository_beforeと組み合わせることでW_t/E_max trajectoryを再構成できる。
-   */
   retrieved_episode_log: RetrievedGenerationLog | null;
   agent_execution_status: AgentExecutionStatus;
   agent_error: NormalizedAgentError | null;
