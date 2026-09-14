@@ -1,5 +1,8 @@
 import { ExplorationBudget } from "../context/exploration-budget";
-import { WorkingSetManager } from "../context/working-set-manager";
+import {
+  WorkingSetEvictionRecord,
+  WorkingSetManager,
+} from "../context/working-set-manager";
 import { serializeArtifactUnitForWorkingSet } from "../measurement/artifact-unit";
 import {
   InMemoryRepositoryAccessor,
@@ -9,12 +12,17 @@ import {
   RepositorySearchArgs,
 } from "./repository-accessor";
 
-export const RETRIEVAL_GATEWAY_SCHEMA_VERSION = "retrieval-gateway-v1" as const;
+export const RETRIEVAL_GATEWAY_SCHEMA_VERSION = "retrieval-gateway-v2-loggable" as const;
 export type RetrievalGatewayPhase = "begin" | "access" | "complete" | "admit";
+
+/** Canonical, JSON-safe representation of the repository operation requested. */
+export type BudgetedRetrievalRequest = Readonly<Record<string, string | number | null>>;
 
 export interface BudgetedRetrievalRecord {
   sequence: number;
   operation: RepositoryAccessOperation;
+  /** Exact repository operation arguments after null-normalization for logging. */
+  request: BudgetedRetrievalRequest;
   label: string;
   phaseTrace: RetrievalGatewayPhase[];
   candidateResultHash: string | null;
@@ -25,8 +33,12 @@ export interface BudgetedRetrievalRecord {
   alreadyActiveUnitIds: string[];
   candidateTokens: number;
   exposedTokens: number;
+  activeUnitIdsBefore: string[];
+  activeUnitIdsAfter: string[];
   workingSetTokensBefore: number;
   workingSetTokensAfter: number;
+  /** FIFO/explicit evictions caused by this one retrieval transaction only. */
+  evictions: WorkingSetEvictionRecord[];
   cumulativeRetrievedTokensAfter: number;
   retrievalOperationsAfter: number;
   error: string | null;
@@ -63,6 +75,11 @@ export interface BudgetedRepositoryGatewayOptions {
  *
  * The accessor remains provider-neutral and budget-unaware. E_max and B_work are
  * owned by their existing authorities and are merely coordinated here.
+ *
+ * The gateway also owns the canonical retrieval transaction log. Recording the
+ * normalized request, active-unit ids before/after, and the exact eviction slice
+ * makes the working-set trajectory reconstructable without exposing any extra
+ * repository evidence to the worker.
  */
 export function createBudgetedRepositoryGateway(
   options: BudgetedRepositoryGatewayOptions
@@ -85,15 +102,27 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
   ) {}
 
   async listFiles(args: RepositoryListArgs = {}): Promise<BudgetedRetrievalResult> {
-    return this.retrieve("list-files", () => this.accessor.listFiles(args));
+    const request: BudgetedRetrievalRequest = {
+      directory: args.directory ?? null,
+    };
+    return this.retrieve("list-files", request, () => this.accessor.listFiles(args));
   }
 
   async search(args: RepositorySearchArgs): Promise<BudgetedRetrievalResult> {
-    return this.retrieve("search", () => this.accessor.search(args));
+    const request: BudgetedRetrievalRequest = {
+      query: args.query,
+      maxResults: args.maxResults ?? null,
+    };
+    return this.retrieve("search", request, () => this.accessor.search(args));
   }
 
   async readChunk(args: RepositoryReadChunkArgs): Promise<BudgetedRetrievalResult> {
-    return this.retrieve("read-chunk", () => this.accessor.readChunk(args));
+    const request: BudgetedRetrievalRequest = {
+      path: args.path,
+      startLine: args.startLine ?? null,
+      endLine: args.endLine ?? null,
+    };
+    return this.retrieve("read-chunk", request, () => this.accessor.readChunk(args));
   }
 
   records(): BudgetedRetrievalRecord[] {
@@ -102,11 +131,13 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
 
   private async retrieve(
     operation: RepositoryAccessOperation,
+    request: BudgetedRetrievalRequest,
     access: () => ReturnType<InMemoryRepositoryAccessor["listFiles"]>
   ): Promise<BudgetedRetrievalResult> {
     const label = `repository:${operation}:${this.history.length}`;
     const workingBefore = this.workingSet.snapshot();
     const phaseTrace: RetrievalGatewayPhase[] = [];
+    const evictionCountBefore = workingBefore.evictionHistory.length;
 
     this.explorationBudget.beginRetrieval(label);
     phaseTrace.push("begin");
@@ -119,8 +150,10 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
       this.explorationBudget.completeRetrieval(0, label);
       phaseTrace.push("complete");
       const snapshot = this.explorationBudget.snapshot();
+      const workingAfter = this.workingSet.snapshot();
       this.pushRecord({
         operation,
+        request,
         label,
         phaseTrace,
         candidateResultHash: null,
@@ -131,8 +164,11 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
         alreadyActiveUnitIds: [],
         candidateTokens: 0,
         exposedTokens: 0,
+        activeUnitIdsBefore: workingBefore.activeUnits.map((unit) => unit.id),
+        activeUnitIdsAfter: workingAfter.activeUnits.map((unit) => unit.id),
         workingSetTokensBefore: workingBefore.currentTokenUsage,
-        workingSetTokensAfter: this.workingSet.currentTokenUsage,
+        workingSetTokensAfter: workingAfter.currentTokenUsage,
+        evictions: workingAfter.evictionHistory.slice(evictionCountBefore).map((entry) => ({ ...entry })),
         cumulativeRetrievedTokensAfter: snapshot.used.cumulativeRetrievedTokens,
         retrievalOperationsAfter: snapshot.used.retrievalOperations,
         error: error instanceof Error ? error.message : String(error),
@@ -153,12 +189,14 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
       this.explorationBudget.completeRetrieval(0, label);
       phaseTrace.push("complete");
       const snapshot = this.explorationBudget.snapshot();
+      const workingAfter = this.workingSet.snapshot();
       const message =
         `B_work cannot admit retrieved ArtifactUnit ${impossible.id}: ` +
         `required=${impossible.tokenCount + workingBefore.memoryTokens}, ` +
         `budget=${workingBefore.budgetTokens}`;
       this.pushRecord({
         operation,
+        request,
         label,
         phaseTrace,
         candidateResultHash: candidate.resultHash,
@@ -169,8 +207,11 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
         alreadyActiveUnitIds,
         candidateTokens: candidate.totalEvidenceTokens,
         exposedTokens: 0,
+        activeUnitIdsBefore: workingBefore.activeUnits.map((unit) => unit.id),
+        activeUnitIdsAfter: workingAfter.activeUnits.map((unit) => unit.id),
         workingSetTokensBefore: workingBefore.currentTokenUsage,
-        workingSetTokensAfter: workingBefore.currentTokenUsage,
+        workingSetTokensAfter: workingAfter.currentTokenUsage,
+        evictions: workingAfter.evictionHistory.slice(evictionCountBefore).map((entry) => ({ ...entry })),
         cumulativeRetrievedTokensAfter: snapshot.used.cumulativeRetrievedTokens,
         retrievalOperationsAfter: snapshot.used.retrievalOperations,
         error: message,
@@ -203,6 +244,7 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
     const explorationAfter = this.explorationBudget.snapshot();
     const record = this.pushRecord({
       operation,
+      request,
       label,
       phaseTrace,
       candidateResultHash: candidate.resultHash,
@@ -213,8 +255,11 @@ class BudgetedRepositoryGatewayImpl implements BudgetedRepositoryGateway {
       alreadyActiveUnitIds,
       candidateTokens: candidate.totalEvidenceTokens,
       exposedTokens,
+      activeUnitIdsBefore: workingBefore.activeUnits.map((unit) => unit.id),
+      activeUnitIdsAfter: workingAfter.activeUnits.map((unit) => unit.id),
       workingSetTokensBefore: workingBefore.currentTokenUsage,
       workingSetTokensAfter: workingAfter.currentTokenUsage,
+      evictions: workingAfter.evictionHistory.slice(evictionCountBefore).map((entry) => ({ ...entry })),
       cumulativeRetrievedTokensAfter: explorationAfter.used.cumulativeRetrievedTokens,
       retrievalOperationsAfter: explorationAfter.used.retrievalOperations,
       error: null,
@@ -257,11 +302,15 @@ function deterministicTokenPrefix<T extends { tokenCount: number }>(
 function cloneRecord(record: BudgetedRetrievalRecord): BudgetedRetrievalRecord {
   return {
     ...record,
+    request: { ...record.request },
     phaseTrace: [...record.phaseTrace],
     candidateUnitIds: [...record.candidateUnitIds],
     exposedUnitIds: [...record.exposedUnitIds],
     admittedUnitIds: [...record.admittedUnitIds],
     rereadUnitIds: [...record.rereadUnitIds],
     alreadyActiveUnitIds: [...record.alreadyActiveUnitIds],
+    activeUnitIdsBefore: [...record.activeUnitIdsBefore],
+    activeUnitIdsAfter: [...record.activeUnitIdsAfter],
+    evictions: record.evictions.map((entry) => ({ ...entry })),
   };
 }
