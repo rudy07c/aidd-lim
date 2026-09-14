@@ -22,7 +22,7 @@ import {
 } from "../../../synthetic-world/schema";
 
 export const PRIVILEGED_RETRIEVED_EPISODE_SCHEMA_VERSION =
-  "privileged-retrieved-episode-v2-observable-step-log" as const;
+  "privileged-retrieved-episode-v3-bounded-note" as const;
 
 export interface PrivilegedRetrievedFinalizeDecision<TFinal = unknown> {
   kind: "finalize";
@@ -60,18 +60,20 @@ export interface PrivilegedRetrievedEpisodeOptions<TFinal = unknown> {
 }
 
 /**
- * PR exposes only the ability to request the next privileged evidence item. The
- * worker never chooses the path and never receives GroundTruth-derived ranking
- * explanations. PrivilegedRetrievalController is the sole source of "what to
- * read" while the shared runtime remains identical to AR.
+ * PR worker can only request the next privileged evidence item. It may attach a
+ * bounded workingNote to that retrieval decision; the note is accounted by the
+ * shared ResearchStatelessEpisodeRunner before the controller touches repository
+ * evidence. GroundTruth-derived ranking details remain evaluator-side only.
  */
-const PR_RETRIEVE_NEXT_TOOL: ResearchStatelessToolDefinition = Object.freeze({
+export const PR_RETRIEVE_NEXT_TOOL: ResearchStatelessToolDefinition = Object.freeze({
   name: "retrieve_next",
-  description: "Request the next repository evidence item selected by the privileged deterministic retrieval policy.",
+  description: "Request the next repository evidence item selected by the privileged deterministic retrieval policy. Include a bounded workingNote (or null) for the next fresh step.",
   parameters: Object.freeze({
     type: "object",
-    properties: Object.freeze({}),
-    required: Object.freeze([]),
+    properties: Object.freeze({
+      workingNote: Object.freeze({ type: ["string", "null"] }),
+    }),
+    required: Object.freeze(["workingNote"]),
     additionalProperties: false,
   }),
 });
@@ -129,5 +131,10 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
       observableSteps: result.observableSteps,
       retrievalPlan: this.controller.retrievalPlan,
     };
+  }
+
+  /** Read-only evaluator-side provenance for failure logging. */
+  retrievalPlanSnapshot(): PrivilegedRetrievalPlan {
+    return JSON.parse(JSON.stringify(this.controller.retrievalPlan)) as PrivilegedRetrievalPlan;
   }
 }
