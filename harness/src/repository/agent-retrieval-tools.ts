@@ -14,13 +14,10 @@ export interface AgentRetrievalTool {
 }
 
 /**
- * AR-only function tool surface. These tools never own repository access directly;
- * every execution delegates to BudgetedRepositoryGateway so E_max/B_work cannot be bypassed.
- *
- * Schemas follow strict function-calling discipline: every declared property is in
- * `required`; semantically optional values are represented as nullable. This keeps
- * the production OpenAI adapter compatible with strict tool schemas without giving
- * the provider a different tool contract than the offline integration verifier.
+ * AR-only function tool surface. Tools delegate repository access exclusively to
+ * BudgetedRepositoryGateway. `workingNote` is model-generated carryover attached
+ * to the retrieval decision; it is consumed by ResearchStatelessEpisodeRunner and
+ * is never interpreted by the repository layer.
  */
 export function createAgentRetrievalTools(
   gateway: BudgetedRepositoryGateway
@@ -29,13 +26,14 @@ export function createAgentRetrievalTools(
     {
       definition: {
         name: "list_files",
-        description: "List repository-relative files recursively. Pass null for the repository root.",
+        description: "List repository-relative files recursively. Also provide a bounded workingNote (or null) to carry into the next fresh reasoning step.",
         parameters: {
           type: "object",
           properties: {
             directory: { type: ["string", "null"] },
+            workingNote: { type: ["string", "null"] },
           },
-          required: ["directory"],
+          required: ["directory", "workingNote"],
           additionalProperties: false,
         },
       },
@@ -48,13 +46,14 @@ export function createAgentRetrievalTools(
     {
       definition: {
         name: "search",
-        description: "Literal case-insensitive search over repository file contents.",
+        description: "Literal case-insensitive search over repository file contents. Also provide a bounded workingNote (or null) to carry into the next fresh reasoning step.",
         parameters: {
           type: "object",
           properties: {
             query: { type: "string" },
+            workingNote: { type: ["string", "null"] },
           },
-          required: ["query"],
+          required: ["query", "workingNote"],
           additionalProperties: false,
         },
       },
@@ -67,15 +66,16 @@ export function createAgentRetrievalTools(
     {
       definition: {
         name: "read_chunk",
-        description: "Read an inclusive line range from one repository-relative file. Pass null bounds to read from the start/to the end.",
+        description: "Read an inclusive line range from one repository-relative file. Pass null bounds to read from the start/to the end, and provide a bounded workingNote (or null) for the next fresh step.",
         parameters: {
           type: "object",
           properties: {
             path: { type: "string" },
             startLine: { type: ["integer", "null"], minimum: 1 },
             endLine: { type: ["integer", "null"], minimum: 1 },
+            workingNote: { type: ["string", "null"] },
           },
-          required: ["path", "startLine", "endLine"],
+          required: ["path", "startLine", "endLine", "workingNote"],
           additionalProperties: false,
         },
       },
@@ -116,6 +116,12 @@ export async function executeAgentRetrievalToolCall(
   return tool.execute(call.arguments);
 }
 
+/** Extract model-authored bounded memory from a retrieval function call. */
+export function workingNoteFromAgentRetrievalArguments(value: unknown): string | null {
+  const args = asObject(value);
+  return nullableString(args.workingNote, "workingNote");
+}
+
 function asObject(value: unknown): Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("Tool arguments must be an object");
@@ -132,7 +138,10 @@ function requiredString(value: unknown, label: string): string {
 
 function nullableString(value: unknown, label: string): string | null {
   if (value === null) return null;
-  return requiredString(value, label);
+  if (typeof value !== "string") {
+    throw new Error(`${label} must be null or a string`);
+  }
+  return value;
 }
 
 function nullableInteger(value: unknown, label: string): number | null {
