@@ -5,14 +5,18 @@ import {
 import {
   ResearchStatelessExecutorFactoryArgs,
   ResearchStatelessModelInput,
+  ResearchStatelessProviderTelemetry,
   ResearchStatelessStepExecutor,
   ResearchStatelessStepResult,
   ResearchStatelessToolDefinition,
 } from "../../context/research-stateless-episode";
+import type { TokenUsage } from "../../types";
 import {
   OPENAI_MUTATION_OUTPUT_SPEC,
   OpenAIRequestOptions,
+  addUsage,
   buildOpenAIStructuredResponseRequestBody,
+  estimateOpenAICostUsd,
   extractRefusal,
   parseStructuredMutation,
   responseFailureDetails,
@@ -54,6 +58,7 @@ export class OpenAIResearchStatelessARExecutor
   async runFresh(
     input: Readonly<ResearchStatelessModelInput>
   ): Promise<ResearchStatelessStepResult<AgentRetrievedDecision<{ modifiedFiles: Record<string, string> }>>> {
+    const startedAt = Date.now();
     const body = buildOpenAIStructuredResponseRequestBody({
       options: this.options,
       responseInput: [{ role: "user", content: buildARUserMessage(input) }],
@@ -62,6 +67,11 @@ export class OpenAIResearchStatelessARExecutor
       outputSpec: OPENAI_MUTATION_OUTPUT_SPEC,
     });
     const response = await this.client.responses.create(body as any);
+    const providerTelemetry = buildProviderTelemetry(
+      this.options,
+      response,
+      Date.now() - startedAt
+    );
     const refusal = extractRefusal(response);
     if (refusal !== null) throw new Error(`AR model refusal: ${refusal}`);
     if (response.status !== "completed") {
@@ -102,6 +112,7 @@ export class OpenAIResearchStatelessARExecutor
         },
         rawResponse: response.output_text ?? "",
         transport: statelessTransport(this.protocolId),
+        providerTelemetry,
       };
     }
 
@@ -116,6 +127,7 @@ export class OpenAIResearchStatelessARExecutor
       rawResponse,
       explicitMemoryUpdate: parsed.value.workingNote,
       transport: statelessTransport(this.protocolId),
+      providerTelemetry,
     };
   }
 }
@@ -160,6 +172,32 @@ function schemaOnlyAgentTool(definition: ResearchStatelessToolDefinition): Agent
     async execute() {
       throw new Error("Research-stateless AR provider adapter must never execute tools in-call");
     },
+  };
+}
+
+function buildProviderTelemetry(
+  options: OpenAIResearchStatelessAROptions,
+  response: OpenAI.Responses.Response,
+  latencyMs: number
+): ResearchStatelessProviderTelemetry {
+  const usage: TokenUsage = {
+    input: 0,
+    output: 0,
+    cachedInput: 0,
+    cacheWriteInput: 0,
+    reasoningOutput: 0,
+    total: 0,
+  };
+  addUsage(usage, response.usage);
+  return {
+    provider: "openai",
+    requestedModel: options.model,
+    actualModel: response.model ?? null,
+    responseId: response.id ?? null,
+    responseStatus: response.status ?? null,
+    tokenUsage: response.usage ? usage : null,
+    latencyMs,
+    costUsd: estimateOpenAICostUsd(options.model, response.usage, "sync"),
   };
 }
 
