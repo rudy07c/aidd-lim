@@ -4,11 +4,12 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { GenerationLog } from "./types";
+import { GenerationLog, getContextCondition } from "./types";
 
 /**
  * 1世代分のログをディスクへ書き出す。
  * ObservableInteractionRecordはhidden evaluator outputとは別ファイルへ保存する。
+ * PR/ARのretrieval/runtime telemetryも evaluator output と混ぜず独立保存する。
  */
 export function writeGenerationLog(log: GenerationLog, runsDir: string): string {
   const generationDir = path.join(
@@ -19,12 +20,20 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
   );
 
   fs.mkdirSync(generationDir, { recursive: true });
+  const condition = getContextCondition(log.condition);
 
   const meta = {
     experiment_id: log.experiment_id,
     lineage_id: log.lineage_id,
     generation: log.generation,
     condition: log.condition,
+    condition_metadata: {
+      axis: condition.axis,
+      inheritance: condition.inheritance,
+      inherits_observable_history: condition.inheritsObservableHistory,
+      repository_access: condition.repositoryAccess,
+      budget_kind: condition.budget.kind,
+    },
     model: log.model,
     model_provenance: log.model_provenance,
     task_id: log.task_id,
@@ -38,6 +47,14 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
       source_breakdown: log.observable_interaction_record.sourceBreakdown,
       inherited_previous_hash: log.inherited_observable_interaction_hash,
     },
+    retrieved_episode: log.retrieved_episode_log
+      ? {
+          schema_version: log.retrieved_episode_log.schemaVersion,
+          runtime_schema_version: log.retrieved_episode_log.runtimeSchemaVersion,
+          retrieval_policy: log.retrieved_episode_log.retrievalPolicy,
+          summary: log.retrieved_episode_log.summary,
+        }
+      : null,
     operational_full_feasibility: log.operational_full_feasibility,
     functional_task_result: log.functional_task_result,
     agent_execution_status: log.agent_execution_status,
@@ -76,6 +93,13 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
     "observable_interaction_record.json",
     log.observable_interaction_record
   );
+
+  // Canonical P5 raw trace. It contains only model-visible/retrieval-controller telemetry,
+  // resource accounting and privileged selection provenance; hidden evaluator test output
+  // remains in the separate evaluator files below and is never fed back to the worker.
+  if (log.retrieved_episode_log) {
+    writeJson(generationDir, "retrieved_episode.json", log.retrieved_episode_log);
+  }
 
   writeJson(generationDir, "visible_test_results.json", log.visible_test_results);
   writeJson(generationDir, "hidden_test_results.json", log.hidden_test_results);
