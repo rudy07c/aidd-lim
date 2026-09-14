@@ -32,7 +32,6 @@ async function main(): Promise<void> {
   }
 
   const parsed: unknown = JSON.parse(fs.readFileSync(absConfigPath, "utf8"));
-  // Raw validation happens BEFORE defaults so scientific freeze cannot be satisfied by harness defaults.
   validateRawRunConfig(parsed);
   const rawConfig = parsed;
 
@@ -55,6 +54,11 @@ async function main(): Promise<void> {
     maxToolRounds: rawConfig.maxToolRounds ?? 4,
     serviceTier: rawConfig.serviceTier ?? "default",
     promptCacheMode: rawConfig.promptCacheMode ?? "implicit",
+    // PR/AR raw configs must explicitly freeze these; defaults preserve legacy/non-retrieved compatibility.
+    maxRetrievalOperations: rawConfig.maxRetrievalOperations ?? 8,
+    maxCumulativeRetrievedTokens: rawConfig.maxCumulativeRetrievedTokens ?? 10_000,
+    maxModelCalls: rawConfig.maxModelCalls ?? 8,
+    maxDecisionRounds: rawConfig.maxDecisionRounds ?? 8,
     syntheticWorldDir: rawConfig.syntheticWorldDir ?? DEFAULT_SYNTHETIC_WORLD_DIR,
     runsDir: resolvedRunsDir,
   };
