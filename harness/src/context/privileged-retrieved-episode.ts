@@ -3,7 +3,10 @@ import {
   ResearchStatelessStepExecutorFactory,
   ResearchStatelessToolDefinition,
 } from "./research-stateless-episode";
-import { RetrievedEpisodeRuntime } from "./retrieved-episode-runtime";
+import {
+  RetrievedEpisodeObservableStep,
+  RetrievedEpisodeRuntime,
+} from "./retrieved-episode-runtime";
 import { ExplorationBudget } from "./exploration-budget";
 import { WorkingSetManager } from "./working-set-manager";
 import {
@@ -19,7 +22,7 @@ import {
 } from "../../../synthetic-world/schema";
 
 export const PRIVILEGED_RETRIEVED_EPISODE_SCHEMA_VERSION =
-  "privileged-retrieved-episode-v1-shared-runtime" as const;
+  "privileged-retrieved-episode-v2-observable-step-log" as const;
 
 export interface PrivilegedRetrievedFinalizeDecision<TFinal = unknown> {
   kind: "finalize";
@@ -39,6 +42,7 @@ export interface PrivilegedRetrievedEpisodeResult<TFinal = unknown> {
   final: TFinal;
   telemetry: ResearchStatelessEpisodeTelemetry;
   retrievals: BudgetedRetrievalRecord[];
+  observableSteps: RetrievedEpisodeObservableStep<PrivilegedRetrievedDecision<TFinal>>[];
   retrievalPlan: PrivilegedRetrievalPlan;
 }
 
@@ -122,6 +126,7 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
       final: result.final,
       telemetry: result.telemetry,
       retrievals: result.retrievals,
+      observableSteps: result.observableSteps,
       retrievalPlan: this.controller.retrievalPlan,
     };
   }
