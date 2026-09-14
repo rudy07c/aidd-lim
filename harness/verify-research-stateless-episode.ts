@@ -1,7 +1,7 @@
 import assert from "assert";
 import {
   ResearchStatelessEpisodeRunner,
-  ResearchStatelessStepExecutorFactoryArgs,
+  ResearchStatelessExecutorFactoryArgs,
   ResearchStatelessTransportAttestation,
   RESEARCH_STATELESS_EPISODE_SCHEMA_VERSION,
 } from "./src/context/research-stateless-episode";
@@ -89,7 +89,7 @@ async function verifyOnlyBoundedExplicitStateCarriesForward(): Promise<Record<st
     protocolId: PROTOCOL_ID,
     workingSet: manager,
     explorationBudget: exploration,
-    executorFactory: (args: Readonly<ResearchStatelessStepExecutorFactoryArgs>) => {
+    executorFactory: (args: Readonly<ResearchStatelessExecutorFactoryArgs>) => {
       factoryCalls += 1;
       assert.strictEqual(args.condition, "AR");
       assert.strictEqual(args.protocolId, PROTOCOL_ID);
