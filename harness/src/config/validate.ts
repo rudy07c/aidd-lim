@@ -14,6 +14,12 @@ const CONDITIONS: readonly ContextConditionName[] = CONTEXT_CONDITION_NAMES;
 const SERVICE_TIERS: OpenAIServiceTier[] = ["auto", "default", "flex", "fast", "priority", "ultrafast"];
 const CACHE_MODES: PromptCacheMode[] = ["implicit", "explicit"];
 const RUN_CLASSES: RunClass[] = ["historical", "smoke", "scientific-calibration", "scientific-main"];
+const RETRIEVED_LIMIT_FIELDS = [
+  "maxRetrievalOperations",
+  "maxCumulativeRetrievedTokens",
+  "maxModelCalls",
+  "maxDecisionRounds",
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -26,7 +32,7 @@ function assertOptionalString(obj: Record<string, unknown>, key: string): void {
 
 function requireOwn(obj: Record<string, unknown>, key: string): void {
   if (!Object.prototype.hasOwnProperty.call(obj, key)) {
-    throw new Error(`Stage 1/2 OpenAI run must explicitly specify raw config field "${key}"`);
+    throw new Error(`Stage 1/2 run must explicitly specify raw config field "${key}"`);
   }
 }
 
@@ -39,7 +45,13 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
     "syntheticWorldDir", "runsDir", "serviceTier", "promptCacheMode",
   ]) assertOptionalString(value, key);
 
-  for (const key of ["maxOutputTokens", "requestTimeoutMs", "maxRetries", "maxToolRounds"] as const) {
+  for (const key of [
+    "maxOutputTokens",
+    "requestTimeoutMs",
+    "maxRetries",
+    "maxToolRounds",
+    ...RETRIEVED_LIMIT_FIELDS,
+  ] as const) {
     const v = value[key];
     if (v !== undefined && (typeof v !== "number" || !Number.isInteger(v))) {
       throw new Error(`Config field "${key}" must be an integer`);
@@ -62,6 +74,15 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
   requireOwn(value, "runClass");
   if (!RUN_CLASSES.includes(value.runClass as RunClass)) {
     throw new Error(`Unsupported runClass: ${String(value.runClass)}`);
+  }
+
+  const retrievedCondition = value.condition === "PR" || value.condition === "AR";
+  if (retrievedCondition) {
+    requireOwn(value, "contextBudget");
+    for (const key of RETRIEVED_LIMIT_FIELDS) requireOwn(value, key);
+    if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget <= 0) {
+      throw new Error(`${value.condition} requires a positive integer contextBudget representing B_work`);
+    }
   }
 
   const scientificOpenAI =
@@ -100,6 +121,18 @@ export function validateResolvedRunConfig(config: RunConfig): void {
   }
   if ((config.condition === "AF" || config.condition === "MOI") && config.contextBudget !== "full") {
     throw new Error(`${config.condition} requires contextBudget="full"; numeric context budgets would misrepresent Operational-Full semantics`);
+  }
+
+  if (config.condition === "PR" || config.condition === "AR") {
+    if (typeof config.contextBudget !== "number" || !Number.isInteger(config.contextBudget) || config.contextBudget <= 0) {
+      throw new Error(`${config.condition} requires a positive integer B_work contextBudget`);
+    }
+    for (const key of RETRIEVED_LIMIT_FIELDS) {
+      const value = config[key];
+      if (value === undefined || !Number.isInteger(value) || value <= 0) {
+        throw new Error(`${config.condition} requires ${key} to be a positive integer`);
+      }
+    }
   }
 
   const reasoningEfforts = new Set(["none", "low", "medium", "high", "xhigh", "max"]);
