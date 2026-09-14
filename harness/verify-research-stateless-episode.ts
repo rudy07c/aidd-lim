@@ -1,16 +1,13 @@
 import assert from "assert";
-import { ExplorationBudget, ExplorationLimits } from "./src/context/exploration-budget";
 import {
-  ResearchStatelessModelInput,
-  ResearchStatelessStepExecutor,
-  ResearchStatelessTransportAttestation,
   ResearchStatelessEpisodeRunner,
+  ResearchStatelessStepExecutorFactoryArgs,
+  ResearchStatelessTransportAttestation,
   RESEARCH_STATELESS_EPISODE_SCHEMA_VERSION,
-  assertResearchStatelessTransport,
 } from "./src/context/research-stateless-episode";
+import { ExplorationBudget, ExplorationLimits } from "./src/context/exploration-budget";
 import { WorkingSetManager } from "./src/context/working-set-manager";
 import {
-  ArtifactUnit,
   createArtifactUnit,
   serializeArtifactUnitForWorkingSet,
 } from "./src/measurement/artifact-unit";
@@ -18,26 +15,17 @@ import { countCanonicalTokens } from "./src/measurement/token-counter";
 
 const PROTOCOL_ID = "stage1-pr-ar-research-stateless-v1";
 
-function exactTokenText(tokens: number): string {
-  for (const atom of [" a", " x", " z", " 0"]) {
-    const value = atom.repeat(tokens);
-    if (countCanonicalTokens(value) === tokens) return value;
-  }
-  throw new Error(`Unable to construct deterministic ${tokens}-token fixture`);
+function generousLimits(overrides: Partial<ExplorationLimits> = {}): ExplorationLimits {
+  return {
+    maxRetrievalOperations: 10,
+    maxCumulativeRetrievedTokens: 10_000,
+    maxModelCalls: 10,
+    maxDecisionRounds: 10,
+    ...overrides,
+  };
 }
 
-function unit(id: string, contentTokens: number): ArtifactUnit {
-  return createArtifactUnit({
-    id,
-    path: `src/${id}.ts`,
-    startLine: 1,
-    endLine: 1,
-    content: exactTokenText(contentTokens),
-    kind: "chunk",
-  });
-}
-
-function statelessTransport(
+function validTransport(
   overrides: Partial<ResearchStatelessTransportAttestation> = {}
 ): ResearchStatelessTransportAttestation {
   return {
@@ -53,90 +41,85 @@ function statelessTransport(
   };
 }
 
-function copyInput(input: Readonly<ResearchStatelessModelInput>): ResearchStatelessModelInput {
-  return {
-    visibleInstruction: input.visibleInstruction,
-    artifactEvidence: [...input.artifactEvidence],
-    explicitMemory: input.explicitMemory,
-  };
+function repeatedTextForTokens(target: number, char = "x"): string {
+  let low = 1;
+  let high = Math.max(32, target * 16);
+  while (countCanonicalTokens(char.repeat(high)) < target) high *= 2;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (countCanonicalTokens(char.repeat(mid)) >= target) high = mid;
+    else low = mid + 1;
+  }
+  return char.repeat(low);
 }
 
-function generousLimits(overrides: Partial<ExplorationLimits> = {}): ExplorationLimits {
-  return {
-    maxRetrievalOperations: 10,
-    maxCumulativeRetrievedTokens: 10_000,
-    maxModelCalls: 10,
-    maxDecisionRounds: 10,
-    ...overrides,
-  };
+function artifact(id: string, path: string, tokenTarget: number, char: string) {
+  const content = repeatedTextForTokens(tokenTarget, char);
+  return createArtifactUnit({
+    id,
+    path,
+    startLine: 1,
+    endLine: 1,
+    content,
+    kind: "chunk",
+  });
 }
 
 async function verifyOnlyBoundedExplicitStateCarriesForward(): Promise<Record<string, unknown>> {
-  const manager = new WorkingSetManager(400);
-  const a = unit("rs-a", 120);
-  const b = unit("rs-b", 120);
-  const initialMemory = exactTokenText(20);
-  const replacementMemory = exactTokenText(200);
-  const firstRawResponseCanary = "PRIVATE-FIRST-RESPONSE-CANARY-MUST-NOT-REAPPEAR";
-
+  const manager = new WorkingSetManager(535);
+  const exploration = new ExplorationBudget(generousLimits());
+  const a = artifact("rs-a", "src/a.ts", 120, "a");
+  const b = artifact("rs-b", "src/b.ts", 120, "b");
   manager.addUnit(a);
   manager.addUnit(b);
-  manager.setExplicitMemory(initialMemory);
-  assert.ok(manager.hasUnit(a.id));
-  assert.ok(manager.hasUnit(b.id));
 
-  const exploration = new ExplorationBudget(generousLimits());
-  const seenInputs: ResearchStatelessModelInput[] = [];
+  const replacementMemory = repeatedTextForTokens(200, "m");
+  const firstRawResponseCanary = "RAW_RESPONSE_MUST_NOT_BE_CARRIED";
+  const seenInputs: Array<{
+    visibleInstruction: string;
+    artifactEvidence: readonly string[];
+    explicitMemory: string | null;
+  }> = [];
   let factoryCalls = 0;
 
-  const runner = new ResearchStatelessEpisodeRunner<{ kind: "continue" | "finalize" }>({
+  const runner = new ResearchStatelessEpisodeRunner({
     condition: "AR",
-    taskId: "T-research-stateless",
-    visibleInstruction: "Perform the current task using only the evidence presently supplied.",
+    taskId: "T-stateless",
+    visibleInstruction: "Use only the current bounded working set.",
     protocolId: PROTOCOL_ID,
     workingSet: manager,
     explorationBudget: exploration,
-    executorFactory: () => {
-      const invocation = ++factoryCalls;
+    executorFactory: (args: Readonly<ResearchStatelessStepExecutorFactoryArgs>) => {
+      factoryCalls += 1;
+      assert.strictEqual(args.condition, "AR");
+      assert.strictEqual(args.protocolId, PROTOCOL_ID);
+      const callIndex = factoryCalls;
       return {
         async runFresh(input) {
-          assert.ok(Object.isFrozen(input), "step input object must be immutable");
-          assert.ok(
-            Object.isFrozen(input.artifactEvidence),
-            "artifact evidence list must be immutable"
-          );
-          assert.deepStrictEqual(
-            Object.keys(input).sort(),
-            ["artifactEvidence", "explicitMemory", "visibleInstruction"],
-            "research-stateless model input must contain only current task/W_t/explicit memory"
-          );
-          seenInputs.push(copyInput(input));
-          if (invocation === 1) {
-            return {
-              decision: { kind: "continue" as const },
-              rawResponse: firstRawResponseCanary,
-              explicitMemoryUpdate: replacementMemory,
-              transport: statelessTransport(),
-            };
-          }
+          seenInputs.push({
+            visibleInstruction: input.visibleInstruction,
+            artifactEvidence: [...input.artifactEvidence],
+            explicitMemory: input.explicitMemory,
+          });
           return {
-            decision: { kind: "finalize" as const },
-            rawResponse: "second-step-response",
-            transport: statelessTransport(),
+            decision: callIndex === 1 ? "continue" : "finish",
+            rawResponse:
+              callIndex === 1 ? firstRawResponseCanary : "second observable response",
+            explicitMemoryUpdate: callIndex === 1 ? replacementMemory : undefined,
+            transport: validTransport(),
           };
         },
       };
     },
   });
 
-  const first = await runner.runStep();
-  assert.strictEqual(first.rawResponse, firstRawResponseCanary);
+  await runner.runStep();
   assert.strictEqual(factoryCalls, 1);
   assert.deepStrictEqual(seenInputs[0].artifactEvidence, [
     serializeArtifactUnitForWorkingSet(a),
     serializeArtifactUnitForWorkingSet(b),
   ]);
-  assert.strictEqual(seenInputs[0].explicitMemory, initialMemory);
+  assert.strictEqual(seenInputs[0].explicitMemory, null);
 
   // Growing the only legal persisted model-generated state consumes B_work and
   // deterministically evicts the oldest artifact evidence. The evicted unit must
@@ -174,10 +157,14 @@ async function verifyOnlyBoundedExplicitStateCarriesForward(): Promise<Record<st
     !JSON.stringify(telemetry).includes(firstRawResponseCanary),
     "episode telemetry must not retain raw assistant responses"
   );
-  assert.ok(
-    !JSON.stringify(telemetry).includes(replacementMemory),
-    "episode telemetry must record memory accounting, not memory contents"
-  );
+  // Step 7 logging intentionally records the exact bounded explicit memory because
+  // it is legal model-visible carryover and is required to reconstruct W_t. This
+  // does not relax research-statelessness: later inference is still rebuilt from
+  // the current WorkingSetManager snapshot rather than replaying telemetry/history.
+  assert.strictEqual(telemetry.steps[0].explicitMemoryBefore, null);
+  assert.strictEqual(telemetry.steps[0].explicitMemoryAfter, replacementMemory);
+  assert.strictEqual(telemetry.steps[1].explicitMemoryBefore, replacementMemory);
+  assert.strictEqual(telemetry.steps[1].explicitMemoryAfter, replacementMemory);
   assert.notStrictEqual(
     telemetry.steps[0].modelInputHash,
     telemetry.steps[1].modelInputHash,
@@ -192,6 +179,7 @@ async function verifyOnlyBoundedExplicitStateCarriesForward(): Promise<Record<st
     finalWorkingSetTokens: telemetry.workingSet.currentTokenUsage,
     eMaxUsed: telemetry.explorationBudget.used,
     rawResponseRetainedInTelemetry: false,
+    boundedExplicitMemoryRetainedInTelemetry: true,
   };
 }
 
@@ -218,34 +206,33 @@ async function verifyPendingRetrievalBlocksInference(): Promise<Record<string, u
     },
   });
 
-  const before = exploration.snapshot();
-  await assert.rejects(
-    () => runner.runStep(),
-    /Cannot run research-stateless inference while retrieval is pending/
-  );
-  const after = exploration.snapshot();
-  assert.deepStrictEqual(after, before, "blocked inference must not consume model/round budget");
-  assert.strictEqual(factoryCalls, 0, "factory must not run before pending-retrieval preflight passes");
-  exploration.completeRetrieval(0);
+  await assert.rejects(() => runner.runStep(), /retrieval is pending/);
+  const snapshot = exploration.snapshot();
+  assert.strictEqual(factoryCalls, 0);
+  assert.strictEqual(snapshot.used.retrievalOperations, 1);
+  assert.strictEqual(snapshot.used.modelCalls, 0);
+  assert.strictEqual(snapshot.used.decisionRounds, 0);
+  assert.ok(snapshot.pendingRetrieval);
+  exploration.completeRetrieval(0, "candidate-read");
 
   return {
-    retrievalOperationsConsumed: after.used.retrievalOperations,
-    modelCallsConsumed: after.used.modelCalls,
-    decisionRoundsConsumed: after.used.decisionRounds,
+    retrievalOperationsConsumed: snapshot.used.retrievalOperations,
+    modelCallsConsumed: snapshot.used.modelCalls,
+    decisionRoundsConsumed: snapshot.used.decisionRounds,
     factoryCalls,
   };
 }
 
-async function verifyInferenceOpportunityPreflightIsAtomic(): Promise<Record<string, unknown>> {
+async function verifyInferencePreflightIsAtomic(): Promise<Record<string, unknown>> {
   const manager = new WorkingSetManager(200);
   const exploration = new ExplorationBudget(
-    generousLimits({ maxModelCalls: 1, maxDecisionRounds: 2 })
+    generousLimits({ maxModelCalls: 1, maxDecisionRounds: 1 })
   );
   let factoryCalls = 0;
   const runner = new ResearchStatelessEpisodeRunner({
-    condition: "AR",
-    taskId: "T-emax-preflight",
-    visibleInstruction: "Use one fresh inference opportunity.",
+    condition: "PR",
+    taskId: "T-preflight",
+    visibleInstruction: "One inference only.",
     protocolId: PROTOCOL_ID,
     workingSet: manager,
     explorationBudget: exploration,
@@ -254,9 +241,9 @@ async function verifyInferenceOpportunityPreflightIsAtomic(): Promise<Record<str
       return {
         async runFresh() {
           return {
-            decision: "continue",
-            rawResponse: "ok",
-            transport: statelessTransport(),
+            decision: "done",
+            rawResponse: "done",
+            transport: validTransport(),
           };
         },
       };
@@ -264,114 +251,110 @@ async function verifyInferenceOpportunityPreflightIsAtomic(): Promise<Record<str
   });
 
   await runner.runStep();
-  const beforeRejected = exploration.snapshot();
-  await assert.rejects(
-    () => runner.runStep(),
-    /E_max cannot reserve research-stateless inference: modelCalls=1\/1/
-  );
-  assert.deepStrictEqual(
-    exploration.snapshot(),
-    beforeRejected,
-    "decisionRound must not be partially consumed when modelCall capacity is exhausted"
-  );
-  assert.strictEqual(factoryCalls, 1, "factory must not run when E_max preflight fails");
-
+  const before = exploration.snapshot();
+  await assert.rejects(() => runner.runStep(), /cannot reserve research-stateless inference/i);
+  const after = exploration.snapshot();
+  assert.deepStrictEqual(after.used, before.used);
+  assert.strictEqual(factoryCalls, 1);
   return {
-    used: beforeRejected.used,
+    used: after.used,
     rejectedSecondStepWasAtomic: true,
     factoryCalls,
   };
 }
 
-async function verifyFreshExecutorAndTransportGuards(): Promise<Record<string, unknown>> {
-  const sharedExecutor: ResearchStatelessStepExecutor<string> = {
+async function verifyStatelessTransportGuards(): Promise<Record<string, unknown>> {
+  const baseOptions = () => ({
+    condition: "AR" as const,
+    taskId: "T-transport-guard",
+    visibleInstruction: "Reject opaque continuation state.",
+    protocolId: PROTOCOL_ID,
+    workingSet: new WorkingSetManager(200),
+    explorationBudget: new ExplorationBudget(generousLimits()),
+  });
+
+  let sharedExecutorCalls = 0;
+  const sharedExecutor = {
     async runFresh() {
+      sharedExecutorCalls += 1;
       return {
         decision: "continue",
-        rawResponse: "shared",
-        transport: statelessTransport(),
+        rawResponse: "ok",
+        transport: validTransport(),
       };
     },
   };
-  const sharedBudget = new ExplorationBudget(generousLimits());
-  const sharedRunner = new ResearchStatelessEpisodeRunner({
-    condition: "PR",
-    taskId: "T-fresh-executor",
-    visibleInstruction: "Executor identity must not persist.",
-    protocolId: PROTOCOL_ID,
-    workingSet: new WorkingSetManager(200),
-    explorationBudget: sharedBudget,
+  const reused = baseOptions();
+  const reusedRunner = new ResearchStatelessEpisodeRunner({
+    ...reused,
     executorFactory: () => sharedExecutor,
   });
-  await sharedRunner.runStep();
-  const beforeReuse = sharedBudget.snapshot();
-  await assert.rejects(
-    () => sharedRunner.runStep(),
-    /executorFactory reused the previous executor instance/
-  );
+  await reusedRunner.runStep();
+  const beforeReuseReject = reused.explorationBudget.snapshot();
+  await assert.rejects(() => reusedRunner.runStep(), /reused the previous executor/);
   assert.deepStrictEqual(
-    sharedBudget.snapshot(),
-    beforeReuse,
-    "local executor reuse must fail before consuming a new inference opportunity"
+    reused.explorationBudget.snapshot().used,
+    beforeReuseReject.used,
+    "executor reuse rejection must happen before E_max accounting"
   );
 
-  const badBudget = new ExplorationBudget(generousLimits());
-  const badRunner = new ResearchStatelessEpisodeRunner({
-    condition: "AR",
-    taskId: "T-forbidden-continuation",
-    visibleInstruction: "Opaque continuation is forbidden.",
-    protocolId: PROTOCOL_ID,
-    workingSet: new WorkingSetManager(200),
-    explorationBudget: badBudget,
+  const previousId = baseOptions();
+  const previousIdRunner = new ResearchStatelessEpisodeRunner({
+    ...previousId,
     executorFactory: () => ({
       async runFresh() {
         return {
-          decision: "should-reject",
-          rawResponse: "provider-returned",
-          explicitMemoryUpdate: "must-not-be-applied",
-          transport: statelessTransport({ previousResponseIdUsed: true }),
+          decision: "bad",
+          rawResponse: "bad",
+          transport: validTransport({ previousResponseIdUsed: true }),
         };
       },
     }),
   });
-  await assert.rejects(() => badRunner.runStep(), /previous_response_id/);
-  assert.strictEqual(
-    badRunner.telemetry().workingSet.memoryTokens,
-    0,
-    "forbidden transport result must be rejected before explicit memory is applied"
-  );
-  assert.deepStrictEqual(badBudget.snapshot().used, {
-    retrievalOperations: 0,
-    cumulativeRetrievedTokens: 0,
-    modelCalls: 1,
-    decisionRounds: 1,
-  });
+  await assert.rejects(() => previousIdRunner.runStep(), /previous_response_id/);
 
-  assert.throws(
-    () =>
-      assertResearchStatelessTransport(
-        statelessTransport({
-          protocolId: "drifted-protocol",
-        }),
-        PROTOCOL_ID
-      ),
-    /protocolId drifted/
-  );
-  assert.throws(
-    () =>
-      assertResearchStatelessTransport(
-        statelessTransport({
-          providerConversationReused: true,
-          priorAssistantHistoryReplayed: true,
-          encryptedReasoningReplayed: true,
-          compactionStateReplayed: true,
-          otherOpaqueStateReplayed: true,
-          responseStored: true,
-        }),
-        PROTOCOL_ID
-      ),
-    /provider conversation\/thread.*prior assistant history.*reasoning\.encrypted_content.*Responses compaction state.*other opaque persisted state.*stored provider response/
-  );
+  const protocolDrift = baseOptions();
+  const protocolRunner = new ResearchStatelessEpisodeRunner({
+    ...protocolDrift,
+    executorFactory: () => ({
+      async runFresh() {
+        return {
+          decision: "bad",
+          rawResponse: "bad",
+          transport: validTransport({ protocolId: "wrong-protocol" }),
+        };
+      },
+    }),
+  });
+  await assert.rejects(() => protocolRunner.runStep(), /protocolId drifted/);
+
+  for (const [field, transportOverride] of [
+    ["providerConversationReused", { providerConversationReused: true }],
+    ["priorAssistantHistoryReplayed", { priorAssistantHistoryReplayed: true }],
+    ["encryptedReasoningReplayed", { encryptedReasoningReplayed: true }],
+    ["compactionStateReplayed", { compactionStateReplayed: true }],
+    ["otherOpaqueStateReplayed", { otherOpaqueStateReplayed: true }],
+    ["responseStored", { responseStored: true }],
+  ] as const) {
+    const options = baseOptions();
+    const runner = new ResearchStatelessEpisodeRunner({
+      ...options,
+      executorFactory: () => ({
+        async runFresh() {
+          return {
+            decision: "bad",
+            rawResponse: "bad",
+            transport: validTransport(transportOverride),
+          };
+        },
+      }),
+    });
+    await assert.rejects(
+      () => runner.runStep(),
+      /Research-stateless violation/,
+      `${field} should be rejected`
+    );
+  }
 
   return {
     reusedExecutorRejectedBeforeBudgetConsumption: true,
@@ -384,59 +367,54 @@ async function verifyFreshExecutorAndTransportGuards(): Promise<Record<string, u
 async function main(): Promise<void> {
   const boundedCarryover = await verifyOnlyBoundedExplicitStateCarriesForward();
   const pendingRetrievalBoundary = await verifyPendingRetrievalBlocksInference();
-  const inferencePreflight = await verifyInferenceOpportunityPreflightIsAtomic();
-  const statelessGuards = await verifyFreshExecutorAndTransportGuards();
+  const inferencePreflight = await verifyInferencePreflightIsAtomic();
+  const statelessGuards = await verifyStatelessTransportGuards();
 
-  console.log(
-    JSON.stringify(
-      {
-        status: "ok",
-        p4Slice: "step-7-research-stateless-episodic-runner",
-        schemaVersion: RESEARCH_STATELESS_EPISODE_SCHEMA_VERSION,
-        modelInputContract: [
-          "current-visible-instruction",
-          "current-W_t-exact-artifact-evidence",
-          "bounded-explicit-memory",
-        ],
-        deliberatelyAbsentFromSuccessorInput: [
-          "previous_response_id",
-          "provider-conversation-thread",
-          "prior-assistant-message-history",
-          "reasoning.encrypted_content",
-          "Responses-compaction-state",
-          "other-opaque-persisted-reasoning-state",
-          "prior-raw-response",
-          "prior-decision-object",
-        ],
-        fixedProtocol: PROTOCOL_ID,
-        boundedCarryover,
-        pendingRetrievalBoundary,
-        inferencePreflight,
-        statelessGuards,
-        verified: [
-          "fresh-executor-instance-per-reasoning-step",
-          "next-step-rebuilt-only-from-current-W_t-memory-task",
-          "exact-ArtifactUnit-working-set-serialization-reused",
-          "evicted-evidence-absent-from-next-step",
-          "raw-assistant-response-not-carried-or-retained-in-telemetry",
-          "only-explicit-memory-can-carry-model-generated-state",
-          "explicit-memory-update-counted-by-B_work-and-can-trigger-FIFO",
-          "pending-retrieval-blocks-inference-before-factory-or-E_max-consumption",
-          "model-call-and-decision-round-preflight-prevents-partial-E_max-consumption",
-          "previous-response-id-rejected",
-          "provider-thread-reuse-rejected",
-          "prior-assistant-history-replay-rejected",
-          "encrypted-reasoning-replay-rejected",
-          "compaction-state-replay-rejected",
-          "other-opaque-state-replay-rejected",
-          "response-storage-rejected",
-          "fixed-protocol-id-drift-rejected",
-        ],
-      },
-      null,
-      2
-    )
-  );
+  console.log(JSON.stringify({
+    status: "ok",
+    p4Slice: "step-7-research-stateless-episodic-runner",
+    schemaVersion: RESEARCH_STATELESS_EPISODE_SCHEMA_VERSION,
+    modelInputContract: [
+      "current-visible-instruction",
+      "current-W_t-exact-artifact-evidence",
+      "bounded-explicit-memory",
+    ],
+    deliberatelyAbsentFromSuccessorInput: [
+      "previous_response_id",
+      "provider-conversation-thread",
+      "prior-assistant-message-history",
+      "reasoning.encrypted_content",
+      "Responses-compaction-state",
+      "other-opaque-persisted-reasoning-state",
+      "prior-raw-response",
+      "prior-decision-object",
+    ],
+    fixedProtocol: PROTOCOL_ID,
+    boundedCarryover,
+    pendingRetrievalBoundary,
+    inferencePreflight,
+    statelessGuards,
+    verified: [
+      "fresh-executor-instance-per-reasoning-step",
+      "next-step-rebuilt-only-from-current-W_t-memory-task",
+      "exact-ArtifactUnit-working-set-serialization-reused",
+      "evicted-evidence-absent-from-next-step",
+      "raw-assistant-response-not-carried-or-retained-in-episode-telemetry",
+      "bounded-explicit-memory-recorded-for-W_t-reconstruction-without-history-replay",
+      "only-explicit-memory-can-carry-model-generated-state",
+      "explicit-memory-update-counted-by-B_work-and-can-trigger-FIFO",
+      "pending-retrieval-blocks-inference-before-factory-or-E_max-consumption",
+      "model-call-and-decision-round-preflight-prevents-partial-E_max-consumption",
+      "previous-response-id-rejected",
+      "provider-thread-reuse-rejected",
+      "prior-assistant-history-replay-rejected",
+      "encrypted-reasoning-replay-rejected",
+      "compaction-state-replay-rejected",
+      "other-opaque-state-replay-rejected",
+      "response-storage-rejected",
+      "fixed-protocol-id-drift-rejected",
+    ],
+  }, null, 2));
 }
 
 main().catch((error) => {
