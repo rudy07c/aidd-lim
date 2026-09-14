@@ -1,8 +1,8 @@
 // harness/src/context/assembler.ts
 //
-// Stage 0の legacy Full / simple-limited context 構築と、Stage 1 condition dispatch。
-// Stage 1のcondition固有runtimeは段階的に実装するため、未実装conditionを
-// legacy挙動へ黙ってfallbackさせず fail-closed にする。
+// Stage 0の legacy Full / simple-limited context 構築と、Stage 1 static condition dispatch。
+// PR/ARはP5.5以降 dynamic retrieved episode runtimeがcontextを構成するため、
+// static assemblerでは空contextを返し、orchestratorのcondition dispatcherが専用runtimeへ送る。
 
 import { ContextConditionName, getContextCondition } from "../types";
 import {
@@ -31,9 +31,10 @@ export function assembleContext(
     case "EL":
       throw stage1RuntimeNotImplemented("EL", "static exposure selector / B_expose runtime");
     case "PR":
-      throw stage1RuntimeNotImplemented("PR", "P4/P5 WorkingSetManager + privileged retrieval");
     case "AR":
-      throw stage1RuntimeNotImplemented("AR", "P4/P5 WorkingSetManager + agent retrieval");
+      // Deliberately no static repository exposure. The dynamic WorkingSetManager /
+      // RepositoryAccessor path is the only model-visible artifact source for PR/AR.
+      return {};
   }
 }
 
@@ -48,10 +49,6 @@ function assembleFull(repositoryFiles: Record<string, string>): Record<string, s
   return { ...repositoryFiles };
 }
 
-/**
- * Stage 0 単純Limited条件。P3 refactor後もhistorical treatmentは変更しない。
- * tests・型定義・固定契約を優先し、それ以外はper-file capを適用する。
- */
 function assembleSimpleLimited(
   repositoryFiles: Record<string, string>
 ): Record<string, string> {
