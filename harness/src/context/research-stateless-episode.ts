@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import type { TokenUsage } from "../types";
 import {
   ExplorationBudget,
   ExplorationBudgetSnapshot,
@@ -13,7 +14,7 @@ import { serializeArtifactUnitForWorkingSet } from "../measurement/artifact-unit
 import { CANONICAL_TOKEN_COUNT_METHOD } from "../measurement/token-counter";
 
 export const RESEARCH_STATELESS_EPISODE_SCHEMA_VERSION =
-  "research-stateless-episode-v1" as const;
+  "research-stateless-episode-v2-loggable" as const;
 
 export type ResearchStatelessCondition = "PR" | "AR";
 
@@ -49,12 +50,26 @@ export interface ResearchStatelessTransportAttestation {
   responseStored: boolean;
 }
 
+/** Observable provider-side accounting for one fresh inference attempt. */
+export interface ResearchStatelessProviderTelemetry {
+  provider: string;
+  requestedModel: string | null;
+  actualModel: string | null;
+  responseId: string | null;
+  responseStatus: string | null;
+  tokenUsage: TokenUsage | null;
+  latencyMs: number | null;
+  costUsd: number | null;
+}
+
 export interface ResearchStatelessStepResult<TDecision = unknown> {
   decision: TDecision;
   rawResponse: string;
   /** undefined = retain current memory; null = clear; string = replace. */
   explicitMemoryUpdate?: string | null;
   transport: ResearchStatelessTransportAttestation;
+  /** Optional for deterministic/offline executors; live provider adapters should populate it. */
+  providerTelemetry?: ResearchStatelessProviderTelemetry | null;
 }
 
 export interface ResearchStatelessStepExecutor<TDecision = unknown> {
@@ -100,8 +115,12 @@ export interface ResearchStatelessStepTelemetry {
   workingSetTokensAfter: number;
   memoryTokensBefore: number;
   memoryTokensAfter: number;
+  /** Exact explicit model-visible memory, needed to reconstruct W_t across steps. */
+  explicitMemoryBefore: string | null;
+  explicitMemoryAfter: string | null;
   explicitMemoryChanged: boolean;
   transport: ResearchStatelessTransportAttestation;
+  providerTelemetry: ResearchStatelessProviderTelemetry | null;
   explorationUsedAfter: ExplorationUsage;
 }
 
@@ -221,8 +240,11 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
       workingSetTokensAfter: workingAfter.currentTokenUsage,
       memoryTokensBefore: workingBefore.memoryTokens,
       memoryTokensAfter: workingAfter.memoryTokens,
+      explicitMemoryBefore: workingBefore.explicitMemory?.content ?? null,
+      explicitMemoryAfter: workingAfter.explicitMemory?.content ?? null,
       explicitMemoryChanged: result.explicitMemoryUpdate !== undefined,
       transport: { ...result.transport },
+      providerTelemetry: cloneProviderTelemetry(result.providerTelemetry ?? null),
       explorationUsedAfter: { ...this.explorationBudget.snapshot().used },
     };
     this.stepTelemetry.push(telemetry);
@@ -358,6 +380,16 @@ function summarizeWorkingSet(
   };
 }
 
+function cloneProviderTelemetry(
+  telemetry: ResearchStatelessProviderTelemetry | null
+): ResearchStatelessProviderTelemetry | null {
+  if (!telemetry) return null;
+  return {
+    ...telemetry,
+    tokenUsage: telemetry.tokenUsage ? { ...telemetry.tokenUsage } : null,
+  };
+}
+
 function cloneStepTelemetry(
   telemetry: ResearchStatelessStepTelemetry
 ): ResearchStatelessStepTelemetry {
@@ -366,6 +398,7 @@ function cloneStepTelemetry(
     activeUnitIdsBefore: [...telemetry.activeUnitIdsBefore],
     activeUnitIdsAfter: [...telemetry.activeUnitIdsAfter],
     transport: { ...telemetry.transport },
+    providerTelemetry: cloneProviderTelemetry(telemetry.providerTelemetry),
     explorationUsedAfter: { ...telemetry.explorationUsedAfter },
   };
 }
