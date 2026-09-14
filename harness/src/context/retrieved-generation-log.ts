@@ -8,12 +8,13 @@ import type {
 } from "./research-stateless-episode";
 import {
   RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
+  RetrievedEpisodeRuntimeFailure,
 } from "./retrieved-episode-runtime";
 import type { BudgetedRetrievalRecord } from "../repository/retrieval-gateway";
 
 export const RETRIEVED_GENERATION_LOG_SCHEMA_VERSION =
-  "retrieved-generation-log-v2-observable-steps" as const;
-export const AGENT_RETRIEVAL_POLICY_VERSION = "agent-function-tools-v1" as const;
+  "retrieved-generation-log-v3-failure-aware" as const;
+export const AGENT_RETRIEVAL_POLICY_VERSION = "agent-function-tools-v2-bounded-note" as const;
 
 export interface RetrievedGenerationPolicyLog {
   source: "privileged-controller" | "agent-function-tools";
@@ -40,12 +41,12 @@ export interface RetrievedGenerationSummary {
   peakWorkingSetTokens: number;
   finalWorkingSetTokens: number;
   uniqueObservedUnitCount: number;
-  /** Unique first-exposure tokens. Reread tokens are excluded. */
   uniqueObservedTokens: number;
   cumulativeAdmissionTokens: number;
   rereadCount: number;
   cumulativeRereadTokens: number;
   retrievalCount: number;
+  failedRetrievalCount: number;
   totalRetrievedTokens: number;
   evictionCount: number;
   modelCalls: number;
@@ -55,23 +56,16 @@ export interface RetrievedGenerationSummary {
   api: RetrievedGenerationApiSummary;
 }
 
-/**
- * Canonical P5 per-generation log payload for PR/AR.
- *
- * It deliberately stores the full research-stateless step telemetry, the
- * application-observable raw step output/decision, and the full gateway
- * transaction trace. Together with repository_before, these are enough to
- * reconstruct which repository request was issued, which ArtifactUnits were
- * exposed/admitted/reread, the active W_t before/after each retrieval/inference,
- * every FIFO eviction, explicit memory contents, and E_max event history.
- *
- * observableSteps are disk/provenance records only. ResearchStatelessEpisodeRunner
- * never replays them into a later inference step.
- */
+export interface RetrievedGenerationCompletion {
+  status: "completed" | "failed";
+  error: string | null;
+}
+
 export interface RetrievedGenerationLog {
   schemaVersion: typeof RETRIEVED_GENERATION_LOG_SCHEMA_VERSION;
   runtimeSchemaVersion: typeof RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION;
   condition: ResearchStatelessCondition;
+  completion: RetrievedGenerationCompletion;
   retrievalPolicy: RetrievedGenerationPolicyLog;
   observableSteps: RetrievedGenerationObservableStepLog[];
   episode: ResearchStatelessEpisodeTelemetry;
@@ -85,6 +79,7 @@ export function buildAgentRetrievedGenerationLog<TFinal>(
 ): RetrievedGenerationLog {
   return buildRetrievedGenerationLog({
     condition: "AR",
+    completion: { status: "completed", error: null },
     policy: {
       source: "agent-function-tools",
       version: AGENT_RETRIEVAL_POLICY_VERSION,
@@ -101,6 +96,7 @@ export function buildPrivilegedRetrievedGenerationLog<TFinal>(
 ): RetrievedGenerationLog {
   return buildRetrievedGenerationLog({
     condition: "PR",
+    completion: { status: "completed", error: null },
     policy: {
       source: "privileged-controller",
       version: result.retrievalPlan.policyVersion,
@@ -112,8 +108,50 @@ export function buildPrivilegedRetrievedGenerationLog<TFinal>(
   });
 }
 
+export function buildFailedAgentRetrievedGenerationLog(
+  failure: RetrievedEpisodeRuntimeFailure<unknown>
+): RetrievedGenerationLog {
+  if (failure.condition !== "AR") {
+    throw new Error(`Expected AR runtime failure, received ${failure.condition}`);
+  }
+  return buildRetrievedGenerationLog({
+    condition: "AR",
+    completion: { status: "failed", error: failure.message },
+    policy: {
+      source: "agent-function-tools",
+      version: AGENT_RETRIEVAL_POLICY_VERSION,
+    },
+    observableSteps: failure.observableSteps,
+    episode: failure.telemetry,
+    retrievals: failure.retrievals,
+    privilegedRetrievalPlan: null,
+  });
+}
+
+export function buildFailedPrivilegedRetrievedGenerationLog(
+  failure: RetrievedEpisodeRuntimeFailure<unknown>,
+  retrievalPlan: PrivilegedRetrievalPlan
+): RetrievedGenerationLog {
+  if (failure.condition !== "PR") {
+    throw new Error(`Expected PR runtime failure, received ${failure.condition}`);
+  }
+  return buildRetrievedGenerationLog({
+    condition: "PR",
+    completion: { status: "failed", error: failure.message },
+    policy: {
+      source: "privileged-controller",
+      version: retrievalPlan.policyVersion,
+    },
+    observableSteps: failure.observableSteps,
+    episode: failure.telemetry,
+    retrievals: failure.retrievals,
+    privilegedRetrievalPlan: retrievalPlan,
+  });
+}
+
 function buildRetrievedGenerationLog(args: {
   condition: ResearchStatelessCondition;
+  completion: RetrievedGenerationCompletion;
   policy: RetrievedGenerationPolicyLog;
   observableSteps: readonly RetrievedGenerationObservableStepLog[];
   episode: ResearchStatelessEpisodeTelemetry;
@@ -127,8 +165,7 @@ function buildRetrievedGenerationLog(args: {
   }
   if (args.observableSteps.length !== args.episode.steps.length) {
     throw new Error(
-      `Observable step/telemetry count mismatch: observable=${args.observableSteps.length}, ` +
-      `telemetry=${args.episode.steps.length}`
+      `Observable step/telemetry count mismatch: observable=${args.observableSteps.length}, telemetry=${args.episode.steps.length}`
     );
   }
   for (let index = 0; index < args.observableSteps.length; index++) {
@@ -146,36 +183,49 @@ function buildRetrievedGenerationLog(args: {
     args.episode.explorationBudget.used.retrievalOperations !== args.retrievals.length
   ) {
     throw new Error(
-      `Retrieval trace/accounting mismatch: records=${args.retrievals.length}, ` +
-      `E_max=${args.episode.explorationBudget.used.retrievalOperations}`
+      `Retrieval trace/accounting mismatch: records=${args.retrievals.length}, E_max=${args.episode.explorationBudget.used.retrievalOperations}`
     );
   }
 
   let exposedTokenSum = 0;
+  let failedRetrievalCount = 0;
   for (let index = 0; index < args.retrievals.length; index++) {
     const record = args.retrievals[index];
     if (record.sequence !== index) {
       throw new Error(`Retrieval sequence drift at ${index}: ${record.sequence}`);
     }
-    if (record.error !== null) {
-      throw new Error(`Completed retrieved episode contains failed retrieval ${index}: ${record.error}`);
-    }
-    if (record.phaseTrace.join(",") !== "begin,access,complete,admit") {
-      throw new Error(
-        `Successful retrieval ${index} has invalid phase trace: ${record.phaseTrace.join(",")}`
-      );
-    }
     if (!record.request || typeof record.request !== "object") {
       throw new Error(`Retrieval ${index} is missing canonical request arguments`);
     }
+    if (record.error === null) {
+      if (record.phaseTrace.join(",") !== "begin,access,complete,admit") {
+        throw new Error(
+          `Successful retrieval ${index} has invalid phase trace: ${record.phaseTrace.join(",")}`
+        );
+      }
+    } else {
+      failedRetrievalCount += 1;
+      const phases = record.phaseTrace.join(",");
+      if (phases !== "begin,complete" && phases !== "begin,access,complete") {
+        throw new Error(`Failed retrieval ${index} has invalid phase trace: ${phases}`);
+      }
+      if (record.exposedTokens !== 0 || record.admittedUnitIds.length !== 0) {
+        throw new Error(`Failed retrieval ${index} exposed or admitted evidence`);
+      }
+    }
     exposedTokenSum += record.exposedTokens;
+  }
+  if (args.completion.status === "completed" && failedRetrievalCount > 0) {
+    throw new Error("Completed retrieved episode cannot contain failed retrieval records");
+  }
+  if (args.completion.status === "failed" && !args.completion.error) {
+    throw new Error("Failed retrieved generation log requires an error message");
   }
   if (
     exposedTokenSum !== args.episode.explorationBudget.used.cumulativeRetrievedTokens
   ) {
     throw new Error(
-      `Retrieved evidence token accounting mismatch: trace=${exposedTokenSum}, ` +
-      `E_max=${args.episode.explorationBudget.used.cumulativeRetrievedTokens}`
+      `Retrieved evidence token accounting mismatch: trace=${exposedTokenSum}, E_max=${args.episode.explorationBudget.used.cumulativeRetrievedTokens}`
     );
   }
 
@@ -196,16 +246,14 @@ function buildRetrievedGenerationLog(args: {
     peakCandidates.push(step.workingSetTokensBefore, step.workingSetTokensAfter);
   }
   for (const retrieval of args.retrievals) {
-    peakCandidates.push(
-      retrieval.workingSetTokensBefore,
-      retrieval.workingSetTokensAfter
-    );
+    peakCandidates.push(retrieval.workingSetTokensBefore, retrieval.workingSetTokensAfter);
   }
 
-  const result: RetrievedGenerationLog = {
+  return {
     schemaVersion: RETRIEVED_GENERATION_LOG_SCHEMA_VERSION,
     runtimeSchemaVersion: RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
     condition: args.condition,
+    completion: { ...args.completion },
     retrievalPolicy: { ...args.policy },
     observableSteps: cloneJson(args.observableSteps) as RetrievedGenerationObservableStepLog[],
     episode: cloneEpisode(args.episode),
@@ -223,8 +271,8 @@ function buildRetrievedGenerationLog(args: {
       rereadCount: working.rereadCount,
       cumulativeRereadTokens: working.cumulativeRereadTokens,
       retrievalCount: args.retrievals.length,
-      totalRetrievedTokens:
-        args.episode.explorationBudget.used.cumulativeRetrievedTokens,
+      failedRetrievalCount,
+      totalRetrievedTokens: args.episode.explorationBudget.used.cumulativeRetrievedTokens,
       evictionCount: working.evictionHistory.length,
       modelCalls: args.episode.explorationBudget.used.modelCalls,
       decisionRounds: args.episode.explorationBudget.used.decisionRounds,
@@ -233,7 +281,6 @@ function buildRetrievedGenerationLog(args: {
       api: summarizeProviderTelemetry(args.episode),
     },
   };
-  return result;
 }
 
 function summarizeProviderTelemetry(
