@@ -3,6 +3,7 @@ import {
   ResearchStatelessStepExecutorFactory,
 } from "./research-stateless-episode";
 import {
+  RetrievedEpisodeObservableStep,
   RetrievedEpisodeRuntime,
 } from "./retrieved-episode-runtime";
 import { ExplorationBudget } from "./exploration-budget";
@@ -16,7 +17,7 @@ import {
 import { BudgetedRetrievalRecord } from "../repository/retrieval-gateway";
 
 export const AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION =
-  "agent-retrieved-episode-v2-shared-runtime" as const;
+  "agent-retrieved-episode-v3-observable-step-log" as const;
 
 export interface AgentRetrievedFinalizeDecision<TFinal = unknown> {
   kind: "finalize";
@@ -37,6 +38,7 @@ export interface AgentRetrievedEpisodeResult<TFinal = unknown> {
   final: TFinal;
   telemetry: ResearchStatelessEpisodeTelemetry;
   retrievals: BudgetedRetrievalRecord[];
+  observableSteps: RetrievedEpisodeObservableStep<AgentRetrievedDecision<TFinal>>[];
 }
 
 export interface AgentRetrievedEpisodeOptions<TFinal = unknown> {
@@ -92,6 +94,7 @@ export class AgentRetrievedEpisode<TFinal = unknown> {
       final: result.final,
       telemetry: result.telemetry,
       retrievals: result.retrievals,
+      observableSteps: result.observableSteps,
     };
   }
 }
