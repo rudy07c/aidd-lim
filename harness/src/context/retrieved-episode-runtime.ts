@@ -15,7 +15,7 @@ import {
 } from "../repository/retrieval-gateway";
 
 export const RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION =
-  "retrieved-episode-runtime-v1" as const;
+  "retrieved-episode-runtime-v2-observable-step-log" as const;
 export const SHARED_RETRIEVAL_PHASE_CONTRACT: readonly RetrievalGatewayPhase[] =
   Object.freeze(["begin", "access", "complete", "admit"] as const);
 
@@ -31,6 +31,18 @@ export interface RetrievedEpisodeContinue {
 export type RetrievedEpisodePolicyOutcome<TFinal = unknown> =
   | RetrievedEpisodeFinalize<TFinal>
   | RetrievedEpisodeContinue;
+
+/**
+ * Observable application-side record of one fresh reasoning step. This is stored
+ * for post-hoc generation logging only; it is never replayed into the next model
+ * input. Therefore retaining it does not weaken the research-stateless boundary.
+ */
+export interface RetrievedEpisodeObservableStep<TDecision = unknown> {
+  stepIndex: number;
+  rawResponse: string;
+  decision: TDecision;
+  explicitMemoryUpdate: string | null | undefined;
+}
 
 /**
  * The only condition-specific seam in the PR/AR episode loop.
@@ -62,12 +74,13 @@ export interface RetrievedEpisodeRuntimeOptions<TDecision, TFinal = unknown> {
   policyFactory: RetrievedEpisodePolicyFactory<TDecision, TFinal>;
 }
 
-export interface RetrievedEpisodeRuntimeResult<TFinal = unknown> {
+export interface RetrievedEpisodeRuntimeResult<TDecision = unknown, TFinal = unknown> {
   schemaVersion: typeof RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION;
   condition: ResearchStatelessCondition;
   final: TFinal;
   telemetry: ResearchStatelessEpisodeTelemetry;
   retrievals: BudgetedRetrievalRecord[];
+  observableSteps: RetrievedEpisodeObservableStep<TDecision>[];
 }
 
 /**
@@ -88,6 +101,7 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
   private readonly gateway: BudgetedRepositoryGateway;
   private readonly policy: RetrievedEpisodePolicy<TDecision, TFinal>;
   private readonly runner: ResearchStatelessEpisodeRunner<TDecision>;
+  private readonly observableSteps: RetrievedEpisodeObservableStep<TDecision>[] = [];
 
   constructor(private readonly options: RetrievedEpisodeRuntimeOptions<TDecision, TFinal>) {
     this.gateway = createBudgetedRepositoryGateway({
@@ -113,9 +127,15 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
     });
   }
 
-  async run(): Promise<RetrievedEpisodeRuntimeResult<TFinal>> {
+  async run(): Promise<RetrievedEpisodeRuntimeResult<TDecision, TFinal>> {
     while (true) {
       const step = await this.runner.runStep();
+      this.observableSteps.push({
+        stepIndex: step.telemetry.stepIndex,
+        rawResponse: step.rawResponse,
+        decision: step.decision,
+        explicitMemoryUpdate: step.explicitMemoryUpdate,
+      });
       const recordsBefore = this.gateway.records().length;
       const outcome = await this.policy.resolve(step.decision);
       const recordsAfter = this.gateway.records();
@@ -132,6 +152,7 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
           final: outcome.value,
           telemetry: this.runner.telemetry(),
           retrievals: recordsAfter,
+          observableSteps: this.observableSteps.map((record) => ({ ...record })),
         };
       }
 
