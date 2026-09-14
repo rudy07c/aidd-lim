@@ -5,6 +5,7 @@ import type {
   ObservableInteractionRecord,
   OperationalFullFeasibility,
 } from "./context/observable-interaction";
+import type { RetrievedGenerationLog } from "./context/retrieved-generation-log";
 
 /**
  * Config / log上で永続化するcondition identifier。
@@ -328,6 +329,11 @@ export interface GenerationLog {
   /** generation開始時に実際に継承した直前record。MOI以外は常にnull。 */
   inherited_observable_interaction_hash: string | null;
   operational_full_feasibility: OperationalFullFeasibility;
+  /**
+   * PR/ARだけが持つP5 research-stateless retrieval trace。AF/MOI/EL/legacyはnull。
+   * repository_beforeと組み合わせることでW_t/E_max trajectoryを再構成できる。
+   */
+  retrieved_episode_log: RetrievedGenerationLog | null;
   agent_execution_status: AgentExecutionStatus;
   agent_error: NormalizedAgentError | null;
   visible_test_results: TestSuiteResult;
