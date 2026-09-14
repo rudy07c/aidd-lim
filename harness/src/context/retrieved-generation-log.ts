@@ -12,12 +12,19 @@ import {
 import type { BudgetedRetrievalRecord } from "../repository/retrieval-gateway";
 
 export const RETRIEVED_GENERATION_LOG_SCHEMA_VERSION =
-  "retrieved-generation-log-v1" as const;
+  "retrieved-generation-log-v2-observable-steps" as const;
 export const AGENT_RETRIEVAL_POLICY_VERSION = "agent-function-tools-v1" as const;
 
 export interface RetrievedGenerationPolicyLog {
   source: "privileged-controller" | "agent-function-tools";
   version: string;
+}
+
+export interface RetrievedGenerationObservableStepLog {
+  stepIndex: number;
+  rawResponse: string;
+  decision: unknown;
+  explicitMemoryUpdate: string | null | undefined;
 }
 
 export interface RetrievedGenerationApiSummary {
@@ -51,17 +58,22 @@ export interface RetrievedGenerationSummary {
 /**
  * Canonical P5 per-generation log payload for PR/AR.
  *
- * It deliberately stores the full research-stateless step telemetry and the full
- * gateway transaction trace. Together with repository_before, these are enough to
+ * It deliberately stores the full research-stateless step telemetry, the
+ * application-observable raw step output/decision, and the full gateway
+ * transaction trace. Together with repository_before, these are enough to
  * reconstruct which repository request was issued, which ArtifactUnits were
  * exposed/admitted/reread, the active W_t before/after each retrieval/inference,
  * every FIFO eviction, explicit memory contents, and E_max event history.
+ *
+ * observableSteps are disk/provenance records only. ResearchStatelessEpisodeRunner
+ * never replays them into a later inference step.
  */
 export interface RetrievedGenerationLog {
   schemaVersion: typeof RETRIEVED_GENERATION_LOG_SCHEMA_VERSION;
   runtimeSchemaVersion: typeof RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION;
   condition: ResearchStatelessCondition;
   retrievalPolicy: RetrievedGenerationPolicyLog;
+  observableSteps: RetrievedGenerationObservableStepLog[];
   episode: ResearchStatelessEpisodeTelemetry;
   retrievals: BudgetedRetrievalRecord[];
   privilegedRetrievalPlan: PrivilegedRetrievalPlan | null;
@@ -77,6 +89,7 @@ export function buildAgentRetrievedGenerationLog<TFinal>(
       source: "agent-function-tools",
       version: AGENT_RETRIEVAL_POLICY_VERSION,
     },
+    observableSteps: result.observableSteps,
     episode: result.telemetry,
     retrievals: result.retrievals,
     privilegedRetrievalPlan: null,
@@ -92,6 +105,7 @@ export function buildPrivilegedRetrievedGenerationLog<TFinal>(
       source: "privileged-controller",
       version: result.retrievalPlan.policyVersion,
     },
+    observableSteps: result.observableSteps,
     episode: result.telemetry,
     retrievals: result.retrievals,
     privilegedRetrievalPlan: result.retrievalPlan,
@@ -101,6 +115,7 @@ export function buildPrivilegedRetrievedGenerationLog<TFinal>(
 function buildRetrievedGenerationLog(args: {
   condition: ResearchStatelessCondition;
   policy: RetrievedGenerationPolicyLog;
+  observableSteps: readonly RetrievedGenerationObservableStepLog[];
   episode: ResearchStatelessEpisodeTelemetry;
   retrievals: BudgetedRetrievalRecord[];
   privilegedRetrievalPlan: PrivilegedRetrievalPlan | null;
@@ -109,6 +124,20 @@ function buildRetrievedGenerationLog(args: {
     throw new Error(
       `Retrieved generation log condition mismatch: ${args.episode.condition} != ${args.condition}`
     );
+  }
+  if (args.observableSteps.length !== args.episode.steps.length) {
+    throw new Error(
+      `Observable step/telemetry count mismatch: observable=${args.observableSteps.length}, ` +
+      `telemetry=${args.episode.steps.length}`
+    );
+  }
+  for (let index = 0; index < args.observableSteps.length; index++) {
+    if (
+      args.observableSteps[index].stepIndex !== index ||
+      args.episode.steps[index].stepIndex !== index
+    ) {
+      throw new Error(`Research-stateless step index drift at ${index}`);
+    }
   }
   if (args.episode.explorationBudget.pendingRetrieval !== null) {
     throw new Error("Cannot persist retrieved generation log with pending retrieval");
@@ -178,6 +207,7 @@ function buildRetrievedGenerationLog(args: {
     runtimeSchemaVersion: RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION,
     condition: args.condition,
     retrievalPolicy: { ...args.policy },
+    observableSteps: cloneJson(args.observableSteps) as RetrievedGenerationObservableStepLog[],
     episode: cloneEpisode(args.episode),
     retrievals: args.retrievals.map(cloneRetrievalRecord),
     privilegedRetrievalPlan: args.privilegedRetrievalPlan
@@ -269,15 +299,19 @@ function summarizeProviderTelemetry(
 function cloneEpisode(
   episode: ResearchStatelessEpisodeTelemetry
 ): ResearchStatelessEpisodeTelemetry {
-  return JSON.parse(JSON.stringify(episode)) as ResearchStatelessEpisodeTelemetry;
+  return cloneJson(episode) as ResearchStatelessEpisodeTelemetry;
 }
 
 function cloneRetrievalRecord(
   record: BudgetedRetrievalRecord
 ): BudgetedRetrievalRecord {
-  return JSON.parse(JSON.stringify(record)) as BudgetedRetrievalRecord;
+  return cloneJson(record) as BudgetedRetrievalRecord;
 }
 
 function clonePrivilegedPlan(plan: PrivilegedRetrievalPlan): PrivilegedRetrievalPlan {
-  return JSON.parse(JSON.stringify(plan)) as PrivilegedRetrievalPlan;
+  return cloneJson(plan) as PrivilegedRetrievalPlan;
+}
+
+function cloneJson(value: unknown): unknown {
+  return JSON.parse(JSON.stringify(value));
 }
