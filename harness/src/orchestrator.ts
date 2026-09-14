@@ -199,6 +199,9 @@ async function runOneGeneration(
     observable_interaction_record: interactionRecord,
     inherited_observable_interaction_hash: inheritedInteractionRecord?.contentHash ?? null,
     operational_full_feasibility: feasibility,
+    // This assembler/backend path remains the validated legacy/AF/MOI path. PR/AR
+    // attach their common-runtime trace when the Stage 1 condition dispatcher is wired.
+    retrieved_episode_log: null,
     agent_execution_status: executionStatus,
     agent_error: agentResult.error,
     visible_test_results: scoring.visibleTests,
