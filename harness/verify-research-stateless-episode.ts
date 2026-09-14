@@ -66,14 +66,26 @@ function artifact(id: string, path: string, tokenTarget: number, char: string) {
 }
 
 async function verifyOnlyBoundedExplicitStateCarriesForward(): Promise<Record<string, unknown>> {
-  const manager = new WorkingSetManager(535);
   const exploration = new ExplorationBudget(generousLimits());
   const a = artifact("rs-a", "src/a.ts", 120, "a");
   const b = artifact("rs-b", "src/b.ts", 120, "b");
+  const replacementMemory = `bounded-memory:${"m0123456789ABCDEF".repeat(25)}`;
+  assert.ok(
+    replacementMemory.length <= 600,
+    "research-stateless fixture must respect the shared 600-char explicit-memory bound"
+  );
+  const replacementMemoryTokens = countCanonicalTokens(replacementMemory);
+  // Size B_work from the actual canonical token counts so the fixture tests the
+  // semantic invariant rather than depending on one tokenizer-specific string:
+  // initial a+b fits, adding memory forces FIFO eviction of a, and b+memory fits.
+  const budgetTokens = Math.max(
+    a.tokenCount + b.tokenCount,
+    b.tokenCount + replacementMemoryTokens
+  );
+  const manager = new WorkingSetManager(budgetTokens);
   manager.addUnit(a);
   manager.addUnit(b);
 
-  const replacementMemory = repeatedTextForTokens(200, "m");
   const firstRawResponseCanary = "RAW_RESPONSE_MUST_NOT_BE_CARRIED";
   const seenInputs: Array<{
     visibleInstruction: string;
@@ -126,7 +138,7 @@ async function verifyOnlyBoundedExplicitStateCarriesForward(): Promise<Record<st
   // therefore disappear from the next step unless P5 explicitly rereads it.
   assert.ok(!manager.hasUnit(a.id), "explicit-memory growth should FIFO-evict rs-a");
   assert.ok(manager.hasUnit(b.id), "rs-b should remain active");
-  assert.strictEqual(manager.snapshot().memoryTokens, 200);
+  assert.strictEqual(manager.snapshot().memoryTokens, replacementMemoryTokens);
   assert.ok(manager.snapshot().currentTokenUsage <= manager.snapshot().budgetTokens);
 
   await runner.runStep();
