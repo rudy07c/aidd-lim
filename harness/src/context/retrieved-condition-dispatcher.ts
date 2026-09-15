@@ -4,6 +4,7 @@ import type { GroundTruth, GroundTruthDelta, NamingScheme } from "../../../synth
 import type { AgentResult, AgentToolEvent } from "../agent-backend/types";
 import { createOpenAIResearchStatelessARExecutorFactory } from "../agent-backend/openai/research-stateless-ar";
 import { createOpenAIResearchStatelessPRExecutorFactory } from "../agent-backend/openai/research-stateless-pr";
+import { ResearchStatelessProviderFailure } from "../agent-backend/research-stateless-provider-failure";
 import type {
   AgentRetrievedDecision,
 } from "./agent-retrieved-episode";
@@ -29,6 +30,7 @@ import { RetrievedEpisodeRuntimeFailure } from "./retrieved-episode-runtime";
 import { WorkingSetManager } from "./working-set-manager";
 import type {
   ModelProvenance,
+  NormalizedAgentError,
   RunConfig,
   TokenUsage,
 } from "../types";
@@ -87,18 +89,36 @@ export async function runRetrievedCondition(args: {
         retrievedLog,
       };
     } catch (error) {
-      if (!(error instanceof RetrievedEpisodeRuntimeFailure)) throw error;
-      const retrievedLog = buildFailedAgentRetrievedGenerationLog(error);
-      return {
-        agentResult: agentResultFromRetrieved(
-          config,
-          {},
+      if (error instanceof RetrievedEpisodeRuntimeFailure) {
+        const retrievedLog = buildFailedAgentRetrievedGenerationLog(error);
+        return {
+          agentResult: agentResultFromRetrieved(
+            config,
+            {},
+            retrievedLog,
+            "tool-error",
+            { category: "tool", message: error.message, retryable: null }
+          ),
           retrievedLog,
-          "tool-error",
-          error.message
-        ),
-        retrievedLog,
-      };
+        };
+      }
+      if (error instanceof ResearchStatelessProviderFailure) {
+        const failure = episode.failureSnapshot(error.message);
+        const retrievedLog = buildFailedAgentRetrievedGenerationLog(failure);
+        return {
+          agentResult: agentResultFromRetrieved(
+            config,
+            {},
+            retrievedLog,
+            error.executionStatus,
+            error.normalizedError,
+            error.providerTelemetry,
+            error.rawResponse
+          ),
+          retrievedLog,
+        };
+      }
+      throw error;
     }
   }
 
@@ -129,21 +149,42 @@ export async function runRetrievedCondition(args: {
       retrievedLog,
     };
   } catch (error) {
-    if (!(error instanceof RetrievedEpisodeRuntimeFailure)) throw error;
-    const retrievedLog = buildFailedPrivilegedRetrievedGenerationLog(
-      error,
-      episode.retrievalPlanSnapshot()
-    );
-    return {
-      agentResult: agentResultFromRetrieved(
-        config,
-        {},
+    if (error instanceof RetrievedEpisodeRuntimeFailure) {
+      const retrievedLog = buildFailedPrivilegedRetrievedGenerationLog(
+        error,
+        episode.retrievalPlanSnapshot()
+      );
+      return {
+        agentResult: agentResultFromRetrieved(
+          config,
+          {},
+          retrievedLog,
+          "tool-error",
+          { category: "tool", message: error.message, retryable: null }
+        ),
         retrievedLog,
-        "tool-error",
-        error.message
-      ),
-      retrievedLog,
-    };
+      };
+    }
+    if (error instanceof ResearchStatelessProviderFailure) {
+      const failure = episode.failureSnapshot(error.message);
+      const retrievedLog = buildFailedPrivilegedRetrievedGenerationLog(
+        failure,
+        episode.retrievalPlanSnapshot()
+      );
+      return {
+        agentResult: agentResultFromRetrieved(
+          config,
+          {},
+          retrievedLog,
+          error.executionStatus,
+          error.normalizedError,
+          error.providerTelemetry,
+          error.rawResponse
+        ),
+        retrievedLog,
+      };
+    }
+    throw error;
   }
 }
 
@@ -268,13 +309,15 @@ function agentResultFromRetrieved(
   config: RunConfig,
   modifiedFiles: Record<string, string>,
   log: RetrievedGenerationLog,
-  executionStatus: "ok" | "tool-error",
-  errorMessage: string | null
+  executionStatus: AgentResult["executionStatus"],
+  error: NormalizedAgentError | null,
+  providerTelemetryOverride: ResearchStatelessProviderTelemetry | null = null,
+  rawResponseOverride: string | null = null
 ): AgentResult {
   const observableAssistantMessages = log.observableSteps
     .map((step) => step.rawResponse)
     .filter((value) => value.length > 0);
-  const rawResponse = observableAssistantMessages.join("\n");
+  const rawResponse = rawResponseOverride ?? observableAssistantMessages.join("\n");
   const finalStep = log.episode.steps[log.episode.steps.length - 1];
   const toolEvents: AgentToolEvent[] = log.retrievals.map((record) => ({
     callId: record.label,
@@ -296,22 +339,24 @@ function agentResultFromRetrieved(
     observableAssistantMessages,
     explicitWorkingNote: finalStep?.explicitMemoryAfter ?? null,
     toolEvents,
-    tokenUsage: api.tokenUsage ?? undefined,
-    latencyMs: api.latencyMs ?? 0,
+    tokenUsage: providerTelemetryOverride?.tokenUsage ?? api.tokenUsage ?? undefined,
+    latencyMs: providerTelemetryOverride?.latencyMs ?? api.latencyMs ?? 0,
     executionStatus,
-    modelProvenance: modelProvenance(config, log),
-    estimatedCostUsd: api.costUsd,
-    error: errorMessage
-      ? { category: "tool", message: errorMessage, retryable: null }
-      : null,
+    modelProvenance: modelProvenance(config, log, providerTelemetryOverride),
+    estimatedCostUsd: providerTelemetryOverride?.costUsd ?? api.costUsd,
+    error,
   };
 }
 
-function modelProvenance(config: RunConfig, log: RetrievedGenerationLog): ModelProvenance {
+function modelProvenance(
+  config: RunConfig,
+  log: RetrievedGenerationLog,
+  providerTelemetryOverride: ResearchStatelessProviderTelemetry | null = null
+): ModelProvenance {
   const providerRows = log.episode.steps
     .map((step) => step.providerTelemetry)
     .filter((row): row is ResearchStatelessProviderTelemetry => row !== null);
-  const last = providerRows[providerRows.length - 1] ?? null;
+  const last = providerTelemetryOverride ?? providerRows[providerRows.length - 1] ?? null;
   return {
     provider: config.backend === "openai" ? "openai" : "mock",
     requestedModel: config.backend === "openai" ? config.model ?? "gpt-5.6-luna" : null,
