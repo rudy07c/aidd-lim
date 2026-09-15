@@ -16,6 +16,8 @@ import {
   ResearchStatelessProviderFailure,
   ResearchStatelessCensoredStatus,
 } from "./src/agent-backend/research-stateless-provider-failure";
+import { OpenAIResearchStatelessPRExecutor } from "./src/agent-backend/openai/research-stateless-pr";
+import { OpenAIResearchStatelessARExecutor } from "./src/agent-backend/openai/research-stateless-ar";
 import { shouldCensorGeneration } from "./src/orchestrator";
 
 const PROTOCOL_ID = "p5.5-error-separation-v1";
@@ -105,6 +107,67 @@ async function verifyEmaxExhaustionBecomesPersistableRuntimeFailure() {
   };
 }
 
+async function verifyOpenAIExecutorsClassifyIncompleteResponses() {
+  const originalApiKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "sk-test-not-used";
+  try {
+    const options = {
+      model: "gpt-5.6-luna",
+      reasoningEffort: "high" as const,
+      maxOutputTokens: 1024,
+      requestTimeoutMs: 1000,
+      maxRetries: 0,
+      storeResponses: false,
+      serviceTier: "default" as const,
+      promptCacheMode: "implicit" as const,
+    };
+    const fakeIncompleteResponse = {
+      id: "resp-incomplete-test",
+      model: "gpt-5.6-luna",
+      status: "incomplete",
+      output: [],
+      output_text: "",
+      usage: null,
+      service_tier: "default",
+      incomplete_details: { reason: "max_output_tokens" },
+      error: null,
+    };
+
+    const executors = {
+      PR: new OpenAIResearchStatelessPRExecutor(options, PROTOCOL_ID, []),
+      AR: new OpenAIResearchStatelessARExecutor(options, PROTOCOL_ID, []),
+    } as const;
+
+    const results: Record<string, unknown> = {};
+    for (const [condition, executor] of Object.entries(executors)) {
+      (executor as any).client.responses.create = async () => fakeIncompleteResponse;
+      let observed: unknown;
+      try {
+        await executor.runFresh({
+          visibleInstruction: "Simulate incomplete provider response.",
+          artifactEvidence: [],
+          explicitMemory: null,
+        });
+        assert.fail("expected incomplete response failure");
+      } catch (error) {
+        observed = error;
+      }
+      assert.ok(observed instanceof ResearchStatelessProviderFailure);
+      assert.strictEqual(observed.executionStatus, "response-incomplete");
+      assert.strictEqual(observed.normalizedError.category, "response");
+      assert.strictEqual(shouldCensorGeneration(observed.executionStatus), true);
+      results[condition] = {
+        executionStatus: observed.executionStatus,
+        censored: true,
+      };
+    }
+    return results;
+  } finally {
+    if (originalApiKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = originalApiKey;
+  }
+}
+
 async function verifyProviderFailuresRemainCensorable() {
   const censorStatuses: ResearchStatelessCensoredStatus[] = [
     "provider-error",
@@ -122,6 +185,7 @@ async function verifyProviderFailuresRemainCensorable() {
   }
   assert.strictEqual(shouldCensorGeneration("tool-error"), false);
 
+  const executorClassification = await verifyOpenAIExecutorsClassifyIncompleteResponses();
   const conditionResults: Record<string, unknown> = {};
   for (const condition of ["PR", "AR"] as const satisfies readonly ResearchStatelessCondition[]) {
     const providerFailure = new ResearchStatelessProviderFailure({
@@ -191,6 +255,7 @@ async function verifyProviderFailuresRemainCensorable() {
 
   return {
     censorStatuses,
+    executorClassification,
     conditionResults,
   };
 }
