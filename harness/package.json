@@ -18,6 +18,7 @@
     "verify:privileged-retrieval": "ts-node verify-privileged-retrieval-controller.ts",
     "verify:pr-ar-runtime-parity": "ts-node verify-pr-ar-runtime-parity.ts",
     "verify:retrieved-generation-logging": "ts-node verify-retrieved-generation-logging.ts",
+    "verify:p5-5-failure-logging": "ts-node verify-p5-5-failure-logging.ts",
     "verify:openai": "ts-node verify-openai-backend.ts",
     "verify:openai-batch": "ts-node verify-openai-batch.ts",
     "verify:openai-live": "ts-node verify-openai-live.ts",
