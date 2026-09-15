@@ -1,0 +1,133 @@
+{
+  "experiment_id": "p5-5-pr-luna-live-smoke__2026-09-15_12-27-59",
+  "lineage_id": "lineage-0",
+  "generation": 0,
+  "condition": "PR",
+  "condition_metadata": {
+    "axis": "axis-b-observation-retrieval",
+    "inheritance": "artifact-only",
+    "inherits_observable_history": false,
+    "repository_access": "full",
+    "budget_kind": "working-set"
+  },
+  "model": "gpt-5.6-luna",
+  "model_provenance": {
+    "provider": "openai",
+    "requestedModel": "gpt-5.6-luna",
+    "actualModel": "gpt-5.6-luna",
+    "responseId": "resp_0b6672b1f6f34fbd016aa939f08ad487d0afcd8a9dc2b2df11",
+    "responseStatus": "completed",
+    "endpoint": "responses",
+    "reasoningEffort": "medium",
+    "maxOutputTokens": 8192,
+    "structuredOutput": true,
+    "storeResponses": false,
+    "requestedServiceTier": "default",
+    "actualServiceTier": null,
+    "promptCacheMode": "implicit",
+    "promptVersion": "stage1-p5.5-retrieved-v1",
+    "promptHash": null,
+    "schemaVersion": "retrieved-generation-log-v3-failure-aware",
+    "schemaHash": null,
+    "pricingMode": "sync",
+    "continuationState": "none",
+    "incompleteReason": null,
+    "refusal": null,
+    "providerErrorCode": null,
+    "sdkVersion": null,
+    "retryPolicy": {
+      "maxRetries": 1,
+      "timeoutMs": 180000
+    }
+  },
+  "task_id": "T-crosscut-2",
+  "context_budget": 5000,
+  "actual_context_tokens": 3819,
+  "observable_interaction": {
+    "schema_version": "observable-interaction-v2",
+    "content_hash": "94e6ac4338640e1ffa1b901c5cbb98ec13b9107eca605d8ff8dfa9a04ebdd147",
+    "token_count": 1524,
+    "token_count_method": "js-tiktoken:o200k_base:v1",
+    "source_breakdown": {
+      "ephemeral-rationale": 45,
+      "task-feedback": 61,
+      "artifact-redundant": 1418,
+      "mutation-metadata": 0
+    },
+    "inherited_previous_hash": null
+  },
+  "retrieved_episode": {
+    "schema_version": "retrieved-generation-log-v3-failure-aware",
+    "runtime_schema_version": "retrieved-episode-runtime-v3-failure-trace",
+    "retrieval_policy": {
+      "source": "privileged-controller",
+      "version": "ground-truth-dependency-system2-v1"
+    },
+    "summary": {
+      "bWork": 5000,
+      "peakWorkingSetTokens": 3819,
+      "finalWorkingSetTokens": 3819,
+      "uniqueObservedUnitCount": 10,
+      "uniqueObservedTokens": 3774,
+      "cumulativeAdmissionTokens": 3774,
+      "rereadCount": 0,
+      "cumulativeRereadTokens": 0,
+      "retrievalCount": 10,
+      "failedRetrievalCount": 0,
+      "totalRetrievedTokens": 3774,
+      "evictionCount": 0,
+      "modelCalls": 10,
+      "decisionRounds": 10,
+      "tokenCountMethod": "js-tiktoken:o200k_base:v1",
+      "evictionPolicy": "fifo-v1",
+      "api": {
+        "providerTelemetryComplete": true,
+        "providerCallsLogged": 10,
+        "tokenUsage": {
+          "input": 18758,
+          "output": 770,
+          "cachedInput": 0,
+          "cacheWriteInput": 15654,
+          "reasoningOutput": 113,
+          "total": 19528
+        },
+        "latencyMs": 34155,
+        "costUsd": 0.0054583
+      }
+    }
+  },
+  "operational_full_feasibility": {
+    "checked": false,
+    "feasible": null,
+    "method": "not-applicable",
+    "contextCapacityTokens": 1050000,
+    "conservativeInputUpperBoundTokens": null,
+    "reservedOutputTokens": 8192
+  },
+  "functional_task_result": false,
+  "agent_execution_status": "tool-error",
+  "agent_error": {
+    "category": "tool",
+    "message": "E_max cannot reserve research-stateless inference: decisionRounds=10/10, modelCalls=10/10",
+    "retryable": null
+  },
+  "explicit_working_note": "状態型とadapterの構造を確認済み。jumpVokZefの実装有無、既存ルールの不変条件、WorldProtocolの契約を確認して最小変更する。",
+  "task_specific_test_result": {
+    "passed": false,
+    "numPassed": 1,
+    "numFailed": 2
+  },
+  "latency_ms": 34155,
+  "token_usage": {
+    "input": 18758,
+    "output": 770,
+    "cachedInput": 0,
+    "cacheWriteInput": 15654,
+    "reasoningOutput": 113,
+    "total": 19528
+  },
+  "cost": 0.0054583,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

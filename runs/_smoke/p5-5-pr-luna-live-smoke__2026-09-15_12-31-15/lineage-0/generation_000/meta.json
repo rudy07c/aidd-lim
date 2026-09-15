@@ -1,0 +1,133 @@
+{
+  "experiment_id": "p5-5-pr-luna-live-smoke__2026-09-15_12-31-15",
+  "lineage_id": "lineage-0",
+  "generation": 0,
+  "condition": "PR",
+  "condition_metadata": {
+    "axis": "axis-b-observation-retrieval",
+    "inheritance": "artifact-only",
+    "inherits_observable_history": false,
+    "repository_access": "full",
+    "budget_kind": "working-set"
+  },
+  "model": "gpt-5.6-luna",
+  "model_provenance": {
+    "provider": "openai",
+    "requestedModel": "gpt-5.6-luna",
+    "actualModel": "gpt-5.6-luna",
+    "responseId": "resp_0d10b09d99160420016aa93aab6d5487d08325cc1dac6a28bd",
+    "responseStatus": "completed",
+    "endpoint": "responses",
+    "reasoningEffort": "medium",
+    "maxOutputTokens": 8192,
+    "structuredOutput": true,
+    "storeResponses": false,
+    "requestedServiceTier": "default",
+    "actualServiceTier": null,
+    "promptCacheMode": "implicit",
+    "promptVersion": "stage1-p5.5-retrieved-v1",
+    "promptHash": null,
+    "schemaVersion": "retrieved-generation-log-v3-failure-aware",
+    "schemaHash": null,
+    "pricingMode": "sync",
+    "continuationState": "none",
+    "incompleteReason": null,
+    "refusal": null,
+    "providerErrorCode": null,
+    "sdkVersion": null,
+    "retryPolicy": {
+      "maxRetries": 1,
+      "timeoutMs": 180000
+    }
+  },
+  "task_id": "T-crosscut-2",
+  "context_budget": 5000,
+  "actual_context_tokens": 4181,
+  "observable_interaction": {
+    "schema_version": "observable-interaction-v2",
+    "content_hash": "f9eb377ebfc47953390e07e092ffdbe2d6458bd4fc76a1337ddee64c098ed1dd",
+    "token_count": 1686,
+    "token_count_method": "js-tiktoken:o200k_base:v1",
+    "source_breakdown": {
+      "ephemeral-rationale": 48,
+      "task-feedback": 61,
+      "artifact-redundant": 1577,
+      "mutation-metadata": 0
+    },
+    "inherited_previous_hash": null
+  },
+  "retrieved_episode": {
+    "schema_version": "retrieved-generation-log-v3-failure-aware",
+    "runtime_schema_version": "retrieved-episode-runtime-v3-failure-trace",
+    "retrieval_policy": {
+      "source": "privileged-controller",
+      "version": "ground-truth-dependency-system2-v1"
+    },
+    "summary": {
+      "bWork": 5000,
+      "peakWorkingSetTokens": 4181,
+      "finalWorkingSetTokens": 4181,
+      "uniqueObservedUnitCount": 11,
+      "uniqueObservedTokens": 4133,
+      "cumulativeAdmissionTokens": 4133,
+      "rereadCount": 0,
+      "cumulativeRereadTokens": 0,
+      "retrievalCount": 11,
+      "failedRetrievalCount": 0,
+      "totalRetrievedTokens": 4133,
+      "evictionCount": 0,
+      "modelCalls": 12,
+      "decisionRounds": 12,
+      "tokenCountMethod": "js-tiktoken:o200k_base:v1",
+      "evictionPolicy": "fifo-v1",
+      "api": {
+        "providerTelemetryComplete": true,
+        "providerCallsLogged": 12,
+        "tokenUsage": {
+          "input": 27675,
+          "output": 911,
+          "cachedInput": 0,
+          "cacheWriteInput": 24576,
+          "reasoningOutput": 141,
+          "total": 28586
+        },
+        "latencyMs": 24689,
+        "costUsd": 0.007857
+      }
+    }
+  },
+  "operational_full_feasibility": {
+    "checked": false,
+    "feasible": null,
+    "method": "not-applicable",
+    "contextCapacityTokens": 1050000,
+    "conservativeInputUpperBoundTokens": null,
+    "reservedOutputTokens": 8192
+  },
+  "functional_task_result": false,
+  "agent_execution_status": "tool-error",
+  "agent_error": {
+    "category": "tool",
+    "message": "Privileged retrieval plan exhausted before finalization",
+    "retryable": null
+  },
+  "explicit_working_note": "既存の状態遷移とprotocol登録を確認済み。jumpVokZefの期待される前提条件・公開operation名を確定するため、仕様またはテスト定義を確認する。",
+  "task_specific_test_result": {
+    "passed": false,
+    "numPassed": 1,
+    "numFailed": 2
+  },
+  "latency_ms": 24689,
+  "token_usage": {
+    "input": 27675,
+    "output": 911,
+    "cachedInput": 0,
+    "cacheWriteInput": 24576,
+    "reasoningOutput": 141,
+    "total": 28586
+  },
+  "cost": 0.007857,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

@@ -126,7 +126,19 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
 
   async run(): Promise<RetrievedEpisodeRuntimeResult<TDecision, TFinal>> {
     while (true) {
-      const step = await this.runner.runStep();
+      let step: Awaited<ReturnType<typeof this.runner.runStep>>;
+      try {
+        step = await this.runner.runStep();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new RetrievedEpisodeRuntimeFailure<TDecision>({
+          condition: this.options.condition,
+          message,
+          telemetry: this.runner.telemetry(),
+          retrievals: this.gateway.records(),
+          observableSteps: this.observableSteps,
+        });
+      }
       this.observableSteps.push({
         stepIndex: step.telemetry.stepIndex,
         rawResponse: step.rawResponse,

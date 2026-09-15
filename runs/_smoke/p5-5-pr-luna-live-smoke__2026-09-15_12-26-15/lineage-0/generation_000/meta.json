@@ -1,0 +1,133 @@
+{
+  "experiment_id": "p5-5-pr-luna-live-smoke__2026-09-15_12-26-15",
+  "lineage_id": "lineage-0",
+  "generation": 0,
+  "condition": "PR",
+  "condition_metadata": {
+    "axis": "axis-b-observation-retrieval",
+    "inheritance": "artifact-only",
+    "inherits_observable_history": false,
+    "repository_access": "full",
+    "budget_kind": "working-set"
+  },
+  "model": "gpt-5.6-luna",
+  "model_provenance": {
+    "provider": "openai",
+    "requestedModel": "gpt-5.6-luna",
+    "actualModel": "gpt-5.6-luna",
+    "responseId": "resp_0933df26bce470ac016aa93976e26087d08bbbbe2bbb1c0fa3",
+    "responseStatus": "completed",
+    "endpoint": "responses",
+    "reasoningEffort": "medium",
+    "maxOutputTokens": 8192,
+    "structuredOutput": true,
+    "storeResponses": false,
+    "requestedServiceTier": "default",
+    "actualServiceTier": null,
+    "promptCacheMode": "implicit",
+    "promptVersion": "stage1-p5.5-retrieved-v1",
+    "promptHash": null,
+    "schemaVersion": "retrieved-generation-log-v3-failure-aware",
+    "schemaHash": null,
+    "pricingMode": "sync",
+    "continuationState": "none",
+    "incompleteReason": null,
+    "refusal": null,
+    "providerErrorCode": null,
+    "sdkVersion": null,
+    "retryPolicy": {
+      "maxRetries": 1,
+      "timeoutMs": 180000
+    }
+  },
+  "task_id": "T-crosscut-2",
+  "context_budget": 5000,
+  "actual_context_tokens": 2997,
+  "observable_interaction": {
+    "schema_version": "observable-interaction-v2",
+    "content_hash": "8ddd8a13a684aca1cde75b7f155588246d7446f1246f9e7422a6bb8233595814",
+    "token_count": 1202,
+    "token_count_method": "js-tiktoken:o200k_base:v1",
+    "source_breakdown": {
+      "ephemeral-rationale": 26,
+      "task-feedback": 61,
+      "artifact-redundant": 1115,
+      "mutation-metadata": 0
+    },
+    "inherited_previous_hash": null
+  },
+  "retrieved_episode": {
+    "schema_version": "retrieved-generation-log-v3-failure-aware",
+    "runtime_schema_version": "retrieved-episode-runtime-v3-failure-trace",
+    "retrieval_policy": {
+      "source": "privileged-controller",
+      "version": "ground-truth-dependency-system2-v1"
+    },
+    "summary": {
+      "bWork": 5000,
+      "peakWorkingSetTokens": 2997,
+      "finalWorkingSetTokens": 2997,
+      "uniqueObservedUnitCount": 8,
+      "uniqueObservedTokens": 2971,
+      "cumulativeAdmissionTokens": 2971,
+      "rereadCount": 0,
+      "cumulativeRereadTokens": 0,
+      "retrievalCount": 8,
+      "failedRetrievalCount": 0,
+      "totalRetrievedTokens": 2971,
+      "evictionCount": 0,
+      "modelCalls": 8,
+      "decisionRounds": 8,
+      "tokenCountMethod": "js-tiktoken:o200k_base:v1",
+      "evictionPolicy": "fifo-v1",
+      "api": {
+        "providerTelemetryComplete": true,
+        "providerCallsLogged": 8,
+        "tokenUsage": {
+          "input": 11336,
+          "output": 441,
+          "cachedInput": 0,
+          "cacheWriteInput": 8330,
+          "reasoningOutput": 81,
+          "total": 11777
+        },
+        "latencyMs": 16820,
+        "costUsd": 0.0032129000000000003
+      }
+    }
+  },
+  "operational_full_feasibility": {
+    "checked": false,
+    "feasible": null,
+    "method": "not-applicable",
+    "contextCapacityTokens": 1050000,
+    "conservativeInputUpperBoundTokens": null,
+    "reservedOutputTokens": 8192
+  },
+  "functional_task_result": false,
+  "agent_execution_status": "tool-error",
+  "agent_error": {
+    "category": "tool",
+    "message": "E_max cannot reserve research-stateless inference: decisionRounds=8/8, modelCalls=8/8",
+    "retryable": null
+  },
+  "explicit_working_note": "Need inspect Vok/Zef rule preconditions and protocol operation typing before implementing atomic jump; preserve immutable transitions and existing adapter exports.",
+  "task_specific_test_result": {
+    "passed": false,
+    "numPassed": 1,
+    "numFailed": 2
+  },
+  "latency_ms": 16820,
+  "token_usage": {
+    "input": 11336,
+    "output": 441,
+    "cachedInput": 0,
+    "cacheWriteInput": 8330,
+    "reasoningOutput": 81,
+    "total": 11777
+  },
+  "cost": 0.0032129000000000003,
+  "protocol_contract_violated": false,
+  "semantic_probe_results": null,
+  "semantic_element_trace": null
+}

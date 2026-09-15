@@ -1,0 +1,1881 @@
+{
+  "schemaVersion": "retrieved-generation-log-v3-failure-aware",
+  "runtimeSchemaVersion": "retrieved-episode-runtime-v3-failure-trace",
+  "condition": "PR",
+  "completion": {
+    "status": "failed",
+    "error": "E_max cannot reserve research-stateless inference: decisionRounds=8/8, modelCalls=8/8"
+  },
+  "retrievalPolicy": {
+    "source": "privileged-controller",
+    "version": "ground-truth-dependency-system2-v1"
+  },
+  "observableSteps": [
+    {
+      "stepIndex": 0,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "Need inspect protocol and operation definitions to add jumpVokZef while preserving exported protocol signatures."
+    },
+    {
+      "stepIndex": 1,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "FenState values are nim, pex, dor. Need inspect protocol and operation definitions, then implement jumpVokZef without changing exported protocol method signatures."
+    },
+    {
+      "stepIndex": 2,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "Need inspect protocol and operation definitions to add jumpVokZef while preserving exported method signatures."
+    },
+    {
+      "stepIndex": 3,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "Need inspect protocol adapter and operation definitions to add the new atomic jump while preserving the public protocol signatures."
+    },
+    {
+      "stepIndex": 4,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "Need inspect protocol adapter and operation definitions to add atomic jumpVokZef while preserving protocol signatures; current risk is operation validation/transition rules may be split across files."
+    },
+    {
+      "stepIndex": 5,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "protocol_adapter operation table currently maps immutable WorldState transitions; need inspect Vok/Zef rules and protocol schema before adding atomic jump."
+    },
+    {
+      "stepIndex": 6,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "Need inspect Vok/Zef rule preconditions and protocol operation typing before implementing atomic jump; preserve immutable transitions and existing adapter exports."
+    },
+    {
+      "stepIndex": 7,
+      "rawResponse": "",
+      "decision": {
+        "kind": "retrieve"
+      },
+      "explicitMemoryUpdate": "Need inspect Vok/Zef rule preconditions and protocol operation typing before implementing atomic jump; preserve immutable transitions and existing adapter exports."
+    }
+  ],
+  "episode": {
+    "schemaVersion": "research-stateless-episode-v2-loggable",
+    "condition": "PR",
+    "taskId": "T-crosscut-2",
+    "protocolId": "stage1-p5.5-retrieved-v1",
+    "steps": [
+      {
+        "stepIndex": 0,
+        "modelInputHash": "2bbf50a87dfab989013754868ea3a95cd0872c9905fefd25caf5cf528104b251",
+        "activeUnitIdsBefore": [],
+        "activeUnitIdsAfter": [],
+        "workingSetTokensBefore": 0,
+        "workingSetTokensAfter": 19,
+        "memoryTokensBefore": 0,
+        "memoryTokensAfter": 19,
+        "explicitMemoryBefore": null,
+        "explicitMemoryAfter": "Need inspect protocol and operation definitions to add jumpVokZef while preserving exported protocol signatures.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_05560957df5aaf26016aa93967df8087d0a636d2cc48fbaa02",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 476,
+            "output": 52,
+            "cachedInput": 0,
+            "cacheWriteInput": 0,
+            "reasoningOutput": 13,
+            "total": 528
+          },
+          "latencyMs": 2528,
+          "costUsd": 0.00015759999999999998
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 0,
+          "cumulativeRetrievedTokens": 0,
+          "modelCalls": 1,
+          "decisionRounds": 1
+        }
+      },
+      {
+        "stepIndex": 1,
+        "modelInputHash": "b6556698f985ded2b990ec81f534d8f3d32f39c0aac64ae2cf234d28cbdcd39a",
+        "activeUnitIdsBefore": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba"
+        ],
+        "activeUnitIdsAfter": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba"
+        ],
+        "workingSetTokensBefore": 50,
+        "workingSetTokensAfter": 63,
+        "memoryTokensBefore": 19,
+        "memoryTokensAfter": 32,
+        "explicitMemoryBefore": "Need inspect protocol and operation definitions to add jumpVokZef while preserving exported protocol signatures.",
+        "explicitMemoryAfter": "FenState values are nim, pex, dor. Need inspect protocol and operation definitions, then implement jumpVokZef without changing exported protocol method signatures.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_05de1f5b462bc018016aa93969f47487d09ab2f47f52ec7c84",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 520,
+            "output": 61,
+            "cachedInput": 0,
+            "cacheWriteInput": 0,
+            "reasoningOutput": 9,
+            "total": 581
+          },
+          "latencyMs": 1738,
+          "costUsd": 0.0001772
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 1,
+          "cumulativeRetrievedTokens": 31,
+          "modelCalls": 2,
+          "decisionRounds": 2
+        }
+      },
+      {
+        "stepIndex": 2,
+        "modelInputHash": "69d30ed07c000d926b9bcfdc7bb42e8cdc50109b6f78d6f78fe345f6bcc8d499",
+        "activeUnitIdsBefore": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3"
+        ],
+        "activeUnitIdsAfter": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3"
+        ],
+        "workingSetTokensBefore": 91,
+        "workingSetTokensAfter": 78,
+        "memoryTokensBefore": 32,
+        "memoryTokensAfter": 19,
+        "explicitMemoryBefore": "FenState values are nim, pex, dor. Need inspect protocol and operation definitions, then implement jumpVokZef without changing exported protocol method signatures.",
+        "explicitMemoryAfter": "Need inspect protocol and operation definitions to add jumpVokZef while preserving exported method signatures.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_0edb4826652d8572016aa9396bb9b087d08d2a3e550feab1ff",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 561,
+            "output": 51,
+            "cachedInput": 0,
+            "cacheWriteInput": 0,
+            "reasoningOutput": 12,
+            "total": 612
+          },
+          "latencyMs": 3307,
+          "costUsd": 0.00017339999999999999
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 2,
+          "cumulativeRetrievedTokens": 59,
+          "modelCalls": 3,
+          "decisionRounds": 3
+        }
+      },
+      {
+        "stepIndex": 3,
+        "modelInputHash": "9ba88d7a5bec20f5c19f3dc02db63fdceb1090b7ba9cf9164eb5221fac86ef85",
+        "activeUnitIdsBefore": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4"
+        ],
+        "activeUnitIdsAfter": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4"
+        ],
+        "workingSetTokensBefore": 110,
+        "workingSetTokensAfter": 111,
+        "memoryTokensBefore": 19,
+        "memoryTokensAfter": 20,
+        "explicitMemoryBefore": "Need inspect protocol and operation definitions to add jumpVokZef while preserving exported method signatures.",
+        "explicitMemoryAfter": "Need inspect protocol adapter and operation definitions to add the new atomic jump while preserving the public protocol signatures.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_0665405e092de924016aa9396efeb087d09d6945c907f47d3a",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 580,
+            "output": 49,
+            "cachedInput": 0,
+            "cacheWriteInput": 0,
+            "reasoningOutput": 9,
+            "total": 629
+          },
+          "latencyMs": 1647,
+          "costUsd": 0.0001748
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 3,
+          "cumulativeRetrievedTokens": 91,
+          "modelCalls": 4,
+          "decisionRounds": 4
+        }
+      },
+      {
+        "stepIndex": 4,
+        "modelInputHash": "d6f2cf2bd6430e75b35e22ec710059290df79c45c9584ce2699ef5cc7dade1bf",
+        "activeUnitIdsBefore": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a"
+        ],
+        "activeUnitIdsAfter": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a"
+        ],
+        "workingSetTokensBefore": 390,
+        "workingSetTokensAfter": 404,
+        "memoryTokensBefore": 20,
+        "memoryTokensAfter": 34,
+        "explicitMemoryBefore": "Need inspect protocol adapter and operation definitions to add the new atomic jump while preserving the public protocol signatures.",
+        "explicitMemoryAfter": "Need inspect protocol adapter and operation definitions to add atomic jumpVokZef while preserving protocol signatures; current risk is operation validation/transition rules may be split across files.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_0b912f29f727c8d8016aa93970b2b887d090042f3588dd1806",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 860,
+            "output": 52,
+            "cachedInput": 0,
+            "cacheWriteInput": 0,
+            "reasoningOutput": 0,
+            "total": 912
+          },
+          "latencyMs": 1750,
+          "costUsd": 0.0002344
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 4,
+          "cumulativeRetrievedTokens": 370,
+          "modelCalls": 5,
+          "decisionRounds": 5
+        }
+      },
+      {
+        "stepIndex": 5,
+        "modelInputHash": "7c4988cc144253cf1082cf2e20c97308ebc253b19fcab6e5265fb777da0ca517",
+        "activeUnitIdsBefore": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a",
+          "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf"
+        ],
+        "activeUnitIdsAfter": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a",
+          "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf"
+        ],
+        "workingSetTokensBefore": 1247,
+        "workingSetTokensAfter": 1239,
+        "memoryTokensBefore": 34,
+        "memoryTokensAfter": 26,
+        "explicitMemoryBefore": "Need inspect protocol adapter and operation definitions to add atomic jumpVokZef while preserving protocol signatures; current risk is operation validation/transition rules may be split across files.",
+        "explicitMemoryAfter": "protocol_adapter operation table currently maps immutable WorldState transitions; need inspect Vok/Zef rules and protocol schema before adding atomic jump.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_09d26bba37964c11016aa939727cd487d0ae22ae28289e1514",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 1717,
+            "output": 61,
+            "cachedInput": 0,
+            "cacheWriteInput": 1714,
+            "reasoningOutput": 15,
+            "total": 1778
+          },
+          "latencyMs": 2207,
+          "costUsd": 0.0005023
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 5,
+          "cumulativeRetrievedTokens": 1213,
+          "modelCalls": 6,
+          "decisionRounds": 6
+        }
+      },
+      {
+        "stepIndex": 6,
+        "modelInputHash": "51277dc2516426c2dc951c4b5a2f45855073b012a20262c151e086a58dde2a72",
+        "activeUnitIdsBefore": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a",
+          "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+          "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f"
+        ],
+        "activeUnitIdsAfter": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a",
+          "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+          "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f"
+        ],
+        "workingSetTokensBefore": 2787,
+        "workingSetTokensAfter": 2787,
+        "memoryTokensBefore": 26,
+        "memoryTokensAfter": 26,
+        "explicitMemoryBefore": "protocol_adapter operation table currently maps immutable WorldState transitions; need inspect Vok/Zef rules and protocol schema before adding atomic jump.",
+        "explicitMemoryAfter": "Need inspect Vok/Zef rule preconditions and protocol operation typing before implementing atomic jump; preserve immutable transitions and existing adapter exports.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_081b100acd7c78ff016aa93974d2d887d08b5d079017e39a5b",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 3257,
+            "output": 60,
+            "cachedInput": 0,
+            "cacheWriteInput": 3254,
+            "reasoningOutput": 14,
+            "total": 3317
+          },
+          "latencyMs": 1959,
+          "costUsd": 0.0008861000000000001
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 6,
+          "cumulativeRetrievedTokens": 2761,
+          "modelCalls": 7,
+          "decisionRounds": 7
+        }
+      },
+      {
+        "stepIndex": 7,
+        "modelInputHash": "bb587ba071b6809fa75b489ca2830950e45bc6445897f291be9065d1446a9432",
+        "activeUnitIdsBefore": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a",
+          "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+          "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f",
+          "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1"
+        ],
+        "activeUnitIdsAfter": [
+          "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+          "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+          "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+          "read:src/world.ts:L1-L22:2b1525e247b9802a",
+          "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+          "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f",
+          "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1"
+        ],
+        "workingSetTokensBefore": 2895,
+        "workingSetTokensAfter": 2895,
+        "memoryTokensBefore": 26,
+        "memoryTokensAfter": 26,
+        "explicitMemoryBefore": "Need inspect Vok/Zef rule preconditions and protocol operation typing before implementing atomic jump; preserve immutable transitions and existing adapter exports.",
+        "explicitMemoryAfter": "Need inspect Vok/Zef rule preconditions and protocol operation typing before implementing atomic jump; preserve immutable transitions and existing adapter exports.",
+        "explicitMemoryChanged": true,
+        "transport": {
+          "protocolId": "stage1-p5.5-retrieved-v1",
+          "previousResponseIdUsed": false,
+          "providerConversationReused": false,
+          "priorAssistantHistoryReplayed": false,
+          "encryptedReasoningReplayed": false,
+          "compactionStateReplayed": false,
+          "otherOpaqueStateReplayed": false,
+          "responseStored": false
+        },
+        "providerTelemetry": {
+          "provider": "openai",
+          "requestedModel": "gpt-5.6-luna",
+          "actualModel": "gpt-5.6-luna",
+          "responseId": "resp_0933df26bce470ac016aa93976e26087d08bbbbe2bbb1c0fa3",
+          "responseStatus": "completed",
+          "tokenUsage": {
+            "input": 3365,
+            "output": 55,
+            "cachedInput": 0,
+            "cacheWriteInput": 3362,
+            "reasoningOutput": 9,
+            "total": 3420
+          },
+          "latencyMs": 1684,
+          "costUsd": 0.0009071000000000001
+        },
+        "explorationUsedAfter": {
+          "retrievalOperations": 7,
+          "cumulativeRetrievedTokens": 2869,
+          "modelCalls": 8,
+          "decisionRounds": 8
+        }
+      }
+    ],
+    "workingSet": {
+      "budgetTokens": 5000,
+      "activeUnitIds": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f",
+        "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1",
+        "read:src/tal/rules.ts:L1-L11:917d554021189441"
+      ],
+      "artifactTokens": 2971,
+      "memoryTokens": 26,
+      "currentTokenUsage": 2997,
+      "remainingBudget": 2003,
+      "cumulativeUnitAdmissionTokens": 2971,
+      "uniqueAdmittedUnitCount": 8,
+      "totalAdmissionCount": 8,
+      "rereadCount": 0,
+      "cumulativeRereadTokens": 0,
+      "evictionPolicy": "fifo-v1",
+      "evictionHistory": [],
+      "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+    },
+    "explorationBudget": {
+      "schemaVersion": "exploration-budget-v2",
+      "limits": {
+        "maxRetrievalOperations": 8,
+        "maxCumulativeRetrievedTokens": 20000,
+        "maxModelCalls": 8,
+        "maxDecisionRounds": 8
+      },
+      "used": {
+        "retrievalOperations": 8,
+        "cumulativeRetrievedTokens": 2971,
+        "modelCalls": 8,
+        "decisionRounds": 8
+      },
+      "remaining": {
+        "retrievalOperations": 0,
+        "cumulativeRetrievedTokens": 17029,
+        "modelCalls": 0,
+        "decisionRounds": 0
+      },
+      "exhausted": [
+        "retrievalOperations",
+        "modelCalls",
+        "decisionRounds"
+      ],
+      "pendingRetrieval": null,
+      "events": [
+        {
+          "sequence": 0,
+          "kind": "decision-round",
+          "label": "research-stateless-step-0",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageAfter": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          }
+        },
+        {
+          "sequence": 1,
+          "kind": "model-call",
+          "label": "research-stateless-step-0",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageAfter": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 1
+          }
+        },
+        {
+          "sequence": 2,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:0",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 1
+          },
+          "usageAfter": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 1
+          }
+        },
+        {
+          "sequence": 3,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:0",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 1
+          },
+          "usageAfter": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 1,
+            "decisionRounds": 1
+          }
+        },
+        {
+          "sequence": 4,
+          "kind": "decision-round",
+          "label": "research-stateless-step-1",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 1,
+            "decisionRounds": 1
+          },
+          "usageAfter": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 1,
+            "decisionRounds": 2
+          }
+        },
+        {
+          "sequence": 5,
+          "kind": "model-call",
+          "label": "research-stateless-step-1",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 1,
+            "decisionRounds": 2
+          },
+          "usageAfter": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 2,
+            "decisionRounds": 2
+          }
+        },
+        {
+          "sequence": 6,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:1",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 2,
+            "decisionRounds": 2
+          },
+          "usageAfter": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 2,
+            "decisionRounds": 2
+          }
+        },
+        {
+          "sequence": 7,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:1",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 28,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 31,
+            "modelCalls": 2,
+            "decisionRounds": 2
+          },
+          "usageAfter": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 2,
+            "decisionRounds": 2
+          }
+        },
+        {
+          "sequence": 8,
+          "kind": "decision-round",
+          "label": "research-stateless-step-2",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 2,
+            "decisionRounds": 2
+          },
+          "usageAfter": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 2,
+            "decisionRounds": 3
+          }
+        },
+        {
+          "sequence": 9,
+          "kind": "model-call",
+          "label": "research-stateless-step-2",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 2,
+            "decisionRounds": 3
+          },
+          "usageAfter": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 3,
+            "decisionRounds": 3
+          }
+        },
+        {
+          "sequence": 10,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:2",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 2,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 3,
+            "decisionRounds": 3
+          },
+          "usageAfter": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 3,
+            "decisionRounds": 3
+          }
+        },
+        {
+          "sequence": 11,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:2",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 32,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 59,
+            "modelCalls": 3,
+            "decisionRounds": 3
+          },
+          "usageAfter": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 3,
+            "decisionRounds": 3
+          }
+        },
+        {
+          "sequence": 12,
+          "kind": "decision-round",
+          "label": "research-stateless-step-3",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 3,
+            "decisionRounds": 3
+          },
+          "usageAfter": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 3,
+            "decisionRounds": 4
+          }
+        },
+        {
+          "sequence": 13,
+          "kind": "model-call",
+          "label": "research-stateless-step-3",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 3,
+            "decisionRounds": 4
+          },
+          "usageAfter": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 4,
+            "decisionRounds": 4
+          }
+        },
+        {
+          "sequence": 14,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:3",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 3,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 4,
+            "decisionRounds": 4
+          },
+          "usageAfter": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 4,
+            "decisionRounds": 4
+          }
+        },
+        {
+          "sequence": 15,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:3",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 279,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 91,
+            "modelCalls": 4,
+            "decisionRounds": 4
+          },
+          "usageAfter": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 4,
+            "decisionRounds": 4
+          }
+        },
+        {
+          "sequence": 16,
+          "kind": "decision-round",
+          "label": "research-stateless-step-4",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 4,
+            "decisionRounds": 4
+          },
+          "usageAfter": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 4,
+            "decisionRounds": 5
+          }
+        },
+        {
+          "sequence": 17,
+          "kind": "model-call",
+          "label": "research-stateless-step-4",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 4,
+            "decisionRounds": 5
+          },
+          "usageAfter": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 5,
+            "decisionRounds": 5
+          }
+        },
+        {
+          "sequence": 18,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:4",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 4,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 5,
+            "decisionRounds": 5
+          },
+          "usageAfter": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 5,
+            "decisionRounds": 5
+          }
+        },
+        {
+          "sequence": 19,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:4",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 843,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 370,
+            "modelCalls": 5,
+            "decisionRounds": 5
+          },
+          "usageAfter": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 5,
+            "decisionRounds": 5
+          }
+        },
+        {
+          "sequence": 20,
+          "kind": "decision-round",
+          "label": "research-stateless-step-5",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 5,
+            "decisionRounds": 5
+          },
+          "usageAfter": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 5,
+            "decisionRounds": 6
+          }
+        },
+        {
+          "sequence": 21,
+          "kind": "model-call",
+          "label": "research-stateless-step-5",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 5,
+            "decisionRounds": 6
+          },
+          "usageAfter": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 6,
+            "decisionRounds": 6
+          }
+        },
+        {
+          "sequence": 22,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:5",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 5,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 6,
+            "decisionRounds": 6
+          },
+          "usageAfter": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 6,
+            "decisionRounds": 6
+          }
+        },
+        {
+          "sequence": 23,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:5",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 1548,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 1213,
+            "modelCalls": 6,
+            "decisionRounds": 6
+          },
+          "usageAfter": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 6,
+            "decisionRounds": 6
+          }
+        },
+        {
+          "sequence": 24,
+          "kind": "decision-round",
+          "label": "research-stateless-step-6",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 6,
+            "decisionRounds": 6
+          },
+          "usageAfter": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 6,
+            "decisionRounds": 7
+          }
+        },
+        {
+          "sequence": 25,
+          "kind": "model-call",
+          "label": "research-stateless-step-6",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 6,
+            "decisionRounds": 7
+          },
+          "usageAfter": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 7,
+            "decisionRounds": 7
+          }
+        },
+        {
+          "sequence": 26,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:6",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 6,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 7,
+            "decisionRounds": 7
+          },
+          "usageAfter": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 7,
+            "decisionRounds": 7
+          }
+        },
+        {
+          "sequence": 27,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:6",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 108,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2761,
+            "modelCalls": 7,
+            "decisionRounds": 7
+          },
+          "usageAfter": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 7,
+            "decisionRounds": 7
+          }
+        },
+        {
+          "sequence": 28,
+          "kind": "decision-round",
+          "label": "research-stateless-step-7",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 1
+          },
+          "usageBefore": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 7,
+            "decisionRounds": 7
+          },
+          "usageAfter": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 7,
+            "decisionRounds": 8
+          }
+        },
+        {
+          "sequence": 29,
+          "kind": "model-call",
+          "label": "research-stateless-step-7",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 1,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 7,
+            "decisionRounds": 8
+          },
+          "usageAfter": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 8,
+            "decisionRounds": 8
+          }
+        },
+        {
+          "sequence": 30,
+          "kind": "retrieval-operation",
+          "label": "repository:read-chunk:7",
+          "delta": {
+            "retrievalOperations": 1,
+            "cumulativeRetrievedTokens": 0,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 7,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 8,
+            "decisionRounds": 8
+          },
+          "usageAfter": {
+            "retrievalOperations": 8,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 8,
+            "decisionRounds": 8
+          }
+        },
+        {
+          "sequence": 31,
+          "kind": "retrieved-evidence",
+          "label": "repository:read-chunk:7",
+          "delta": {
+            "retrievalOperations": 0,
+            "cumulativeRetrievedTokens": 102,
+            "modelCalls": 0,
+            "decisionRounds": 0
+          },
+          "usageBefore": {
+            "retrievalOperations": 8,
+            "cumulativeRetrievedTokens": 2869,
+            "modelCalls": 8,
+            "decisionRounds": 8
+          },
+          "usageAfter": {
+            "retrievalOperations": 8,
+            "cumulativeRetrievedTokens": 2971,
+            "modelCalls": 8,
+            "decisionRounds": 8
+          }
+        }
+      ]
+    }
+  },
+  "retrievals": [
+    {
+      "sequence": 0,
+      "operation": "read-chunk",
+      "request": {
+        "path": "src/fen/state.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:0",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "dbfe6e578cb75e584e77d411236d97d049e5582ee75baa1969f85f9204898613",
+      "candidateUnitIds": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba"
+      ],
+      "exposedUnitIds": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba"
+      ],
+      "admittedUnitIds": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 31,
+      "exposedTokens": 31,
+      "activeUnitIdsBefore": [],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba"
+      ],
+      "workingSetTokensBefore": 19,
+      "workingSetTokensAfter": 50,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 31,
+      "retrievalOperationsAfter": 1,
+      "error": null
+    },
+    {
+      "sequence": 1,
+      "operation": "read-chunk",
+      "request": {
+        "path": "src/osk/state.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:1",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "cac3b81fb9bc6d617ed61225abcc06e31c9f8083f864566014ca65d2dca8abaa",
+      "candidateUnitIds": [
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3"
+      ],
+      "exposedUnitIds": [
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3"
+      ],
+      "admittedUnitIds": [
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 28,
+      "exposedTokens": 28,
+      "activeUnitIdsBefore": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba"
+      ],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3"
+      ],
+      "workingSetTokensBefore": 63,
+      "workingSetTokensAfter": 91,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 59,
+      "retrievalOperationsAfter": 2,
+      "error": null
+    },
+    {
+      "sequence": 2,
+      "operation": "read-chunk",
+      "request": {
+        "path": "src/vok/state.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:2",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "cd5d48462fcd325a142dbff4a34feadff6ad3593c189e32aa354a79752f6eb10",
+      "candidateUnitIds": [
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4"
+      ],
+      "exposedUnitIds": [
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4"
+      ],
+      "admittedUnitIds": [
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 32,
+      "exposedTokens": 32,
+      "activeUnitIdsBefore": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3"
+      ],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4"
+      ],
+      "workingSetTokensBefore": 78,
+      "workingSetTokensAfter": 110,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 91,
+      "retrievalOperationsAfter": 3,
+      "error": null
+    },
+    {
+      "sequence": 3,
+      "operation": "read-chunk",
+      "request": {
+        "path": "src/world.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:3",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "a662c3d8b7b079541489e9be3e65b5eb5efe72b7e3742136c2666fe98ae607b2",
+      "candidateUnitIds": [
+        "read:src/world.ts:L1-L22:2b1525e247b9802a"
+      ],
+      "exposedUnitIds": [
+        "read:src/world.ts:L1-L22:2b1525e247b9802a"
+      ],
+      "admittedUnitIds": [
+        "read:src/world.ts:L1-L22:2b1525e247b9802a"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 279,
+      "exposedTokens": 279,
+      "activeUnitIdsBefore": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4"
+      ],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a"
+      ],
+      "workingSetTokensBefore": 111,
+      "workingSetTokensAfter": 390,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 370,
+      "retrievalOperationsAfter": 4,
+      "error": null
+    },
+    {
+      "sequence": 4,
+      "operation": "read-chunk",
+      "request": {
+        "path": "src/protocol_adapter.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:4",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "96a449d02f1fd017f85066f5327e8e3d96d43e2b84952a70cd31b51a9384807f",
+      "candidateUnitIds": [
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf"
+      ],
+      "exposedUnitIds": [
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf"
+      ],
+      "admittedUnitIds": [
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 843,
+      "exposedTokens": 843,
+      "activeUnitIdsBefore": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a"
+      ],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf"
+      ],
+      "workingSetTokensBefore": 404,
+      "workingSetTokensAfter": 1247,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 1213,
+      "retrievalOperationsAfter": 5,
+      "error": null
+    },
+    {
+      "sequence": 5,
+      "operation": "read-chunk",
+      "request": {
+        "path": "tests/rules.visible.test.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:5",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "c1cd85bb1f0c29de3d95e6b96ceee2ad88df824dcd9b4db3403631c703be3d2d",
+      "candidateUnitIds": [
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f"
+      ],
+      "exposedUnitIds": [
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f"
+      ],
+      "admittedUnitIds": [
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 1548,
+      "exposedTokens": 1548,
+      "activeUnitIdsBefore": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf"
+      ],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f"
+      ],
+      "workingSetTokensBefore": 1239,
+      "workingSetTokensAfter": 2787,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 2761,
+      "retrievalOperationsAfter": 6,
+      "error": null
+    },
+    {
+      "sequence": 6,
+      "operation": "read-chunk",
+      "request": {
+        "path": "src/osk/rules.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:6",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "ab97b60fd53952fec7388abd22213f5517828f852562739a14af55d659ddc3cb",
+      "candidateUnitIds": [
+        "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1"
+      ],
+      "exposedUnitIds": [
+        "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1"
+      ],
+      "admittedUnitIds": [
+        "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 108,
+      "exposedTokens": 108,
+      "activeUnitIdsBefore": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f"
+      ],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f",
+        "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1"
+      ],
+      "workingSetTokensBefore": 2787,
+      "workingSetTokensAfter": 2895,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 2869,
+      "retrievalOperationsAfter": 7,
+      "error": null
+    },
+    {
+      "sequence": 7,
+      "operation": "read-chunk",
+      "request": {
+        "path": "src/tal/rules.ts",
+        "startLine": null,
+        "endLine": null
+      },
+      "label": "repository:read-chunk:7",
+      "phaseTrace": [
+        "begin",
+        "access",
+        "complete",
+        "admit"
+      ],
+      "candidateResultHash": "ea9c257359e7d1f87b0651e7517a577b266c33f6261a8ed13c2d90e060b391fd",
+      "candidateUnitIds": [
+        "read:src/tal/rules.ts:L1-L11:917d554021189441"
+      ],
+      "exposedUnitIds": [
+        "read:src/tal/rules.ts:L1-L11:917d554021189441"
+      ],
+      "admittedUnitIds": [
+        "read:src/tal/rules.ts:L1-L11:917d554021189441"
+      ],
+      "rereadUnitIds": [],
+      "alreadyActiveUnitIds": [],
+      "candidateTokens": 102,
+      "exposedTokens": 102,
+      "activeUnitIdsBefore": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f",
+        "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1"
+      ],
+      "activeUnitIdsAfter": [
+        "read:src/fen/state.ts:L1-L1:b6314a4197cffeba",
+        "read:src/osk/state.ts:L1-L1:97b3302f019ab1a3",
+        "read:src/vok/state.ts:L1-L1:c722720cb6e8faf4",
+        "read:src/world.ts:L1-L22:2b1525e247b9802a",
+        "read:src/protocol_adapter.ts:L1-L80:894297e5b84814cf",
+        "read:tests/rules.visible.test.ts:L1-L121:ebd92ffaf3d2523f",
+        "read:src/osk/rules.ts:L1-L11:10ff14515c7f33f1",
+        "read:src/tal/rules.ts:L1-L11:917d554021189441"
+      ],
+      "workingSetTokensBefore": 2895,
+      "workingSetTokensAfter": 2997,
+      "evictions": [],
+      "cumulativeRetrievedTokensAfter": 2971,
+      "retrievalOperationsAfter": 8,
+      "error": null
+    }
+  ],
+  "privilegedRetrievalPlan": {
+    "policyVersion": "ground-truth-dependency-system2-v1",
+    "surfaceEntities": [
+      "E1",
+      "E2",
+      "E3",
+      "E5"
+    ],
+    "semanticEntities": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5"
+    ],
+    "entityFilePaths": {
+      "E1": [
+        "src/vok/rules.ts",
+        "src/vok/state.ts"
+      ],
+      "E2": [
+        "src/zef/rules.ts"
+      ],
+      "E3": [
+        "src/tal/rules.ts"
+      ],
+      "E4": [
+        "src/fen/rules.ts",
+        "src/fen/state.ts"
+      ],
+      "E5": [
+        "src/osk/rules.ts",
+        "src/osk/state.ts"
+      ]
+    },
+    "dependencyDistances": {
+      "E1": 0,
+      "E2": 0,
+      "E3": 0,
+      "E4": 1,
+      "E5": 0
+    },
+    "entries": [
+      {
+        "sequence": 0,
+        "path": "src/fen/state.ts",
+        "category": "type_definition",
+        "mappedEntities": [
+          "E4"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 1
+      },
+      {
+        "sequence": 1,
+        "path": "src/osk/state.ts",
+        "category": "type_definition",
+        "mappedEntities": [
+          "E5"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 0
+      },
+      {
+        "sequence": 2,
+        "path": "src/vok/state.ts",
+        "category": "type_definition",
+        "mappedEntities": [
+          "E1"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 0
+      },
+      {
+        "sequence": 3,
+        "path": "src/world.ts",
+        "category": "type_definition",
+        "mappedEntities": [],
+        "semanticRelevant": false,
+        "dependencyDistance": null
+      },
+      {
+        "sequence": 4,
+        "path": "src/protocol_adapter.ts",
+        "category": "fixed_contract",
+        "mappedEntities": [],
+        "semanticRelevant": false,
+        "dependencyDistance": null
+      },
+      {
+        "sequence": 5,
+        "path": "tests/rules.visible.test.ts",
+        "category": "test",
+        "mappedEntities": [],
+        "semanticRelevant": false,
+        "dependencyDistance": null
+      },
+      {
+        "sequence": 6,
+        "path": "src/osk/rules.ts",
+        "category": "implementation",
+        "mappedEntities": [
+          "E5"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 0
+      },
+      {
+        "sequence": 7,
+        "path": "src/tal/rules.ts",
+        "category": "implementation",
+        "mappedEntities": [
+          "E3"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 0
+      },
+      {
+        "sequence": 8,
+        "path": "src/vok/rules.ts",
+        "category": "implementation",
+        "mappedEntities": [
+          "E1"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 0
+      },
+      {
+        "sequence": 9,
+        "path": "src/zef/rules.ts",
+        "category": "implementation",
+        "mappedEntities": [
+          "E2"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 0
+      },
+      {
+        "sequence": 10,
+        "path": "src/fen/rules.ts",
+        "category": "implementation",
+        "mappedEntities": [
+          "E4"
+        ],
+        "semanticRelevant": true,
+        "dependencyDistance": 1
+      }
+    ]
+  },
+  "summary": {
+    "bWork": 5000,
+    "peakWorkingSetTokens": 2997,
+    "finalWorkingSetTokens": 2997,
+    "uniqueObservedUnitCount": 8,
+    "uniqueObservedTokens": 2971,
+    "cumulativeAdmissionTokens": 2971,
+    "rereadCount": 0,
+    "cumulativeRereadTokens": 0,
+    "retrievalCount": 8,
+    "failedRetrievalCount": 0,
+    "totalRetrievedTokens": 2971,
+    "evictionCount": 0,
+    "modelCalls": 8,
+    "decisionRounds": 8,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1",
+    "evictionPolicy": "fifo-v1",
+    "api": {
+      "providerTelemetryComplete": true,
+      "providerCallsLogged": 8,
+      "tokenUsage": {
+        "input": 11336,
+        "output": 441,
+        "cachedInput": 0,
+        "cacheWriteInput": 8330,
+        "reasoningOutput": 81,
+        "total": 11777
+      },
+      "latencyMs": 16820,
+      "costUsd": 0.0032129000000000003
+    }
+  }
+}
