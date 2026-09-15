@@ -84,6 +84,9 @@ jobs:
       - name: Verify P5.5 failed retrieval logging
         working-directory: harness
         run: npm run verify:p5-5-failure-logging
+      - name: Verify P5.5 typed E_max/provider error separation
+        working-directory: harness
+        run: npm run verify:p5-5-error-separation
       - name: P5.5 PR end-to-end run.ts smoke
         working-directory: harness
         run: |
