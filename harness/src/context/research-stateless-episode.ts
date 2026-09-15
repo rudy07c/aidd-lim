@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import type { TokenUsage } from "../types";
 import {
   ExplorationBudget,
+  ExplorationBudgetExceededError,
   ExplorationBudgetSnapshot,
   ExplorationUsage,
 } from "./exploration-budget";
@@ -290,8 +291,9 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
       );
     }
     if (violations.length > 0) {
-      throw new Error(
-        `E_max cannot reserve research-stateless inference: ${violations.join(", ")}`
+      throw new ExplorationBudgetExceededError(
+        `E_max cannot reserve research-stateless inference: ${violations.join(", ")}`,
+        violations
       );
     }
   }
