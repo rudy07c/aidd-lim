@@ -48,6 +48,23 @@ export interface ExplorationBudgetSnapshot {
   events: ExplorationEvent[];
 }
 
+/**
+ * Typed boundary for scientific E_max exhaustion only.
+ *
+ * Provider/response/harness failures must never be confused with E_max exhaustion:
+ * RetrievedEpisodeRuntime catches this class specifically and rethrows all other
+ * errors unchanged so provider censor semantics stay aligned with the P1 backend.
+ */
+export class ExplorationBudgetExceededError extends Error {
+  readonly violations: readonly string[];
+
+  constructor(message: string, violations: readonly string[] = []) {
+    super(message);
+    this.name = "ExplorationBudgetExceededError";
+    this.violations = Object.freeze([...violations]);
+  }
+}
+
 const ZERO_USAGE: ExplorationUsage = {
   retrievalOperations: 0,
   cumulativeRetrievedTokens: 0,
@@ -256,7 +273,10 @@ export class ExplorationBudget {
       violations.push(`decisionRounds=${next.decisionRounds}/${this.limits.maxDecisionRounds}`);
     }
     if (violations.length > 0) {
-      throw new Error(`E_max exceeded by ${kind}: ${violations.join(", ")}`);
+      throw new ExplorationBudgetExceededError(
+        `E_max exceeded by ${kind}: ${violations.join(", ")}`,
+        violations
+      );
     }
   }
 }
