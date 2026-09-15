@@ -1,3 +1,0 @@
-{
-  "prompt": "[Research-stateless retrieved runtime: PR]\n[Retrieval policy: privileged-controller/ground-truth-dependency-system2-v1]\n[B_work: 5000, peak: 2997]\n[E_max retrievals: 8, model calls: 8]\nTask:\nパフォーマンス改善のため、Vok と Zef を同時に 'nim' から 'dor' へ一気に進める 'jumpVokZef' operation を追加せよ。中間状態の 'pex' を経由する必要はない。"
-}
