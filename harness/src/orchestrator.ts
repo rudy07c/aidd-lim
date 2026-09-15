@@ -160,7 +160,6 @@ async function runOneGeneration(
       inheritedInteractionRecord
     );
 
-    // Factory is invoked inside every generation: no provider/backend instance is inherited.
     const backend = backendFactory(config, task.taskId, generation);
     agentResult = await backend.run({
       contextFiles,
@@ -333,10 +332,13 @@ function buildAgentPromptSummary(
 }
 
 function buildRetrievedPromptSummary(
-  condition: "PR" | "AR",
+  condition: RunConfig["condition"],
   visibleInstruction: string,
   retrievedLog: RetrievedGenerationLog
 ): string {
+  if (condition !== "PR" && condition !== "AR") {
+    throw new Error(`Retrieved prompt summary received non-retrieved condition: ${condition}`);
+  }
   return [
     `[Research-stateless retrieved runtime: ${condition}]`,
     `[Retrieval policy: ${retrievedLog.retrievalPolicy.source}/${retrievedLog.retrievalPolicy.version}]`,
