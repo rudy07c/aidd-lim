@@ -99,17 +99,20 @@ assert.deepStrictEqual(
 const legacyLimited = assembleContext(repository, "simple-limited");
 assert.ok(Object.values(legacyLimited).join("").length <= 6_000);
 
-// P2 still must not silently approximate later finite-observation mechanisms.
-for (const name of ["EL", "PR", "AR"] as const) {
-  assert.throws(
-    () => assembleContext(repository, name),
-    new RegExp(`Context condition ${name} is defined but its execution semantics are not implemented yet`)
-  );
-}
+// EL is still intentionally unimplemented. PR/AR are dynamic retrieval conditions:
+// the static assembler must expose zero repository evidence so the common retrieved
+// episode runtime remains the only path to model-visible artifact evidence.
+assert.throws(
+  () => assembleContext(repository, "EL"),
+  /Context condition EL is defined but its execution semantics are not implemented yet/
+);
+assert.deepStrictEqual(assembleContext(repository, "PR"), {});
+assert.deepStrictEqual(assembleContext(repository, "AR"), {});
 
 console.log(JSON.stringify({
   status: "ok",
   legacy: ["full", "simple-limited"].map((name) => getContextCondition(name as "full" | "simple-limited")),
   stage1: STAGE1_CONTEXT_CONDITION_NAMES.map((name) => getContextCondition(name)),
-  p2Executable: ["AF", "MOI"],
+  staticExecutable: ["AF", "MOI"],
+  dynamicRetrievedExecutable: ["PR", "AR"],
 }, null, 2));
