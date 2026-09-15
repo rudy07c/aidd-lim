@@ -1,0 +1,15 @@
+{
+  "stage": "p5_5",
+  "experimentId": "p5-5-pr-mock-e2e",
+  "lineageId": "lineage-0",
+  "runClass": "smoke",
+  "backend": "mock-noop",
+  "condition": "PR",
+  "contextBudget": 1600,
+  "generations": 1,
+  "tasks": ["T-crosscut-2"],
+  "maxRetrievalOperations": 4,
+  "maxCumulativeRetrievedTokens": 10000,
+  "maxModelCalls": 4,
+  "maxDecisionRounds": 4
+}
