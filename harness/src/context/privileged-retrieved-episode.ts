@@ -6,6 +6,7 @@ import {
 import {
   RetrievedEpisodeObservableStep,
   RetrievedEpisodeRuntime,
+  RetrievedEpisodeRuntimeFailure,
 } from "./retrieved-episode-runtime";
 import { ExplorationBudget } from "./exploration-budget";
 import { WorkingSetManager } from "./working-set-manager";
@@ -136,5 +137,10 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
   /** Read-only evaluator-side provenance for failure logging. */
   retrievalPlanSnapshot(): PrivilegedRetrievalPlan {
     return JSON.parse(JSON.stringify(this.controller.retrievalPlan)) as PrivilegedRetrievalPlan;
+  }
+
+  /** Diagnostic trace when a provider failure is intentionally rethrown by the runtime. */
+  failureSnapshot(message: string): RetrievedEpisodeRuntimeFailure<PrivilegedRetrievedDecision<TFinal>> {
+    return this.runtime.failureSnapshot(message);
   }
 }
