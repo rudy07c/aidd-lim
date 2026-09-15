@@ -12,6 +12,11 @@ import {
 } from "../../context/research-stateless-episode";
 import type { TokenUsage } from "../../types";
 import {
+  ResearchStatelessProviderFailure,
+  inferProviderRetryable,
+  responseStatusToCensoredExecutionStatus,
+} from "../research-stateless-provider-failure";
+import {
   OPENAI_MUTATION_OUTPUT_SPEC,
   OpenAIRequestOptions,
   addUsage,
@@ -63,20 +68,54 @@ export class OpenAIResearchStatelessPRExecutor
       includeEncryptedReasoning: false,
       outputSpec: OPENAI_MUTATION_OUTPUT_SPEC,
     });
-    const response = await this.client.responses.create(body as any);
+
+    let response: OpenAI.Responses.Response;
+    try {
+      response = await this.client.responses.create(body as any);
+    } catch (error) {
+      if (!(error instanceof OpenAI.APIError)) throw error;
+      throw new ResearchStatelessProviderFailure({
+        executionStatus: "provider-error",
+        normalizedError: {
+          category: "provider",
+          message: error.message,
+          retryable: inferProviderRetryable(error),
+        },
+      });
+    }
+
     const providerTelemetry = buildProviderTelemetry(
       this.options,
       response,
       Date.now() - startedAt
     );
     const refusal = extractRefusal(response);
-    if (refusal !== null) throw new Error(`PR model refusal: ${refusal}`);
+    if (refusal !== null) {
+      throw new ResearchStatelessProviderFailure({
+        executionStatus: "response-refusal",
+        normalizedError: {
+          category: "response",
+          message: `PR model refusal: ${refusal}`,
+          retryable: false,
+        },
+        providerTelemetry,
+        rawResponse: response.output_text ?? "",
+      });
+    }
     if (response.status !== "completed") {
       const details = responseFailureDetails(response);
-      throw new Error(
-        details.providerErrorMessage ??
-          `PR response status=${response.status}${details.incompleteReason ? ` reason=${details.incompleteReason}` : ""}`
-      );
+      throw new ResearchStatelessProviderFailure({
+        executionStatus: responseStatusToCensoredExecutionStatus(response.status),
+        normalizedError: {
+          category: "response",
+          message:
+            details.providerErrorMessage ??
+            `PR response status=${response.status}${details.incompleteReason ? ` reason=${details.incompleteReason}` : ""}`,
+          retryable: false,
+        },
+        providerTelemetry,
+        rawResponse: response.output_text ?? "",
+      });
     }
 
     const calls = response.output.filter(
