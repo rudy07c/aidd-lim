@@ -20,9 +20,12 @@ import {
   buildObservableInteractionRecord,
   evaluateOperationalFullFeasibility,
 } from "./context/observable-interaction";
+import { runRetrievedCondition } from "./context/retrieved-condition-dispatcher";
+import type { RetrievedGenerationLog } from "./context/retrieved-generation-log";
 import { runScoring } from "./scoring";
 import { writeGenerationLog, generateDiff } from "./logging";
 import { validateModifiedFiles } from "./repository/path-guard";
+import type { GroundTruthDelta } from "../../synthetic-world/schema";
 
 export interface OrchestratorResult {
   completedGenerations: number;
@@ -31,7 +34,13 @@ export interface OrchestratorResult {
   crashError?: string;
 }
 
-interface HeldOutTask { taskId: string; visibleInstruction: string; taskSpecificTestCode?: string; }
+interface HeldOutTask {
+  taskId: string;
+  visibleInstruction: string;
+  taskSpecificTestCode?: string;
+  namingScheme?: string;
+  groundTruthDelta?: GroundTruthDelta;
+}
 
 export type AgentBackendFactory = (
   config: RunConfig,
@@ -50,14 +59,14 @@ export async function runGenerationLoop(
   const tasksPath = path.join(config.syntheticWorldDir, "heldout_tasks.json");
   const allTasks: HeldOutTask[] = JSON.parse(fs.readFileSync(tasksPath, "utf8"));
   const taskMap = new Map(allTasks.map((t) => [t.taskId, t]));
-  for (const taskId of config.tasks) if (!taskMap.has(taskId)) throw new Error(`Task "${taskId}" not found in heldout_tasks.json`);
+  for (const taskId of config.tasks) {
+    if (!taskMap.has(taskId)) throw new Error(`Task "${taskId}" not found in heldout_tasks.json`);
+  }
 
   const repositoryDir = path.join(config.syntheticWorldDir, "repository");
   let currentFiles = loadRepositoryFiles(repositoryDir);
   const logDirs: string[] = [];
   let completedGenerations = 0;
-  // Disk may contain the full lineage for analysis, but successor input only receives this
-  // single immediate-predecessor record. It is overwritten after every valid generation.
   let previousInteractionRecord: ObservableInteractionRecord | null = null;
 
   for (let gen = 0; gen < config.generations; gen++) {
@@ -67,9 +76,7 @@ export async function runGenerationLoop(
       const { logDir, repositoryAfter, interactionRecord } = await runOneGeneration(
         config,
         gen,
-        taskId,
-        task.visibleInstruction,
-        task.taskSpecificTestCode,
+        task,
         currentFiles,
         previousInteractionRecord,
         backendFactory
@@ -79,7 +86,12 @@ export async function runGenerationLoop(
       logDirs.push(logDir);
       completedGenerations++;
     } catch (e) {
-      return { completedGenerations, logDirs, crashed: true, crashError: e instanceof Error ? e.message : String(e) };
+      return {
+        completedGenerations,
+        logDirs,
+        crashed: true,
+        crashError: e instanceof Error ? e.message : String(e),
+      };
     }
   }
   return { completedGenerations, logDirs, crashed: false };
@@ -88,9 +100,7 @@ export async function runGenerationLoop(
 async function runOneGeneration(
   config: RunConfig,
   generation: number,
-  taskId: string,
-  visibleInstruction: string,
-  taskSpecificTestCode: string | undefined,
+  task: HeldOutTask,
   currentFiles: Record<string, string>,
   previousInteractionRecord: ObservableInteractionRecord | null,
   backendFactory: AgentBackendFactory
@@ -100,8 +110,8 @@ async function runOneGeneration(
   interactionRecord: ObservableInteractionRecord;
 }> {
   const repositoryBefore = { ...currentFiles };
-  const contextFiles = assembleContext(currentFiles, config.condition);
-  const actualContextTokens = estimateTokenCount(contextFiles);
+  const retrievedCondition = config.condition === "PR" || config.condition === "AR";
+  const contextFiles = retrievedCondition ? {} : assembleContext(currentFiles, config.condition);
   const inheritedInteractionRecord = selectInheritedInteractionRecord(
     config.condition,
     previousInteractionRecord
@@ -110,7 +120,7 @@ async function runOneGeneration(
   const feasibility = evaluateOperationalFullFeasibility({
     applicable: config.condition === "AF" || config.condition === "MOI",
     contextFiles,
-    visibleInstruction,
+    visibleInstruction: task.visibleInstruction,
     previousInteractionRecord: inheritedInteractionRecord,
     reservedOutputTokens: config.maxOutputTokens ?? 8192,
     contextCapacityTokens: contextCapacityTokensFor(config),
@@ -123,25 +133,48 @@ async function runOneGeneration(
     );
   }
 
-  const agentPromptSummary = buildAgentPromptSummary(
-    contextFiles,
-    visibleInstruction,
-    inheritedInteractionRecord
-  );
+  let retrievedEpisodeLog: RetrievedGenerationLog | null = null;
+  let agentResult;
+  let actualContextTokens: number;
+  let agentPromptSummary: string;
 
-  // Factory is invoked inside every generation: no provider/backend instance is inherited.
-  const backend = backendFactory(config, taskId, generation);
-  const agentResult = await backend.run({
-    contextFiles,
-    visibleInstruction,
-    previousInteractionRecord: inheritedInteractionRecord,
-    contextBudget: config.contextBudget,
-  });
+  if (retrievedCondition) {
+    const retrieved = await runRetrievedCondition({
+      config,
+      task,
+      repositoryFiles: currentFiles,
+    });
+    agentResult = retrieved.agentResult;
+    retrievedEpisodeLog = retrieved.retrievedLog;
+    actualContextTokens = retrieved.retrievedLog.summary.peakWorkingSetTokens;
+    agentPromptSummary = buildRetrievedPromptSummary(
+      config.condition,
+      task.visibleInstruction,
+      retrieved.retrievedLog
+    );
+  } else {
+    actualContextTokens = estimateTokenCount(contextFiles);
+    agentPromptSummary = buildAgentPromptSummary(
+      contextFiles,
+      task.visibleInstruction,
+      inheritedInteractionRecord
+    );
 
-  // Provider/network failures are infrastructure failures, not software-evolution outcomes.
-  // Do not score or advance the lineage after the SDK's frozen retry policy is exhausted.
+    // Factory is invoked inside every generation: no provider/backend instance is inherited.
+    const backend = backendFactory(config, task.taskId, generation);
+    agentResult = await backend.run({
+      contextFiles,
+      visibleInstruction: task.visibleInstruction,
+      previousInteractionRecord: inheritedInteractionRecord,
+      contextBudget: config.contextBudget,
+    });
+  }
+
   if (shouldCensorGeneration(agentResult.executionStatus)) {
-    throw new Error(`Provider/response failure; generation invalid/censored (${agentResult.executionStatus}): ${agentResult.error?.message ?? "no detail"}`);
+    throw new Error(
+      `Provider/response failure; generation invalid/censored (${agentResult.executionStatus}): ` +
+      `${agentResult.error?.message ?? "no detail"}`
+    );
   }
 
   let executionStatus: AgentExecutionStatus = agentResult.executionStatus;
@@ -149,21 +182,21 @@ async function runOneGeneration(
   if (executionStatus === "ok") {
     try {
       validatedModifiedFiles = validateModifiedFiles(agentResult.modifiedFiles);
-    } catch (e) {
+    } catch (_e) {
       executionStatus = "mutation-validation-failure";
     }
   }
 
-  const repositoryAfter: Record<string, string> = { ...currentFiles, ...validatedModifiedFiles };
+  const repositoryAfter: Record<string, string> = {
+    ...currentFiles,
+    ...validatedModifiedFiles,
+  };
   const gitDiff = generateDiff(repositoryBefore, repositoryAfter);
 
-  // Build the record before scoring. Hidden/visible evaluator outputs therefore cannot be
-  // accidentally copied into MOI history. visibleFeedback remains empty until a future repair
-  // loop actually presents feedback to the worker.
   const interactionRecord = buildObservableInteractionRecord({
     generation,
-    taskId,
-    visibleInstruction,
+    taskId: task.taskId,
+    visibleInstruction: task.visibleInstruction,
     observableAssistantMessages: agentResult.observableAssistantMessages,
     toolEvents: agentResult.toolEvents,
     explicitWorkingNote: agentResult.explicitWorkingNote,
@@ -173,9 +206,18 @@ async function runOneGeneration(
     visibleFeedback: [],
   });
 
-  const scoring = await runScoring(repositoryAfter, config.syntheticWorldDir, taskSpecificTestCode);
-  const taskSpecificPassed = scoring.taskSpecificTests === null || scoring.taskSpecificTests.passed;
-  const functionalTaskResult = executionStatus === "ok" && scoring.visibleTests.passed && scoring.hiddenTests.passed && taskSpecificPassed;
+  const scoring = await runScoring(
+    repositoryAfter,
+    config.syntheticWorldDir,
+    task.taskSpecificTestCode
+  );
+  const taskSpecificPassed =
+    scoring.taskSpecificTests === null || scoring.taskSpecificTests.passed;
+  const functionalTaskResult =
+    executionStatus === "ok" &&
+    scoring.visibleTests.passed &&
+    scoring.hiddenTests.passed &&
+    taskSpecificPassed;
 
   const log: GenerationLog = {
     experiment_id: config.experimentId,
@@ -184,7 +226,7 @@ async function runOneGeneration(
     condition: config.condition,
     model: config.model ?? null,
     model_provenance: agentResult.modelProvenance,
-    task_id: taskId,
+    task_id: task.taskId,
     repository_before: repositoryBefore,
     repository_after: repositoryAfter,
     git_diff: gitDiff,
@@ -199,9 +241,7 @@ async function runOneGeneration(
     observable_interaction_record: interactionRecord,
     inherited_observable_interaction_hash: inheritedInteractionRecord?.contentHash ?? null,
     operational_full_feasibility: feasibility,
-    // This assembler/backend path remains the validated legacy/AF/MOI path. PR/AR
-    // attach their common-runtime trace when the Stage 1 condition dispatcher is wired.
-    retrieved_episode_log: null,
+    retrieved_episode_log: retrievedEpisodeLog,
     agent_execution_status: executionStatus,
     agent_error: agentResult.error,
     visible_test_results: scoring.visibleTests,
@@ -237,23 +277,26 @@ function contextCapacityTokensFor(config: RunConfig): number | null {
 
 function createBackend(config: RunConfig, taskId: string, _generation: number): AgentBackend {
   switch (config.backend) {
-    case "mock-noop": return new MockNoopBackend();
+    case "mock-noop":
+      return new MockNoopBackend();
     case "mock-oracle": {
       const harnessDir = path.dirname(__dirname);
       return new MockOracleBackend(taskId, path.join(harnessDir, "fixtures"));
     }
-    case "anthropic": return new AnthropicBackend(config.model ?? "claude-haiku-4-5-20251001");
-    case "openai": return new OpenAIBackend({
-      model: config.model ?? "gpt-5.6-luna",
-      reasoningEffort: config.reasoningEffort ?? "medium",
-      maxOutputTokens: config.maxOutputTokens ?? 8192,
-      requestTimeoutMs: config.requestTimeoutMs ?? 120_000,
-      maxRetries: config.maxRetries ?? 2,
-      storeResponses: config.storeResponses ?? false,
-      maxToolRounds: config.maxToolRounds ?? 4,
-      serviceTier: config.serviceTier ?? "default",
-      promptCacheMode: config.promptCacheMode ?? "implicit",
-    });
+    case "anthropic":
+      return new AnthropicBackend(config.model ?? "claude-haiku-4-5-20251001");
+    case "openai":
+      return new OpenAIBackend({
+        model: config.model ?? "gpt-5.6-luna",
+        reasoningEffort: config.reasoningEffort ?? "medium",
+        maxOutputTokens: config.maxOutputTokens ?? 8192,
+        requestTimeoutMs: config.requestTimeoutMs ?? 120_000,
+        maxRetries: config.maxRetries ?? 2,
+        storeResponses: config.storeResponses ?? false,
+        maxToolRounds: config.maxToolRounds ?? 4,
+        serviceTier: config.serviceTier ?? "default",
+        promptCacheMode: config.promptCacheMode ?? "implicit",
+      });
   }
 }
 
@@ -262,13 +305,22 @@ function loadRepositoryFiles(dir: string): Record<string, string> {
   loadDirRecursive(dir, dir, result);
   return result;
 }
-function loadDirRecursive(baseDir: string, currentDir: string, result: Record<string, string>): void {
+
+function loadDirRecursive(
+  baseDir: string,
+  currentDir: string,
+  result: Record<string, string>
+): void {
   for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
     const fullPath = path.join(currentDir, entry.name);
     if (entry.isDirectory()) loadDirRecursive(baseDir, fullPath, result);
-    else if (entry.isFile()) result[path.relative(baseDir, fullPath).replace(/\\/g, "/")] = fs.readFileSync(fullPath, "utf8");
+    else if (entry.isFile()) {
+      result[path.relative(baseDir, fullPath).replace(/\\/g, "/")] =
+        fs.readFileSync(fullPath, "utf8");
+    }
   }
 }
+
 function buildAgentPromptSummary(
   contextFiles: Record<string, string>,
   visibleInstruction: string,
@@ -280,6 +332,20 @@ function buildAgentPromptSummary(
   return `${history}[Context files: ${Object.keys(contextFiles).sort().join(", ")}]\n\nTask:\n${visibleInstruction}`;
 }
 
+function buildRetrievedPromptSummary(
+  condition: "PR" | "AR",
+  visibleInstruction: string,
+  retrievedLog: RetrievedGenerationLog
+): string {
+  return [
+    `[Research-stateless retrieved runtime: ${condition}]`,
+    `[Retrieval policy: ${retrievedLog.retrievalPolicy.source}/${retrievedLog.retrievalPolicy.version}]`,
+    `[B_work: ${retrievedLog.summary.bWork}, peak: ${retrievedLog.summary.peakWorkingSetTokens}]`,
+    `[E_max retrievals: ${retrievedLog.summary.retrievalCount}, model calls: ${retrievedLog.summary.modelCalls}]`,
+    `Task:\n${visibleInstruction}`,
+  ].join("\n");
+}
+
 const CENSORED_AGENT_STATUSES = new Set<AgentExecutionStatus>([
   "provider-error",
   "response-failed",
@@ -288,12 +354,6 @@ const CENSORED_AGENT_STATUSES = new Set<AgentExecutionStatus>([
   "response-refusal",
 ]);
 
-/**
- * Provider/Responses transport・completion由来で、software evolutionの結果として
- * lineageへ取り込んではならないstatusだけをcensorする。
- * output-parse-failure / tool-error / mutation-validation-failureはagentがtaskを
- * 実際に試みた結果としてcensorしない。
- */
 export function shouldCensorGeneration(status: AgentExecutionStatus): boolean {
   return CENSORED_AGENT_STATUSES.has(status);
 }
