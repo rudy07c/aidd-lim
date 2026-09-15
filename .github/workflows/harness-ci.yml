@@ -81,6 +81,18 @@ jobs:
       - name: Verify P5 GenerationLog integration
         working-directory: harness
         run: npm run verify:retrieved-generation-logging
+      - name: P5.5 PR end-to-end run.ts smoke
+        working-directory: harness
+        run: |
+          npm run run -- --config config/p5_5-pr-mock.json --smoke
+          test -f ../runs/_smoke/p5-5-pr-mock-e2e/lineage-0/generation_000/retrieved_episode.json
+          node -e 'const x=require("../runs/_smoke/p5-5-pr-mock-e2e/lineage-0/generation_000/retrieved_episode.json"); if(x.condition!=="PR"||x.completion.status!=="completed") process.exit(1)'
+      - name: P5.5 AR end-to-end run.ts smoke
+        working-directory: harness
+        run: |
+          npm run run -- --config config/p5_5-ar-mock.json --smoke
+          test -f ../runs/_smoke/p5-5-ar-mock-e2e/lineage-0/generation_000/retrieved_episode.json
+          node -e 'const x=require("../runs/_smoke/p5-5-ar-mock-e2e/lineage-0/generation_000/retrieved_episode.json"); if(x.condition!=="AR"||x.completion.status!=="completed") process.exit(1)'
       - name: Verify P3 measurement repair
         working-directory: calibration
         run: npm run verify:p3
