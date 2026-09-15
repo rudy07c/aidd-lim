@@ -5,6 +5,7 @@ import {
 import {
   RetrievedEpisodeObservableStep,
   RetrievedEpisodeRuntime,
+  RetrievedEpisodeRuntimeFailure,
 } from "./retrieved-episode-runtime";
 import { ExplorationBudget } from "./exploration-budget";
 import { WorkingSetManager } from "./working-set-manager";
@@ -96,5 +97,10 @@ export class AgentRetrievedEpisode<TFinal = unknown> {
       retrievals: result.retrievals,
       observableSteps: result.observableSteps,
     };
+  }
+
+  /** Diagnostic trace when a provider failure is intentionally rethrown by the runtime. */
+  failureSnapshot(message: string): RetrievedEpisodeRuntimeFailure<AgentRetrievedDecision<TFinal>> {
+    return this.runtime.failureSnapshot(message);
   }
 }
