@@ -5,6 +5,8 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+# Generated smoke/calibration run artifacts
+runs/_smoke/
 
 # OS / editor
 .DS_Store
