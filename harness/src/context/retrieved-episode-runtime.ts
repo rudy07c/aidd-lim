@@ -5,7 +5,10 @@ import {
   ResearchStatelessStepExecutorFactory,
   ResearchStatelessToolDefinition,
 } from "./research-stateless-episode";
-import { ExplorationBudget } from "./exploration-budget";
+import {
+  ExplorationBudget,
+  ExplorationBudgetExceededError,
+} from "./exploration-budget";
 import { WorkingSetManager } from "./working-set-manager";
 import {
   BudgetedRepositoryGateway,
@@ -70,7 +73,7 @@ export interface RetrievedEpisodeRuntimeResult<TDecision = unknown, TFinal = unk
   observableSteps: RetrievedEpisodeObservableStep<TDecision>[];
 }
 
-/** Partial, persistable trace when retrieval-policy execution fails after inference. */
+/** Partial, persistable trace when retrieval-policy/runtime execution fails. */
 export class RetrievedEpisodeRuntimeFailure<TDecision = unknown> extends Error {
   readonly condition: ResearchStatelessCondition;
   readonly telemetry: ResearchStatelessEpisodeTelemetry;
@@ -130,15 +133,10 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
       try {
         step = await this.runner.runStep();
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        throw new RetrievedEpisodeRuntimeFailure<TDecision>({
-          condition: this.options.condition,
-          message,
-          telemetry: this.runner.telemetry(),
-          retrievals: this.gateway.records(),
-          observableSteps: this.observableSteps,
-        });
+        if (!(error instanceof ExplorationBudgetExceededError)) throw error;
+        throw this.failureSnapshot(error.message);
       }
+
       this.observableSteps.push({
         stepIndex: step.telemetry.stepIndex,
         rawResponse: step.rawResponse,
@@ -186,15 +184,20 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        throw new RetrievedEpisodeRuntimeFailure<TDecision>({
-          condition: this.options.condition,
-          message,
-          telemetry: this.runner.telemetry(),
-          retrievals: this.gateway.records(),
-          observableSteps: this.observableSteps,
-        });
+        throw this.failureSnapshot(message);
       }
     }
+  }
+
+  /** Read-only partial trace for errors intentionally rethrown above this runtime. */
+  failureSnapshot(message: string): RetrievedEpisodeRuntimeFailure<TDecision> {
+    return new RetrievedEpisodeRuntimeFailure<TDecision>({
+      condition: this.options.condition,
+      message,
+      telemetry: this.runner.telemetry(),
+      retrievals: this.gateway.records(),
+      observableSteps: this.observableSteps,
+    });
   }
 }
 
