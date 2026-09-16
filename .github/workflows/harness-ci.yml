@@ -78,6 +78,9 @@ jobs:
       - name: Verify P5 PR AR common runtime parity
         working-directory: harness
         run: npm run verify:pr-ar-runtime-parity
+      - name: Verify P5.5 PR AR reread capability parity
+        working-directory: harness
+        run: npm run verify:pr-reread-parity
       - name: Verify P5 GenerationLog integration
         working-directory: harness
         run: npm run verify:retrieved-generation-logging
