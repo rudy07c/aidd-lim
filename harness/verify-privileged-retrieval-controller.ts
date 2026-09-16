@@ -170,12 +170,14 @@ async function runControllerOnce(repositoryFiles: Record<string, string>) {
     namingScheme,
     repositoryFiles,
     gateway,
+    workingSet,
   });
 
   const readOrder: string[] = [];
   while (controller.hasNext()) {
     const execution = await controller.retrieveNext();
     assert.ok(execution);
+    assert.strictEqual(execution.selectionKind, "initial");
     readOrder.push(execution.planEntry.path);
   }
 
@@ -197,6 +199,7 @@ async function runControllerOnce(repositoryFiles: Record<string, string>) {
   );
   assert.ok(working.evictionHistory.length > 0);
   assert.strictEqual(exploration.pendingRetrieval, null);
+  assert.strictEqual(controller.hasRereadCandidate(), true);
 
   return {
     readOrder,
@@ -252,6 +255,7 @@ async function verifyPendingBoundaryDoesNotAdvanceController(
     namingScheme,
     repositoryFiles,
     gateway,
+    workingSet,
   });
 
   const firstEntry = controller.nextEntry();
@@ -265,6 +269,7 @@ async function verifyPendingBoundaryDoesNotAdvanceController(
   explorationBudget.completeRetrieval(0, "verification-pending");
   const execution = await controller.retrieveNext();
   assert.strictEqual(execution?.planEntry.path, firstEntry.path);
+  assert.strictEqual(execution?.selectionKind, "initial");
   assert.strictEqual(explorationBudget.snapshot().pendingRetrieval, null);
 
   return {
@@ -343,6 +348,7 @@ async function main(): Promise<void> {
       "begin-access-complete-admit-order-on-PR-path",
       "active-working-set-never-exceeds-B_work",
       "cumulative-retrieval-can-exceed-B_work",
+      "first-pass-exhaustion-exposes-deterministic-reread-candidate",
       "pending-retrieval-blocks-next-PR-access-without-advancing-ranking",
       "raw-accessor-not-referenced-outside-accessor-and-gateway",
     ],
