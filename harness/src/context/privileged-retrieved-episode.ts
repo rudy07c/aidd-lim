@@ -101,6 +101,7 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
           namingScheme: options.namingScheme,
           repositoryFiles: options.repositoryFiles,
           gateway,
+          workingSet: options.workingSet,
         };
         controller = new PrivilegedRetrievalController(controllerOptions);
         return {
@@ -112,7 +113,9 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
             }
             const execution = await controller.retrieveNext();
             if (!execution) {
-              throw new Error("Privileged retrieval plan exhausted before finalization");
+              throw new Error(
+                "No legal privileged retrieval remains: initial plan exhausted and no previously observed inactive ArtifactUnit is available for reread"
+              );
             }
             return { kind: "retrieved" as const };
           },
