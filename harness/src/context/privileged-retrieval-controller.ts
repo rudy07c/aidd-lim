@@ -311,7 +311,7 @@ export class PrivilegedRetrievalController {
     const retrieval = await this.options.gateway.readChunk({ path: entry.path });
     if (selectionKind === "initial") {
       this.cursor += 1;
-    } else if (retrieval.rereadUnitIds.length === 0) {
+    } else if (retrieval.record.rereadUnitIds.length === 0) {
       throw new Error(
         `Privileged reread candidate no longer produced an inactive same-ID ArtifactUnit: ${entry.path}`
       );
