@@ -25,6 +25,8 @@ The five attempts covered the following operational outcomes:
 
 These intermediate failures were useful for validating failure-aware episode logging and for discovering the need to distinguish scientific E_max exhaustion from provider/response failures.
 
+A later post-error-separation live rerun again reached `Privileged retrieval plan exhausted before finalization`. This exposed a C2 design confound: PR's controller was one-pass only while AR could legally reread previously observed, currently inactive ArtifactUnits. The PR policy was therefore revised so that, after the ranked first pass, it deterministically rereads the highest-ranked previously observed inactive evidence through the same gateway/WorkingSetManager reread path as AR.
+
 ## Representative successful run
 
 The successful configuration committed as `harness/config/p5_5-pr-luna-live.json` used:
