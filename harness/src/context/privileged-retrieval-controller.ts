@@ -18,9 +18,10 @@ import {
   BudgetedRepositoryGateway,
   BudgetedRetrievalResult,
 } from "../repository/retrieval-gateway";
+import { WorkingSetManager } from "./working-set-manager";
 
 export const PRIVILEGED_RETRIEVAL_POLICY_VERSION =
-  "ground-truth-dependency-system2-v1" as const;
+  "ground-truth-dependency-system2-reread-v2" as const;
 
 const CATEGORY_PRIORITY: Record<ArtifactFileCategory, number> = {
   type_definition: 0,
@@ -54,11 +55,20 @@ export interface PrivilegedRetrievalControllerOptions {
   namingScheme: NamingScheme;
   repositoryFiles: Readonly<Record<string, string>>;
   gateway: BudgetedRepositoryGateway;
+  /**
+   * Evaluator-side read-only state used only to decide which previously observed
+   * evidence is currently inactive and therefore legally rereadable. The actual
+   * reread still goes through BudgetedRepositoryGateway -> WorkingSetManager.rereadUnit().
+   */
+  workingSet: WorkingSetManager;
 }
+
+export type PrivilegedRetrievalSelectionKind = "initial" | "reread";
 
 export interface PrivilegedRetrievalExecution {
   planEntry: PrivilegedRetrievalPlanEntry;
   retrieval: BudgetedRetrievalResult;
+  selectionKind: PrivilegedRetrievalSelectionKind;
 }
 
 /**
@@ -256,8 +266,16 @@ export function buildPrivilegedRetrievalPlan(args: {
  * same BudgetedRepositoryGateway used by AR. Therefore every actual read still
  * consumes E_max before access and is admitted through B_work afterwards.
  *
- * This class intentionally performs one retrieval at a time. P5 Step 6 can
- * interleave the same common research-stateless episode loop with retrieveNext().
+ * Selection has two deterministic phases:
+ * 1. First-pass: consume every ranked plan entry exactly once in existing order.
+ * 2. Reread: after the first pass, choose the highest-ranked plan entry that has
+ *    previously admitted evidence which is currently inactive because of FIFO or
+ *    explicit-memory eviction. The repository read is repeated through the same
+ *    gateway, which routes identical inactive ArtifactUnits through rereadUnit().
+ *
+ * Active evidence is never reread merely to refresh FIFO age. If no previously
+ * observed inactive evidence exists, retrieveNext() returns null; this matches the
+ * shared WorkingSetManager contract that active reread is illegal.
  */
 export class PrivilegedRetrievalController {
   readonly retrievalPlan: PrivilegedRetrievalPlan;
@@ -267,6 +285,7 @@ export class PrivilegedRetrievalController {
     this.retrievalPlan = buildPrivilegedRetrievalPlan(options);
   }
 
+  /** True only while the initial ranked first-pass still has unseen entries. */
   hasNext(): boolean {
     return this.cursor < this.retrievalPlan.entries.length;
   }
@@ -276,22 +295,68 @@ export class PrivilegedRetrievalController {
     return entry ? clonePlanEntry(entry) : null;
   }
 
+  /** Whether a legal deterministic reread candidate exists after the first pass. */
+  hasRereadCandidate(): boolean {
+    return this.cursor >= this.retrievalPlan.entries.length && this.selectRereadEntry() !== null;
+  }
+
   async retrieveNext(): Promise<PrivilegedRetrievalExecution | null> {
-    const entry = this.retrievalPlan.entries[this.cursor];
+    const initialEntry = this.retrievalPlan.entries[this.cursor];
+    const selectionKind: PrivilegedRetrievalSelectionKind = initialEntry ? "initial" : "reread";
+    const entry = initialEntry ?? this.selectRereadEntry();
     if (!entry) return null;
 
-    // Cursor advances only after the gateway transaction succeeds. A pending
-    // retrieval or exhausted E_max therefore cannot silently skip a ranked file.
+    // All repository observations, including rereads, pass through the same
+    // gateway used by AR. Cursor advances only for successful first-pass reads.
     const retrieval = await this.options.gateway.readChunk({ path: entry.path });
-    this.cursor += 1;
+    if (selectionKind === "initial") {
+      this.cursor += 1;
+    } else if (retrieval.rereadUnitIds.length === 0) {
+      throw new Error(
+        `Privileged reread candidate no longer produced an inactive same-ID ArtifactUnit: ${entry.path}`
+      );
+    }
+
     return {
       planEntry: clonePlanEntry(entry),
       retrieval,
+      selectionKind,
     };
   }
 
   position(): number {
     return this.cursor;
+  }
+
+  private selectRereadEntry(): PrivilegedRetrievalPlanEntry | null {
+    if (this.cursor < this.retrievalPlan.entries.length) return null;
+
+    const activeIds = new Set(
+      this.options.workingSet.snapshot().activeUnits.map((unit) => unit.id)
+    );
+    const observedUnitIdsByPath = new Map<string, Set<string>>();
+    for (const record of this.options.gateway.records()) {
+      if (record.operation !== "read-chunk") continue;
+      const filePath = record.request.path;
+      if (typeof filePath !== "string") continue;
+      const observedIds = [
+        ...record.admittedUnitIds,
+        ...record.rereadUnitIds,
+      ];
+      if (observedIds.length === 0) continue;
+      const ids = observedUnitIdsByPath.get(filePath) ?? new Set<string>();
+      for (const id of observedIds) ids.add(id);
+      observedUnitIdsByPath.set(filePath, ids);
+    }
+
+    for (const entry of this.retrievalPlan.entries) {
+      const observedIds = observedUnitIdsByPath.get(entry.path);
+      if (!observedIds || observedIds.size === 0) continue;
+      if ([...observedIds].some((unitId) => !activeIds.has(unitId))) {
+        return entry;
+      }
+    }
+    return null;
   }
 }
 
