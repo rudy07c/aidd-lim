@@ -15,7 +15,7 @@ import { serializeArtifactUnitForWorkingSet } from "../measurement/artifact-unit
 import { CANONICAL_TOKEN_COUNT_METHOD } from "../measurement/token-counter";
 
 export const RESEARCH_STATELESS_EPISODE_SCHEMA_VERSION =
-  "research-stateless-episode-v2-loggable" as const;
+  "research-stateless-episode-v3-runtime-observation" as const;
 
 export type ResearchStatelessCondition = "PR" | "AR";
 
@@ -24,6 +24,20 @@ export interface ResearchStatelessToolDefinition {
   name: string;
   description: string;
   parameters: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * Small, controller/tool-result status carried to exactly the next fresh inference.
+ * It is deliberately not repository content and is not persisted provider state.
+ * The exact value is logged so the next model input is reconstructable.
+ */
+export type ResearchStatelessRuntimeObservationKind =
+  | "no-more-evidence"
+  | "empty-retrieval-result";
+
+export interface ResearchStatelessRuntimeObservation {
+  kind: ResearchStatelessRuntimeObservationKind;
+  message: string;
 }
 
 /**
@@ -38,6 +52,8 @@ export interface ResearchStatelessModelInput {
   visibleInstruction: string;
   artifactEvidence: readonly string[];
   explicitMemory: string | null;
+  /** One-step observable tool/controller outcome from the immediately prior action. */
+  runtimeObservation: ResearchStatelessRuntimeObservation | null;
 }
 
 export interface ResearchStatelessTransportAttestation {
@@ -120,6 +136,8 @@ export interface ResearchStatelessStepTelemetry {
   explicitMemoryBefore: string | null;
   explicitMemoryAfter: string | null;
   explicitMemoryChanged: boolean;
+  /** Exact one-step runtime/tool observation visible to this inference. */
+  runtimeObservationBefore: ResearchStatelessRuntimeObservation | null;
   transport: ResearchStatelessTransportAttestation;
   providerTelemetry: ResearchStatelessProviderTelemetry | null;
   explorationUsedAfter: ExplorationUsage;
@@ -133,6 +151,8 @@ export interface ResearchStatelessEpisodeTelemetry {
   steps: ResearchStatelessStepTelemetry[];
   workingSet: ResearchStatelessWorkingSetTelemetry;
   explorationBudget: ExplorationBudgetSnapshot;
+  /** Queued but not yet consumed by a fresh inference, useful on E_max failure. */
+  pendingRuntimeObservation: ResearchStatelessRuntimeObservation | null;
 }
 
 export interface ResearchStatelessStepExecution<TDecision = unknown> {
@@ -168,6 +188,7 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
   private readonly stepTelemetry: ResearchStatelessStepTelemetry[] = [];
   private previousExecutor: ResearchStatelessStepExecutor<TDecision> | null = null;
   private nextStepIndex = 0;
+  private pendingRuntimeObservation: ResearchStatelessRuntimeObservation | null = null;
 
   constructor(options: ResearchStatelessEpisodeOptions<TDecision>) {
     if (!options.taskId) throw new Error("research-stateless taskId must be non-empty");
@@ -195,6 +216,23 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
     this.executorFactory = options.executorFactory;
   }
 
+  /** Queue a small observable tool/controller result for exactly the next fresh step. */
+  queueRuntimeObservation(
+    observation: ResearchStatelessRuntimeObservation | null
+  ): void {
+    if (observation === null) {
+      this.pendingRuntimeObservation = null;
+      return;
+    }
+    if (!observation.message) {
+      throw new Error("Runtime observation message must be non-empty");
+    }
+    if (this.pendingRuntimeObservation !== null) {
+      throw new Error("Cannot overwrite an unconsumed research-stateless runtime observation");
+    }
+    this.pendingRuntimeObservation = cloneRuntimeObservation(observation);
+  }
+
   async runStep(): Promise<ResearchStatelessStepExecution<TDecision>> {
     const stepIndex = this.nextStepIndex;
     const label = `research-stateless-step-${stepIndex}`;
@@ -202,9 +240,11 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
     this.assertInferenceOpportunityAvailable(explorationBefore);
 
     const workingBefore = this.workingSet.snapshot();
+    const runtimeObservationBefore = cloneRuntimeObservation(this.pendingRuntimeObservation);
     const modelInput = buildResearchStatelessModelInput(
       this.visibleInstruction,
-      workingBefore
+      workingBefore,
+      runtimeObservationBefore
     );
     const modelInputHash = hashModelInput(modelInput);
 
@@ -219,6 +259,10 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
       );
     }
     this.previousExecutor = executor;
+
+    // The observation is one-step input, analogous to a tool result. It is not
+    // provider history and must not survive beyond the fresh inference that sees it.
+    this.pendingRuntimeObservation = null;
 
     this.explorationBudget.recordDecisionRound(label);
     this.explorationBudget.recordModelCall(label);
@@ -244,6 +288,7 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
       explicitMemoryBefore: workingBefore.explicitMemory?.content ?? null,
       explicitMemoryAfter: workingAfter.explicitMemory?.content ?? null,
       explicitMemoryChanged: result.explicitMemoryUpdate !== undefined,
+      runtimeObservationBefore,
       transport: { ...result.transport },
       providerTelemetry: cloneProviderTelemetry(result.providerTelemetry ?? null),
       explorationUsedAfter: { ...this.explorationBudget.snapshot().used },
@@ -267,6 +312,7 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
       steps: this.stepTelemetry.map(cloneStepTelemetry),
       workingSet: summarizeWorkingSet(this.workingSet.snapshot()),
       explorationBudget: this.explorationBudget.snapshot(),
+      pendingRuntimeObservation: cloneRuntimeObservation(this.pendingRuntimeObservation),
     };
   }
 
@@ -301,7 +347,8 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
 
 export function buildResearchStatelessModelInput(
   visibleInstruction: string,
-  snapshot: WorkingSetSnapshot
+  snapshot: WorkingSetSnapshot,
+  runtimeObservation: ResearchStatelessRuntimeObservation | null = null
 ): Readonly<ResearchStatelessModelInput> {
   const artifactEvidence = snapshot.activeUnits.map((unit) =>
     serializeArtifactUnitForWorkingSet(unit)
@@ -327,6 +374,7 @@ export function buildResearchStatelessModelInput(
     visibleInstruction,
     artifactEvidence: Object.freeze([...artifactEvidence]),
     explicitMemory: snapshot.explicitMemory?.content ?? null,
+    runtimeObservation: cloneRuntimeObservation(runtimeObservation),
   });
 }
 
@@ -392,6 +440,12 @@ function cloneProviderTelemetry(
   };
 }
 
+function cloneRuntimeObservation(
+  observation: ResearchStatelessRuntimeObservation | null
+): ResearchStatelessRuntimeObservation | null {
+  return observation ? { ...observation } : null;
+}
+
 function cloneStepTelemetry(
   telemetry: ResearchStatelessStepTelemetry
 ): ResearchStatelessStepTelemetry {
@@ -399,6 +453,7 @@ function cloneStepTelemetry(
     ...telemetry,
     activeUnitIdsBefore: [...telemetry.activeUnitIdsBefore],
     activeUnitIdsAfter: [...telemetry.activeUnitIdsAfter],
+    runtimeObservationBefore: cloneRuntimeObservation(telemetry.runtimeObservationBefore),
     transport: { ...telemetry.transport },
     providerTelemetry: cloneProviderTelemetry(telemetry.providerTelemetry),
     explorationUsedAfter: { ...telemetry.explorationUsedAfter },
