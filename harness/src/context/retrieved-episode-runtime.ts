@@ -2,6 +2,7 @@ import {
   ResearchStatelessCondition,
   ResearchStatelessEpisodeRunner,
   ResearchStatelessEpisodeTelemetry,
+  ResearchStatelessRuntimeObservation,
   ResearchStatelessStepExecutorFactory,
   ResearchStatelessToolDefinition,
 } from "./research-stateless-episode";
@@ -18,7 +19,7 @@ import {
 } from "../repository/retrieval-gateway";
 
 export const RETRIEVED_EPISODE_RUNTIME_SCHEMA_VERSION =
-  "retrieved-episode-runtime-v3-failure-trace" as const;
+  "retrieved-episode-runtime-v4-evidence-exhaustion-signal" as const;
 export const SHARED_RETRIEVAL_PHASE_CONTRACT: readonly RetrievalGatewayPhase[] =
   Object.freeze(["begin", "access", "complete", "admit"] as const);
 
@@ -29,6 +30,14 @@ export interface RetrievedEpisodeFinalize<TFinal = unknown> {
 
 export interface RetrievedEpisodeContinue {
   kind: "retrieved";
+  /**
+   * Most retrieve decisions perform one gateway access. PR evidence exhaustion is
+   * the intentional exception: the privileged controller already knows that no
+   * legal candidate exists, so no repository access occurs.
+   */
+  repositoryAccessPerformed?: boolean;
+  /** Small one-step tool/controller result visible to the next fresh inference. */
+  nextObservation?: ResearchStatelessRuntimeObservation | null;
 }
 
 export type RetrievedEpisodePolicyOutcome<TFinal = unknown> =
@@ -165,23 +174,35 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
           };
         }
 
-        if (recordsAfter.length !== recordsBefore + 1) {
+        const repositoryAccessPerformed = outcome.repositoryAccessPerformed !== false;
+        const expectedRecordDelta = repositoryAccessPerformed ? 1 : 0;
+        if (recordsAfter.length !== recordsBefore + expectedRecordDelta) {
           throw new Error(
-            `Retrieved episode policy must perform exactly one gateway retrieval per retrieve decision: ` +
-            `before=${recordsBefore}, after=${recordsAfter.length}`
+            `Retrieved episode policy gateway-access drift: ` +
+            `performed=${repositoryAccessPerformed}, before=${recordsBefore}, after=${recordsAfter.length}`
           );
         }
-        const record = recordsAfter[recordsAfter.length - 1];
-        if (!samePhaseTrace(record.phaseTrace, SHARED_RETRIEVAL_PHASE_CONTRACT)) {
+
+        if (repositoryAccessPerformed) {
+          const record = recordsAfter[recordsAfter.length - 1];
+          if (!samePhaseTrace(record.phaseTrace, SHARED_RETRIEVAL_PHASE_CONTRACT)) {
+            throw new Error(
+              `Retrieved episode gateway phase drift: ${record.phaseTrace.join("->")}`
+            );
+          }
+        } else if (!outcome.nextObservation) {
           throw new Error(
-            `Retrieved episode gateway phase drift: ${record.phaseTrace.join("->")}`
+            "Retrieved episode policy skipped repository access without an observable runtime result"
           );
         }
+
         if (this.options.explorationBudget.snapshot().pendingRetrieval !== null) {
           throw new Error(
             "Retrieved episode policy returned before pending retrieval was closed"
           );
         }
+
+        this.runner.queueRuntimeObservation(outcome.nextObservation ?? null);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         throw this.failureSnapshot(message);
