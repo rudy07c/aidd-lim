@@ -192,8 +192,13 @@ export function buildARUserMessage(input: Readonly<ResearchStatelessModelInput>)
     for (const evidence of input.artifactEvidence) lines.push(`\n${evidence}`);
   }
   lines.push(`\nEXPLICIT MEMORY:\n${input.explicitMemory ?? "<none>"}`);
+  if (input.runtimeObservation) {
+    lines.push(
+      `\nLAST RETRIEVAL RESULT:\n[${input.runtimeObservation.kind}] ${input.runtimeObservation.message}`
+    );
+  }
   lines.push(
-    "\nIf more repository evidence is needed, call exactly one retrieval function and include a concise workingNote (or null) in that function call. Otherwise return the final structured repository mutation."
+    "\nIf more repository evidence is needed, call exactly one retrieval function and include a concise workingNote (or null) in that function call. An empty-retrieval-result means the prior retrieval succeeded but yielded no new observable evidence; choose another retrieval action or finalize from the current working set and memory. Otherwise return the final structured repository mutation."
   );
   return lines.join("");
 }
