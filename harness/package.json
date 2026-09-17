@@ -18,6 +18,7 @@
     "verify:privileged-retrieval": "ts-node verify-privileged-retrieval-controller.ts",
     "verify:pr-ar-runtime-parity": "ts-node verify-pr-ar-runtime-parity.ts",
     "verify:pr-reread-parity": "ts-node verify-pr-reread-parity.ts",
+    "verify:evidence-exhaustion-signal": "ts-node verify-evidence-exhaustion-signal.ts",
     "verify:retrieved-generation-logging": "ts-node verify-retrieved-generation-logging.ts",
     "verify:p5-5-failure-logging": "ts-node verify-p5-5-failure-logging.ts",
     "verify:p5-5-error-separation": "ts-node verify-p5-5-error-separation.ts",
