@@ -52,8 +52,12 @@ export interface ResearchStatelessModelInput {
   visibleInstruction: string;
   artifactEvidence: readonly string[];
   explicitMemory: string | null;
-  /** One-step observable tool/controller outcome from the immediately prior action. */
-  runtimeObservation: ResearchStatelessRuntimeObservation | null;
+  /**
+   * One-step observable tool/controller outcome from the immediately prior action.
+   * Omitted by legacy/offline fixtures is equivalent to null; the production
+   * ResearchStatelessEpisodeRunner always supplies an explicit null or value.
+   */
+  runtimeObservation?: ResearchStatelessRuntimeObservation | null;
 }
 
 export interface ResearchStatelessTransportAttestation {
@@ -441,7 +445,7 @@ function cloneProviderTelemetry(
 }
 
 function cloneRuntimeObservation(
-  observation: ResearchStatelessRuntimeObservation | null
+  observation: ResearchStatelessRuntimeObservation | null | undefined
 ): ResearchStatelessRuntimeObservation | null {
   return observation ? { ...observation } : null;
 }
