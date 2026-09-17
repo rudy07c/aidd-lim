@@ -23,7 +23,7 @@ import {
 } from "../../../synthetic-world/schema";
 
 export const PRIVILEGED_RETRIEVED_EPISODE_SCHEMA_VERSION =
-  "privileged-retrieved-episode-v3-bounded-note" as const;
+  "privileged-retrieved-episode-v4-evidence-exhaustion-observable" as const;
 
 export interface PrivilegedRetrievedFinalizeDecision<TFinal = unknown> {
   kind: "finalize";
@@ -68,7 +68,7 @@ export interface PrivilegedRetrievedEpisodeOptions<TFinal = unknown> {
  */
 export const PR_RETRIEVE_NEXT_TOOL: ResearchStatelessToolDefinition = Object.freeze({
   name: "retrieve_next",
-  description: "Request the next repository evidence item selected by the privileged deterministic retrieval policy. Include a bounded workingNote (or null) for the next fresh step.",
+  description: "Request the next repository evidence item selected by the privileged deterministic retrieval policy. Include a bounded workingNote (or null) for the next fresh step. If no additional observable evidence exists, the next fresh step will receive an explicit no-more-evidence result rather than a tool error.",
   parameters: Object.freeze({
     type: "object",
     properties: Object.freeze({
@@ -113,11 +113,21 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
             }
             const execution = await controller.retrieveNext();
             if (!execution) {
-              throw new Error(
-                "No legal privileged retrieval remains: initial plan exhausted and no previously observed inactive ArtifactUnit is available for reread"
-              );
+              return {
+                kind: "retrieved" as const,
+                repositoryAccessPerformed: false,
+                nextObservation: {
+                  kind: "no-more-evidence" as const,
+                  message:
+                    "No additional observable repository evidence is available from retrieve_next: the initial privileged candidate plan is exhausted and no previously observed ArtifactUnit is currently inactive and legally rereadable. Decide from the current working set and explicit memory, or request retrieve_next again if you choose; E_max still limits further decision rounds.",
+                },
+              };
             }
-            return { kind: "retrieved" as const };
+            return {
+              kind: "retrieved" as const,
+              repositoryAccessPerformed: true,
+              nextObservation: null,
+            };
           },
         };
       },
