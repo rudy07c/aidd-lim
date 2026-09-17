@@ -27,6 +27,8 @@ These intermediate failures were useful for validating failure-aware episode log
 
 A later post-error-separation live rerun again reached `Privileged retrieval plan exhausted before finalization`. This exposed a C2 design confound: PR's controller was one-pass only while AR could legally reread previously observed, currently inactive ArtifactUnits. The PR policy was therefore revised so that, after the ranked first pass, it deterministically rereads the highest-ranked previously observed inactive evidence through the same gateway/WorkingSetManager reread path as AR.
 
+A subsequent live rerun after reread support exposed a second, distinct confound. With `B_work=5000`, all 11 observable repository files fit simultaneously, so after the first pass there may be no inactive ArtifactUnit to reread. In that epistemically legitimate state, PR previously converted another `retrieve_next` request into a tool error (`No legal privileged retrieval remains...`) even though nothing had malfunctioned. Candidate exhaustion is now modeled as an observable `no-more-evidence` tool/controller result delivered to the next fresh inference. The model can then finalize from the current working set or spend another decision round requesting retrieval; `E_max` remains the terminal loop bound. AR empty retrievals are aligned to the same one-step runtime-observation mechanism rather than silently producing no model-visible result.
+
 ## Representative successful run
 
 The successful configuration committed as `harness/config/p5_5-pr-luna-live.json` used:
