@@ -18,7 +18,7 @@ import {
 import { BudgetedRetrievalRecord } from "../repository/retrieval-gateway";
 
 export const AGENT_RETRIEVED_EPISODE_SCHEMA_VERSION =
-  "agent-retrieved-episode-v3-observable-step-log" as const;
+  "agent-retrieved-episode-v4-empty-result-observable" as const;
 
 export interface AgentRetrievedFinalizeDecision<TFinal = unknown> {
   kind: "finalize";
@@ -80,8 +80,18 @@ export class AgentRetrievedEpisode<TFinal = unknown> {
             if (decision.kind === "finalize") {
               return { kind: "finalize" as const, value: decision.value };
             }
-            await executeAgentRetrievalToolCall(tools, decision.call);
-            return { kind: "retrieved" as const };
+            const result = await executeAgentRetrievalToolCall(tools, decision.call);
+            return {
+              kind: "retrieved" as const,
+              repositoryAccessPerformed: true,
+              nextObservation: result.evidence.length === 0
+                ? {
+                    kind: "empty-retrieval-result" as const,
+                    message:
+                      "The retrieval completed successfully but returned no new observable repository evidence. Decide from the current working set and explicit memory, or choose another retrieval action if E_max permits.",
+                  }
+                : null,
+            };
           },
         };
       },
