@@ -1,0 +1,24 @@
+name: P6 Live Preflight
+
+on:
+  push:
+    paths:
+      - '.github/workflows/p6-live-preflight.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check-secret:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Check OpenAI API key availability
+        shell: bash
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY_MISSING"
+            exit 2
+          fi
+          echo "OPENAI_API_KEY_AVAILABLE"
