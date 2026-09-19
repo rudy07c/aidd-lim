@@ -120,328 +120,304 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-9",
+    "probeId": "A-obfuscated-bool-relation-I3-positive",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "Vok が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Osk は 'pex' である。",
     "correctAnswer": true,
     "derivedFrom": {
-      "kind": "invariant_violation_check",
-      "invariantId": "I1",
-      "encoding": "distributed"
-    },
-    "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
-  },
-  {
-    "probeId": "A-obfuscated-bool-9-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "Vok が 'dor' で、Tal が 'pex' である状態は、この世界のinvariantに違反するか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_violation_check_matched_negative",
-      "invariantId": "I1",
-      "encoding": "distributed",
-      "matchedPositiveProbeId": "A-obfuscated-bool-9"
-    },
-    "note": "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-10",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "Zef が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
-    "correctAnswer": true,
-    "derivedFrom": {
-      "kind": "invariant_violation_check",
-      "invariantId": "I2",
-      "encoding": "explicit"
-    },
-    "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
-  },
-  {
-    "probeId": "A-obfuscated-bool-10-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "Zef が 'dor' で、Tal が 'pex' である状態は、この世界のinvariantに違反するか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_violation_check_matched_negative",
-      "invariantId": "I2",
-      "encoding": "explicit",
-      "matchedPositiveProbeId": "A-obfuscated-bool-10"
-    },
-    "note": "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-11",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "Fen が 'dor' で、Osk が 'nim' である状態は、この世界のinvariantに違反するか？",
-    "correctAnswer": true,
-    "derivedFrom": {
-      "kind": "invariant_violation_check",
-      "invariantId": "I3",
-      "encoding": "explicit"
-    },
-    "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
-  },
-  {
-    "probeId": "A-obfuscated-bool-11-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "Fen が 'dor' で、Osk が 'pex' である状態は、この世界のinvariantに違反するか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_violation_check_matched_negative",
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "ground-truth-invariant",
       "invariantId": "I3",
       "encoding": "explicit",
-      "matchedPositiveProbeId": "A-obfuscated-bool-11"
-    },
-    "note": "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。"
+      "condition": {
+        "entity": "E4",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E5",
+        "state": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-12",
+    "probeId": "A-obfuscated-bool-relation-I6-positive",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "Vok が 'dor' で、Osk が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Tal は 'pex' である。",
     "correctAnswer": true,
     "derivedFrom": {
-      "kind": "invariant_violation_check",
-      "invariantId": "I4",
-      "encoding": "explicit"
-    },
-    "note": "explicit encoding: O のpreconditionが直接この関係を強制している"
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "ground-truth-invariant",
+      "invariantId": "I6",
+      "encoding": "distributed",
+      "condition": {
+        "entity": "E4",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E3",
+        "state": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-12-matched-negative",
+    "probeId": "A-obfuscated-bool-relation-I4-negative",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "Vok が 'dor' で、Osk が 'pex' である状態は、この世界のinvariantに違反するか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Fen は 'pex' である。",
     "correctAnswer": false,
     "derivedFrom": {
-      "kind": "invariant_violation_check_matched_negative",
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "reachable-counterexample",
+      "matchedInvariantId": "I4",
+      "condition": {
+        "entity": "E1",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E4",
+        "state": "q2"
+      },
+      "counterexampleState": {
+        "E1": "q3",
+        "E2": "q2",
+        "E3": "q2",
+        "E4": "q1",
+        "E5": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "A-obfuscated-bool-relation-I4-positive",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Osk は 'pex' である。",
+    "correctAnswer": true,
+    "derivedFrom": {
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "ground-truth-invariant",
       "invariantId": "I4",
       "encoding": "explicit",
-      "matchedPositiveProbeId": "A-obfuscated-bool-12"
-    },
-    "note": "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。"
+      "condition": {
+        "entity": "E1",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E5",
+        "state": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-13",
+    "probeId": "A-obfuscated-bool-relation-I2-negative",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "Zef が 'dor' で、Osk が 'nim' である状態は、この世界のinvariantに違反するか？",
-    "correctAnswer": true,
-    "derivedFrom": {
-      "kind": "invariant_violation_check",
-      "invariantId": "I5",
-      "encoding": "distributed"
-    },
-    "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
-  },
-  {
-    "probeId": "A-obfuscated-bool-13-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "Zef が 'dor' で、Osk が 'pex' である状態は、この世界のinvariantに違反するか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Vok は 'pex' である。",
     "correctAnswer": false,
     "derivedFrom": {
-      "kind": "invariant_violation_check_matched_negative",
-      "invariantId": "I5",
-      "encoding": "distributed",
-      "matchedPositiveProbeId": "A-obfuscated-bool-13"
-    },
-    "note": "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。"
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "reachable-counterexample",
+      "matchedInvariantId": "I2",
+      "condition": {
+        "entity": "E2",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E1",
+        "state": "q2"
+      },
+      "counterexampleState": {
+        "E1": "q1",
+        "E2": "q3",
+        "E3": "q2",
+        "E4": "q2",
+        "E5": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-14",
+    "probeId": "A-obfuscated-bool-relation-I2-positive",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "Fen が 'dor' で、Tal が 'nim' である状態は、この世界のinvariantに違反するか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Tal は 'pex' である。",
     "correctAnswer": true,
     "derivedFrom": {
-      "kind": "invariant_violation_check",
-      "invariantId": "I6",
-      "encoding": "distributed"
-    },
-    "note": "distributed encoding: 直接的なguardは存在せず、複数preconditionの連鎖で成立する"
-  },
-  {
-    "probeId": "A-obfuscated-bool-14-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "Fen が 'dor' で、Tal が 'pex' である状態は、この世界のinvariantに違反するか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_violation_check_matched_negative",
-      "invariantId": "I6",
-      "encoding": "distributed",
-      "matchedPositiveProbeId": "A-obfuscated-bool-14"
-    },
-    "note": "Stage 1 matched negative: condition側は同じままrequiresを満たす状態に反転。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-15",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Vok を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
-    "correctAnswer": true,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning",
-      "invariantId": "I1",
-      "encoding": "distributed"
-    },
-    "note": "正答には I1 (distributed) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-15-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Tal が 'pex' である場合に限って Vok を 'dor' へ遷移させられる場合、このoperationは Vok と Tal のこのinvariantに違反する状態を新たに作るか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning_matched_negative",
-      "invariantId": "I1",
-      "encoding": "distributed",
-      "matchedPositiveProbeId": "A-obfuscated-bool-15"
-    },
-    "note": "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-16",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Zef を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
-    "correctAnswer": true,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning",
-      "invariantId": "I2",
-      "encoding": "explicit"
-    },
-    "note": "正答には I2 (explicit) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-16-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Tal が 'pex' である場合に限って Zef を 'dor' へ遷移させられる場合、このoperationは Zef と Tal のこのinvariantに違反する状態を新たに作るか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning_matched_negative",
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "ground-truth-invariant",
       "invariantId": "I2",
       "encoding": "explicit",
-      "matchedPositiveProbeId": "A-obfuscated-bool-16"
-    },
-    "note": "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。"
+      "condition": {
+        "entity": "E2",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E3",
+        "state": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-17",
+    "probeId": "A-obfuscated-bool-relation-I1-positive",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Osk の状態を確認せずに直接 Fen を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Tal は 'pex' である。",
     "correctAnswer": true,
     "derivedFrom": {
-      "kind": "invariant_stress_reasoning",
-      "invariantId": "I3",
-      "encoding": "explicit"
-    },
-    "note": "正答には I3 (explicit) の存在を認識していることが必要。Osk=pex チェックを省略すると違反状態に到達しうる。"
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "ground-truth-invariant",
+      "invariantId": "I1",
+      "encoding": "distributed",
+      "condition": {
+        "entity": "E1",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E3",
+        "state": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-17-matched-negative",
+    "probeId": "A-obfuscated-bool-relation-I6-negative",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Osk が 'pex' である場合に限って Fen を 'dor' へ遷移させられる場合、このoperationは Fen と Osk のこのinvariantに違反する状態を新たに作るか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Vok は 'nim' である。",
     "correctAnswer": false,
     "derivedFrom": {
-      "kind": "invariant_stress_reasoning_matched_negative",
-      "invariantId": "I3",
-      "encoding": "explicit",
-      "matchedPositiveProbeId": "A-obfuscated-bool-17"
-    },
-    "note": "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。"
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "reachable-counterexample",
+      "matchedInvariantId": "I6",
+      "condition": {
+        "entity": "E4",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E1",
+        "state": "q1"
+      },
+      "counterexampleState": {
+        "E1": "q2",
+        "E2": "q2",
+        "E3": "q2",
+        "E4": "q3",
+        "E5": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-18",
+    "probeId": "A-obfuscated-bool-relation-I5-negative",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Osk の状態を確認せずに直接 Vok を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Vok は 'nim' である。",
+    "correctAnswer": false,
+    "derivedFrom": {
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "reachable-counterexample",
+      "matchedInvariantId": "I5",
+      "condition": {
+        "entity": "E2",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E1",
+        "state": "q1"
+      },
+      "counterexampleState": {
+        "E1": "q2",
+        "E2": "q3",
+        "E3": "q2",
+        "E4": "q2",
+        "E5": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "A-obfuscated-bool-relation-I5-positive",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Osk は 'pex' である。",
     "correctAnswer": true,
     "derivedFrom": {
-      "kind": "invariant_stress_reasoning",
-      "invariantId": "I4",
-      "encoding": "explicit"
-    },
-    "note": "正答には I4 (explicit) の存在を認識していることが必要。Osk=pex チェックを省略すると違反状態に到達しうる。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-18-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Osk が 'pex' である場合に限って Vok を 'dor' へ遷移させられる場合、このoperationは Vok と Osk のこのinvariantに違反する状態を新たに作るか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning_matched_negative",
-      "invariantId": "I4",
-      "encoding": "explicit",
-      "matchedPositiveProbeId": "A-obfuscated-bool-18"
-    },
-    "note": "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-19",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Osk の状態を確認せずに直接 Zef を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
-    "correctAnswer": true,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning",
-      "invariantId": "I5",
-      "encoding": "distributed"
-    },
-    "note": "正答には I5 (distributed) の存在を認識していることが必要。Osk=pex チェックを省略すると違反状態に到達しうる。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-19-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Osk が 'pex' である場合に限って Zef を 'dor' へ遷移させられる場合、このoperationは Zef と Osk のこのinvariantに違反する状態を新たに作るか？",
-    "correctAnswer": false,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning_matched_negative",
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "ground-truth-invariant",
       "invariantId": "I5",
       "encoding": "distributed",
-      "matchedPositiveProbeId": "A-obfuscated-bool-19"
-    },
-    "note": "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。"
+      "condition": {
+        "entity": "E2",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E5",
+        "state": "q2"
+      }
+    }
   },
   {
-    "probeId": "A-obfuscated-bool-20",
+    "probeId": "A-obfuscated-bool-relation-I1-negative",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Tal の状態を確認せずに直接 Fen を 'dor' へ遷移させられるようになった場合、既存のinvariantを壊す可能性があるか？",
-    "correctAnswer": true,
-    "derivedFrom": {
-      "kind": "invariant_stress_reasoning",
-      "invariantId": "I6",
-      "encoding": "distributed"
-    },
-    "note": "正答には I6 (distributed) の存在を認識していることが必要。Tal=pex チェックを省略すると違反状態に到達しうる。"
-  },
-  {
-    "probeId": "A-obfuscated-bool-20-matched-negative",
-    "type": "boolean",
-    "namingScheme": "A-obfuscated",
-    "prompt": "もし新しいoperationが追加され、Tal が 'pex' である場合に限って Fen を 'dor' へ遷移させられる場合、このoperationは Fen と Tal のこのinvariantに違反する状態を新たに作るか？",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Zef は 'pex' である。",
     "correctAnswer": false,
     "derivedFrom": {
-      "kind": "invariant_stress_reasoning_matched_negative",
-      "invariantId": "I6",
-      "encoding": "distributed",
-      "matchedPositiveProbeId": "A-obfuscated-bool-20"
-    },
-    "note": "Stage 1 matched negative: positive probeで欠落していたrequires guardを満たすよう反転。"
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "reachable-counterexample",
+      "matchedInvariantId": "I1",
+      "condition": {
+        "entity": "E1",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E2",
+        "state": "q2"
+      },
+      "counterexampleState": {
+        "E1": "q3",
+        "E2": "q3",
+        "E3": "q2",
+        "E4": "q2",
+        "E5": "q2"
+      }
+    }
+  },
+  {
+    "probeId": "A-obfuscated-bool-relation-I3-negative",
+    "type": "boolean",
+    "namingScheme": "A-obfuscated",
+    "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Vok は 'pex' である。",
+    "correctAnswer": false,
+    "derivedFrom": {
+      "kind": "invariant_relation_candidate",
+      "designVersion": "stage1-neutral-relation-v2",
+      "candidateSource": "reachable-counterexample",
+      "matchedInvariantId": "I3",
+      "condition": {
+        "entity": "E4",
+        "state": "q3"
+      },
+      "requires": {
+        "entity": "E1",
+        "state": "q2"
+      },
+      "counterexampleState": {
+        "E1": "q1",
+        "E2": "q2",
+        "E3": "q2",
+        "E4": "q3",
+        "E5": "q2"
+      }
+    }
   },
   {
     "probeId": "A-obfuscated-stp-37",

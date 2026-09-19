@@ -27,9 +27,15 @@ const P6_0_GATES = {
   b0BooleanMax: 0.65,
   fullBooleanMin: 0.85,
   minFullMinusB0: 0.25,
-  testsOnlyBooleanMax: 0.65,
-  maxTestsOnlyMinusB0: 0.15,
+  adapterBooleanMin: 0.35,
+  adapterBooleanMax: 0.65,
 } as const;
+
+const P6_0_CRITERIA_VERSION = "p6-0-v2-neutral-probes";
+const P6_0_GATE_REVISION =
+  "The first Luna live run exposed prompt-label leakage in the v1 matched-negative boolean design. " +
+  "tests-only remains a diagnostic rather than a hard gate because visible tests are artifact evidence and may legitimately encode semantics. " +
+  "Direct F5 leakage is guarded statically; adapter-only boolean chance is the hard structural-inference guard.";
 
 // Predeclared P6-1 pilot classification rule (3 repeats per task):
 // 2/3+ pass = provisional T_primary eligible; 0/3 = provisional floor/T_challenge candidate;
@@ -346,19 +352,32 @@ async function main(): Promise<void> {
   const tasks = JSON.parse(fs.readFileSync(path.join(swDir, "heldout_tasks.json"), "utf8")) as HeldOutTask[];
 
   const staticAudit = {
-    total: audit.audit.total,
-    booleanTotal: audit.audit.booleanTotal,
-    booleanTrue: audit.audit.booleanTrue,
-    booleanFalse: audit.audit.booleanFalse,
-    f5Warnings: audit.audit.f5Warnings,
-    rawGroundTruthIdLeakage: audit.audit.rawGroundTruthIdLeakage,
-    interleaveVerified: audit.interleaveVerified,
-  };
-  if (staticAudit.booleanTotal !== 24 || staticAudit.booleanTrue !== 12 || staticAudit.booleanFalse !== 12 || staticAudit.f5Warnings.length || staticAudit.rawGroundTruthIdLeakage.length) {
-    throw new Error(`P6-0 static probe audit failed: ${JSON.stringify(staticAudit)}`);
-  }
+  total: audit.audit.total,
+  designVersion: audit.designVersion,
+  booleanTotal: audit.audit.booleanTotal,
+  booleanTrue: audit.audit.booleanTrue,
+  booleanFalse: audit.audit.booleanFalse,
+  counterexampleNegativeCount: audit.audit.counterexampleNegativeCount,
+  surfaceNeutralBooleanCount: audit.audit.surfaceNeutralBooleanCount,
+  f5Warnings: audit.audit.f5Warnings,
+  rawGroundTruthIdLeakage: audit.audit.rawGroundTruthIdLeakage,
+  booleanCueWarnings: audit.audit.booleanCueWarnings,
+};
+if (
+  staticAudit.designVersion !== "stage1-neutral-relation-v2" ||
+  staticAudit.booleanTotal !== 12 ||
+  staticAudit.booleanTrue !== 6 ||
+  staticAudit.booleanFalse !== 6 ||
+  staticAudit.counterexampleNegativeCount !== 6 ||
+  staticAudit.surfaceNeutralBooleanCount !== 12 ||
+  staticAudit.f5Warnings.length ||
+  staticAudit.rawGroundTruthIdLeakage.length ||
+  staticAudit.booleanCueWarnings.length
+) {
+  throw new Error(`P6-0 static probe audit failed: ${JSON.stringify(staticAudit)}`);
+}
 
-  console.log("P6-0 PREDECLARED GATES", JSON.stringify(P6_0_GATES));
+console.log("P6-0 PREDECLARED GATES", JSON.stringify(P6_0_GATES));
   console.log("P6-1 PREDECLARED RULE", JSON.stringify(P6_1_RULE));
   console.log("P6-1 PILOT TASKS", PILOT_TASKS.join(","));
 
@@ -381,26 +400,32 @@ async function main(): Promise<void> {
   const b0Ref = acc("b0", "referenceAccuracy");
   const b1kRef = acc("b1k", "referenceAccuracy");
   const p60Checks = {
-    b0ChanceBand: b0 >= P6_0_GATES.b0BooleanMin && b0 <= P6_0_GATES.b0BooleanMax,
-    fullHeadroom: full >= P6_0_GATES.fullBooleanMin,
-    doseResponse: full - b0 >= P6_0_GATES.minFullMinusB0,
-    f5TestsOnly: testsOnly <= P6_0_GATES.testsOnlyBooleanMax && testsOnly - b0 <= P6_0_GATES.maxTestsOnlyMinusB0,
-  };
-  const p60Passed = Object.values(p60Checks).every(Boolean);
-  const f9Diagnostic = {
-    b0ReferenceAccuracy: b0Ref,
-    b1kReferenceAccuracy: b1kRef,
-    adapterOnlyReferenceAccuracy: adapterRef,
-    adapterOnlyBooleanAccuracy: adapterBool,
-    recurrenceObserved: adapterRef >= 0.5 || b1kRef >= 0.8,
-    interpretation: "Reference-probe F9 recurrence is diagnostic and does not fail P6-0 while boolean primary remains valid; mc/stp stay reference-only.",
-  };
-  console.log("P6-0 SUMMARY", JSON.stringify({ b0, b1k, full, testsOnly, adapterBool, p60Checks, f9Diagnostic, p60Passed }, null, 2));
+  b0ChanceBand: b0 >= P6_0_GATES.b0BooleanMin && b0 <= P6_0_GATES.b0BooleanMax,
+  fullHeadroom: full >= P6_0_GATES.fullBooleanMin,
+  doseResponse: full - b0 >= P6_0_GATES.minFullMinusB0,
+  adapterPrimaryChance: adapterBool >= P6_0_GATES.adapterBooleanMin && adapterBool <= P6_0_GATES.adapterBooleanMax,
+};
+const p60Passed = Object.values(p60Checks).every(Boolean);
+const f9Diagnostic = {
+  b0ReferenceAccuracy: b0Ref,
+  b1kReferenceAccuracy: b1kRef,
+  adapterOnlyReferenceAccuracy: adapterRef,
+  adapterOnlyBooleanAccuracy: adapterBool,
+  recurrenceObserved: adapterRef >= 0.5 || b1kRef >= 0.8,
+  interpretation: "Reference-probe F9 recurrence is diagnostic and does not fail P6-0 while boolean primary remains valid; mc/stp stay reference-only.",
+};
+const f5Diagnostic = {
+  staticDirectLeakageWarnings: staticAudit.f5Warnings,
+  testsOnlyBooleanAccuracy: testsOnly,
+  testsOnlyMinusB0: testsOnly - b0,
+  interpretation: "tests-only is retained as an F5 diagnostic, not a hard gate: visible tests are inherited artifact evidence and can legitimately support semantic inference. B=0 chance plus the static direct-leakage scan guards prompt/test answer leakage.",
+};
+console.log("P6-0 SUMMARY", JSON.stringify({ criteriaVersion: P6_0_CRITERIA_VERSION, b0, b1k, full, testsOnly, adapterBool, p60Checks, f5Diagnostic, f9Diagnostic, p60Passed }, null, 2));
 
   const outputBase: any = {
     meta: { model: MODEL, reasoningEffort: REASONING, repeats: REPEATS, generatedAt: new Date().toISOString() },
-    criteria: { p6_0: P6_0_GATES, p6_1: P6_1_RULE },
-    p6_0: { staticAudit, probeResults, summary: { b0, b1k, full, testsOnly, adapterBool, checks: p60Checks, f9Diagnostic, passed: p60Passed } },
+    criteria: { p6_0_version: P6_0_CRITERIA_VERSION, p6_0_revision: P6_0_GATE_REVISION, p6_0: P6_0_GATES, p6_1: P6_1_RULE },
+    p6_0: { staticAudit, probeResults, summary: { b0, b1k, full, testsOnly, adapterBool, checks: p60Checks, f5Diagnostic, f9Diagnostic, passed: p60Passed } },
     p6_1: null,
   };
 
