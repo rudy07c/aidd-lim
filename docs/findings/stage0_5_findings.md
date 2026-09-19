@@ -777,6 +777,80 @@ LLM のサンプリング確率的失敗（シングルラン）と判断する�
 
 ---
 
+## F11: AR条件下でのstateless推論による同一クエリ繰り返しループ（AR固有の探索非効率性）
+
+**日付**：2026-09-19
+**Phase**：Phase 5.5（AR Luna live smoke）
+**元コード**：`harness/src/context/agent-retrieved-episode.ts`
+**元データ**：`runs/_smoke/p5-5-ar-luna-live-smoke__2026-09-19_06-11-48/lineage-0/generation_000/`
+**実行条件**：condition=AR, model=gpt-5.6-luna, reasoningEffort=high, B_work=5000, E_max=13
+
+### 何が起きたか
+
+T-crosscut-2（jumpVokZef という新規操作を追加するタスク）のAR smokeで、
+13ラウンド中9ラウンドをsearch呼び出しに費やし、実際のファイル読み取りは3ラウンドのみ。
+E_maxを使い切り `tool-error` で終了（作業メモ「まだ命名規則確認が必要」）。
+
+ツール呼び出し内訳：
+- `list_files`: 1回（step 0）
+- `search("jumpVokZef")`: 7回（step 1-6, 11）  ← 空振り連続
+- `search("jump")`: 1回（step 7）
+- `search("advanceVok2")`: 1回（step 12）
+- `read_chunk`: 3回（step 8-10: protocol_adapter, vok/rules, zef/rules）
+
+`jumpVokZef` はこれから追加する操作なのでリポジトリに存在せず、
+7回のsearch全てで `empty-retrieval-result` が正しく返った。
+しかし各ステップが完全statelessに新推論するため、ループが断ち切れなかった。
+
+ループのメカニズム：
+1. タスク説明「jumpVokZefを追加せよ」を新推論で読む
+2. 「既存のjumpVokZefを先に探索すべき」と毎回再導出する
+3. 空結果 → working noteに「未検出、要調査」と書く
+4. 次ステップの新推論が同じnoteを読んで同じ結論を出す
+
+### なぜ注目すべきか
+
+これは**bugではなく、ARという条件が本来持つ「stateless推論下での探索非効率性」**の実観測例。
+C2で測ろうとしている「自律的探索の困難さ」の一部であり、修正して消すのではなく、
+測定への影響を最小限にする形で扱う必要がある。
+
+PR条件（`PrivilegedRetrievalController`が決定論的にランク付け・順序提供）と対比したとき、
+同じB_work/E_max設定でAR条件がなぜより多くのラウンドを必要とするか、を説明する基底的なメカニズム。
+
+### AR vs PR 比較（同タスク・同モデル・同設定）
+
+| メトリクス | PR（stable run） | AR（今回） |
+|---|---|---|
+| `agent_execution_status` | `ok` | `tool-error`（E_max枯渇） |
+| `modelCalls` | 12 | 13（枯渇） |
+| `uniqueObservedUnitCount` | 11 | 22 |
+| `uniqueObservedTokens` | 4,133 | 2,401 |
+| 実際のファイル読み取り回数 | 11（全件） | 3 |
+| input tokens | 27,719 | 15,337 |
+| latency | 38,080ms | 26,762ms |
+| cost | $0.00812 | $0.00550 |
+
+ARはPRより安く速いが、全ファイルに到達できなかった。
+
+### 対処（測定への影響を最小化する最小介入）
+
+`empty-retrieval-result` メッセージに、harness側のクエリ試行カウント（客観的事実）のみを追加。
+指示・誘導は一切含めない。「このクエリをN回試みて空振りした」という事実の提示のみ。
+
+実装：`agent-retrieved-episode.ts` の `searchEmptyAttempts: Map<string, number>` で
+エピソード内の空振りカウントをharness側bookkeepingとして追跡。provider continuation stateとは無関係。
+スキーマバージョン: v5 (`agent-retrieved-episode-v5-search-repeat-tracking`)
+
+### 今後への示唆
+
+- ARのE_max設定はPRより大きくする必要がある（ナビゲーションオーバーヘッドが本質的に存在するため）
+- 修正後の再実行でループ短縮が観察されれば、E_max=13が十分かを再評価できる
+- 観察が改善しない場合のみ、E_max増加（例：20）を次の介入として検討する
+- Stage 1 本較正では、ARとPRを同じE_max設定で比較するのではなく、
+  それぞれが「完了可能な最小E_max」を別々に較正する設計が適切かもしれない
+
+---
+
 ## エントリの追加方法
 
 新しい発見を追加する際は、上記のF1と同じ形式（日付・Phase・元コード/ログ・実行条件・
