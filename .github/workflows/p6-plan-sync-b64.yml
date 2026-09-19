@@ -1,0 +1,30 @@
+name: One-shot P6 plan sync b64
+
+on:
+  push:
+    paths:
+      - '.github/workflows/p6-plan-sync-b64.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Rewrite P6-0 section
+        env:
+          P6_SECTION_B64: "IyMjIDEwLjAgUDYtMO+8mlByb2JlIGJhbmvlho3mpJzoqLzvvIhGNS9GOeODu0x1bmHvvIkKClByaW1hcnkgbW9kZWzjgpJHUFQtNS42IEx1bmHjgbjnp7vooYzjgZfjgZ/jgZ/jgoHjgIF0YXNrIGVsaWdpYmlsaXR55YmN44GrYGNhbGlicmF0aW9uL2ZpeHR1cmVzL3Byb2JlLWJhbmstc3RhZ2UxLmpzb25g44Gu5ris5a6a5aal5b2T5oCn44KSbGl2ZSBBUEnjgaflho3norroqo3jgZnjgovjgIIKCiMjIyMgMTAuMC4xIGZpcnN0IEx1bmEgcHJlZmxpZ2h0IGZpbmRpbmcKCjIwMjYtMDktMTnjga5maXJzdCBydW7jgafjga/ml6dib29sZWFuIGJhbmsgMjTllY/jgYxCPTDjgafjgoIzIHJlcGVhdOOBmeOBueOBpjI0LzI044Go44Gq44KK44CBRnVsbOOBqOOBruW3ruOBjOa2iOWkseOBl+OBn+OAguOBk+OCjOOBr0x1bmEgY2FwYWJpbGl0eeOBrue1kOaenOOBp+OBr+OBquOBjyoqbWVhc3VyZW1lbnQgaW52YWxpZCoq44Go5omx44GG44CC6Kq/5p+744Gn44Gv44CBdHJ1ZS9mYWxzZeOBp+ioreWVj3dvcmRpbmfjgYznlbDjgarjgaPjgabjgYTjgZ/jgZPjgajjgavliqDjgYjjgIFtb2RlbC12aXNpYmxlIHByb2JlIElE44GrYHBvc2l0aXZlYCAvIGBuZWdhdGl2ZWAgLyBgbWF0Y2hlZC1uZWdhdGl2ZWDnrYnjga5sYWJlbCBjdWXjgYzlkKvjgb7jgozjgabjgYTjgZ/jgIIKCuWQjHJ1buOBp+OBr21jL3N0cCByZWZlcmVuY2XjgYxCPTDlubPlnYfntIQwLjIy44CBQj0xSz0xLjAw44CBYHByb3RvY29sX2FkYXB0ZXIudHNgIG9ubHnntIQwLjk444Gn44CBRjnlnotzdHJ1Y3R1cmFsIGluZmVyZW5jZeOBjEx1bmHjgafjgoLlho3nj77jgZfjgZ/jgIJtYy9zdHDjga/lvJXjgY3ntprjgY1yZWZlcmVuY2Utb25seeOBqOOBmeOCi+OAglA2LTAgZmFpbHVyZeS4reOBr1A2LTHjgpLplovlp4vjgZfjgarjgYTjgIIKCiMjIyMgMTAuMC4yIHJldmlzZWQgYm9vbGVhbiBiYW5rIC8gbGVha2FnZSBjb250cm9scwoKYm9vbGVhbiBwcmltYXJ544GvYHN0YWdlMS1uZXV0cmFsLXJlbGF0aW9uLXYyYOOBuOe9ruaPm+OBmeOCi+OAggoKLSB0cnVl77yaZ3JvdW5kIHRydXRo5LiK44GuNiBpbnZhcmlhbnQgcmVsYXRpb24KLSBmYWxzZe+8mnJlYWNoYWJsZSBzdGF0ZSBncmFwaOOBq+Wun+WcqGNvdW50ZXJleGFtcGxl44KS5oyB44GkNiBmYWxzZSByZWxhdGlvbgotIHRydWUvZmFsc2XjgaflkIzkuIBzdXJmYWNlIHRlbXBsYXRlCi0gbW9kZWwtdmlzaWJsZSBJROOBr2Bib29sLXIwMWDnrYnjga5vcGFxdWUgSUQKLSBpbnZhcmlhbnQgSUTjgIFsYWJlbOOAgXBhaXLmg4XloLHjga9tb2RlbCBwcm9tcHTjgbjlh7rjgZXjgZpnZW5lcmF0b3Itc2lkZSBwcm92ZW5hbmNl44Gg44GR44Gr5L+d5oyBCi0gYm9vbGVhbiBwcmltYXJ544GobWMvc3RwIHJlZmVyZW5jZeOBr+WIpW1vZGVsIGNhbGwKCnN0YXRpYyBhdWRpdOOBr+OAgWJvb2xlYW4gMTLllY/vvIg2LzbvvInjgIFmYWxzZeWFqOWVj+OBrnJlYWNoYWJsZSBjb3VudGVyZXhhbXBsZeOAgWNvbnN0YW50LWFuc3dlciBiYXNlbGluZT0wLjUw44CBYGY1V2FybmluZ3M9W11g44CBcmF3IEdUIElEIGxlYWthZ2XjgarjgZfjgIFwcm9tcHQgY3Vl44Gq44GX44CBSUQgY3Vl44Gq44GX44CBZHVwbGljYXRlIHByb21wdOOBquOBl+OCkuimgeaxguOBmeOCi+OAggoKIyMjIyAxMC4wLjMgcmV2aXNlZCBsaXZlIGdhdGUKCuS6i+WJjWVuZ2luZWVyaW5nIGdhdGXvvJoKCi0gQj0wIMOXIDMgcmVwZWF077yaYm9vbGVhbuW5s+WdhzAuMzXjgJwwLjY1Ci0gRnVsbCDDlyAzIHJlcGVhdO+8mmJvb2xlYW7lubPlnYcgPj0gMC44NQotIEZ1bGziiJJCPTAgPj0gMC4yNQotIGBwcm90b2NvbF9hZGFwdGVyLnRzYCBvbmx5IMOXIDMgcmVwZWF077yaYm9vbGVhbuW5s+WdhzAuMzXjgJwwLjY1CgphZGFwdGVyLW9ubHnjgadtYy9zdHDjgYzpq5jlvpfngrnjgavjgarjgovjgZPjgajoh6rkvZPjga9GOSBkaWFnbm9zdGlj44Go44GX44Gm6Kix5a6544GZ44KL44CC5LiA5pa544CBaW52YXJpYW5044KS55u05o6l6KGo54++44GX44Gq44GEYWRhcHRlcuOBoOOBkeOBp2Jvb2xlYW7jgb7jgadjaGFuY2XjgpLlpKfjgY3jgY/otoXjgYjjgovloLTlkIjjgIFwcmltYXJ544Gr44KCc3RydWN0dXJhbCBpbmZlcmVuY2XjgYzmt7flhaXjgZfjgabjgYTjgovjgZ/jgoFmYWlsdXJl44Go44GZ44KL44CCCgp2aXNpYmxlLXRlc3RzLW9ubHnjga9kaWFnbm9zdGlj44Go44GX44Gm6KiY6Yyy44GZ44KL44GMaGFyZCBnYXRl44Gr44Gv44GX44Gq44GE44CCdmlzaWJsZSB0ZXN0c+OBr2FydGlmYWN044Gu5LiA6YOo44GncHJlY29uZGl0aW9uL2JlaGF2aW9y44KS5q2j5b2T44Gr6KGo54++44GX44GG44KL44Gf44KB44CB6auY5b6X54K544GoZGlyZWN0IGFuc3dlciBsZWFrYWdl44Gv5ZCM576p44Gn44Gv44Gq44GE44CCRjXjga9zdGF0aWMgbGVha2FnZSBhdWRpdOOAgUI9MCBjaGFuY2XjgIFwcm9iZS1sZXZlbCByZXNwb25zZeeiuuiqjeOBp+iouuaWreOBmeOCi+OAggoKKipHYXRlIFA2LTAqKgoKLSByZXZpc2VkIHN0YXRpYyBhdWRpdOOBjGNsZWFuCi0gYm9vbGVhbiBCPTDjgYxjaGFuY2Xov5Hlgo0KLSBCPTDihpJGdWxs44Gr5Y2B5YiG44GqZG9zZS1yZXNwb25zZQotIGFkYXB0ZXItb25seSBib29sZWFu44GMY2hhbmNl6L+R5YKNCi0gRjUgdGVzdHMtb25seSAvIEY5IG1jLXN0cOOCknJlZmVyZW5jZSBkaWFnbm9zdGlj44Go44GX44Gm5YCL5Yil6KiY6YyyCi0gcHJvYmUtbGV2ZWwgYW5zd2VyIC8gY29ycmVjdCBhbnN3ZXIgLyBwYXJzZSBlcnJvciAvIG1vZGVsIC8gdXNhZ2UgLyBjb3N044KScmVwZWF044GU44Go44Gr5L+d5a2YCgpmYWlsdXJl5pmC44GvbWVhc3VyZW1lbnQgcGF0aOOCkuS/ruato+OBl+OAgVA2LTHjgpLplovlp4vjgZfjgarjgYTjgIIKCg=="
+        run: |
+          python -c 'import os,base64; from pathlib import Path; p=Path("docs/stage1_plan.md"); s=p.read_text(); a=s.index("### 10.0 P6-0：Probe bank再検証（F5/F9・Luna）"); b=s.index("### 10.1 P6-1：Primary task eligibility",a); sec=base64.b64decode(os.environ["P6_SECTION_B64"]).decode(); p.write_text(s[:a]+sec+s[b:])'
+      - name: Commit and remove one-shot workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/p6-plan-sync-b64.yml
+          git add docs/stage1_plan.md
+          git commit -m 'docs(p6): record first Luna probe failure and revised gate'
+          git push
