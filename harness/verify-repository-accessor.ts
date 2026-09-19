@@ -102,9 +102,18 @@ async function verifyReadChunkAndDefensiveSnapshot(): Promise<Record<string, unk
   assert.strictEqual(empty.units[0].startLine, 1);
   assert.strictEqual(empty.units[0].endLine, 1);
 
-  await assert.rejects(
-    () => accessor.readChunk({ path: "src/b.ts", startLine: 2, endLine: 4 }),
-    /requested=L2-L4, totalLines=3/
+  const clamped = await accessor.readChunk({
+    path: "src/b.ts",
+    startLine: 2,
+    endLine: 4,
+  });
+  assert.strictEqual(clamped.units.length, 1);
+  assert.strictEqual(clamped.units[0].startLine, 2);
+  assert.strictEqual(clamped.units[0].endLine, 3);
+  assert.strictEqual(
+    clamped.units[0].content,
+    "const shared = 'NEEDLE';\nconst tail = true;\n",
+    "endLine beyond EOF must clamp to the final available line"
   );
   await assert.rejects(
     () => accessor.readChunk({ path: "src/b.ts", startLine: 0, endLine: 1 }),
@@ -115,6 +124,7 @@ async function verifyReadChunkAndDefensiveSnapshot(): Promise<Record<string, unk
     exactSourceSlicePreserved: true,
     callerMutationIsolated: true,
     emptyFileReadableAsLineOne: true,
+    endLineBeyondEofClamped: true,
     canonicalSerialization: serializeArtifactUnitForWorkingSet(second.units[0]),
   };
 }
@@ -300,6 +310,7 @@ async function main(): Promise<void> {
           "root-and-directory-listing-deterministic",
           "literal-search-deterministic-and-bounded",
           "read-chunk-preserves-exact-source-slice",
+          "read-chunk-endLine-beyond-EOF-clamps-to-final-line",
           "all-returned-evidence-is-canonical-ArtifactUnit",
           "harness-side-result-metadata-not-free-model-evidence",
           "caller-cannot-mutate-accessor-snapshot-through-input-or-result",
