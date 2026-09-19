@@ -206,6 +206,7 @@ function main(): void {
   assert.strictEqual(audit.counterexampleNegativeCount, 6);
   assert.strictEqual(audit.surfaceNeutralBooleanCount, 12);
   assert.strictEqual(audit.booleanCueWarnings.length, 0);
+  assert.strictEqual(audit.booleanIdCueWarnings.length, 0);
   assert.strictEqual(audit.alwaysTrueAccuracy, 0.5);
   assert.strictEqual(audit.alwaysFalseAccuracy, 0.5);
   verifyBooleanParsing(stage1Probes);
@@ -231,6 +232,7 @@ function main(): void {
       "constant-answer-baseline-rejection",
       "visible-test-and-raw-id-leakage-scan",
       "boolean-answer-cue-scan",
+      "boolean-id-cue-scan",
       "boolean-parse-robustness",
       "canonical-o200k-token-counter",
       "observable-history-canonical-accounting",

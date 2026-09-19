@@ -120,7 +120,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I3-positive",
+    "probeId": "A-obfuscated-bool-r01",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Osk は 'pex' である。",
@@ -142,7 +142,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I6-positive",
+    "probeId": "A-obfuscated-bool-r02",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Tal は 'pex' である。",
@@ -164,7 +164,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I4-negative",
+    "probeId": "A-obfuscated-bool-r03",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Fen は 'pex' である。",
@@ -192,7 +192,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I4-positive",
+    "probeId": "A-obfuscated-bool-r04",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Osk は 'pex' である。",
@@ -214,7 +214,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I2-negative",
+    "probeId": "A-obfuscated-bool-r05",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Vok は 'pex' である。",
@@ -242,7 +242,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I2-positive",
+    "probeId": "A-obfuscated-bool-r06",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Tal は 'pex' である。",
@@ -264,7 +264,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I1-positive",
+    "probeId": "A-obfuscated-bool-r07",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Tal は 'pex' である。",
@@ -286,7 +286,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I6-negative",
+    "probeId": "A-obfuscated-bool-r08",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Vok は 'nim' である。",
@@ -314,7 +314,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I5-negative",
+    "probeId": "A-obfuscated-bool-r09",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Vok は 'nim' である。",
@@ -342,7 +342,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I5-positive",
+    "probeId": "A-obfuscated-bool-r10",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Zef が 'dor' なら、Osk は 'pex' である。",
@@ -364,7 +364,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I1-negative",
+    "probeId": "A-obfuscated-bool-r11",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Vok が 'dor' なら、Zef は 'pex' である。",
@@ -392,7 +392,7 @@
     }
   },
   {
-    "probeId": "A-obfuscated-bool-relation-I3-negative",
+    "probeId": "A-obfuscated-bool-r12",
     "type": "boolean",
     "namingScheme": "A-obfuscated",
     "prompt": "repositoryのコードを参照し、到達可能な状態について次の命題が常に成り立つか答えよ：Fen が 'dor' なら、Vok は 'pex' である。",

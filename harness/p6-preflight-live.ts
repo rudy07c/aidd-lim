@@ -199,14 +199,22 @@ async function runProbeRepeat(
   const actualModels: string[] = [];
   const usage: TokenUsage = { input: 0, output: 0, cachedInput: 0, cacheWriteInput: 0, reasoningOutput: 0, total: 0 };
   let estimatedCostUsd = 0;
-  for (let i = 0; i < probes.length; i += PROBE_BATCH_SIZE) {
-    const batch = probes.slice(i, i + PROBE_BATCH_SIZE);
+  // Keep boolean primary probes isolated from mc/stp reference probes.
+// F9 reference questions must not provide same-call hints to the primary R^sem measurement.
+const probeGroups = [
+  probes.filter((p) => p.type === "boolean"),
+  probes.filter((p) => p.type !== "boolean"),
+].filter((group) => group.length > 0);
+for (const group of probeGroups) {
+  for (let i = 0; i < group.length; i += PROBE_BATCH_SIZE) {
+    const batch = group.slice(i, i + PROBE_BATCH_SIZE);
     const r = await answerProbeBatch(client, ctx.files, batch);
     Object.assign(answers, r.answers);
     actualModels.push(r.model);
     addUsage(usage, r.usage);
     estimatedCostUsd += r.cost;
   }
+}
   const scored = scoreProbes(probes, answers);
   const summary = summarizeScores(scored, probes);
   const typeById = new Map(probes.map((p) => [p.probeId, p.type]));
@@ -362,6 +370,7 @@ async function main(): Promise<void> {
   f5Warnings: audit.audit.f5Warnings,
   rawGroundTruthIdLeakage: audit.audit.rawGroundTruthIdLeakage,
   booleanCueWarnings: audit.audit.booleanCueWarnings,
+  booleanIdCueWarnings: audit.audit.booleanIdCueWarnings,
 };
 if (
   staticAudit.designVersion !== "stage1-neutral-relation-v2" ||
@@ -372,7 +381,8 @@ if (
   staticAudit.surfaceNeutralBooleanCount !== 12 ||
   staticAudit.f5Warnings.length ||
   staticAudit.rawGroundTruthIdLeakage.length ||
-  staticAudit.booleanCueWarnings.length
+  staticAudit.booleanCueWarnings.length ||
+  staticAudit.booleanIdCueWarnings.length
 ) {
   throw new Error(`P6-0 static probe audit failed: ${JSON.stringify(staticAudit)}`);
 }

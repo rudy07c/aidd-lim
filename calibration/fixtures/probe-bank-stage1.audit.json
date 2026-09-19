@@ -25,6 +25,7 @@
     "f5Warnings": [],
     "rawGroundTruthIdLeakage": [],
     "booleanCueWarnings": [],
+    "booleanIdCueWarnings": [],
     "duplicateBooleanPrompts": []
   }
 }

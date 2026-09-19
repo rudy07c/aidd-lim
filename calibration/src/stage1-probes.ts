@@ -34,6 +34,7 @@ export interface Stage1ProbeAudit {
   f5Warnings: string[];
   rawGroundTruthIdLeakage: string[];
   booleanCueWarnings: string[];
+  booleanIdCueWarnings: string[];
   duplicateBooleanPrompts: string[];
 }
 
@@ -208,15 +209,20 @@ function buildSurfaceNeutralBooleanProbes(
     });
   }
 
-  // Do not preserve positive/negative pair adjacency.  A stable hash gives reproducible ordering
-  // without making label predictable from the visible position in the prompt batch.
-  return [...positives, ...negatives].sort((a, b) => {
-    const key = (probe: GeneratedProbe) => crypto
-      .createHash("sha256")
-      .update(`${STAGE1_BOOLEAN_DESIGN_VERSION}:${probe.probeId}`)
-      .digest("hex");
-    return key(a).localeCompare(key(b));
-  });
+  // Do not preserve positive/negative pair adjacency. A stable hash gives reproducible ordering.
+// Temporary construction IDs contain provenance for generator-side bookkeeping only.
+// Re-ID after ordering so no label/provenance cue reaches the model-visible prompt.
+const ordered = [...positives, ...negatives].sort((a, b) => {
+  const key = (probe: GeneratedProbe) => crypto
+    .createHash("sha256")
+    .update(`${STAGE1_BOOLEAN_DESIGN_VERSION}:${probe.probeId}`)
+    .digest("hex");
+  return key(a).localeCompare(key(b));
+});
+return ordered.map((probe, index) => ({
+  ...probe,
+  probeId: `${scheme.schemeId}-bool-r${String(index + 1).padStart(2, "0")}`,
+}));
 }
 
 /**
@@ -264,10 +270,12 @@ export function auditStage1ProbeBank(probes: GeneratedProbe[]): Stage1ProbeAudit
 
   const f5Warnings = probes.filter((p) => p.f5Warning).map((p) => p.probeId);
   const rawGroundTruthIdLeakage = probes
-    .filter((p) => /\b(?:E|O|I)\d+\b/.test(p.prompt))
+    .filter((p) => /\b(?:E|O|I)\d+\b/.test(`${p.probeId}\n${p.prompt}`))
     .map((p) => p.probeId);
   const cuePattern = /確認せず|場合に限って|このinvariant|既存のinvariantを壊す|matched negative/i;
   const booleanCueWarnings = booleanProbes.filter((p) => cuePattern.test(p.prompt)).map((p) => p.probeId);
+  const idCuePattern = /positive|negative|matched|true|false|(?:^|-)I\d+(?:-|$)/i;
+  const booleanIdCueWarnings = booleanProbes.filter((p) => idCuePattern.test(p.probeId)).map((p) => p.probeId);
   const promptCounts = new Map<string, number>();
   for (const probe of booleanProbes) promptCounts.set(probe.prompt, (promptCounts.get(probe.prompt) ?? 0) + 1);
   const duplicateBooleanPrompts = [...promptCounts.entries()].filter(([, count]) => count > 1).map(([prompt]) => prompt);
@@ -285,6 +293,7 @@ export function auditStage1ProbeBank(probes: GeneratedProbe[]): Stage1ProbeAudit
     f5Warnings,
     rawGroundTruthIdLeakage,
     booleanCueWarnings,
+    booleanIdCueWarnings,
     duplicateBooleanPrompts,
   };
 }
@@ -328,6 +337,9 @@ export function assertStage1ProbeBankValid(probes: GeneratedProbe[]): Stage1Prob
   }
   if (audit.booleanCueWarnings.length > 0) {
     throw new Error(`Stage 1 boolean prompts contain answer-cue wording: ${audit.booleanCueWarnings.join(", ")}`);
+  }
+  if (audit.booleanIdCueWarnings.length > 0) {
+    throw new Error(`Stage 1 boolean probe IDs contain answer/provenance cues: ${audit.booleanIdCueWarnings.join(", ")}`);
   }
   if (audit.duplicateBooleanPrompts.length > 0) {
     throw new Error(`Stage 1 boolean prompts contain duplicates: ${audit.duplicateBooleanPrompts.join(" | ")}`);
