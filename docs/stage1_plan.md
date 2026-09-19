@@ -2102,7 +2102,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 ## 21. 実装順序
 
-### Phase P0：Conceptual / Naming Sync
+### Phase P0：Conceptual / Naming Sync ✅ 完了
 
 1. `docs/aidd_ilm_paper.md`
 2. `docs/experiment_plan.md`（v2.1）
@@ -2112,7 +2112,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 **Gate**：5条件・2軸・C0〜C3が文書/型で一致。
 
-### Phase P1：Backend / Model Migration
+### Phase P1：Backend / Model Migration ✅ 完了
 
 6. OpenAI backend
 7. selected model smoke
@@ -2124,7 +2124,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 **Gate**：provider-neutral execution。
 
-### Phase P2：MOI / Observable Interaction
+### Phase P2：MOI / Observable Interaction ✅ 完了
 
 13. `ObservableInteractionRecord`
 14. generation event capture
@@ -2137,7 +2137,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 **Gate**：observable inheritanceがmechanistically isolated。
 
-### Phase P3：Measurement Repair
+### Phase P3：Measurement Repair ✅ 完了
 
 21. balanced boolean probes
 22. constant-answer check
@@ -2147,7 +2147,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 **Gate**：measurement instrument repaired。
 
-### Phase P4：Working-Set Runtime
+### Phase P4：Working-Set Runtime ✅ 完了
 
 26. WorkingSetManager
 27. explicit memory
@@ -2158,7 +2158,7 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 
 **Gate**：bounded cognitionがcumulative read limitではなくworking setとして成立。
 
-### Phase P5：Retrieval / Security
+### Phase P5：Retrieval / Security ✅ 完了
 
 32. RepositoryAccessor
 33. tools
@@ -2168,6 +2168,23 @@ MOI/AF比較では**predecessor fixture id**を必須にする。
 37. retrieval/eviction logs
 
 **Gate**：PR/ARがsafe full-repo access。
+
+### Phase P5.5：PR / AR Runtime Hardening & Luna Live Smoke ✅ 完了
+
+P5で構築したretrieval/runtimeを、実際のcondition dispatcher・OpenAI実行経路・GenerationLogへ接続し、P6で科学的較正へ入れる状態までhardeningする。
+
+- [x] PR / ARをproductionのcondition dispatcherへ接続し、`run.ts`から実conditionとして起動可能にする
+- [x] retrieved episodeの結果を`GenerationLog`へ配線し、retrieval / working-set / completion / error provenanceを世代ログから再構成可能にする
+- [x] OpenAI用PR executorを新設し、privileged controller + research-stateless requestでPRを実API実行可能にする
+- [x] PR / ARで同一FIFO-v1のreread capabilityを実装・検証し、C2でretrieval policy以外のresource contractを共有する
+- [x] evidence exhaustionを例外で潰さず`evidence-exhaustion-signal`として観測可能にする
+- [x] failed retrieval loggingと、`E_max`枯渇・provider error・model-originated outcomeのtyped separationを実装する
+- [x] `RepositoryAccessor.readChunk()`の`endLine`を実ファイル末尾へclampする契約を修正し、回帰testで固定する
+- [x] GPT-5.6 LunaでPR / ARのlive smokeを実施し、research-stateless ARで同一searchを反復するF11を生ログから記録する
+- [x] F11をC2のshared resource contractへ同期し、PR / ARで**同一の `B_work`・同一の `E_max`・同一のFIFO-v1**を使うこと、ARの追加探索消費自体をretrieval-policy effectとして扱うことを明文化する
+- [x] `searchEmptyAttempts`等のdeterministic episodic bookkeepingがresearch-stateless原則と両立する境界を文書化する
+
+**Gate**：PR / ARが共通C2 resource contract上でproduction dispatcherからend-to-end実行でき、reread・evidence exhaustion・failure semantics・GenerationLogが観測可能である。RepositoryAccessorのclamp契約がtestで固定され、GPT-5.6 Luna live smokeでPR / ARの実行経路を確認済み。F11はretrieval-policy effectとして記録され、P6ではPR / AR共通の`E_max`をrepeatで較正・freezeする方針まで同期済み。
 
 ### Phase P6：Recalibration
 
