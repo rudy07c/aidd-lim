@@ -18,7 +18,9 @@ import type { TestSuiteResult, TokenUsage } from "./src/types";
 const MODEL = "gpt-5.6-luna";
 const REASONING = "high" as const;
 const REPEATS = 3;
-const PROBE_BATCH_SIZE = 20;
+const PRIMARY_PROBE_BATCH_SIZE = 12;
+const REFERENCE_PROBE_BATCH_SIZE = 8;
+const PROBE_MAX_OUTPUT_TOKENS = 8000;
 const PILOT_TASKS = ["T-local-2", "T-crosscut-1", "T-delayed-1", "T-crosscut-2", "T-local-1"] as const;
 
 // Predeclared P6-0 engineering gates. These are calibration guards, not confirmatory statistics.
@@ -141,7 +143,7 @@ async function answerProbeBatch(
     options: {
       model: MODEL,
       reasoningEffort: REASONING,
-      maxOutputTokens: 5000,
+      maxOutputTokens: PROBE_MAX_OUTPUT_TOKENS,
       storeResponses: false,
       serviceTier: "default",
       promptCacheMode: "implicit",
@@ -199,22 +201,24 @@ async function runProbeRepeat(
   const actualModels: string[] = [];
   const usage: TokenUsage = { input: 0, output: 0, cachedInput: 0, cacheWriteInput: 0, reasoningOutput: 0, total: 0 };
   let estimatedCostUsd = 0;
+
   // Keep boolean primary probes isolated from mc/stp reference probes.
-// F9 reference questions must not provide same-call hints to the primary R^sem measurement.
-const probeGroups = [
-  probes.filter((p) => p.type === "boolean"),
-  probes.filter((p) => p.type !== "boolean"),
-].filter((group) => group.length > 0);
-for (const group of probeGroups) {
-  for (let i = 0; i < group.length; i += PROBE_BATCH_SIZE) {
-    const batch = group.slice(i, i + PROBE_BATCH_SIZE);
-    const r = await answerProbeBatch(client, ctx.files, batch);
-    Object.assign(answers, r.answers);
-    actualModels.push(r.model);
-    addUsage(usage, r.usage);
-    estimatedCostUsd += r.cost;
+  // Reference probes are diagnostic only, so use smaller batches to avoid reasoning-token truncation.
+  const probeGroups = [
+    { probes: probes.filter((p) => p.type === "boolean"), batchSize: PRIMARY_PROBE_BATCH_SIZE },
+    { probes: probes.filter((p) => p.type !== "boolean"), batchSize: REFERENCE_PROBE_BATCH_SIZE },
+  ].filter((group) => group.probes.length > 0);
+  for (const group of probeGroups) {
+    for (let i = 0; i < group.probes.length; i += group.batchSize) {
+      const batch = group.probes.slice(i, i + group.batchSize);
+      const r = await answerProbeBatch(client, ctx.files, batch);
+      Object.assign(answers, r.answers);
+      actualModels.push(r.model);
+      addUsage(usage, r.usage);
+      estimatedCostUsd += r.cost;
+    }
   }
-}
+
   const scored = scoreProbes(probes, answers);
   const summary = summarizeScores(scored, probes);
   const typeById = new Map(probes.map((p) => [p.probeId, p.type]));
@@ -360,34 +364,34 @@ async function main(): Promise<void> {
   const tasks = JSON.parse(fs.readFileSync(path.join(swDir, "heldout_tasks.json"), "utf8")) as HeldOutTask[];
 
   const staticAudit = {
-  total: audit.audit.total,
-  designVersion: audit.designVersion,
-  booleanTotal: audit.audit.booleanTotal,
-  booleanTrue: audit.audit.booleanTrue,
-  booleanFalse: audit.audit.booleanFalse,
-  counterexampleNegativeCount: audit.audit.counterexampleNegativeCount,
-  surfaceNeutralBooleanCount: audit.audit.surfaceNeutralBooleanCount,
-  f5Warnings: audit.audit.f5Warnings,
-  rawGroundTruthIdLeakage: audit.audit.rawGroundTruthIdLeakage,
-  booleanCueWarnings: audit.audit.booleanCueWarnings,
-  booleanIdCueWarnings: audit.audit.booleanIdCueWarnings,
-};
-if (
-  staticAudit.designVersion !== "stage1-neutral-relation-v2" ||
-  staticAudit.booleanTotal !== 12 ||
-  staticAudit.booleanTrue !== 6 ||
-  staticAudit.booleanFalse !== 6 ||
-  staticAudit.counterexampleNegativeCount !== 6 ||
-  staticAudit.surfaceNeutralBooleanCount !== 12 ||
-  staticAudit.f5Warnings.length ||
-  staticAudit.rawGroundTruthIdLeakage.length ||
-  staticAudit.booleanCueWarnings.length ||
-  staticAudit.booleanIdCueWarnings.length
-) {
-  throw new Error(`P6-0 static probe audit failed: ${JSON.stringify(staticAudit)}`);
-}
+    total: audit.audit.total,
+    designVersion: audit.designVersion,
+    booleanTotal: audit.audit.booleanTotal,
+    booleanTrue: audit.audit.booleanTrue,
+    booleanFalse: audit.audit.booleanFalse,
+    counterexampleNegativeCount: audit.audit.counterexampleNegativeCount,
+    surfaceNeutralBooleanCount: audit.audit.surfaceNeutralBooleanCount,
+    f5Warnings: audit.audit.f5Warnings,
+    rawGroundTruthIdLeakage: audit.audit.rawGroundTruthIdLeakage,
+    booleanCueWarnings: audit.audit.booleanCueWarnings,
+    booleanIdCueWarnings: audit.audit.booleanIdCueWarnings,
+  };
+  if (
+    staticAudit.designVersion !== "stage1-neutral-relation-v2" ||
+    staticAudit.booleanTotal !== 12 ||
+    staticAudit.booleanTrue !== 6 ||
+    staticAudit.booleanFalse !== 6 ||
+    staticAudit.counterexampleNegativeCount !== 6 ||
+    staticAudit.surfaceNeutralBooleanCount !== 12 ||
+    staticAudit.f5Warnings.length ||
+    staticAudit.rawGroundTruthIdLeakage.length ||
+    staticAudit.booleanCueWarnings.length ||
+    staticAudit.booleanIdCueWarnings.length
+  ) {
+    throw new Error(`P6-0 static probe audit failed: ${JSON.stringify(staticAudit)}`);
+  }
 
-console.log("P6-0 PREDECLARED GATES", JSON.stringify(P6_0_GATES));
+  console.log("P6-0 PREDECLARED GATES", JSON.stringify(P6_0_GATES));
   console.log("P6-1 PREDECLARED RULE", JSON.stringify(P6_1_RULE));
   console.log("P6-1 PILOT TASKS", PILOT_TASKS.join(","));
 
@@ -410,27 +414,27 @@ console.log("P6-0 PREDECLARED GATES", JSON.stringify(P6_0_GATES));
   const b0Ref = acc("b0", "referenceAccuracy");
   const b1kRef = acc("b1k", "referenceAccuracy");
   const p60Checks = {
-  b0ChanceBand: b0 >= P6_0_GATES.b0BooleanMin && b0 <= P6_0_GATES.b0BooleanMax,
-  fullHeadroom: full >= P6_0_GATES.fullBooleanMin,
-  doseResponse: full - b0 >= P6_0_GATES.minFullMinusB0,
-  adapterPrimaryChance: adapterBool >= P6_0_GATES.adapterBooleanMin && adapterBool <= P6_0_GATES.adapterBooleanMax,
-};
-const p60Passed = Object.values(p60Checks).every(Boolean);
-const f9Diagnostic = {
-  b0ReferenceAccuracy: b0Ref,
-  b1kReferenceAccuracy: b1kRef,
-  adapterOnlyReferenceAccuracy: adapterRef,
-  adapterOnlyBooleanAccuracy: adapterBool,
-  recurrenceObserved: adapterRef >= 0.5 || b1kRef >= 0.8,
-  interpretation: "Reference-probe F9 recurrence is diagnostic and does not fail P6-0 while boolean primary remains valid; mc/stp stay reference-only.",
-};
-const f5Diagnostic = {
-  staticDirectLeakageWarnings: staticAudit.f5Warnings,
-  testsOnlyBooleanAccuracy: testsOnly,
-  testsOnlyMinusB0: testsOnly - b0,
-  interpretation: "tests-only is retained as an F5 diagnostic, not a hard gate: visible tests are inherited artifact evidence and can legitimately support semantic inference. B=0 chance plus the static direct-leakage scan guards prompt/test answer leakage.",
-};
-console.log("P6-0 SUMMARY", JSON.stringify({ criteriaVersion: P6_0_CRITERIA_VERSION, b0, b1k, full, testsOnly, adapterBool, p60Checks, f5Diagnostic, f9Diagnostic, p60Passed }, null, 2));
+    b0ChanceBand: b0 >= P6_0_GATES.b0BooleanMin && b0 <= P6_0_GATES.b0BooleanMax,
+    fullHeadroom: full >= P6_0_GATES.fullBooleanMin,
+    doseResponse: full - b0 >= P6_0_GATES.minFullMinusB0,
+    adapterPrimaryChance: adapterBool >= P6_0_GATES.adapterBooleanMin && adapterBool <= P6_0_GATES.adapterBooleanMax,
+  };
+  const p60Passed = Object.values(p60Checks).every(Boolean);
+  const f9Diagnostic = {
+    b0ReferenceAccuracy: b0Ref,
+    b1kReferenceAccuracy: b1kRef,
+    adapterOnlyReferenceAccuracy: adapterRef,
+    adapterOnlyBooleanAccuracy: adapterBool,
+    recurrenceObserved: adapterRef >= 0.5 || b1kRef >= 0.8,
+    interpretation: "Reference-probe F9 recurrence is diagnostic and does not fail P6-0 while boolean primary remains valid; mc/stp stay reference-only.",
+  };
+  const f5Diagnostic = {
+    staticDirectLeakageWarnings: staticAudit.f5Warnings,
+    testsOnlyBooleanAccuracy: testsOnly,
+    testsOnlyMinusB0: testsOnly - b0,
+    interpretation: "tests-only is retained as an F5 diagnostic, not a hard gate: visible tests are inherited artifact evidence and can legitimately support semantic inference. B=0 chance plus the static direct-leakage scan guards prompt/test answer leakage.",
+  };
+  console.log("P6-0 SUMMARY", JSON.stringify({ criteriaVersion: P6_0_CRITERIA_VERSION, b0, b1k, full, testsOnly, adapterBool, p60Checks, f5Diagnostic, f9Diagnostic, p60Passed }, null, 2));
 
   const outputBase: any = {
     meta: { model: MODEL, reasoningEffort: REASONING, repeats: REPEATS, generatedAt: new Date().toISOString() },
