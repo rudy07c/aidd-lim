@@ -180,7 +180,7 @@ export class InMemoryRepositoryAccessor implements RepositoryAccessor {
 
     const lines = splitSourceLines(content);
     const startLine = args.startLine ?? 1;
-    const endLine = args.endLine ?? lines.length;
+    const endLine = Math.min(args.endLine ?? lines.length, lines.length);
     validateLineRange(startLine, endLine, lines.length, filePath);
     const chunkContent = lines.slice(startLine - 1, endLine).join("");
     const unit = createArtifactUnit({
@@ -245,10 +245,10 @@ function validateLineRange(
   if (!Number.isInteger(endLine) || endLine < startLine) {
     throw new Error("Repository read endLine must be an integer >= startLine");
   }
-  if (startLine > totalLines || endLine > totalLines) {
+  if (startLine > totalLines) {
     throw new Error(
-      `Repository read range exceeds ${filePath}: ` +
-        `requested=L${startLine}-L${endLine}, totalLines=${totalLines}`
+      `Repository read startLine exceeds ${filePath}: ` +
+        `startLine=${startLine}, totalLines=${totalLines}`
     );
   }
 }
