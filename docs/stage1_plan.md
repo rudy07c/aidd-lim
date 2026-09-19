@@ -839,6 +839,8 @@ repository全体は常に再アクセス可能。
 
 OpenAI API上で`store=false`かつreturned output itemsを手動再送する方式はAPI運用上はstatelessと呼べるが、本研究では**encrypted reasoning等がevict済みartifact evidenceを内包しうるためresearch-statelessとはみなさない**。PR / ARでは各stepを新しいinferenceとして起動し、必要な継続情報は明示的memoryへ外在化して \(B_{work}\) に算入する。
 
+ここでいう**research-stateless**は、episode中のあらゆる状態を禁止する意味ではない。禁止対象は、provider/model内部に保持されworkerから監査・再構成できないopaque continuation stateである。一方、harness/controllerがepisode内で追跡するdeterministicなepisodic state（例：同一search queryの空結果試行回数、retrieval budget counters、working-set admission/eviction state）は保持してよい。ただし、それがworkerの次step判断に影響する場合は、provider continuationとして暗黙に渡すのではなく、`workingNote`、current `W_t`、または明示的なtool/runtime observationとしてmodel-visibleかつlog/replay可能な形で開示する。したがって `searchEmptyAttempts` のようなharness-side bookkeepingはresearch-stateless原則と両立するが、その事実提示はretrieval actionを指示する誘導文ではなく、観測済みepisodic factに限定する。
+
 さらに、artifact evidenceのbudget enforcementはcondition runner / `WorkingSetManager`だけが行う。provider backendは受け取ったactive evidenceを勝手に再truncateしない。backend側の二重truncateは、selectorが選んだ \(W_t\) とmodelが実際に見た \(W_t\) をずらすため禁止する。
 
 ### 6.2 \(B_{work}\) に含める
