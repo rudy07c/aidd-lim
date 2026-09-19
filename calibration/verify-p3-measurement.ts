@@ -10,7 +10,11 @@ import {
 } from "./src/budget-assembler";
 import { GeneratedProbe, generateProbes } from "./src/probe-generator";
 import { scoreProbe } from "./src/probe-scorer";
-import { assertStage1ProbeBankValid, generateStage1Probes } from "./src/stage1-probes";
+import {
+  STAGE1_BOOLEAN_DESIGN_VERSION,
+  assertStage1ProbeBankValid,
+  generateStage1Probes,
+} from "./src/stage1-probes";
 import {
   CANONICAL_TOKEN_COUNT_METHOD,
   countCanonicalFileContentTokens,
@@ -196,6 +200,12 @@ function main(): void {
 
   const stage1Probes = generateStage1Probes(groundTruth, scheme, visibleTestPath);
   const audit = assertStage1ProbeBankValid(stage1Probes);
+  assert.strictEqual(audit.booleanTotal, 12);
+  assert.strictEqual(audit.booleanTrue, 6);
+  assert.strictEqual(audit.booleanFalse, 6);
+  assert.strictEqual(audit.counterexampleNegativeCount, 6);
+  assert.strictEqual(audit.surfaceNeutralBooleanCount, 12);
+  assert.strictEqual(audit.booleanCueWarnings.length, 0);
   assert.strictEqual(audit.alwaysTrueAccuracy, 0.5);
   assert.strictEqual(audit.alwaysFalseAccuracy, 0.5);
   verifyBooleanParsing(stage1Probes);
@@ -211,13 +221,16 @@ function main(): void {
     status: "ok",
     canonicalTokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
     legacyProbeCount: legacyFixture.length,
+    stage1BooleanDesignVersion: STAGE1_BOOLEAN_DESIGN_VERSION,
     stage1ProbeAudit: audit,
     artifactUnitsAt128Tokens: repositoryToArtifactUnits(repositoryFiles, 128).length,
     verified: [
       "balanced-boolean-probes",
-      "matched-negative-probes",
+      "surface-neutral-boolean-template",
+      "reachable-counterexample-negative-probes",
       "constant-answer-baseline-rejection",
       "visible-test-and-raw-id-leakage-scan",
+      "boolean-answer-cue-scan",
       "boolean-parse-robustness",
       "canonical-o200k-token-counter",
       "observable-history-canonical-accounting",
