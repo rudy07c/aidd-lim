@@ -1,8 +1,14 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.6
+**版**: v2.7
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.7での変更点（Pre-Stage 1 P5.5完了・現在地同期）**：
+- `docs/stage1_plan.md`の実装順序にP5.5を正式追加し、condition dispatcher接続、GenerationLog配線、OpenAI PR executor、PR/AR reread parity、evidence-exhaustion signal、RepositoryAccessor clamp契約、Luna live smoke、F11記録までを完了済みphaseとして固定
+- Pre-Stage 1のP0〜P5.5を完了済み（✅）として明記し、次の実装対象をP6 Recalibrationへ更新
+- 現在地を「Stage 1着手前」一般ではなく、**P6着手直前**へ更新。P6では `T_primary / T_challenge`、`B_expose`、`B_work`、PR/AR共通`E_max`等を再較正・freezeする
+- F11の解釈をC2のshared resource contractに合わせ、PR/ARは同一`B_work`・同一`E_max`・同一FIFO-v1を共有し、自律探索に伴う追加resource消費をretrieval-policy effectの一部として扱う方針を維持
 
 **v2.6での変更点（OpenAI Sync backend自己レビューによる内部妥当性hardening）**：
 - PR/ARの`stateless request`をAPI object非継承だけでなく**model-internal reasoning非継承**として精密化し、`previous_response_id` / conversationに加えて`reasoning.encrypted_content`、compaction item、その他persisted reasoning stateをreasoning step間で持ち越すことを禁止
@@ -1481,18 +1487,19 @@ u_i
 
 ## 6. 次のアクション
 
-**v2.0時点の現在地**：Stage 0 / 0.5は完了済みであり、次の実装対象はStage 1である。以下の旧来の①〜⑥は研究装置を構築した履歴として保持するが、現在の実行順序は `docs/stage1_plan.md` のPre-Stage 1 → Stage 1A → 1B → 1Cを優先する。
+**v2.7時点の現在地（2026-09-19）**：Stage 0 / 0.5は完了済み。Pre-Stage 1は **P0〜P5.5まで完了**しており、5条件（MOI / AF / EL / PR / AR）の二軸設計、OpenAI backend / Batch経路、MOI observable interaction、balanced measurement、bounded working-set runtime、RepositoryAccessor、PR/AR retrieval runtime、GenerationLog、reread parity、error/evidence-exhaustion semantics、Luna live smokeまで実装・検証済みである。**次の実装対象はPre-Stage 1 P6：Recalibration**であり、旧3条件版のStage 1 Phase 0へ戻らない。
 
-**Stage 1着手前の最優先追加事項**：
+**次の実行順序**：
 
-1. MOI用 \(\mathcal{I}^{obs}_g\) schema、source tagging、hidden-information boundaryをfreeze
-2. five-condition型・logging schemaを実装
-3. AF/EL/PR/AR用exposure / working-set / retrieval runtimeを完成し、stateless per-step requestとOperational-Full feasibility checkを実装
-4. Stage 1AでC1〜C3を較正
-5. Stage 1BでMOI vs AF + sham-historyのone-step inheritance diagnosticを実施
-6. Stage 1Cで5条件10〜15世代integration
-7. Stage 2 common-environment evaluation用runnerを設計
+1. **P6 Recalibration**：Luna capability-floor / AF baselineを再取得し、`T_primary / T_challenge`、`B_expose`、`B_work`、PR/AR共通`E_max`、MOI schema/size、equivalence margin、repeat数をmain comparison前にfreezeする
+2. **Stage 1A**：fixed-\(S_0\)でAF / EL / PR / ARを比較し、C1〜C3を診断する
+3. **Stage 1B**：同一predecessor fixtureからMOI / AF + sham-historyを比較し、C0 immediate history utilityを診断する
+4. **P6.5**：MOI対応Semantic Element Traceをsource-aware化する
+5. **P7**：longitudinal evaluatorを累積評価対応へ更新する
+6. **Stage 1C**：5条件を10〜15世代通すintegration runを行う
+7. Stage 1C完了後、Stage 2 common-environment evaluation / longitudinal pilotへ進む
 
+以下の旧来の①〜⑥は研究装置を構築した履歴として保持するが、現在の実行順序の根拠には使わない。現在地の正本は `docs/stage1_plan.md` の21節と本節で同期する。
 
 **方針**：generatorを最初から汎用化しない。1つの世界でprobe設計・測定パイプラインが失敗した場合、generatorごと作り直すコストを避けるため、まず手書きの最小構成（**Synthetic World v0**）で測定パイプライン全体を通してから、generator化に進む。
 
