@@ -1197,25 +1197,50 @@ Stage 1でLLM selectorは使わない。
 
 ### 10.0 P6-0：Probe bank再検証（F5/F9・Luna）
 
-Primary modelをGPT-5.6 Lunaへ移行し、Synthetic World / probe bankもStage 1向けに拡張されたため、task eligibility判定へ入る前に`calibration/fixtures/probe-bank-stage1.json`自体の測定妥当性をlive APIで再確認する。
+Primary modelをGPT-5.6 Lunaへ移行したため、task eligibility前に`calibration/fixtures/probe-bank-stage1.json`の測定妥当性をlive APIで再確認する。
 
-事前に固定する確認：
+#### 10.0.1 first Luna preflight finding
 
-- static auditでboolean主指標が24問（true 12 / false 12）のbalanced設計を維持し、`f5Warnings=[]`・raw Ground Truth ID leakageなしであること
-- Luna × B=0を3 repeatし、boolean主指標の平均accuracyがchance近傍（engineering gate: 0.35〜0.65）にあること
-- Luna × B=1K / Fullを3 repeatし、Full平均accuracy >= 0.85かつFull−B=0 >= 0.25の感度を持つこと
-- visible-tests-only ablationを3 repeatし、boolean平均が0.65以下かつB=0平均+0.15を超えないこと。超える場合はF5型のvisible-test leakageとしてprobe bankをP6-1前に修正する
-- `protocol_adapter.ts` only ablationとB=1Kでmc/stp reference probeを確認し、F9型のoperationTable / naming-pattern inferenceがLunaでも再現するかを記録する
+2026-09-19のfirst runでは旧boolean bank 24問がB=0でも3 repeatすべて24/24となり、Fullとの差が消失した。これはLuna capabilityの結果ではなく**measurement invalid**と扱う。調査では、true/falseで設問wordingが異なっていたことに加え、model-visible probe IDに`positive` / `negative` / `matched-negative`等のlabel cueが含まれていた。
 
-mc/stpは既にreference-onlyであり、F9再現それ自体はboolean主指標のgate failureとはしない。ただしreferenceとしての解釈を超えてprimary判定へ混入させない。boolean側にF5/F9由来の非context情報が見つかった場合はP6-1へ進まずprobe bankを修正する。
+同runではmc/stp referenceがB=0平均約0.22、B=1K=1.00、`protocol_adapter.ts` only約0.98で、F9型structural inferenceがLunaでも再現した。mc/stpは引き続きreference-onlyとする。P6-0 failure中はP6-1を開始しない。
+
+#### 10.0.2 revised boolean bank / leakage controls
+
+boolean primaryは`stage1-neutral-relation-v2`へ置換する。
+
+- true：ground truth上の6 invariant relation
+- false：reachable state graphに実在counterexampleを持つ6 false relation
+- true/falseで同一surface template
+- model-visible IDは`bool-r01`等のopaque ID
+- invariant ID、label、pair情報はmodel promptへ出さずgenerator-side provenanceだけに保持
+- boolean primaryとmc/stp referenceは別model call
+
+static auditは、boolean 12問（6/6）、false全問のreachable counterexample、constant-answer baseline=0.50、`f5Warnings=[]`、raw GT ID leakageなし、prompt cueなし、ID cueなし、duplicate promptなしを要求する。
+
+#### 10.0.3 revised live gate
+
+事前engineering gate：
+
+- B=0 × 3 repeat：boolean平均0.35〜0.65
+- Full × 3 repeat：boolean平均 >= 0.85
+- Full−B=0 >= 0.25
+- `protocol_adapter.ts` only × 3 repeat：boolean平均0.35〜0.65
+
+adapter-onlyでmc/stpが高得点になること自体はF9 diagnosticとして許容する。一方、invariantを直接表現しないadapterだけでbooleanまでchanceを大きく超える場合、primaryにもstructural inferenceが混入しているためfailureとする。
+
+visible-tests-onlyはdiagnosticとして記録するがhard gateにはしない。visible testsはartifactの一部でprecondition/behaviorを正当に表現しうるため、高得点とdirect answer leakageは同義ではない。F5はstatic leakage audit、B=0 chance、probe-level response確認で診断する。
 
 **Gate P6-0**
 
-- balanced/static leakage auditがclean
+- revised static auditがclean
 - boolean B=0がchance近傍
-- booleanがB=0→Fullで十分なdose-responseを持つ
-- visible-tests-onlyでbooleanのF5 leakageが観測されない
-- mc/stpのF9挙動がreference diagnosticとして記録される
+- B=0→Fullに十分なdose-response
+- adapter-only booleanがchance近傍
+- F5 tests-only / F9 mc-stpをreference diagnosticとして個別記録
+- probe-level answer / correct answer / parse error / model / usage / costをrepeatごとに保存
+
+failure時はmeasurement pathを修正し、P6-1を開始しない。
 
 ### 10.1 P6-1：Primary task eligibility
 
