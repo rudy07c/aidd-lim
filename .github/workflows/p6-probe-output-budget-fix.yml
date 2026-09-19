@@ -23,8 +23,8 @@ jobs:
       - name: Install harness dependencies
         run: cd harness && npm ci
       - name: Patch P6 probe transport only
-        shell: python
         run: |
+          python - <<'PY'
           from pathlib import Path
           p = Path('harness/p6-preflight-live.ts')
           s = p.read_text()
@@ -78,6 +78,7 @@ for (const group of probeGroups) {
                   raise SystemExit(f'missing expected token: {token}')
 
           p.write_text(s)
+          PY
       - name: Verify harness
         run: |
           cd harness
