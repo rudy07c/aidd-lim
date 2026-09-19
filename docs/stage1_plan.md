@@ -1195,7 +1195,29 @@ Stage 1でLLM selectorは使わない。
 
 ## 10. Pre-Stage 1 / P6：再較正
 
-### 10.0 Primary task eligibility
+### 10.0 P6-0：Probe bank再検証（F5/F9・Luna）
+
+Primary modelをGPT-5.6 Lunaへ移行し、Synthetic World / probe bankもStage 1向けに拡張されたため、task eligibility判定へ入る前に`calibration/fixtures/probe-bank-stage1.json`自体の測定妥当性をlive APIで再確認する。
+
+事前に固定する確認：
+
+- static auditでboolean主指標が24問（true 12 / false 12）のbalanced設計を維持し、`f5Warnings=[]`・raw Ground Truth ID leakageなしであること
+- Luna × B=0を3 repeatし、boolean主指標の平均accuracyがchance近傍（engineering gate: 0.35〜0.65）にあること
+- Luna × B=1K / Fullを3 repeatし、Full平均accuracy >= 0.85かつFull−B=0 >= 0.25の感度を持つこと
+- visible-tests-only ablationを3 repeatし、boolean平均が0.65以下かつB=0平均+0.15を超えないこと。超える場合はF5型のvisible-test leakageとしてprobe bankをP6-1前に修正する
+- `protocol_adapter.ts` only ablationとB=1Kでmc/stp reference probeを確認し、F9型のoperationTable / naming-pattern inferenceがLunaでも再現するかを記録する
+
+mc/stpは既にreference-onlyであり、F9再現それ自体はboolean主指標のgate failureとはしない。ただしreferenceとしての解釈を超えてprimary判定へ混入させない。boolean側にF5/F9由来の非context情報が見つかった場合はP6-1へ進まずprobe bankを修正する。
+
+**Gate P6-0**
+
+- balanced/static leakage auditがclean
+- boolean B=0がchance近傍
+- booleanがB=0→Fullで十分なdose-responseを持つ
+- visible-tests-onlyでbooleanのF5 leakageが観測されない
+- mc/stpのF9挙動がreference diagnosticとして記録される
+
+### 10.1 P6-1：Primary task eligibility
 
 旧Stage 0.5では、当時のmodelでArtifact-Fullでも恒常的に失敗するtaskが存在した。primary model移行後は、その旧結果だけでtaskを除外せず、main comparisonとは独立したcalibration repeatでtask適格性を再評価する。
 
@@ -1218,13 +1240,13 @@ Stage 1でLLM selectorは使わない。
 
 構成A（通常feature task）をprimary outcomeの中心に置き、構成B（invariant-stressingを含む）はdiagnosticとして別集計する。閾値、repeat数、分類理由はStage 1Aのcondition差を見る前にfreezeする。
 
-### 10.0.1 Luna capability-floor gate
+### 10.1.1 Luna capability-floor gate
 
 GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main comparison前にmodel capability floorを明示的に検査する。Artifact-Fullで \(\mathcal T_{primary}\) が恒常的に失敗する、または \(R^{sem}\) / \(M\) がfloorへ張り付く場合、そのtaskはchallenge setへ移す。primary task全体がfloorとなる場合のみ、model選択自体を再検討する。
 
 このgateはLunaを有利に見せるためのpost-hoc task除外ではなく、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
 
-### 10.1 AF baseline
+### 10.2 P6-2：AF baseline
 
 selected primary modelで、
 
@@ -1233,7 +1255,7 @@ selected primary modelで、
 
 のAF baselineを再取得。
 
-### 10.2 EL static exposure
+### 10.3 P6-3：EL static exposure
 
 複数static exposure budget：
 
@@ -1245,7 +1267,7 @@ B_{expose} \in \{0,B_1,B_2,\ldots,AF\}
 
 既存1K/2Kは候補であり、model/token-counter変更後に再freezeする。
 
-### 10.3 PR working-set dose-response
+### 10.4 P6-4：PR working-set dose-response
 
 複数 \(B_{work}\) で：
 
@@ -1262,7 +1284,7 @@ B_{expose} \in \{0,B_1,B_2,\ldots,AF\}
 
 > **finite simultaneous working setでもmeasurement sensitivityがあるか**
 
-### 10.4 AR smoke / non-floor
+### 10.5 P6-5：AR smoke / non-floor
 
 ARはretrieval能力そのものが研究変数。
 
@@ -1275,7 +1297,7 @@ ARはretrieval能力そのものが研究変数。
 - budget works
 - pathological floor onlyではない
 
-### 10.5 MOI serialization preflight
+### 10.6 P6-6：MOI serialization preflight
 
 MOIについては「budget dose-response」は不要。
 
@@ -1290,7 +1312,7 @@ MOIについては「budget dose-response」は不要。
 
 を較正する。
 
-### 10.6 freeze
+### 10.7 P6-7：freeze
 
 Stage 1本実験前に：
 
@@ -2188,18 +2210,19 @@ P5で構築したretrieval/runtimeを、実際のcondition dispatcher・OpenAI�
 
 ### Phase P6：Recalibration
 
-38. AF baseline
-39. EL static dose-response
-40. PR working-set dose-response
-41. AR smoke/non-floor
-42. MOI serialization + source-tagging preflight
-43. Operational-Full feasibility preflight
-44. \(B_{expose}\) freeze
-45. \(B_{work}\) freeze
-46. \(E_{max}\) freeze
-47. MOI schema/size freeze
-48. equivalence margins
-49. variance / repeats freeze
+38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only）
+39. **P6-1** Primary task eligibility + Luna capability-floor pilot / classification
+40. **P6-2** AF baseline
+41. **P6-3** EL static dose-response
+42. **P6-4** PR working-set dose-response
+43. **P6-5** AR smoke/non-floor
+44. **P6-6** MOI serialization + source-tagging / Operational-Full feasibility preflight
+45. **P6-7** \(B_{expose}\) freeze
+46. \(B_{work}\) freeze
+47. PR/AR共通 \(E_{max}\) freeze
+48. MOI schema/size freeze
+49. equivalence margins
+50. variance / repeats freeze
 
 **Gate**：5 conditions non-degenerate。
 
