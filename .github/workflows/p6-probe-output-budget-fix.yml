@@ -1,0 +1,92 @@
+name: One-shot P6 probe output budget fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/p6-probe-output-budget-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        run: cd harness && npm ci
+      - name: Patch P6 probe transport only
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('harness/p6-preflight-live.ts')
+          s = p.read_text()
+
+          s = s.replace(
+              'const PROBE_BATCH_SIZE = 20;\n',
+              'const PRIMARY_PROBE_BATCH_SIZE = 12;\nconst REFERENCE_PROBE_BATCH_SIZE = 8;\nconst PROBE_MAX_OUTPUT_TOKENS = 8000;\n'
+          )
+          s = s.replace('      maxOutputTokens: 5000,\n', '      maxOutputTokens: PROBE_MAX_OUTPUT_TOKENS,\n', 1)
+
+          old = '''const probeGroups = [
+  probes.filter((p) => p.type === "boolean"),
+  probes.filter((p) => p.type !== "boolean"),
+].filter((group) => group.length > 0);
+for (const group of probeGroups) {
+  for (let i = 0; i < group.length; i += PROBE_BATCH_SIZE) {
+    const batch = group.slice(i, i + PROBE_BATCH_SIZE);
+    const r = await answerProbeBatch(client, ctx.files, batch);
+    Object.assign(answers, r.answers);
+    actualModels.push(r.model);
+    addUsage(usage, r.usage);
+    estimatedCostUsd += r.cost;
+  }
+}'''
+          new = '''const probeGroups = [
+  { probes: probes.filter((p) => p.type === "boolean"), batchSize: PRIMARY_PROBE_BATCH_SIZE },
+  { probes: probes.filter((p) => p.type !== "boolean"), batchSize: REFERENCE_PROBE_BATCH_SIZE },
+].filter((group) => group.probes.length > 0);
+for (const group of probeGroups) {
+  for (let i = 0; i < group.probes.length; i += group.batchSize) {
+    const batch = group.probes.slice(i, i + group.batchSize);
+    const r = await answerProbeBatch(client, ctx.files, batch);
+    Object.assign(answers, r.answers);
+    actualModels.push(r.model);
+    addUsage(usage, r.usage);
+    estimatedCostUsd += r.cost;
+  }
+}'''
+          if old not in s:
+              raise SystemExit('probe group block not found')
+          s = s.replace(old, new)
+
+          for token in [
+              'const PRIMARY_PROBE_BATCH_SIZE = 12;',
+              'const REFERENCE_PROBE_BATCH_SIZE = 8;',
+              'const PROBE_MAX_OUTPUT_TOKENS = 8000;',
+              'maxOutputTokens: PROBE_MAX_OUTPUT_TOKENS',
+              'batchSize: REFERENCE_PROBE_BATCH_SIZE',
+          ]:
+              if token not in s:
+                  raise SystemExit(f'missing expected token: {token}')
+
+          p.write_text(s)
+      - name: Verify harness
+        run: |
+          cd harness
+          npm run typecheck
+      - name: Commit transport fix and remove one-shot workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/p6-probe-output-budget-fix.yml
+          git add harness/p6-preflight-live.ts
+          git commit -m 'fix(p6): avoid probe output-token truncation'
+          git push
