@@ -1,0 +1,204 @@
+name: One-shot P6 probe ID leak fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/p6-probe-id-leak-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            harness/package-lock.json
+            calibration/package-lock.json
+      - name: Install dependencies
+        run: |
+          cd calibration && npm ci
+          cd ../harness && npm ci
+      - name: Remove boolean ID label leakage and strengthen audit
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('calibration/src/stage1-probes.ts')
+          s = p.read_text()
+
+          s = s.replace(
+              '  booleanCueWarnings: string[];\n  duplicateBooleanPrompts: string[];',
+              '  booleanCueWarnings: string[];\n  booleanIdCueWarnings: string[];\n  duplicateBooleanPrompts: string[];'
+          )
+
+          old = '''  // Do not preserve positive/negative pair adjacency.  A stable hash gives reproducible ordering
+          // without making label predictable from the visible position in the prompt batch.
+          return [...positives, ...negatives].sort((a, b) => {
+            const key = (probe: GeneratedProbe) => crypto
+              .createHash("sha256")
+              .update(`${STAGE1_BOOLEAN_DESIGN_VERSION}:${probe.probeId}`)
+              .digest("hex");
+            return key(a).localeCompare(key(b));
+          });'''
+          new = '''  // Do not preserve positive/negative pair adjacency. A stable hash gives reproducible ordering.
+          // IMPORTANT: temporary construction IDs above contain provenance (I1/positive/negative) for generator-side
+          // bookkeeping only. Re-ID after ordering so no label/provenance cue reaches the model-visible prompt.
+          const ordered = [...positives, ...negatives].sort((a, b) => {
+            const key = (probe: GeneratedProbe) => crypto
+              .createHash("sha256")
+              .update(`${STAGE1_BOOLEAN_DESIGN_VERSION}:${probe.probeId}`)
+              .digest("hex");
+            return key(a).localeCompare(key(b));
+          });
+          return ordered.map((probe, index) => ({
+            ...probe,
+            probeId: `${scheme.schemeId}-bool-r${String(index + 1).padStart(2, "0")}`,
+          }));'''
+          if old not in s:
+              raise SystemExit('boolean ordering block not found')
+          s = s.replace(old, new)
+
+          s = s.replace(
+              '''  const rawGroundTruthIdLeakage = probes
+            .filter((p) => /\\b(?:E|O|I)\\d+\\b/.test(p.prompt))
+            .map((p) => p.probeId);''',
+              '''  const rawGroundTruthIdLeakage = probes
+            .filter((p) => /\\b(?:E|O|I)\\d+\\b/.test(`${p.probeId}\\n${p.prompt}`))
+            .map((p) => p.probeId);'''
+          )
+
+          marker = '''  const booleanCueWarnings = booleanProbes.filter((p) => cuePattern.test(p.prompt)).map((p) => p.probeId);
+          const promptCounts = new Map<string, number>();'''
+          repl = '''  const booleanCueWarnings = booleanProbes.filter((p) => cuePattern.test(p.prompt)).map((p) => p.probeId);
+          const idCuePattern = /positive|negative|matched|true|false|(?:^|-)I\\d+(?:-|$)/i;
+          const booleanIdCueWarnings = booleanProbes.filter((p) => idCuePattern.test(p.probeId)).map((p) => p.probeId);
+          const promptCounts = new Map<string, number>();'''
+          if marker not in s:
+              raise SystemExit('cue audit marker not found')
+          s = s.replace(marker, repl)
+
+          s = s.replace(
+              '    booleanCueWarnings,\n    duplicateBooleanPrompts,',
+              '    booleanCueWarnings,\n    booleanIdCueWarnings,\n    duplicateBooleanPrompts,'
+          )
+
+          marker = '''  if (audit.booleanCueWarnings.length > 0) {
+            throw new Error(`Stage 1 boolean prompts contain answer-cue wording: ${audit.booleanCueWarnings.join(", ")}`);
+          }
+          if (audit.duplicateBooleanPrompts.length > 0) {'''
+          repl = '''  if (audit.booleanCueWarnings.length > 0) {
+            throw new Error(`Stage 1 boolean prompts contain answer-cue wording: ${audit.booleanCueWarnings.join(", ")}`);
+          }
+          if (audit.booleanIdCueWarnings.length > 0) {
+            throw new Error(`Stage 1 boolean probe IDs contain answer/provenance cues: ${audit.booleanIdCueWarnings.join(", ")}`);
+          }
+          if (audit.duplicateBooleanPrompts.length > 0) {'''
+          if marker not in s:
+              raise SystemExit('assert cue marker not found')
+          s = s.replace(marker, repl)
+
+          required = ['bool-r${String(index + 1)', 'booleanIdCueWarnings', '`${p.probeId}\\n${p.prompt}`']
+          for token in required:
+              if token not in s:
+                  raise SystemExit(f'missing generator patch token: {token}')
+          p.write_text(s)
+
+      - name: Separate primary boolean from reference API batches
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('harness/p6-preflight-live.ts')
+          s = p.read_text()
+          old = '''  for (let i = 0; i < probes.length; i += PROBE_BATCH_SIZE) {
+            const batch = probes.slice(i, i + PROBE_BATCH_SIZE);
+            const r = await answerProbeBatch(client, ctx.files, batch);
+            Object.assign(answers, r.answers);
+            actualModels.push(r.model);
+            addUsage(usage, r.usage);
+            estimatedCostUsd += r.cost;
+          }'''
+          new = '''  // Primary boolean probes and mc/stp reference probes must not share a model call.
+          // Otherwise reference questions (notably operationTable-driven F9 probes) can leak structural hints
+          // into the primary measurement even when the repository context itself is empty.
+          const probeGroups = [
+            probes.filter((p) => p.type === "boolean"),
+            probes.filter((p) => p.type !== "boolean"),
+          ].filter((group) => group.length > 0);
+          for (const group of probeGroups) {
+            for (let i = 0; i < group.length; i += PROBE_BATCH_SIZE) {
+              const batch = group.slice(i, i + PROBE_BATCH_SIZE);
+              const r = await answerProbeBatch(client, ctx.files, batch);
+              Object.assign(answers, r.answers);
+              actualModels.push(r.model);
+              addUsage(usage, r.usage);
+              estimatedCostUsd += r.cost;
+            }
+          }'''
+          if old not in s:
+              raise SystemExit('runProbeRepeat batch loop not found')
+          s = s.replace(old, new)
+
+          old = '''    booleanCueWarnings: audit.audit.booleanCueWarnings,
+          };'''
+          new = '''    booleanCueWarnings: audit.audit.booleanCueWarnings,
+            booleanIdCueWarnings: audit.audit.booleanIdCueWarnings,
+          };'''
+          if old not in s:
+              raise SystemExit('runner static audit marker not found')
+          s = s.replace(old, new)
+
+          old = '''    staticAudit.rawGroundTruthIdLeakage.length ||
+            staticAudit.booleanCueWarnings.length
+          ) {'''
+          new = '''    staticAudit.rawGroundTruthIdLeakage.length ||
+            staticAudit.booleanCueWarnings.length ||
+            staticAudit.booleanIdCueWarnings.length
+          ) {'''
+          if old not in s:
+              raise SystemExit('runner static assertion marker not found')
+          s = s.replace(old, new)
+          p.write_text(s)
+
+      - name: Update P3 verification for ID-cue audit
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('calibration/verify-p3-measurement.ts')
+          s = p.read_text()
+          marker = '  assert.strictEqual(audit.booleanCueWarnings.length, 0);\n'
+          if marker not in s:
+              raise SystemExit('verify-p3 cue assertion not found')
+          s = s.replace(marker, marker + '  assert.strictEqual(audit.booleanIdCueWarnings.length, 0);\n')
+          s = s.replace(
+              '      "boolean-answer-cue-scan",\n',
+              '      "boolean-answer-cue-scan",\n      "boolean-id-cue-scan",\n'
+          )
+          p.write_text(s)
+
+      - name: Regenerate probes and verify
+        run: |
+          cd calibration
+          npm run generate-probes:stage1
+          npm run typecheck
+          npm run verify:p3
+          npx ts-node src/calibration-runner.ts --backend=mock-noop --budgets=0 --tasks=T-local-1 --probe-bank=stage1
+          cd ../harness
+          npm run typecheck
+          cd ../synthetic-world
+          npm ci
+          npm test -- --runInBand
+      - name: Commit repaired P6-0 measurement path
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/p6-probe-id-leak-fix.yml
+          git add calibration/src/stage1-probes.ts calibration/verify-p3-measurement.ts calibration/fixtures/probe-bank-stage1.json calibration/fixtures/probe-bank-stage1.audit.json harness/p6-preflight-live.ts
+          git commit -m 'fix(p6): remove boolean probe ID leakage'
+          git push
