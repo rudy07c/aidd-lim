@@ -27,7 +27,8 @@
     "verify:openai-live": "ts-node verify-openai-live.ts",
     "verify:openai-batch-live": "ts-node verify-openai-batch-live.ts",
     "verify:p2-openai-live": "ts-node verify-p2-openai-live.ts",
-    "verify:run-validity": "ts-node verify-run-validity.ts"
+    "verify:run-validity": "ts-node verify-run-validity.ts",
+    "p6:preflight-live": "ts-node p6-preflight-live.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
