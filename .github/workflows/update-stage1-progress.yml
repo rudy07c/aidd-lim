@@ -1,4 +1,4 @@
-name: One-shot Stage 1 progress docs update
+name: One-shot Stage 1 plan progress update
 
 on:
   push:
@@ -9,24 +9,64 @@ permissions:
   contents: write
 
 jobs:
-  update-docs:
+  update-stage1:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Update Stage 1 progress documentation
+      - name: Update docs/stage1_plan.md
         shell: bash
         run: |
-          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAppbXBvcnQgcmUKCnN0YWdlMV9wYXRoID0gUGF0aCgiZG9jcy9zdGFnZTFfcGxhbi5tZCIpCmV4cGVyaW1lbnRfcGF0aCA9IFBhdGgoImRvY3MvZXhwZXJpbWVudF9wbGFuLm1kIikKCnN0YWdlMSA9IHN0YWdlMV9wYXRoLnJlYWRfdGV4dCgpCgpjb21wbGV0ZWRfaGVhZGVycyA9IFsKICAgICgiIyMjIFBoYXNlIFAw77yaQ29uY2VwdHVhbCAvIE5hbWluZyBTeW5jIiwgIiMjIyBQaGFzZSBQMO+8mkNvbmNlcHR1YWwgLyBOYW1pbmcgU3luYyDijIUg5a6M5LqGIiksCiAgICAoIiMjIyBQaGFzZSBQMe+8mkJhY2tlbmQgLyBNb2RlbCBNaWdyYXRpb24iLCAiIyMjIFBoYXNlIFAx77yaQmFja2VuZCAvIE1vZGVsIE1pZ3JhdGlvbiDijIUg5a6M5LqGIiksCiAgICAoIiMjIyBQaGFzZSBQMu+8mk1PSSAvIE9ic2VydmFibGUgSW50ZXJhY3Rpb24iLCAiIyMjIFBoYXNlIFAy77yaTU9JIC8gT2JzZXJ2YWJsZSBJbnRlcmFjdGlvbiDijIUg5a6M5LqGIiksCiAgICAoIiMjIyBQaGFzZSBQM++8mk1lYXN1cmVtZW50IFJlcGFpciIsICIjIyMgUGhhc2UgUDPvvJpNZWFzdXJlbWVudCBSZXBhaXIg4pyFIOWujOS6hiIpLAogICAgKCIjIyMgUGhhc2UgUDTvvJpXb3JraW5nLVNldCBSdW50aW1lIiwgIiMjIyBQaGFzZSBQNO+8mldvcmtpbmctU2V0IFJ1bnRpbWUg4pyFIOWujOS6hiIpLAogICAgKCIjIyMgUGhhc2UgUDXvvJpSZXRyaWV2YWwgLyBTZWN1cml0eSIsICIjIyMgUGhhc2UgUDXvvJpSZXRyaWV2YWwgLyBTZWN1cml0eSDijIUg5a6M5LqGIiksCl0KZm9yIG9sZCwgbmV3IGluIGNvbXBsZXRlZF9oZWFkZXJzOgogICAgaWYgb2xkIG5vdCBpbiBzdGFnZTE6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdChmIm1pc3NpbmcgU3RhZ2UgMSBwaGFzZSBoZWFkZXI6IHtvbGR9IikKICAgIHN0YWdlMSA9IHN0YWdlMS5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKcDU1ID0gIiIiIyMjIFBoYXNlIFA1LjXvvJpQUiAvIEFSIFJ1bnRpbWUgSGFyZGVuaW5nICYgTHVuYSBMaXZlIFNtb2tlIOKchSDlrozkuoYKClA15p2L5qeJ44GX44GfcmV0cmlldmFsL3J1bnRpbWXjgpLjgIHlrp/mmZvjga5jb25kaXRpb24gZGlzcGF0Y2hlcuODu09wZW5BSeWunumhjOe1j+i3r+ODu0dlbmVyYXRpb25Mb2fjgbjlt6XmgqjjgZfjgIFQNuOBp+enkeWtpueahOi8g+ato+OBuOWFpeOCjOOCi+eKtuaFi+OBvuOBp2hhcmRlbmluZ+OBmeOCi+OAggoKLSBbeF0gUFIgLyBBUuOCknByb2R1Y3Rpb27jga5jb25kaXRpb24gZGlzcGF0Y2hlcuOBuuaOpue2muOBlyDjgIFgcnVuLnRzYOOBi+OCieWun+W5s2NvbmRpdGlvbuOBqOOBl+OBp+i1t+WLleWPr+iDveOBq+OBmeOCi+OBmeOCi+CiCi0gW3hdIHJldHJpZXZlZCBlcGlzb2Rl44Gu57WQ5p6c44KSVGBlbmVyYXRpb25Mb2dg44G46YWN57ea44GX44CBcmV0cmlldmFsIC8gd29ya2luZy1zZXQgLyBjb21wbGV0aW9uIC8gZXJyb3IgcHJvdmVuYW5jZeOCkuS4luS7o+ODreOCs+OBi+OCieWGjeani+WujOWPr+iDveOBq+OBmeOCi+CiCi0gW3hdIE9wZW5BSeeUqFBSIGV4ZWN1dG9y44KS5paw6Kit44GX44CBcHJpdmlsZWdlZCBjb250cm9sbGVyICsgcmVzZWFyY2gtc3RhdGVsZXNzIHJlcXVlc3TjgafQUuOCkuWun+WVg0FQSOWun+ihjOWPr+iDveOBq+OBmeOCi+CiCi0gW3hdIFBSIC8gQVLjgaflkIzkuIBGSUZPLXYx44GUrereadIGNhcGFiaWxpdHnjgpLlrp/mmZvjg7vmpJzoqLzjgZfjgIFDMuOBp3JldHJpZXZhbCBwb2xpY3nku6XlpJbjga5yZXNvdXJjZSBjb250cmFjdOOCkuWFseaciOOBmeOCi+CiCi0gW3hdIGV2aWRlbmNlIGV4aGF1c3Rpb27jgpLkvovlpJbjgafmuYTjgZXjgZpGZXZpZGVuY2UtZXhoYXVzdGlvbi1zaWduYWxg44Go44GX44Gm6Kaz5ris5Y+v6IO944Gr44GZ44KL5a6f6KOF44GZ44KLClsgXSBlcnJvciBoZXJlCiIiIgptYXJrZXIgPSAiIyMjIFBoYXNlIFA277yaUmVjYWxpYnJhdGlvblxuIgppZiBtYXJrZXIgbm90IGluIHN0YWdlMToKICAgIHJhaXNlIFN5c3RlbUV4aXQoIm1pc3NpbmcgUDYgbWFya2VyIikKaWYgIiMjIFBoYXNlIFA1LjXvvJoiIGluIHN0YWdlMToKICAgIHJhaXNlIFN5c3RlbUV4aXQoIlA1LjUgYWxyZWFkeSBleGlzdHMiKQpzdGFnZTEgPSBzdGFnZTEucmVwbGFjZShtYXJrZXIsIHA1NSArIG1hcmtlciwgMSkKc3RhZ2UxX3BhdGgud3JpdGVfdGV4dChzdGFnZTEpCgpleHBlcmltZW50ID0gZXhwZXJpbWVudF9wYXRoLnJlYWRfdGV4dCgpCmlmICIqKuinhOWIlCoqOiB2Mi42IiBub3QgaW4gZXhwZXJpbWVudDoKICAgIHJhaXNlIFN5c3RlbUV4aXQoInVuZXhwZWN0ZWQgZXhwZXJpbWVudCBwbGFuIHZlcnNpb24iKQpleHBlcmltZW50ID0gZXhwZXJpbWVudC5yZXBsYWNlKCIqKuinhOWIlCoqOiB2Mi42IiwgIioq54mIKio6IHYyLjciLCAxKQoKdjI3X25vdGUgPSAiIiIqKnYyLjfjgafjga7lpInmm7TngrnvvIhQcmUtU3RhZ2UgMSBQNS41448CIOWujOS6huODuuePvuWcqOWcsOWQjOacnO+8ieKAvO+8mgotIGBkb2NzL3N0YWdlMV9wbGFuLm1kYOOBrOWun+ijhemghuW6j+OBq1A1LjXjgpLmqLTlvI/jgavov73liqDjgZfjgIFjb25kaXRpb24gZGlzcGF0Y2hlcuabpee2muODu0dlbmVyYXRpb25Mb2fphY3nt5rjg7tPcGVuQUkgUFIgZXhlY3V0b3LjgIFQUi9BUiByZXJlYWQgcGFyaXR544CBeXZpZGVuY2UtZXhoYXVzdGlvbiBzaWduYWzjgIFyZXBvc2l0b3J5LWFjY2Vzc29yIGNsYW1w5aWR57SE44CBTHVuYSBsaXZlIHNtb2tl44CBRjExIOiovemMsuOBvuOBp2OCkuWujOS6hua4iHBoYXNl44Go44GX44Gm5Zu65a6aCi0gUHJlLVN0YWdlIDHjga5QMOOAnVA1LjXjgpLlrp/miJDmuIjjgb/vvIjijIUvvInjgajjgZfて...snipped...' | base64 -d > /tmp/update_stage1_progress.py
-          python /tmp/update_stage1_progress.py
-      - name: Commit and push documentation update
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/stage1_plan.md')
+          s = p.read_text()
+          for old in [
+              '### Phase P0：Conceptual / Naming Sync',
+              '### Phase P1：Backend / Model Migration',
+              '### Phase P2：MOI / Observable Interaction',
+              '### Phase P3：Measurement Repair',
+              '### Phase P4：Working-Set Runtime',
+              '### Phase P5：Retrieval / Security',
+          ]:
+              if old not in s:
+                  raise SystemExit(f'missing header: {old}')
+              s = s.replace(old, old + ' ✅ 完了', 1)
+          marker = '### Phase P6：Recalibration\n'
+          if marker not in s:
+              raise SystemExit('missing P6 marker')
+          if '### Phase P5.5：' in s:
+              raise SystemExit('P5.5 already exists')
+          block = '''### Phase P5.5：PR / AR Runtime Hardening & Luna Live Smoke ✅ 完了
+
+          P5で構築したretrieval/runtimeを、実際のcondition dispatcher・OpenAI実行経路・GenerationLogへ接続し、P6で科学的較正へ入れる状態までhardeningする。
+
+          - [x] PR / ARをproductionのcondition dispatcherへ接続し、`run.ts`から実conditionとして起動可能にする
+          - [x] retrieved episodeの結果を`GenerationLog`へ配線し、retrieval / working-set / completion / error provenanceを世代ログから再構成可能にする
+          - [x] OpenAI用PR executorを新設し、privileged controller + research-stateless requestでPRを実API実行可能にする
+          - [x] PR / ARで同一FIFO-v1のreread capabilityを実装・検証し、C2でretrieval policy以外のresource contractを共有する
+          - [x] evidence exhaustionを例外で潰さず`evidence-exhaustion-signal`として観測可能にする
+          - [x] failed retrieval loggingと、`E_max`枯渇・provider error・model-originated outcomeのtyped separationを実装する
+          - [x] `RepositoryAccessor.readChunk()`の`endLine`を実ファイル末尾へclampする契約を修正し、回帰testで固定する
+          - [x] GPT-5.6 LunaでPR / ARのlive smokeを実施し、research-stateless ARで同一searchを反復するF11を生ログから記録する
+          - [x] F11をC2のshared resource contractへ同期し、PR / ARで**同一の `B_work`・同一の `E_max`・同一のFIFO-v1**を使うこと、ARの追加探索消費自体をretrieval-policy effectとして扱うことを明文化する
+          - [x] `searchEmptyAttempts`等のdeterministic episodic bookkeepingがresearch-stateless原則と両立する境界を文書化する
+
+          **Gate**：PR / ARが共通C2 resource contract上でproduction dispatcherからend-to-end実行でき、reread・evidence exhaustion・failure semantics・GenerationLogが観測可能である。RepositoryAccessorのclamp契約がtestで固定され、GPT-5.6 Luna live smokeでPR / ARの実行経路を確認済み。F11はretrieval-policy effectとして記録され、P6ではPR / AR共通の`E_max`をrepeatで較正・freezeする方針まで同期済み。
+
+          '''
+          import textwrap
+          block = textwrap.dedent(block)
+          s = s.replace(marker, block + marker, 1)
+          p.write_text(s)
+          PY
+      - name: Commit and push stage1 plan update
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git rm .github/workflows/update-stage1-progress.yml
-          git add docs/stage1_plan.md docs/experiment_plan.md
+          git add docs/stage1_plan.md
           git diff --cached --check
-          git commit -m 'docs(stage1): record P5.5 completion and P6 current position'
+          git commit -m 'docs(stage1): record P5.5 completion'
           git push origin HEAD:main
