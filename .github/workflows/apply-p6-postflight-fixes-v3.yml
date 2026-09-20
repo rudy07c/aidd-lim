@@ -1,0 +1,72 @@
+name: Apply P6 postflight fixes v3
+
+on:
+  push:
+    paths:
+      - '.github/p6_postflight_trigger_v3'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            harness/package-lock.json
+            synthetic-world/package-lock.json
+      - name: Generate validated patch
+        run: |
+          python .github/fix_p6_postflight_generator.py
+          python .github/apply_p6_postflight_fixes.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('harness/src/p6/task-bank-eligibility.ts')
+          s = p.read_text()
+          old = 'export const P6_1_TASK_BANK_VERSION = "p6-1-full-task-bank-v2";'
+          new = 'export const P6_1_TASK_BANK_VERSION = "p6-1-full-task-bank-v3-postflight-coverage";'
+          if old not in s:
+              raise SystemExit('task bank version anchor missing')
+          p.write_text(s.replace(old, new, 1))
+
+          findings = Path('docs/findings/stage1_findings.md')
+          findings.write_text('\n'.join(line.rstrip() for line in findings.read_text().splitlines()) + '\n')
+          anthropic = Path('harness/src/agent-backend/anthropic.ts')
+          anthropic.write_text(anthropic.read_text().rstrip() + '\n')
+          PY
+      - name: Install dependencies
+        run: |
+          cd harness && npm ci
+          cd ../synthetic-world && npm ci
+      - name: Recheck key validations after normalization
+        working-directory: harness
+        run: |
+          npm run typecheck
+          npm run verify:package-version
+          npm run verify:heldout-invariant-coverage
+          npm run verify:p6-failure-classification
+          npm run verify:p6-task-bank-eligibility
+          npm run verify:p6-task-bank-eligibility-runner
+      - name: Commit fixes
+        run: |
+          git config user.name 'rudy07c'
+          git config user.email 'rudy07c@gmail.com'
+          git add \
+            harness/src/agent-backend/package-version.ts \
+            harness/src/agent-backend/openai/shared.ts \
+            harness/src/agent-backend/anthropic.ts \
+            harness/src/p6/task-bank-eligibility.ts \
+            harness/verify-package-version.ts \
+            harness/verify-heldout-invariant-coverage.ts \
+            harness/package.json \
+            synthetic-world/heldout_tasks.json \
+            docs/stage1_plan.md \
+            docs/findings/stage1_findings.md
+          git diff --cached --check
+          git commit -m 'fix(p6): record postflight and harden task coverage'
+          git push
