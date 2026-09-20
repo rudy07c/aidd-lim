@@ -25,6 +25,26 @@ jobs:
         run: |
           git config user.name 'rudy07c'
           git config user.email 'rudy07c@gmail.com'
+      - name: Repair generated-TypeScript template escaping
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('harness/apply-p6-2-exact-power-fix.js')
+          s = p.read_text()
+          for name, end_marker in [
+              ('adjudicationTs', "\nwrite('harness/src/p6/adjudication.ts', adjudicationTs);"),
+              ('cliTs', "\nwrite('harness/adjudicate-p6-af-baseline.ts', cliTs);"),
+          ]:
+              marker = f'const {name} = String.raw`'
+              start = s.index(marker)
+              body_start = start + len(marker)
+              end = s.index('`;'+end_marker, body_start)
+              body = s[body_start:end]
+              body = body.replace('`', r'\`').replace('${', r'\${')
+              s = s[:start] + f'const {name} = `' + body + '`;' + end_marker + s[end + len('`;'+end_marker):]
+          p.write_text(s)
+          PY
+          node --check harness/apply-p6-2-exact-power-fix.js
       - name: Apply predeclaration then implementation commits
         run: node harness/apply-p6-2-exact-power-fix.js
       - name: Install harness dependencies
