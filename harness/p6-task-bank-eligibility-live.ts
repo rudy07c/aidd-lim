@@ -620,10 +620,8 @@ async function main(): Promise<void> {
   const executionManifest = buildExecutionManifest(repoRoot);
 
   console.log("P6-1 FULL TASK-BANK PREDECLARED RULE", JSON.stringify({
-    initialAttempts: P6_1_INITIAL_REPEATS,
-    maxAttempts: P6_1_MAX_ATTEMPTS,
-    maxTotalAttempts: selectedTasks.length * P6_1_MAX_ATTEMPTS,
     ...DEFAULT_P6_1_ELIGIBILITY_RULE,
+    maxTotalAttempts: selectedTasks.length * P6_1_MAX_ATTEMPTS,
     floorBasis: "semantic-failure-only",
     protocolFailureRole: "agent-output-reliability-diagnostic-only",
     analysisRoleRule: "invariant_stressing=>diagnostic;otherwise=>main",
