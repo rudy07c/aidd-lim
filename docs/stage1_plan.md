@@ -1305,7 +1305,7 @@ P6-1ではoverall success/failureだけでcapability floorを判定しない。r
 
 GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main comparison前にmodel capability floorを明示的に検査する。Artifact-Fullで \(\mathcal T_{primary}\) が恒常的にsemantic failureとなる、または \(R^{sem}\) / \(M\) がfloorへ張り付く場合、そのtaskはchallenge setへ移す。primary task全体がfloorとなる場合のみ、model選択自体を再検討する。
 
-このgateはLunaを有利に見せるためのpost-hoc task除外ではな、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
+このgateはLunaを有利に見せるためのpost-hoc task除外ではなく、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
 
 ### 10.1.3 2026-09-20 P6-1 reclassification / frozen pilot sets
 
