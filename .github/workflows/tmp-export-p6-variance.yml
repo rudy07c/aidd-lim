@@ -1,0 +1,24 @@
+name: Temporary variance export patch
+on:
+  push:
+    branches: [p6-2-variance-pilot-runner-v2]
+    paths:
+      - 'harness/tmp_export_p6_variance.py'
+      - '.github/workflows/tmp-export-p6-variance.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p6-2-variance-pilot-runner-v2
+      - run: python harness/tmp_export_p6_variance.py
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add harness/p6-af-baseline-live.ts
+          git diff --cached --check
+          git commit -m 'refactor: expose P6-2 measurement primitives'
+          git push origin HEAD:p6-2-variance-pilot-runner-v2
