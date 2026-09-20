@@ -39,7 +39,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .gitignore docs/stage1_plan.md docs/experiment_plan.md harness/package.json harness/p6-task-bank-eligibility-live.ts harness/src/p6/task-bank-live-runtime.ts harness/verify-p6-task-bank-eligibility-runner.ts .github/workflows/harness-ci.yml
+          git add .gitignore docs/stage1_plan.md docs/experiment_plan.md harness/package.json harness/p6-task-bank-eligibility-live.ts harness/src/p6/task-bank-live-runtime.ts harness/verify-p6-task-bank-eligibility-runner.ts
           git diff --cached --check
           git commit -m "fix(p6): harden task-bank live execution phases"
           git push
