@@ -55,8 +55,8 @@ import type { TestSuiteResult, TokenUsage } from "./src/types";
 export const P6_2_MODEL = "gpt-5.6-luna";
 export const P6_2_REASONING = "high" as const;
 export const P6_2_CONDITION = "AF" as const;
-export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v1";
-export const P6_2_ARTIFACT_LAYOUT_VERSION = "p6-2-af-baseline-artifacts-v1";
+export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v2";
+export const P6_2_ARTIFACT_LAYOUT_VERSION = "p6-2-af-baseline-artifacts-v2";
 export const P6_2_PROBE_SCHEMA_VERSION = "p6-2-af-boolean-answers-v1";
 export const P6_2_PROBE_PROMPT_VERSION = "p6-2-af-probe-prompt-v1";
 
@@ -117,12 +117,34 @@ interface MRepeatExecution {
   artifacts: RepeatArtifactBundle;
 }
 
+export type P62RSemFailureDomain = "none" | "semantic" | "protocol" | "system" | "infrastructure";
+
+export interface P62RSemModelProvenance {
+  provider: "openai";
+  requestedModel: typeof P6_2_MODEL;
+  actualModel: string | null;
+  responseId: string | null;
+  responseStatus: string | null;
+  reasoningEffort: typeof P6_2_REASONING;
+  maxOutputTokens: number;
+  requestTimeoutMs: number;
+  maxRetries: number;
+  sdkVersion: string | null;
+  providerErrorCode: string | null;
+}
+
 export interface RSemProbeRepeatResult {
   repeat: number;
   designVersion: string;
-  booleanCorrect: number;
+  executionStatus: string;
+  validity: "valid" | "infrastructure-invalid";
+  failureDomain: P62RSemFailureDomain;
+  failureReason: string | null;
+  rawResponse: string;
+  modelProvenance: P62RSemModelProvenance;
+  booleanCorrect: number | null;
   booleanTotal: number;
-  booleanAccuracy: number;
+  booleanAccuracy: number | null;
   probeDetails: Array<{
     probeId: string;
     correct: boolean;
@@ -130,9 +152,9 @@ export interface RSemProbeRepeatResult {
     correctAnswer: string;
     parseError?: string;
   }>;
-  actualModel: string;
+  actualModel: string | null;
   usage: TokenUsage;
-  estimatedCostUsd: number;
+  estimatedCostUsd: number | null;
 }
 
 export interface P62ExecutionManifest {
@@ -177,7 +199,15 @@ export interface P62AfBaselineResult {
   schemaVersion: typeof P6_2_RUN_SCHEMA_VERSION;
   artifactLayoutVersion: typeof P6_2_ARTIFACT_LAYOUT_VERSION;
   baselineVersion: typeof P6_2_AF_BASELINE_VERSION;
-  status: "running" | "completed";
+  status: "running" | "needs-audit" | "completed";
+  auditFlags: Array<{
+    measurement: "M" | "Rsem";
+    taskId: string | null;
+    repeat: number;
+    failureDomain: string;
+    executionStatus: string;
+    reason: string | null;
+  }>;
   startedAt: string;
   updatedAt: string;
   completedAt: string | null;
@@ -302,7 +332,7 @@ function loadProbeMaterial(syntheticWorldDir: string): ProbeMaterial {
   const schemes = JSON.parse(namingSchemesRaw) as NamingScheme[];
   const scheme = schemes.find((candidate) => candidate.schemeId === "A-obfuscated");
   if (!scheme) throw new Error("P6-2 requires A-obfuscated naming scheme");
-  const visibleTestPath = path.join(syntheticWorldDir, "repository/tests/visible.test.ts");
+  const visibleTestPath = path.join(syntheticWorldDir, "repository/tests/rules.visible.test.ts");
   const probes = generateStage1Probes(groundTruth, scheme, visibleTestPath);
   const audit = assertStage1ProbeBankValid(probes);
   if (audit.booleanTotal !== 12 || audit.booleanTrue !== 6 || audit.booleanFalse !== 6) {
@@ -394,6 +424,7 @@ export function createP62Result(args: {
     artifactLayoutVersion: P6_2_ARTIFACT_LAYOUT_VERSION,
     baselineVersion: P6_2_AF_BASELINE_VERSION,
     status: "running",
+    auditFlags: [],
     startedAt: now,
     updatedAt: now,
     completedAt: null,
@@ -462,12 +493,15 @@ export function assertP62ResumeCompatible(
 function recomputeResult(result: P62AfBaselineResult): void {
   result.measurements.M.summary = summarizeP62M(result.measurements.M.repeatResults);
   const r = result.measurements.Rsem.repeatResults;
-  result.measurements.Rsem.meanBooleanAccuracy = r.length
-    ? r.reduce((sum, item) => sum + item.booleanAccuracy, 0) / r.length
+  const validR = r.filter((item) =>
+    item.validity === "valid" && item.failureDomain === "none" && item.booleanAccuracy !== null
+  );
+  result.measurements.Rsem.meanBooleanAccuracy = validR.length
+    ? validR.reduce((sum, item) => sum + (item.booleanAccuracy ?? 0), 0) / validR.length
     : null;
   result.estimatedCostUsd =
     result.measurements.M.repeatResults.reduce((sum, item) => sum + (item.estimatedCostUsd ?? 0), 0) +
-    r.reduce((sum, item) => sum + item.estimatedCostUsd, 0);
+    r.reduce((sum, item) => sum + (item.estimatedCostUsd ?? 0), 0);
   result.updatedAt = new Date().toISOString();
 }
 
@@ -654,12 +688,73 @@ function addUsage(target: TokenUsage, usage: any): void {
   target.total = (target.total ?? 0) + (usage.total_tokens ?? 0);
 }
 
-async function runRSemRepeat(
+function emptyUsage(): TokenUsage {
+  return { input: 0, output: 0, cachedInput: 0, cacheWriteInput: 0, reasoningOutput: 0, total: 0 };
+}
+
+export interface P62ProbeClient {
+  responses: { create(body: any): Promise<any> };
+}
+
+export type P62ProbeClientFactory = (options: { timeout: number; maxRetries: number }) => P62ProbeClient;
+
+const defaultProbeClientFactory: P62ProbeClientFactory = (options) => new OpenAI(options) as P62ProbeClient;
+
+function probeModelProvenance(response: any | null, providerErrorCode: string | null = null): P62RSemModelProvenance {
+  return {
+    provider: "openai",
+    requestedModel: P6_2_MODEL,
+    actualModel: response?.model ?? null,
+    responseId: response?.id ?? null,
+    responseStatus: response?.status ?? (providerErrorCode ? "provider-error" : null),
+    reasoningEffort: P6_2_REASONING,
+    maxOutputTokens: PROBE_MAX_OUTPUT_TOKENS,
+    requestTimeoutMs: REQUEST_TIMEOUT_MS,
+    maxRetries: MAX_RETRIES,
+    sdkVersion: getPackageVersion("openai"),
+    providerErrorCode,
+  };
+}
+
+function probeFailure(args: {
+  repeat: number;
+  executionStatus: string;
+  validity: "valid" | "infrastructure-invalid";
+  failureDomain: P62RSemFailureDomain;
+  failureReason: string;
+  rawResponse: string;
+  response: any | null;
+  usage: TokenUsage;
+  estimatedCostUsd: number | null;
+  booleanTotal: number;
+  probeDetails?: RSemProbeRepeatResult["probeDetails"];
+  providerErrorCode?: string | null;
+}): RSemProbeRepeatResult {
+  return {
+    repeat: args.repeat,
+    designVersion: STAGE1_BOOLEAN_DESIGN_VERSION,
+    executionStatus: args.executionStatus,
+    validity: args.validity,
+    failureDomain: args.failureDomain,
+    failureReason: args.failureReason,
+    rawResponse: args.rawResponse,
+    modelProvenance: probeModelProvenance(args.response, args.providerErrorCode ?? null),
+    booleanCorrect: null,
+    booleanTotal: args.booleanTotal,
+    booleanAccuracy: null,
+    probeDetails: args.probeDetails ?? [],
+    actualModel: args.response?.model ?? null,
+    usage: args.usage,
+    estimatedCostUsd: args.estimatedCostUsd,
+  };
+}
+
+export async function runRSemRepeat(
   repository: Record<string, string>,
   probes: GeneratedProbe[],
-  repeat: number
+  repeat: number,
+  clientFactory: P62ProbeClientFactory = defaultProbeClientFactory
 ): Promise<RSemProbeRepeatResult> {
-  const client = new OpenAI();
   const properties = Object.fromEntries(probes.map((probe) => [probe.probeId, { type: "string" }]));
   const schema = { type: "object", properties, required: probes.map((probe) => probe.probeId), additionalProperties: false };
   const body = buildOpenAIStructuredResponseRequestBody({
@@ -678,35 +773,148 @@ async function runRSemRepeat(
       schema,
     },
   });
-  const response = await client.responses.create(body as any);
+
+  const usage = emptyUsage();
+  let response: any;
+  try {
+    const client = clientFactory({ timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES });
+    response = await client.responses.create(body as any);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const providerErrorCode = typeof (error as any)?.code === "string" ? (error as any).code : null;
+    return probeFailure({
+      repeat,
+      executionStatus: "provider-error",
+      validity: "infrastructure-invalid",
+      failureDomain: "infrastructure",
+      failureReason: message,
+      rawResponse: "",
+      response: null,
+      usage,
+      estimatedCostUsd: null,
+      booleanTotal: probes.length,
+      providerErrorCode,
+    });
+  }
+
+  addUsage(usage, response.usage);
+  const rawResponse = extractOutputText(response);
+  const estimatedCostUsd = estimateOpenAICostUsd(P6_2_MODEL, response.usage, "sync");
   const refusal = extractRefusal(response);
   const failure = responseFailureDetails(response);
-  if (refusal) throw new Error(`probe-refusal:${refusal}`);
-  if (response.status !== "completed") {
-    throw new Error(`probe-response-${response.status}:${failure.incompleteReason ?? failure.providerErrorMessage ?? "unknown"}`);
+  if (refusal) {
+    return probeFailure({
+      repeat,
+      executionStatus: "response-refusal",
+      validity: "infrastructure-invalid",
+      failureDomain: "infrastructure",
+      failureReason: refusal,
+      rawResponse,
+      response,
+      usage,
+      estimatedCostUsd,
+      booleanTotal: probes.length,
+      providerErrorCode: failure.providerErrorCode,
+    });
   }
-  const parsed = JSON.parse(extractOutputText(response)) as Record<string, unknown>;
+  if (response.status !== "completed") {
+    const executionStatus = response.status === "incomplete"
+      ? "response-incomplete"
+      : response.status === "failed"
+        ? "response-failed"
+        : "response-not-completed";
+    return probeFailure({
+      repeat,
+      executionStatus,
+      validity: "infrastructure-invalid",
+      failureDomain: "infrastructure",
+      failureReason: failure.incompleteReason ?? failure.providerErrorMessage ?? `response status=${response.status}`,
+      rawResponse,
+      response,
+      usage,
+      estimatedCostUsd,
+      booleanTotal: probes.length,
+      providerErrorCode: failure.providerErrorCode,
+    });
+  }
+
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(rawResponse) as Record<string, unknown>;
+  } catch (error) {
+    return probeFailure({
+      repeat,
+      executionStatus: "output-parse-failure",
+      validity: "valid",
+      failureDomain: "protocol",
+      failureReason: `Invalid structured JSON: ${error instanceof Error ? error.message : String(error)}`,
+      rawResponse,
+      response,
+      usage,
+      estimatedCostUsd,
+      booleanTotal: probes.length,
+    });
+  }
+
   const answers = Object.fromEntries(probes.map((probe) => [probe.probeId, String(parsed[probe.probeId] ?? "")]));
-  const scored = scoreProbes(probes, answers);
-  const usage: TokenUsage = { input: 0, output: 0, cachedInput: 0, cacheWriteInput: 0, reasoningOutput: 0, total: 0 };
-  addUsage(usage, response.usage);
+  let scored: ReturnType<typeof scoreProbes>;
+  try {
+    scored = scoreProbes(probes, answers);
+  } catch (error) {
+    return probeFailure({
+      repeat,
+      executionStatus: "probe-scoring-error",
+      validity: "infrastructure-invalid",
+      failureDomain: "system",
+      failureReason: error instanceof Error ? error.message : String(error),
+      rawResponse,
+      response,
+      usage,
+      estimatedCostUsd,
+      booleanTotal: probes.length,
+    });
+  }
+  const details = scored.map((item) => ({
+    probeId: item.probeId,
+    correct: item.correct,
+    agentAnswer: item.agentAnswer,
+    correctAnswer: item.correctAnswer,
+    parseError: item.parseError,
+  }));
+  const parseErrors = details.filter((item) => item.parseError);
+  if (parseErrors.length > 0) {
+    return probeFailure({
+      repeat,
+      executionStatus: "answer-protocol-failure",
+      validity: "valid",
+      failureDomain: "protocol",
+      failureReason: `Malformed forced-choice answer(s): ${parseErrors.map((item) => item.probeId).join(",")}`,
+      rawResponse,
+      response,
+      usage,
+      estimatedCostUsd,
+      booleanTotal: scored.length,
+      probeDetails: details,
+    });
+  }
+
   const correct = scored.filter((item) => item.correct).length;
   return {
     repeat,
     designVersion: STAGE1_BOOLEAN_DESIGN_VERSION,
+    executionStatus: "ok",
+    validity: "valid",
+    failureDomain: "none",
+    failureReason: null,
+    rawResponse,
+    modelProvenance: probeModelProvenance(response),
     booleanCorrect: correct,
     booleanTotal: scored.length,
     booleanAccuracy: scored.length ? correct / scored.length : 0,
-    probeDetails: scored.map((item) => ({
-      probeId: item.probeId,
-      correct: item.correct,
-      agentAnswer: item.agentAnswer,
-      correctAnswer: item.correctAnswer,
-      parseError: item.parseError,
-    })),
-    actualModel: response.model,
+    probeDetails: details,
+    actualModel: response.model ?? null,
     usage,
-    estimatedCostUsd: estimateOpenAICostUsd(P6_2_MODEL, response.usage, "sync") ?? 0,
+    estimatedCostUsd,
   };
 }
 
@@ -715,6 +923,10 @@ function writeResult(resultPath: string, result: P62AfBaselineResult): void {
   const tmp = `${resultPath}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(result, null, 2) + "\n", "utf8");
   fs.renameSync(tmp, resultPath);
+}
+
+export function mJournalDirectory(runDir: string): string {
+  return path.join(runDir, "m");
 }
 
 function probeJournalDirectory(runDir: string, repeat: number): string {
@@ -800,6 +1012,19 @@ function createResultPath(repoRoot: string): string {
   return path.join(repoRoot, "runs", "_calibration", `p6-2-af-baseline-luna__${stamp}`, "result.json");
 }
 
+function requiresAudit(failureDomain: string): boolean {
+  return failureDomain === "infrastructure" || failureDomain === "system";
+}
+
+function markNeedsAudit(
+  result: P62AfBaselineResult,
+  flag: P62AfBaselineResult["auditFlags"][number]
+): void {
+  result.status = "needs-audit";
+  result.auditFlags.push(flag);
+  recomputeResult(result);
+}
+
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const repeatCount = parseRepeatCount(argv);
@@ -847,7 +1072,10 @@ async function main(): Promise<void> {
   if (resumePath) {
     result = JSON.parse(fs.readFileSync(resumePath, "utf8")) as P62AfBaselineResult;
     assertP62ResumeCompatible(result, manifest, taskBankRaw, repository);
-    const mRecovery = reconcileRepeatJournal(runDir, result.measurements.M.repeatResults);
+    if (result.status === "needs-audit") {
+      throw new Error("Resume refused: P6-2 result is needs-audit; inspect the recorded auditFlags before continuation");
+    }
+    const mRecovery = reconcileRepeatJournal(mJournalDirectory(runDir), result.measurements.M.repeatResults);
     result.measurements.M.repeatResults = mRecovery.repeatResults as ClassifiedMRepeatResult[];
     const rRecovery = reconcileProbeJournal(runDir, result.measurements.Rsem.repeatResults);
     result.measurements.Rsem.repeatResults = rRecovery.repeatResults;
@@ -879,11 +1107,24 @@ async function main(): Promise<void> {
     if (!task) throw new Error(`P6-2 planned task missing: ${planned.taskId}`);
     const execution = await runMRepeat(repository, syntheticWorldDir, task, planned.role, planned.repeat);
     const classified = classifyP62MRepeat(execution.result, planned.role) as ClassifiedMRepeatResult;
-    commitRepeatArtifactsAtomic(runDir, classified, execution.artifacts);
+    commitRepeatArtifactsAtomic(mJournalDirectory(runDir), classified, execution.artifacts);
     result.measurements.M.repeatResults.push(classified);
     recomputeResult(result);
     writeResult(resultPath, result);
     console.log(`P6-2 M ${classified.taskId} repeat=${classified.repeat} role=${classified.role} passed=${classified.passed} domain=${classified.failureDomain}`);
+    if (requiresAudit(classified.failureDomain)) {
+      markNeedsAudit(result, {
+        measurement: "M",
+        taskId: classified.taskId,
+        repeat: classified.repeat,
+        failureDomain: classified.failureDomain,
+        executionStatus: classified.executionStatus,
+        reason: classified.failureReason,
+      });
+      writeResult(resultPath, result);
+      console.log("STOP: P6-2 entered needs-audit after structural/infrastructure M failure; no further repeats executed.");
+      return;
+    }
   }
 
   const rPlan = planP62ProbeRepeats(repeatCount, result.measurements.Rsem.repeatResults);
@@ -893,7 +1134,20 @@ async function main(): Promise<void> {
     result.measurements.Rsem.repeatResults.push(probeResult);
     recomputeResult(result);
     writeResult(resultPath, result);
-    console.log(`P6-2 Rsem repeat=${repeat} accuracy=${probeResult.booleanAccuracy.toFixed(3)}`);
+    console.log(`P6-2 Rsem repeat=${repeat} status=${probeResult.executionStatus} domain=${probeResult.failureDomain} accuracy=${probeResult.booleanAccuracy === null ? "null" : probeResult.booleanAccuracy.toFixed(3)}`);
+    if (requiresAudit(probeResult.failureDomain)) {
+      markNeedsAudit(result, {
+        measurement: "Rsem",
+        taskId: null,
+        repeat: probeResult.repeat,
+        failureDomain: probeResult.failureDomain,
+        executionStatus: probeResult.executionStatus,
+        reason: probeResult.failureReason,
+      });
+      writeResult(resultPath, result);
+      console.log("STOP: P6-2 entered needs-audit after structural/infrastructure Rsem failure; no further repeats executed.");
+      return;
+    }
   }
 
   result.status = "completed";

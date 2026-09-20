@@ -18,14 +18,18 @@ import {
   planP62MRepeats,
   planP62ProbeRepeats,
   selectP62TaskBank,
+  summarizeP62M,
 } from "./src/p6/af-baseline";
 import {
   assertP62ResumeCompatible,
   buildP62ExecutionManifest,
   commitProbeResultAtomic,
   createP62Result,
+  mJournalDirectory,
   reconcileProbeJournal,
+  runRSemRepeat,
   type P62AfBaselineResult,
+  type P62ProbeClientFactory,
   type RSemProbeRepeatResult,
 } from "./p6-af-baseline-live";
 import { getPackageVersion } from "./src/agent-backend/openai/shared";
@@ -81,6 +85,45 @@ function assertThrowsMessage(fn: () => void, pattern: RegExp): void {
   try { fn(); } catch (error) { thrown = error; }
   assert(thrown instanceof Error, `Expected error matching ${pattern}`);
   assert.match(thrown.message, pattern);
+}
+
+function mockUsage() {
+  return {
+    input_tokens: 10,
+    output_tokens: 5,
+    total_tokens: 15,
+    input_tokens_details: { cached_tokens: 0 },
+    output_tokens_details: { reasoning_tokens: 0 },
+  };
+}
+
+function completedProbeResponse(outputText: string) {
+  return {
+    id: "resp_mock",
+    status: "completed",
+    model: "gpt-5.6-luna-mock",
+    output_text: outputText,
+    output: [],
+    usage: mockUsage(),
+    service_tier: "default",
+  };
+}
+
+function fakeProbeFactory(
+  outcome: any | Error,
+  captured?: Array<{ timeout: number; maxRetries: number }>
+): P62ProbeClientFactory {
+  return (options) => {
+    captured?.push(options);
+    return {
+      responses: {
+        create: async () => {
+          if (outcome instanceof Error) throw outcome;
+          return outcome;
+        },
+      },
+    };
+  };
 }
 
 async function main(): Promise<void> {
@@ -207,10 +250,53 @@ async function main(): Promise<void> {
     executionStatus: "mutation-validation-failure",
   }, "primary");
   assert.equal(protocolMock.failureDomain, "protocol");
+  const passedMock = classifyP62MRepeat({
+    taskId: "T-local-2",
+    taskType: "local",
+    repeat: 2,
+    passed: true,
+    validity: "valid",
+    failureCategory: null,
+    failureReason: null,
+    executionStatus: "ok",
+  }, "primary");
+  const infrastructureMock = classifyP62MRepeat({
+    taskId: "T-local-2",
+    taskType: "local",
+    repeat: 3,
+    passed: false,
+    validity: "infrastructure-invalid",
+    failureCategory: "provider",
+    failureReason: "mock provider outage",
+    executionStatus: "provider-error",
+  }, "primary");
+  const denominatorSummary = summarizeP62M([passedMock, infrastructureMock]);
+  assert.equal(denominatorSummary.primary.totalRepeats, 2);
+  assert.equal(denominatorSummary.primary.scientificallyValidRepeats, 1);
+  assert.equal(denominatorSummary.primary.infrastructureInvalidRepeats, 1);
+  assert.equal(denominatorSummary.primary.passRate, 1);
 
   const rsemMock: RSemProbeRepeatResult = {
     repeat: 1,
     designVersion: STAGE1_BOOLEAN_DESIGN_VERSION,
+    executionStatus: "ok",
+    validity: "valid",
+    failureDomain: "none",
+    failureReason: null,
+    rawResponse: "{}",
+    modelProvenance: {
+      provider: "openai",
+      requestedModel: "gpt-5.6-luna",
+      actualModel: "gpt-5.6-luna-mock",
+      responseId: "resp_mock",
+      responseStatus: "completed",
+      reasoningEffort: "high",
+      maxOutputTokens: 8000,
+      requestTimeoutMs: 180000,
+      maxRetries: 2,
+      sdkVersion,
+      providerErrorCode: null,
+    },
     booleanCorrect: 11,
     booleanTotal: 12,
     booleanAccuracy: 11 / 12,
@@ -235,7 +321,7 @@ async function main(): Promise<void> {
     /frozen execution manifest changed/
   );
 
-  // Atomic artifact journals can recover committed M / R^sem repeats missing from result.json.
+  // Regression reproducer: the pre-fix co-located topology lets M recovery delete rsem/repeat-N.
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), "p6-af-baseline-"));
   try {
     const mJournalResult = {
@@ -260,15 +346,87 @@ async function main(): Promise<void> {
       agentError: null,
       runnerError: null,
     };
-    commitRepeatArtifactsAtomic(temp, mJournalResult, mArtifacts);
-    const mRecovered = reconcileRepeatJournal<typeof mJournalResult>(temp, []);
+
+    const legacyRoot = path.join(temp, "legacy-colocated");
+    commitRepeatArtifactsAtomic(legacyRoot, mJournalResult, mArtifacts);
+    commitProbeResultAtomic(legacyRoot, rsemMock);
+    const legacyProbePath = path.join(legacyRoot, "rsem", "repeat-1", "probe_result.json");
+    assert(fs.existsSync(legacyProbePath));
+    reconcileRepeatJournal<typeof mJournalResult>(legacyRoot, []);
+    assert(!fs.existsSync(legacyProbePath), "legacy co-located layout should reproduce Critical #1 deletion");
+
+    // Fixed topology: M recovery is rooted at runDir/m and cannot traverse runDir/rsem.
+    const fixedRoot = path.join(temp, "fixed-separated");
+    const fixedMRoot = mJournalDirectory(fixedRoot);
+    commitRepeatArtifactsAtomic(fixedMRoot, mJournalResult, mArtifacts);
+    commitProbeResultAtomic(fixedRoot, rsemMock);
+    const fixedProbePath = path.join(fixedRoot, "rsem", "repeat-1", "probe_result.json");
+    const mRecovered = reconcileRepeatJournal<typeof mJournalResult>(fixedMRoot, []);
     assert.equal(mRecovered.recoveredArtifactKeys.length, 1);
     assert.equal(mRecovered.repeatResults[0].taskId, "T-local-2");
-
-    commitProbeResultAtomic(temp, rsemMock);
-    const rRecovered = reconcileProbeJournal(temp, []);
+    assert(fs.existsSync(fixedProbePath), "M recovery must not delete the coexisting R^sem journal");
+    const rRecovered = reconcileProbeJournal(fixedRoot, []);
     assert.deepEqual(rRecovered.recoveredArtifactRepeats, [1]);
     assert.equal(rRecovered.repeatResults[0].booleanAccuracy, 11 / 12);
+
+    // R^sem failures are returned as journalable records; injected clients guarantee no live API call.
+    const correctAnswers = Object.fromEntries(booleanProbes.map((probe) => [probe.probeId, String(probe.correctAnswer)]));
+    const capturedClientOptions: Array<{ timeout: number; maxRetries: number }> = [];
+    const success = await runRSemRepeat(
+      repository,
+      booleanProbes,
+      2,
+      fakeProbeFactory(completedProbeResponse(JSON.stringify(correctAnswers)), capturedClientOptions)
+    );
+    assert.equal(success.failureDomain, "none");
+    assert.equal(success.booleanAccuracy, 1);
+    assert.deepEqual(capturedClientOptions, [{ timeout: 180000, maxRetries: 2 }]);
+
+    const refusalResponse = {
+      ...completedProbeResponse(""),
+      id: "resp_refusal",
+      output: [{ type: "message", content: [{ type: "refusal", refusal: "mock refusal" }] }],
+    };
+    const refusal = await runRSemRepeat(repository, booleanProbes, 3, fakeProbeFactory(refusalResponse));
+    assert.equal(refusal.executionStatus, "response-refusal");
+    assert.equal(refusal.failureDomain, "infrastructure");
+    assert.equal(refusal.validity, "infrastructure-invalid");
+
+    const incompleteResponse = {
+      ...completedProbeResponse(""),
+      id: "resp_incomplete",
+      status: "incomplete",
+      incomplete_details: { reason: "max_output_tokens" },
+    };
+    const incomplete = await runRSemRepeat(repository, booleanProbes, 4, fakeProbeFactory(incompleteResponse));
+    assert.equal(incomplete.executionStatus, "response-incomplete");
+    assert.equal(incomplete.failureDomain, "infrastructure");
+
+    const parseFailure = await runRSemRepeat(
+      repository,
+      booleanProbes,
+      5,
+      fakeProbeFactory(completedProbeResponse("not-json"))
+    );
+    assert.equal(parseFailure.executionStatus, "output-parse-failure");
+    assert.equal(parseFailure.failureDomain, "protocol");
+    assert.equal(parseFailure.validity, "valid");
+
+    const apiError = Object.assign(new Error("mock API outage"), { code: "mock_provider_error" });
+    const providerFailure = await runRSemRepeat(repository, booleanProbes, 6, fakeProbeFactory(apiError));
+    assert.equal(providerFailure.executionStatus, "provider-error");
+    assert.equal(providerFailure.failureDomain, "infrastructure");
+    assert.equal(providerFailure.modelProvenance.providerErrorCode, "mock_provider_error");
+
+    for (const failureResult of [refusal, incomplete, parseFailure, providerFailure]) {
+      commitProbeResultAtomic(fixedRoot, failureResult);
+    }
+    const failureJournal = reconcileProbeJournal(fixedRoot, [rsemMock, refusal, incomplete, parseFailure, providerFailure]);
+    assert.equal(failureJournal.missingArtifactRepeats.length, 0);
+    assert(failureJournal.repeatResults.some((item) => item.executionStatus === "response-refusal" && item.failureDomain === "infrastructure"));
+    assert(failureJournal.repeatResults.some((item) => item.executionStatus === "response-incomplete" && item.failureDomain === "infrastructure"));
+    assert(failureJournal.repeatResults.some((item) => item.executionStatus === "output-parse-failure" && item.failureDomain === "protocol"));
+    assert(failureJournal.repeatResults.some((item) => item.executionStatus === "provider-error" && item.failureDomain === "infrastructure"));
 
     const serializedPath = path.join(temp, "result.json");
     fs.writeFileSync(serializedPath, JSON.stringify(result, null, 2));
@@ -290,6 +448,8 @@ async function main(): Promise<void> {
   console.log(`  task bank: primary=${selection.primary.length}, diagnostic=${selection.diagnostic.length}, floor-excluded=${P6_2_SEMANTIC_FLOOR_TASK_IDS.length}`);
   console.log(`  R^sem: ${STAGE1_BOOLEAN_DESIGN_VERSION}, boolean=${booleanProbes.length}, constant-baseline=0.50`);
   console.log(`  provenance: openai=${manifest.openAiSdkVersion}, node=${manifest.nodeVersion}`);
+  console.log("  Critical #1 legacy topology reproducer: deletion confirmed; separated m/rsem topology: preserved");
+  console.log("  R^sem failures: refusal/incomplete/parse/API error journalable via injected clients; live API calls: 0");
   console.log("  resume mismatch: rejected; M/Rsem journals: recovery verified; live API calls: 0");
 }
 

@@ -7,7 +7,7 @@ import {
 } from "./failure-classification";
 import { P6_1_EXPECTED_TASK_BANK_SIZE, P6_1_TASK_BANK_VERSION } from "./task-bank-eligibility";
 
-export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v1";
+export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v2-prelive-hardening";
 export const P6_2_TASK_BANK_VERSION = P6_1_TASK_BANK_VERSION;
 export const P6_2_FAILURE_CLASSIFICATION_VERSION = P6_1_FAILURE_CLASSIFICATION_VERSION;
 
@@ -77,7 +77,9 @@ export interface P62MSummary {
 
 export interface P62RoleSummary {
   taskCount: number;
-  repeatCount: number;
+  totalRepeats: number;
+  scientificallyValidRepeats: number;
+  infrastructureInvalidRepeats: number;
   passed: number;
   passRate: number | null;
 }
@@ -181,12 +183,15 @@ export function summarizeP62M(results: P62MRepeatLike[]): P62MSummary {
   const summarizeRole = (role: P62TaskRole): P62RoleSummary => {
     const subset = results.filter((item) => item.role === role);
     const ids = new Set(subset.map((item) => item.taskId));
-    const passed = subset.filter((item) => item.passed).length;
+    const scientificallyValid = subset.filter((item) => item.failureDomain !== "infrastructure");
+    const passed = scientificallyValid.filter((item) => item.passed).length;
     return {
       taskCount: ids.size,
-      repeatCount: subset.length,
+      totalRepeats: subset.length,
+      scientificallyValidRepeats: scientificallyValid.length,
+      infrastructureInvalidRepeats: subset.length - scientificallyValid.length,
       passed,
-      passRate: subset.length ? passed / subset.length : null,
+      passRate: scientificallyValid.length ? passed / scientificallyValid.length : null,
     };
   };
   const failureDomains: Record<FailureDomain, number> = {
