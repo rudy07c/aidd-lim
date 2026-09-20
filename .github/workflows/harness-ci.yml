@@ -67,7 +67,7 @@ jobs:
         working-directory: harness
         run: npm run verify:research-stateless-episode
       - name: Verify P5 step 1 provider-neutral repository accessor
-        working-directory: harness
+        working_directory: harness
         run: npm run verify:repository-accessor
       - name: Verify P5 AR budgeted retrieval integration
         working-directory: harness
@@ -123,6 +123,9 @@ jobs:
       - name: Verify P6 task-bank live runner hardening offline
         working-directory: harness
         run: npm run verify:p6-task-bank-eligibility-runner
+      - name: Verify P6-2 AF baseline runner offline
+        working-directory: harness
+        run: npm run verify:p6-af-baseline
       - name: Verify installed SDK version provenance
         working-directory: harness
         run: npm run verify:package-version
