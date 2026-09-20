@@ -2412,8 +2412,8 @@ P5で構築したretrieval/runtimeを、実際のcondition dispatcher・OpenAI�
 
 38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only） ✅ 2026-09-20通過
 39. **P6-1** Primary task eligibility + Luna capability-floor pilot / semantic-vs-protocol reclassification ✅ 5-task pilot確定
-40. **P6-1b** task bank全体eligibility拡張（finite hold / capability-role分離 / provenance freeze実装済み、live未実行） ← 次
-41. **P6-2** AF baseline
+40. **P6-1b** task bank全体eligibility拡張 ✅ 2026-09-20完了（initial 45 / hold追加0 / final bank freeze）
+41. **P6-2** AF baseline ← 次
 42. **P6-3** EL static dose-response
 43. **P6-4** PR working-set dose-response
 44. **P6-5** AR smoke/non-floor
