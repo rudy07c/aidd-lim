@@ -1,0 +1,140 @@
+from pathlib import Path
+
+path = Path("docs/findings/stage0_5_findings.md")
+text = path.read_text(encoding="utf-8")
+
+if "## F12:" in text or "## F13:" in text:
+    raise SystemExit("F12/F13 already present; refusing duplicate append")
+
+marker = "\n---\n\n## エントリの追加方法"
+if marker not in text:
+    raise SystemExit("findings append marker not found")
+
+addition = r'''---
+
+## F12: model-visible probe IDへの正解ラベル直接エンコード漏洩
+
+**日付**：2026-09-19
+**Phase**：Pre-Stage 1 / P6-0（GPT-5.6 Luna probe-bank revalidation）
+**元コード**：`calibration/src/stage1-probes.ts`（旧 matched-negative design → `stage1-neutral-relation-v2`）
+**元データ**：P6-0 first Luna live run（旧boolean bank、B=0で24/24を3 repeat）／commit `3d05a20b54e7e442ce3678b5aacdf43c1f272d0a`・`2eddc1292851bf4fa424e395d7165af599468db5`
+
+### 何が起きたか
+
+P6-0の初回Luna live runでは、旧boolean bankがB=0にもかかわらず3 repeatすべて24/24（100%）となり、Fullとの差が消失した。調査の結果、設問wordingのlabel cueに加えて、**model-visibleな`probeId`自体が正解ラベルを直接エンコードしていた**ことが判明した。
+
+旧matched-negative designでは、trueのpositive boolean probeに対してfalseのmatched negativeを機械生成し、そのfalse側のIDを
+
+```text
+<positive-probe-id>-matched-negative
+```
+
+としていた。したがってboolean probeについて、`matched-negative`を含むIDは`correctAnswer=false`、対応する元probeは`correctAnswer=true`という決定的な対応が存在した。後続のv2構築途中でもgenerator内部IDに`...-positive` / `...-negative` / raw invariant IDが残っており、prompt本文を一切読まなくてもmetadataだけからラベルを推定できる経路があった。
+
+### なぜ注目すべきか
+
+これはF5（visible test等のartifact内容から答えが漏れる経路）とも、F9（規則的なSynthetic World構造からの類推）とも異なる。**測定対象の内容ではなく、測定器の管理metadataそのものが答えを漏らす第三の経路**である。
+
+内容面のprompt auditだけを行っても、model-visible ID・field名・並び順などのmetadata channelを監査しなければmeasurement leakageを見逃しうる。とくにLLMは、人間が「識別子にすぎない」と考える文字列も通常の入力テキストとして利用できるため、ID設計も測定器の一部として扱う必要がある。
+
+### 対応
+
+Stage 1 boolean bankを`stage1-neutral-relation-v2`として再構成し、model-visible IDを
+
+```text
+A-obfuscated-bool-r01
+A-obfuscated-bool-r02
+...
+A-obfuscated-bool-r12
+```
+
+というopaque IDへre-IDした。`positive` / `negative` / `matched` / `true` / `false` / raw invariant IDをmodel-visible IDから除去し、provenanceはgenerator-sideの`derivedFrom`だけに保持する。
+
+再発防止として`auditStage1ProbeBank()`に`booleanIdCueWarnings`を追加した。正規表現
+
+```text
+/positive|negative|matched|true|false|(?:^|-)I\d+(?:-|$)/i
+```
+
+でboolean probe IDを検査し、該当IDが1件でもあれば`assertStage1ProbeBankValid()`が例外を投げる。P6-0 runner側も`booleanIdCueWarnings.length === 0`をstatic auditの必須条件としている。
+
+### 今後への示唆
+
+- probe本文だけでなく、**ID・JSON key・順序・batch位置などmodel-visible metadataをleakage surfaceとして監査する**。
+- evaluator-only provenanceとmodel-visible identifierを明確に分離する。
+- B=0でchanceから大きく外れた場合、モデル能力を疑う前に「本文以外の入力channelにラベルが埋め込まれていないか」を確認する。
+- この発見は、測定器が意味内容だけでなく周辺表現まで含むという、Stage 1以降のmeasurement design上の一般的な注意点として扱う。
+
+---
+
+## F13: T-local-1 / T-crosscut-2のモデル・時期を超えたfloor再現とcross-entity invariant処理の構造的難しさ
+
+**日付**：2026-09-20
+**Phase**：Stage 0.5 Phase 5 Step 9 ↔ Pre-Stage 1 P6-1（cross-stage comparison）
+**元データ**：`runs/stage0_5/stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T08-25-10/`、`docs/stage1_plan.md` 10.1.3（P6-1 reclassification）
+**実行条件**：Stage 0.5 = Claude Haiku 4.5 / budget較正、P6-1 = GPT-5.6 Luna / Artifact-Full / 3 repeats
+
+### 何が起きたか
+
+Stage 0.5とP6-1で独立にtask eligibilityを観測したところ、`T-local-1`と`T-crosscut-2`が、モデルと実行時期をまたいで再びfloor側へ分類された。
+
+Stage 0.5では、B=2K / 4K / 8K / Fullの全てで両taskが失敗した。Full時のtask-specific scoreは：
+
+| task | Haiku 4.5 / Stage 0.5 B=Full |
+|---|---:|
+| `T-local-1` | 2/3 |
+| `T-crosscut-2` | 1/3 |
+
+一方、GPT-5.6 LunaによるP6-1 Artifact-Full 3 repeatをsemantic/protocolに再分類すると：
+
+| task | semantic success | semantic failure | protocol failure | P6-1 classification |
+|---|---:|---:|---:|---|
+| `T-local-1` | 0/3 | 3/3 | 0/3 | `T_challenge`（semantic floor） |
+| `T-crosscut-2` | 0/3 | 2/3 | 1/3 | `T_challenge`（semantic floor） |
+
+`T-crosscut-2`の1 protocol failureはduplicate modified file pathによる`output-parse`であり、semantic floor票から除外しても、semanticに評価可能だった2回が双方失敗している。
+
+### 共通している構造
+
+両taskは、visible instructionだけを見ると局所または単純な複合operation追加に見えるが、正解実装には別entityの状態を同時に考慮する必要がある。
+
+- `T-local-1`：Vokを`nim→dor`へ飛ばすだけに見えるが、少なくともTal=`pex`（I1）などcross-entity invariantを守るpreconditionが必要。
+- `T-crosscut-2`：VokとZefを同時に`nim→dor`へ飛ばすため、I1/I2を含む複数entityの依存・invariantを整合させる必要がある。
+
+Stage 0のF1/F2で最初に観測された「局所的な変更要求に対してdistributed invariantを再構成できない」という現象と同じ**構造的な難しさのクラス**が、Stage 0.5とP6-1でも残ったと解釈できる。
+
+### ただし、具体的な失敗パターンは同一ではない
+
+この再現性を「両モデルが毎回まったく同じバグを書いた」と解釈してはいけない。
+
+`T-local-1`は比較的一貫しており、Stage 0 / Stage 0.5ではTal guard欠落、P6-1でも`Tal=nim`時に失敗すべきI1 guardを満たさないsemantic failureが繰り返された。
+
+一方`T-crosscut-2`は、Stage 0.5 B=FullではagentがTal/Osk/Fenまで依存を読んだうえでFen=`pex`を追加要求し、task-specific testの正常ケースを**過剰制約で拒否**して1/3となった。P6-1では少なくともsemantic failureとしてI1/I2 guardを満たさず`Tal=nim`を拒否できないケースが観測されている。したがって、**exact failure mechanismは同じではないが、cross-entity invariant/dependencyの再構成で崩れるという共通性が再現した**、と表現するのが正確である。
+
+### なぜ注目すべきか
+
+- 同一taskがHaiku 4.5とLunaという異なるmodel・異なる較正時期でfloor側に残ったため、単一model固有の癖や1回のsampling noiseだけでは説明しにくい。
+- とくに`T-local-1`はStage 0 F1/F2から同種のI1 guard問題が継続しており、distributed invariantの見落としが長期間にわたり再現している。
+- `T-crosscut-2`は誤り方自体は変化しているため、「特定guardを必ず忘れる」というより、複数entityの依存を一つの新operationへ正しく写像すること自体が難しい可能性を示す。
+- これは有限context効果とは別に存在するtask-intrinsic difficultyであり、main comparisonに混ぜるとcontext conditionの差をtask floorが覆い隠す。
+
+### 対応
+
+P6-1のsemantic-only floor ruleに基づき、両taskを`T_challenge`へ分類する。P6-1 pilotでは：
+
+```text
+T_primary  = {T-local-2, T-crosscut-1, T-delayed-1}
+T_challenge = {T-local-1, T-crosscut-2}
+```
+
+とし、`T-local-1` / `T-crosscut-2`はStage 1本実験の主力candidateから外し、diagnostic / stress-test用の難問枠として保持する。
+
+### 今後への示唆
+
+- task bank全体のeligibility拡張でも、overall pass/failではなくsemantic failureを用いてtask-intrinsic floorを識別する。
+- `T_challenge`は捨てず、cross-entity invariant reconstruction能力の診断用として別集計する。
+- 将来model familyを追加した際、同じtask群が再びfloorになるかを確認すれば、「model固有」対「task構造固有」の切り分けをさらに進められる。
+- main experimentでは`T_primary`に十分なheadroomを確保し、有限contextによる差とtask自体の難しさを混同しない。
+'''
+
+path.write_text(text.replace(marker, "\n" + addition + "\n---\n\n## エントリの追加方法", 1), encoding="utf-8")
