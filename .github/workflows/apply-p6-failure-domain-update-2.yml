@@ -1,4 +1,4 @@
-name: Apply P6 failure-domain patch v2
+name: Clean P6 plan wording
 
 on:
   push:
@@ -15,19 +15,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Reuse staged patch payload
+      - name: Fix wording
         shell: bash
         run: |
-          payload=$(sed -n "s/^[[:space:]]*run: echo '\([^']*\)' | base64 -d | python3$/\1/p" .github/workflows/apply-p6-failure-domain-update.yml)
-          test -n "$payload"
-          printf '%s' "$payload" | base64 -d | python3
-          git checkout -- .github/workflows/harness-ci.yml
-      - name: Commit research update
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('docs/stage1_plan.md')
+          s = p.read_text()
+          old = 'post-hoc task除外ではな、context condition'
+          new = 'post-hoc task除外ではなく、context condition'
+          if old not in s:
+              raise SystemExit('wording anchor not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit wording fix
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add harness/p6-preflight-live.ts harness/package.json docs/stage1_plan.md
+          git add docs/stage1_plan.md
           git diff --cached --check
-          git commit -m "fix(p6): separate semantic and protocol failures"
+          git commit -m "docs(p6): fix capability-floor wording"
           git push
