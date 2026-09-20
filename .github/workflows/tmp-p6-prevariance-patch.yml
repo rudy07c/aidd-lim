@@ -1,0 +1,26 @@
+name: Temporary P6 pre-variance patch
+on:
+  push:
+    branches: [p6-2-pre-variance-hardening-2]
+    paths:
+      - 'harness/tmp_p6_prevariance_patch.py'
+      - '.github/workflows/tmp-p6-prevariance-patch.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p6-2-pre-variance-hardening-2
+      - name: Apply patch
+        run: python harness/tmp_p6_prevariance_patch.py
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/stage1_plan.md docs/experiment_plan.md harness/src/p6/af-baseline.ts harness/p6-af-baseline-live.ts .github/workflows/harness-ci.yml
+          git diff --cached --check
+          git commit -m 'feat: harden P6-2 pre-variance design'
+          git push origin HEAD:p6-2-pre-variance-hardening-2
