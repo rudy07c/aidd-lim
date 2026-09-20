@@ -1242,6 +1242,20 @@ visible-tests-onlyはdiagnosticとして記録するがhard gateにはしない�
 
 failure時はmeasurement pathを修正し、P6-1を開始しない。
 
+#### 10.0.4 2026-09-20 Luna live result：P6-0通過
+
+`gpt-5.6-luna`、reasoning=`high`、3 repeatsでrevised gateを再実行し、P6-0は全hard gateを通過した。
+
+| context | boolean primary accuracy | interpretation |
+|---|---:|---|
+| B=0 | 0.500 | chance band内 |
+| B=1K | 0.583 | diagnostic intermediate exposure |
+| Full | 0.917 | headroomあり |
+| visible-tests-only | 0.944 | F5 diagnostic。hard gateではない |
+| protocol-adapter-only | 0.500 | primary structural-inference guard通過 |
+
+`Full - B=0 = 0.417`で事前閾値0.25を超え、B=0 chance / Full headroom / dose-response / adapter-only chanceの4 checkはすべてtrue。reference mc/stpはB=1Kおよびadapter-onlyで1.00となりF9 recurrenceを再確認したため、引き続きreference-onlyとする。P6-0の測定器はStage 1較正へ使用可能と判断する。
+
 ### 10.1 P6-1：Primary task eligibility
 
 旧Stage 0.5では、当時のmodelでArtifact-Fullでも恒常的に失敗するtaskが存在した。primary model移行後は、その旧結果だけでtaskを除外せず、main comparisonとは独立したcalibration repeatでtask適格性を再評価する。
@@ -1265,11 +1279,63 @@ failure時はmeasurement pathを修正し、P6-1を開始しない。
 
 構成A（通常feature task）をprimary outcomeの中心に置き、構成B（invariant-stressingを含む）はdiagnosticとして別集計する。閾値、repeat数、分類理由はStage 1Aのcondition差を見る前にfreezeする。
 
-### 10.1.1 Luna capability-floor gate
+### 10.1.1 Failure-domain classification / floor rule
 
-GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main comparison前にmodel capability floorを明示的に検査する。Artifact-Fullで \(\mathcal T_{primary}\) が恒常的に失敗する、または \(R^{sem}\) / \(M\) がfloorへ張り付く場合、そのtaskはchallenge setへ移す。primary task全体がfloorとなる場合のみ、model選択自体を再検討する。
+P6-1ではoverall success/failureだけでcapability floorを判定しない。repeatごとのfailureを次のdomainへ分類する。
 
-このgateはLunaを有利に見せるためのpost-hoc task除外ではなく、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
+- `semantic`：test assertion failure等、task意味・invariant・behaviorを満たせなかったfailure
+- `protocol`：structured output parse、duplicate modified path、mutation validation、WorldProtocol contract等、agent output / mutation contractのfailure
+- `system`：compiler / test-suite execution自体のfailure
+- `infrastructure`：provider / harness infrastructure invalid
+- `other`：上記へ安全に分類できないfailure
+
+**floor判定に使うのは`semantic`だけ**とする。`protocol`は`agent output reliability`の別diagnostic軸として保存し、semantic capabilityの失敗票には加えない。`system` / `infrastructure`もsemantic floorへ加えない。
+
+3-repeat P6-1 ruleは以下でfreezeする。
+
+- `semanticSuccesses >= 2`：`T_primary` eligible
+- `semanticSuccesses = 0` かつ `semanticFailures >= 2`：semantic floorとして`T_challenge`
+- 上記以外：追加semantic repeatが必要なhold
+- infrastructure invalidが2 repeat以上：capability classification自体をinvalid
+- protocol reliability：infrastructure-invalidを除くattemptのうちprotocol failureでなかった割合。eligibilityとは独立に報告
+
+このruleは「AFでsuccess probabilityがfloorではない」「compiler/system/protocol failureだけで決めない」という既存基準を、機械判定へ落としたものである。
+
+### 10.1.2 Luna capability-floor gate
+
+GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main comparison前にmodel capability floorを明示的に検査する。Artifact-Fullで \(\mathcal T_{primary}\) が恒常的にsemantic failureとなる、または \(R^{sem}\) / \(M\) がfloorへ張り付く場合、そのtaskはchallenge setへ移す。primary task全体がfloorとなる場合のみ、model選択自体を再検討する。
+
+このgateはLunaを有利に見せるためのpost-hoc task除外ではな、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
+
+### 10.1.3 2026-09-20 P6-1 reclassification / frozen pilot sets
+
+既存live result `p6-preflight-luna__2026-09-20T01-59-44-098Z/result.json` の5 task × 3 repeatは、APIを再実行せず、既存`failureCategory` / `failureReason` / `executionStatus`から`p6-1-failure-domain-v2`で再分類する。
+
+| task | semantic success | semantic failure | protocol failure | protocol reliability | pilot classification |
+|---|---:|---:|---:|---:|---|
+| `T-local-2` | 2/3 | 0/3 | 1/3 (`output-parse`: duplicate path) | 2/3 | `T_primary` |
+| `T-crosscut-1` | 3/3 | 0/3 | 0/3 | 3/3 | `T_primary`（clean） |
+| `T-delayed-1` | 3/3 | 0/3 | 0/3 | 3/3 | `T_primary`（clean） |
+| `T-crosscut-2` | 0/3 | 2/3 | 1/3 (`output-parse`: duplicate path) | 2/3 | `T_challenge`（semantic floor） |
+| `T-local-1` | 0/3 | 3/3 | 0/3 | 3/3 | `T_challenge`（semantic floor） |
+
+したがって、この5-task pilotについてfreezeする集合は：
+
+\[
+\mathcal T_{primary}^{pilot}
+=\{T\text{-}local\text{-}2,\ T\text{-}crosscut\text{-}1,\ T\text{-}delayed\text{-}1\}
+\]
+
+\[
+\mathcal T_{challenge}^{pilot}
+=\{T\text{-}local\text{-}1,\ T\text{-}crosscut\text{-}2\}
+\]
+
+である。`T-local-2`のoverall 2/3はsemantic capabilityの不安定さではなくprotocol reliability 2/3を含むため、floorへ落とさない。一方`T-crosscut-2`はprotocol failure 1回をfloor票から除外しても、semanticに評価可能だった2回が双方invariant/behavior failureで、semantic successが0なのでchallengeとする。
+
+最もcleanなprimary coreは`T-crosscut-1` / `T-delayed-1`である。`T-local-2`はprimaryに残すが、protocol reliability diagnosticを必ず併記する。
+
+P6-2へ進む前に、同じfailure-domain ruleをtask bank全体へ適用するeligibility拡張を行い、primary/challenge bankを最終freezeする。
 
 ### 10.2 P6-2：AF baseline
 
@@ -2235,19 +2301,20 @@ P5で構築したretrieval/runtimeを、実際のcondition dispatcher・OpenAI�
 
 ### Phase P6：Recalibration
 
-38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only）
-39. **P6-1** Primary task eligibility + Luna capability-floor pilot / classification
-40. **P6-2** AF baseline
-41. **P6-3** EL static dose-response
-42. **P6-4** PR working-set dose-response
-43. **P6-5** AR smoke/non-floor
-44. **P6-6** MOI serialization + source-tagging / Operational-Full feasibility preflight
-45. **P6-7** \(B_{expose}\) freeze
-46. \(B_{work}\) freeze
-47. PR/AR共通 \(E_{max}\) freeze
-48. MOI schema/size freeze
-49. equivalence margins
-50. variance / repeats freeze
+38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only） ✅ 2026-09-20通過
+39. **P6-1** Primary task eligibility + Luna capability-floor pilot / semantic-vs-protocol reclassification ✅ 5-task pilot確定
+40. **P6-1b** task bank全体eligibility拡張（同一failure-domain ruleでprimary/challenge最終freeze） ← 次
+41. **P6-2** AF baseline
+42. **P6-3** EL static dose-response
+43. **P6-4** PR working-set dose-response
+44. **P6-5** AR smoke/non-floor
+45. **P6-6** MOI serialization + source-tagging / Operational-Full feasibility preflight
+46. **P6-7** \(B_{expose}\) freeze
+47. \(B_{work}\) freeze
+48. PR/AR共通 \(E_{max}\) freeze
+49. MOI schema/size freeze
+50. equivalence margins
+51. variance / repeats freeze
 
 **Gate**：5 conditions non-degenerate。
 

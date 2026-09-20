@@ -14,6 +14,13 @@ import {
 } from "./src/agent-backend/openai/shared";
 import { runScoring } from "./src/scoring";
 import type { TestSuiteResult, TokenUsage } from "./src/types";
+import {
+  classifyFailure,
+  classifyTaskEligibility,
+  DEFAULT_P6_1_ELIGIBILITY_RULE,
+  P6_1_FAILURE_CLASSIFICATION_VERSION,
+  type FailureClassification,
+} from "./src/p6/failure-classification";
 
 const MODEL = "gpt-5.6-luna";
 const REASONING = "high" as const;
@@ -39,14 +46,14 @@ const P6_0_GATE_REVISION =
   "tests-only remains a diagnostic rather than a hard gate because visible tests are artifact evidence and may legitimately encode semantics. " +
   "Direct F5 leakage is guarded statically; adapter-only boolean chance is the hard structural-inference guard.";
 
-// Predeclared P6-1 pilot classification rule (3 repeats per task):
-// 2/3+ pass = provisional T_primary eligible; 0/3 = provisional floor/T_challenge candidate;
-// 1/3 = hold; >=2 infrastructure/provider-invalid repeats = capability classification invalid.
+// P6-1 failure-domain rule: semantic capability and agent output reliability are separate axes.
+// Protocol/output-contract failures do not count toward semantic floor classification.
 const P6_1_RULE = {
   repeats: REPEATS,
-  primaryMinPasses: 2,
-  floorPasses: 0,
-  invalidInfrastructureMin: 2,
+  ...DEFAULT_P6_1_ELIGIBILITY_RULE,
+  floorBasis: "semantic-failure-only",
+  protocolFailureRole: "agent-output-reliability-diagnostic-only",
+  classificationVersion: P6_1_FAILURE_CLASSIFICATION_VERSION,
 } as const;
 
 type ProbeContextKind = "b0" | "b1k" | "full" | "tests-only" | "adapter-only";
@@ -100,6 +107,12 @@ interface P61RepeatResult {
   actualModel: string | null;
   usage: TokenUsage | null;
   estimatedCostUsd: number | null;
+}
+
+interface P61ClassifiedRepeatResult extends P61RepeatResult, FailureClassification {}
+
+function classifyP61Repeat(result: P61RepeatResult): P61ClassifiedRepeatResult {
+  return { ...result, ...classifyFailure(result) };
 }
 
 function loadDirRecursive(dir: string, baseDir: string, out: Record<string, string>): void {
@@ -453,26 +466,18 @@ async function main(): Promise<void> {
   }
 
   const selected = PILOT_TASKS.map((id) => tasks.find((t) => t.taskId === id) ?? (() => { throw new Error(`Missing task ${id}`); })());
-  const taskResults: P61RepeatResult[] = [];
+  const taskResults: P61ClassifiedRepeatResult[] = [];
   for (const task of selected) {
     for (let repeat = 1; repeat <= REPEATS; repeat++) {
-      const r = await runTaskRepeat(repository, swDir, task, repeat);
+      const raw = await runTaskRepeat(repository, swDir, task, repeat);
+      const r = classifyP61Repeat(raw);
       taskResults.push(r);
-      console.log(`P6-1 ${task.taskId} repeat=${repeat} passed=${r.passed} validity=${r.validity} category=${r.failureCategory ?? "none"} reason=${r.failureReason ?? "none"} cost=$${(r.estimatedCostUsd ?? 0).toFixed(6)}`);
+      console.log(`P6-1 ${task.taskId} repeat=${repeat} passed=${r.passed} validity=${r.validity} domain=${r.failureDomain} category=${r.failureCategory ?? "none"} reason=${r.failureReason ?? "none"} cost=$${(r.estimatedCostUsd ?? 0).toFixed(6)}`);
     }
   }
-  const classifications = selected.map((task) => {
-    const rs = taskResults.filter((r) => r.taskId === task.taskId);
-    const valid = rs.filter((r) => r.validity === "valid");
-    const infrastructureInvalidCount = rs.length - valid.length;
-    const passes = valid.filter((r) => r.passed).length;
-    let classification: string;
-    if (infrastructureInvalidCount >= P6_1_RULE.invalidInfrastructureMin) classification = "invalid-capability-classification";
-    else if (passes >= P6_1_RULE.primaryMinPasses) classification = "provisional-T_primary-eligible";
-    else if (passes === P6_1_RULE.floorPasses && valid.length >= 2) classification = "provisional-floor-T_challenge-candidate";
-    else classification = "hold-more-repeats";
-    return { taskId: task.taskId, taskType: task.type ?? null, passes, validRepeats: valid.length, infrastructureInvalidCount, classification };
-  });
+  const classifications = selected.map((task) =>
+    classifyTaskEligibility(taskResults.filter((r) => r.taskId === task.taskId), P6_1_RULE)
+  );
   outputBase.p6_1 = { pilotTasks: PILOT_TASKS, taskResults, classifications };
 
   const totalProbeCost = probeResults.reduce((s, r) => s + r.estimatedCostUsd, 0);
