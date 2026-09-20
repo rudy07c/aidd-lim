@@ -261,7 +261,7 @@ async function main(): Promise<void> {
       runnerError: null,
     };
     commitRepeatArtifactsAtomic(temp, mJournalResult, mArtifacts);
-    const mRecovered = reconcileRepeatJournal(temp, []);
+    const mRecovered = reconcileRepeatJournal<typeof mJournalResult>(temp, []);
     assert.equal(mRecovered.recoveredArtifactKeys.length, 1);
     assert.equal(mRecovered.repeatResults[0].taskId, "T-local-2");
 

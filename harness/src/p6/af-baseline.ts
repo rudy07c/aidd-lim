@@ -101,7 +101,7 @@ export function selectP62TaskBank<T extends P62TaskIdentity>(tasks: T[]): P62Tas
     ...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS,
     ...P6_2_SEMANTIC_FLOOR_TASK_IDS,
   ];
-  const partitionSet = new Set(expectedPartition);
+  const partitionSet = new Set<string>(expectedPartition);
   if (partitionSet.size !== P6_1_EXPECTED_TASK_BANK_SIZE) {
     throw new Error("P6-2 frozen task partition contains duplicate IDs");
   }
