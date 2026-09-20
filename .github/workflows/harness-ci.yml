@@ -67,7 +67,7 @@ jobs:
         working-directory: harness
         run: npm run verify:research-stateless-episode
       - name: Verify P5 step 1 provider-neutral repository accessor
-        working_directory: harness
+        working-directory: harness
         run: npm run verify:repository-accessor
       - name: Verify P5 AR budgeted retrieval integration
         working-directory: harness
