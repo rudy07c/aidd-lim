@@ -1,3 +1,4 @@
+// Shared source of truth for provider/response statuses that censor scientific outcomes.
 import type { AgentExecutionStatus } from "./types";
 
 export const CENSORED_AGENT_EXECUTION_STATUSES: ReadonlySet<AgentExecutionStatus> = new Set<AgentExecutionStatus>([
