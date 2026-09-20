@@ -1569,6 +1569,63 @@ P6-1bの3 repeatはtask eligibility判定のための設計であり、P6-2以�
 
 とする。観測されたAF平均やSDに合わせてequivalence margin自体を変更しない。
 
+#### 10.2.5a 2026-09-20 equivalence / repeat-design freeze（live前）
+
+P6-2 live baseline結果を一切観測する前に、primary outcome scale上のequivalence marginを次でfreezeする。
+
+\[
+\Delta_M=\Delta_R=\frac{1}{12}\approx0.08333
+\]
+
+理由は、primary \(M\) bankが12 task、primary \(R^{sem}\) bankが12 balanced boolean probeで構成されているためである。**1 task / 1 probe丸ごとの差は研究上無視しない**。したがってequivalence regionは
+
+\[
+(-1/12,+1/12)
+\]
+
+のopen intervalとし、差がちょうど \(1/12\) に達する場合はequivalentとは判定しない。このmarginは観測varianceやAF平均から逆算した値ではなく、現在のprimary measurement bankにおける1 semantic unitを実質差の境界とする事前定義である。
+
+Equivalence判定はTOSTと整合する \(\alpha=0.05\) の **90% CI** を用い、paired differenceの90% CI全体が事前margin内に入った場合にのみequivalence evidenceありとする。CIがmarginをまたぐ場合は、通常の差の検定が非有意であっても「同等」とせず**判定不能**とする。
+
+paired analysis unitは、Stage 1Aで同一task/probe・同一repeat id・同一model settingsを共有するbank-level repeatとする。各repeatについて12 task / 12 probeをまず固定bank内で集約し、そのrepeat-level paired differenceをuncertainty推定の基本単位とする。これにより、同一API応答内のprobe相関や固定task bank内の依存を独立sampleとして過大計上しない。
+
+\(M\)のscientific denominatorは次でfreezeする。
+
+- `none`：success=1として分母へ含める
+- `semantic`：end-to-end modification failure=0として分母へ含める
+- `protocol`：有効なmutation/output contractを満たせず変更を完了できなかったend-to-end failure=0として分母へ含める。ただしprotocol reliabilityは別diagnosticでも必ず報告する
+- `system`：自動的に0へ落とさず`needs-audit`。生成artifact起因のcompile/runtime failureと確認できた場合のみscientific task failureへ再分類して0として含め、harness/evaluator起因なら`infrastructure-invalid`へ再分類して除外する
+- `infrastructure`：scientific denominatorから除外し`needs-audit`
+- `other`：原因未分類のままscientific denominatorへ入れず`needs-audit`
+
+\(R^{sem}\)ではsemantic reconstructionとoutput protocolを混同しないため、structured-output parse / forced-choice format等の`protocol` failureは誤答0点へ変換せず`needs-audit`とする。`system` / `infrastructure`も同様であり、main accuracyは`failureDomain=none`のrepeatだけから計算する。ただしaudit未解決のままrunをcompleted扱いしない。
+
+repeat数決定用variance pilotも同時に次でfreezeする。
+
+- 独立したfresh-agent **AF-vs-AF twin arm** を用いる
+- pilot pair数：8
+- 各pairで同じ12 primary M task / 12 boolean probeを両armへ割り当てる
+- 各pairのbank-level差 \(d_j\) を作り、そのsample SD \(s_D\) を推定する
+- SDの楽観的過小推定を避けるため、\(df=7\) のchi-squareに基づく**片側95% upper confidence bound** \(\sigma_U\) をrepeat sizingへ使う
+- TOST \(\alpha=0.05\)、真の差0を仮定したtarget power=0.80で、
+
+\[
+n_{req}=\left\lceil
+\left(
+\frac{(z_{0.95}+z_{0.90})\sigma_U}{\Delta}
+\right)^2
+\right\rceil
+\]
+
+をM/Rそれぞれに計算する
+- Stage 1 primary comparisonの共通repeat数は `max(8, n_M, n_R)` とする
+- `n_req > 30`となる場合は30へ丸めて実行せず、measurement instability / feasibilityの`needs-audit`として停止する
+- variance pilotの観測値をequivalence margin変更やtask reselectionには使用しない
+- variance pilot dataはP6-2 baseline本取得へpoolしない
+- repeat数freeze後はCIがwideでも追加repeatをpost-hocに足さず、equivalenceについては「判定不能」と報告する
+
+この時点ではvariance pilot自体はまだlive実行しない。scientific repeat countは`null`のままとし、P6-2 baseline runnerはrepeat数がfreezeされるまで`--live`を拒否する。
+
 #### 10.2.6 post-hoc task reselection禁止 / abnormal baseline handling
 
 P6-2でAF baselineが想定外に低い、分散が異常に大きい、protocol / infrastructure failureが多い、または測定不能な挙動を示した場合、その結果を理由にprimary taskを除外したり、diagnostic / semantic-floorとの分類を入れ替えたりしない。
@@ -1690,17 +1747,17 @@ Stage 1本実験前に：
 
 ## 11. Equivalence / Uncertainty設計
 
-### 11.1 \(\Delta_M,\Delta_R\)
+### 11.1 \(\Delta_M,\Delta_R\)（freeze済み）
 
-観測後のSDからequivalence marginを逆算しない。
+P6-2 pre-live freezeとして、
 
-まず、
+\[
+\Delta_M=\Delta_R=1/12\approx0.08333
+\]
 
-> 研究上どの差以下なら実質同等とするか
+を採用する。1 task / 1 probe丸ごとの差は実質同等に含めず、equivalence regionはopen interval \((-1/12,+1/12)\) とする。
 
-を定義する。
-
-その後variance pilotでrepeat数を決める。
+Equivalenceは \(\alpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体がmargin内へ入った場合のみ主張する。marginは観測後のSDや平均から変更しない。repeat数は10.2.5aでfreezeしたAF-vs-AF variance pilot規則から決定する。
 
 ### 11.2 Stage 1A paired design
 

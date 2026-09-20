@@ -7,7 +7,7 @@ import {
 } from "./failure-classification";
 import { P6_1_EXPECTED_TASK_BANK_SIZE, P6_1_TASK_BANK_VERSION } from "./task-bank-eligibility";
 
-export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v2-prelive-hardening";
+export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v3-equivalence-freeze";
 export const P6_2_TASK_BANK_VERSION = P6_1_TASK_BANK_VERSION;
 export const P6_2_FAILURE_CLASSIFICATION_VERSION = P6_1_FAILURE_CLASSIFICATION_VERSION;
 
@@ -45,6 +45,24 @@ export const P6_2_MEASURED_TASK_IDS = [
   ...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS,
 ] as const;
 
+// P6-2 pre-live equivalence design. These values are frozen before any AF
+// baseline/variance result is observed. One full primary task/probe (1/12) is
+// the smallest difference that is considered substantively meaningful; the
+// equivalence interval is therefore open at +/- 1/12.
+export const P6_2_EQUIVALENCE_DESIGN_VERSION = "p6-2-equivalence-v1";
+export const P6_2_RSEM_PRIMARY_PROBE_COUNT = 12;
+export const P6_2_DELTA_M = 1 / P6_2_PRIMARY_TASK_IDS.length;
+export const P6_2_DELTA_R = 1 / P6_2_RSEM_PRIMARY_PROBE_COUNT;
+export const P6_2_EQUIVALENCE_ALPHA = 0.05;
+export const P6_2_EQUIVALENCE_CI_LEVEL = 0.90;
+export const P6_2_EQUIVALENCE_TARGET_POWER = 0.80;
+export const P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS = 8;
+export const P6_2_VARIANCE_SD_UCB_CONFIDENCE = 0.95;
+export const P6_2_MIN_SCIENTIFIC_REPEATS = 8;
+export const P6_2_MAX_SCIENTIFIC_REPEATS = 30;
+// Remains null until the separate AF-vs-AF variance pilot is completed.
+export const P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT: number | null = null;
+
 export type P62TaskRole = "primary" | "diagnostic";
 
 export interface P62TaskIdentity {
@@ -80,6 +98,9 @@ export interface P62RoleSummary {
   totalRepeats: number;
   scientificallyValidRepeats: number;
   infrastructureInvalidRepeats: number;
+  systemAuditRepeats: number;
+  otherAuditRepeats: number;
+  auditExcludedRepeats: number;
   passed: number;
   passRate: number | null;
 }
@@ -179,17 +200,35 @@ export function classifyP62MRepeat<T extends TaskRepeatLike>(
   return { ...result, ...classifyFailure(result), role };
 }
 
+export type P62MOutcomeDisposition = "score" | "needs-audit";
+
+export function p62MOutcomeDisposition(failureDomain: FailureDomain): P62MOutcomeDisposition {
+  // M is an end-to-end modification outcome. Semantic and protocol failures
+  // both mean the requested modification was not successfully completed and
+  // therefore remain scientific failures (0) in the M denominator. System,
+  // infrastructure, and unclassified failures are not silently converted into
+  // capability failures; they require adjudication first.
+  if (failureDomain === "none" || failureDomain === "semantic" || failureDomain === "protocol") return "score";
+  return "needs-audit";
+}
+
 export function summarizeP62M(results: P62MRepeatLike[]): P62MSummary {
   const summarizeRole = (role: P62TaskRole): P62RoleSummary => {
     const subset = results.filter((item) => item.role === role);
     const ids = new Set(subset.map((item) => item.taskId));
-    const scientificallyValid = subset.filter((item) => item.failureDomain !== "infrastructure");
+    const scientificallyValid = subset.filter((item) => p62MOutcomeDisposition(item.failureDomain) === "score");
     const passed = scientificallyValid.filter((item) => item.passed).length;
+    const infrastructureInvalidRepeats = subset.filter((item) => item.failureDomain === "infrastructure").length;
+    const systemAuditRepeats = subset.filter((item) => item.failureDomain === "system").length;
+    const otherAuditRepeats = subset.filter((item) => item.failureDomain === "other").length;
     return {
       taskCount: ids.size,
       totalRepeats: subset.length,
       scientificallyValidRepeats: scientificallyValid.length,
-      infrastructureInvalidRepeats: subset.length - scientificallyValid.length,
+      infrastructureInvalidRepeats,
+      systemAuditRepeats,
+      otherAuditRepeats,
+      auditExcludedRepeats: infrastructureInvalidRepeats + systemAuditRepeats + otherAuditRepeats,
       passed,
       passRate: scientificallyValid.length ? passed / scientificallyValid.length : null,
     };

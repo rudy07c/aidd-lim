@@ -10,11 +10,23 @@ import {
 } from "../calibration/src/stage1-probes";
 import type { GroundTruth, NamingScheme } from "../synthetic-world/schema";
 import {
+  P6_2_DELTA_M,
+  P6_2_DELTA_R,
   P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS,
+  P6_2_EQUIVALENCE_ALPHA,
+  P6_2_EQUIVALENCE_CI_LEVEL,
+  P6_2_EQUIVALENCE_DESIGN_VERSION,
+  P6_2_EQUIVALENCE_TARGET_POWER,
+  P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT,
+  P6_2_MAX_SCIENTIFIC_REPEATS,
+  P6_2_MIN_SCIENTIFIC_REPEATS,
   P6_2_PRIMARY_TASK_IDS,
   P6_2_SEMANTIC_FLOOR_TASK_IDS,
   P6_2_TASK_BANK_VERSION,
+  P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+  P6_2_VARIANCE_SD_UCB_CONFIDENCE,
   classifyP62MRepeat,
+  p62MOutcomeDisposition,
   planP62MRepeats,
   planP62ProbeRepeats,
   selectP62TaskBank,
@@ -27,6 +39,9 @@ import {
   createP62Result,
   mJournalDirectory,
   reconcileProbeJournal,
+  requiresP62MAudit,
+  requiresP62RSemAudit,
+  assertP62LiveRepeatCountFrozen,
   runRSemRepeat,
   type P62AfBaselineResult,
   type P62ProbeClientFactory,
@@ -127,6 +142,32 @@ function fakeProbeFactory(
 }
 
 async function main(): Promise<void> {
+  // Equivalence semantics are frozen independently of any live AF outcome.
+  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v1");
+  assert.equal(P6_2_DELTA_M, 1 / 12);
+  assert.equal(P6_2_DELTA_R, 1 / 12);
+  assert.equal(P6_2_EQUIVALENCE_ALPHA, 0.05);
+  assert.equal(P6_2_EQUIVALENCE_CI_LEVEL, 0.90);
+  assert.equal(P6_2_EQUIVALENCE_TARGET_POWER, 0.80);
+  assert.equal(P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS, 8);
+  assert.equal(P6_2_VARIANCE_SD_UCB_CONFIDENCE, 0.95);
+  assert.equal(P6_2_MIN_SCIENTIFIC_REPEATS, 8);
+  assert.equal(P6_2_MAX_SCIENTIFIC_REPEATS, 30);
+  assert.equal(P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT, null);
+  assert.equal(p62MOutcomeDisposition("semantic"), "score");
+  assert.equal(p62MOutcomeDisposition("protocol"), "score");
+  assert.equal(p62MOutcomeDisposition("system"), "needs-audit");
+  assert.equal(p62MOutcomeDisposition("infrastructure"), "needs-audit");
+  assert.equal(p62MOutcomeDisposition("other"), "needs-audit");
+  assert.equal(requiresP62MAudit("protocol"), false);
+  assert.equal(requiresP62MAudit("system"), true);
+  assert.equal(requiresP62MAudit("infrastructure"), true);
+  assert.equal(requiresP62MAudit("other"), true);
+  assert.equal(requiresP62RSemAudit("protocol"), true);
+  assert.equal(requiresP62RSemAudit("system"), true);
+  assert.equal(requiresP62RSemAudit("infrastructure"), true);
+  assertThrowsMessage(() => assertP62LiveRepeatCountFrozen(8), /scientific repeat count is not frozen/);
+
   const repoRoot = path.resolve(__dirname, "..");
   const swDir = path.join(repoRoot, "synthetic-world");
   const repositoryDir = path.join(swDir, "repository");
@@ -225,6 +266,11 @@ async function main(): Promise<void> {
   assert.deepEqual(result.measurements.M.excludedSemanticFloorTaskIds, [...P6_2_SEMANTIC_FLOOR_TASK_IDS]);
   assert.equal(result.measurements.Rsem.designVersion, "stage1-neutral-relation-v2");
   assert.equal(result.measurements.Rsem.booleanProbeIds.length, 12);
+  assert.equal(result.executionManifest.equivalenceDesignVersion, P6_2_EQUIVALENCE_DESIGN_VERSION);
+  assert.equal(result.executionManifest.deltaM, 1 / 12);
+  assert.equal(result.executionManifest.deltaR, 1 / 12);
+  assert.equal(result.executionManifest.equivalenceCiLevel, 0.90);
+  assert.equal(result.executionManifest.frozenScientificRepeatCount, null);
   assert.notStrictEqual(result.measurements.M, result.measurements.Rsem);
 
   // Mock M and R^sem outputs stay in independent fields and journals.
@@ -270,11 +316,34 @@ async function main(): Promise<void> {
     failureReason: "mock provider outage",
     executionStatus: "provider-error",
   }, "primary");
-  const denominatorSummary = summarizeP62M([passedMock, infrastructureMock]);
-  assert.equal(denominatorSummary.primary.totalRepeats, 2);
-  assert.equal(denominatorSummary.primary.scientificallyValidRepeats, 1);
+  const systemMock = classifyP62MRepeat({
+    taskId: "T-local-2",
+    taskType: "local",
+    repeat: 4,
+    passed: false,
+    validity: "valid",
+    failureCategory: "test-failure",
+    failureReason: "visible:execution:mock runner failure",
+    executionStatus: "ok",
+  }, "primary");
+  const otherMock = classifyP62MRepeat({
+    taskId: "T-local-2",
+    taskType: "local",
+    repeat: 5,
+    passed: false,
+    validity: "valid",
+    failureCategory: "unclassified-mock",
+    failureReason: "mock unknown",
+    executionStatus: "ok",
+  }, "primary");
+  const denominatorSummary = summarizeP62M([passedMock, protocolMock, infrastructureMock, systemMock, otherMock]);
+  assert.equal(denominatorSummary.primary.totalRepeats, 5);
+  assert.equal(denominatorSummary.primary.scientificallyValidRepeats, 2);
   assert.equal(denominatorSummary.primary.infrastructureInvalidRepeats, 1);
-  assert.equal(denominatorSummary.primary.passRate, 1);
+  assert.equal(denominatorSummary.primary.systemAuditRepeats, 1);
+  assert.equal(denominatorSummary.primary.otherAuditRepeats, 1);
+  assert.equal(denominatorSummary.primary.auditExcludedRepeats, 3);
+  assert.equal(denominatorSummary.primary.passRate, 0.5);
 
   const rsemMock: RSemProbeRepeatResult = {
     repeat: 1,
@@ -445,6 +514,8 @@ async function main(): Promise<void> {
   assert.deepEqual(afterMockOutcomes.diagnostic.map((task) => task.taskId), [...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS]);
 
   console.log("P6-2 AF baseline offline verification passed.");
+  console.log(`  equivalence: Delta_M=Delta_R=${P6_2_DELTA_M.toFixed(6)}, 90% CI / alpha=0.05, target power=0.80`);
+  console.log(`  variance pilot: paired AF-vs-AF repeats=${P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS}, scientific repeat count still unfrozen/live-blocked`);
   console.log(`  task bank: primary=${selection.primary.length}, diagnostic=${selection.diagnostic.length}, floor-excluded=${P6_2_SEMANTIC_FLOOR_TASK_IDS.length}`);
   console.log(`  R^sem: ${STAGE1_BOOLEAN_DESIGN_VERSION}, boolean=${booleanProbes.length}, constant-baseline=0.50`);
   console.log(`  provenance: openai=${manifest.openAiSdkVersion}, node=${manifest.nodeVersion}`);
