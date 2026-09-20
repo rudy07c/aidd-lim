@@ -123,6 +123,12 @@ jobs:
       - name: Verify P6 task-bank live runner hardening offline
         working-directory: harness
         run: npm run verify:p6-task-bank-eligibility-runner
+      - name: Verify installed SDK version provenance
+        working-directory: harness
+        run: npm run verify:package-version
+      - name: Verify invariant heldout dependency coverage
+        working-directory: harness
+        run: npm run verify:heldout-invariant-coverage
       - name: Verify OpenAI backend offline
         working-directory: harness
         run: npm run verify:openai
