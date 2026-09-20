@@ -26,6 +26,7 @@ import { runScoring } from "./scoring";
 import { writeGenerationLog, generateDiff } from "./logging";
 import { validateModifiedFiles } from "./repository/path-guard";
 import type { GroundTruthDelta } from "../../synthetic-world/schema";
+import { isCensoredAgentExecutionStatus } from "./run-validity";
 
 export interface OrchestratorResult {
   completedGenerations: number;
@@ -348,14 +349,6 @@ function buildRetrievedPromptSummary(
   ].join("\n");
 }
 
-const CENSORED_AGENT_STATUSES = new Set<AgentExecutionStatus>([
-  "provider-error",
-  "response-failed",
-  "response-incomplete",
-  "response-not-completed",
-  "response-refusal",
-]);
-
 export function shouldCensorGeneration(status: AgentExecutionStatus): boolean {
-  return CENSORED_AGENT_STATUSES.has(status);
+  return isCensoredAgentExecutionStatus(status);
 }

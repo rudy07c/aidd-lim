@@ -1337,6 +1337,75 @@ GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main compariso
 
 P6-2へ進む前に、同じfailure-domain ruleをtask bank全体へ適用するeligibility拡張を行い、primary/challenge bankを最終freezeする。
 
+
+### 10.1.4 P6-1b full task-bank eligibility predeclaration（live前freeze）
+
+P6-1bは、20 task bankのうち既にP6-1 pilotでfreeze済みの5 taskを再実行せず、残り15 taskをGPT-5.6 Luna / reasoning=`high` / Artifact-Fullで評価する。**本節の規則はlive resultを見る前にfreezeする。**
+
+#### attempt / hold終了規則
+
+各taskは初期3 attemptを必ず実行する。protocol/system/other failureによりsemantic-evaluable evidenceが不足し、3 attempt後もterminal classificationに到達しない場合のみ追加attemptを許可する。追加は最大2回、したがって**1 taskあたり最大5 attempt**、15 task全体では初期45 attempt・最大75 attemptを上限とする。
+
+3 attempt以降のcapability判定は次で固定する。
+
+- `semanticSuccesses >= 2` → `eligible`
+- `semanticSuccesses = 0` かつ `semanticFailures >= 2` → `semantic-floor`
+- `semanticSuccesses = 1` かつ `semanticFailures >= 2` → `AF-unstable`
+- 上記に達せずattempt < 5 → `pending`として追加attempt
+- attempt = 5で`semanticSuccesses = 1`のまま → `AF-unstable`
+- attempt = 5でも上記terminal条件を満たさずsemantic evidence不足 → `invalid`
+- infrastructure-invalidが3 attempt以降で2回以上 → `invalid`
+
+したがって`hold`は無期限に残らない。`semantic-floor`と`AF-unstable`は別categoryで保存し、後者をfloorと混同しない。
+
+#### capabilityClassとanalysisRoleを分離
+
+各taskについて、能力上の判定と研究上の役割を別軸で保存する。
+
+- `capabilityClass ∈ {eligible, semantic-floor, AF-unstable, invalid, pending}`
+- `analysisRole ∈ {main, diagnostic}`
+- `taskType = invariant_stressing` → `analysisRole = diagnostic`
+- その他のtask type → `analysisRole = main`
+
+main primary bankは
+
+\[
+\mathcal T_{primary}=\{t\mid capabilityClass(t)=eligible\ \land\ analysisRole(t)=main\}
+\]
+
+とする。`eligible ∩ diagnostic`は解けるtaskであってもprimary outcomeへ混ぜず、diagnosticとして別集計する。`semantic-floor` / `AF-unstable`はchallenge categoryとして別々に保持する。
+
+#### provider/response failure semantics
+
+`provider-error` / `response-failed` / `response-incomplete` / `response-not-completed` / `response-refusal`は、orchestratorのrun-validityとP6 eligibilityで同じ共有集合を用い、すべて`infrastructure`として扱う。semantic failure票へ加えない。
+
+#### resume freeze / provenance
+
+run開始時にtask bank SHA、baseline repository SHAに加えて、以下をmanifestへ固定する。
+
+- git SHA
+- OpenAI `promptVersion` / `promptHash`
+- OpenAI `schemaVersion` / `schemaHash`
+- eligibility runner SHA256
+- runner / OpenAI backend / prompt-schema / classification / scoring等のcritical source fingerprint
+
+resume時にいずれかが不一致なら同一runへの追記を拒否する。
+
+#### repeat artifact保存
+
+各repeatについて`result.json`とは別に、run directory配下の`<taskId>/repeat-N/`へ少なくとも以下を保存する。
+
+- `agent_response.txt`：raw response
+- `modified_files.json`：生成された変更内容
+- `model_provenance.json`：model / prompt / schema / SDK等のprovenance
+- `test_results.json`：visible / hidden / task-specific / protocol判定
+- `repeat_meta.json`：execution status / normalized error / runner error
+
+これにより、後からsemantic failureの具体的原因を再監査できるようにする。
+
+**P6-1b live実行は、本実装・unit test・既存回帰・CIがgreenであることを確認した後にのみ開始する。P6-2はまだ実行しない。**
+
+
 ### 10.2 P6-2：AF baseline
 
 selected primary modelで、
@@ -2303,7 +2372,7 @@ P5で構築したretrieval/runtimeを、実際のcondition dispatcher・OpenAI�
 
 38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only） ✅ 2026-09-20通過
 39. **P6-1** Primary task eligibility + Luna capability-floor pilot / semantic-vs-protocol reclassification ✅ 5-task pilot確定
-40. **P6-1b** task bank全体eligibility拡張（同一failure-domain ruleでprimary/challenge最終freeze） ← 次
+40. **P6-1b** task bank全体eligibility拡張（finite hold / capability-role分離 / provenance freeze実装済み、live未実行） ← 次
 41. **P6-2** AF baseline
 42. **P6-3** EL static dose-response
 43. **P6-4** PR working-set dose-response
