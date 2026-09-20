@@ -114,6 +114,9 @@ jobs:
       - name: Verify run validity semantics
         working-directory: harness
         run: npm run verify:run-validity
+      - name: Verify P6 semantic/protocol failure classification
+        working-directory: harness
+        run: npm run verify:p6-failure-classification
       - name: Verify OpenAI backend offline
         working-directory: harness
         run: npm run verify:openai
