@@ -1574,7 +1574,7 @@ P6-1bの3 repeatはtask eligibility判定のための設計であり、P6-2以�
 P6-2 live baseline結果を一切観測する前に、primary outcome scale上のequivalence marginを次でfreezeする。
 
 \[
-\Delta_M=\Delta_R=rac{1}{12}pprox0.08333
+\Delta_M=\Delta_R=\frac{1}{12}\approx0.08333
 \]
 
 理由は、primary \(M\) bankが12 task、primary \(R^{sem}\) bankが12 balanced boolean probeで構成されているためである。**1 task / 1 probe丸ごとの差は研究上無視しない**。したがってequivalence regionは
@@ -1585,7 +1585,7 @@ P6-2 live baseline結果を一切観測する前に、primary outcome scale上�
 
 のopen intervalとし、差がちょうど \(1/12\) に達する場合はequivalentとは判定しない。このmarginは観測varianceやAF平均から逆算した値ではなく、現在のprimary measurement bankにおける1 semantic unitを実質差の境界とする事前定義である。
 
-Equivalence判定はTOSTと整合する \(lpha=0.05\) の **90% CI** を用い、paired differenceの90% CI全体が事前margin内に入った場合にのみequivalence evidenceありとする。CIがmarginをまたぐ場合は、通常の差の検定が非有意であっても「同等」とせず**判定不能**とする。
+Equivalence判定はTOSTと整合する \(\alpha=0.05\) の **90% CI** を用い、paired differenceの90% CI全体が事前margin内に入った場合にのみequivalence evidenceありとする。CIがmarginをまたぐ場合は、通常の差の検定が非有意であっても「同等」とせず**判定不能**とする。
 
 paired analysis unitは、Stage 1Aで同一task/probe・同一repeat id・同一model settingsを共有するbank-level repeatとする。各repeatについて12 task / 12 probeをまず固定bank内で集約し、そのrepeat-level paired differenceをuncertainty推定の基本単位とする。これにより、同一API応答内のprobe相関や固定task bank内の依存を独立sampleとして過大計上しない。
 
@@ -1607,12 +1607,12 @@ repeat数決定用variance pilotも同時に次でfreezeする。
 - 各pairで同じ12 primary M task / 12 boolean probeを両armへ割り当てる
 - 各pairのbank-level差 \(d_j\) を作り、そのsample SD \(s_D\) を推定する
 - SDの楽観的過小推定を避けるため、\(df=7\) のchi-squareに基づく**片側95% upper confidence bound** \(\sigma_U\) をrepeat sizingへ使う
-- TOST \(lpha=0.05\)、真の差0を仮定したtarget power=0.80で、
+- TOST \(\alpha=0.05\)、真の差0を仮定したtarget power=0.80で、
 
 \[
 n_{req}=\left\lceil
 \left(
-rac{(z_{0.95}+z_{0.90})\sigma_U}{\Delta}
+\frac{(z_{0.95}+z_{0.90})\sigma_U}{\Delta}
 
 ight)^2
 
@@ -1755,12 +1755,12 @@ Stage 1本実験前に：
 P6-2 pre-live freezeとして、
 
 \[
-\Delta_M=\Delta_R=1/12pprox0.08333
+\Delta_M=\Delta_R=1/12\approx0.08333
 \]
 
 を採用する。1 task / 1 probe丸ごとの差は実質同等に含めず、equivalence regionはopen interval \((-1/12,+1/12)\) とする。
 
-Equivalenceは \(lpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体がmargin内へ入った場合のみ主張する。marginは観測後のSDや平均から変更しない。repeat数は10.2.5aでfreezeしたAF-vs-AF variance pilot規則から決定する。
+Equivalenceは \(\alpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体がmargin内へ入った場合のみ主張する。marginは観測後のSDや平均から変更しない。repeat数は10.2.5aでfreezeしたAF-vs-AF variance pilot規則から決定する。
 
 ### 11.2 Stage 1A paired design
 
