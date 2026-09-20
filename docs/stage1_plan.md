@@ -1613,11 +1613,8 @@ repeat数決定用variance pilotも同時に次でfreezeする。
 n_{req}=\left\lceil
 \left(
 \frac{(z_{0.95}+z_{0.90})\sigma_U}{\Delta}
-
-ight)^2
-
-ight
-ceil
+\right)^2
+\right\rceil
 \]
 
 をM/Rそれぞれに計算する
