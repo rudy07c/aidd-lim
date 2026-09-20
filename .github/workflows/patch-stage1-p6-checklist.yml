@@ -1,0 +1,35 @@
+name: Sync Stage 1 P6 checklist
+
+on:
+  push:
+    paths:
+      - '.github/stage1_p6_checklist_trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync checklist
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('docs/stage1_plan.md')
+          s = p.read_text()
+          old = '40. **P6-1b** task bank全体eligibility拡張（finite hold / capability-role分離 / provenance freeze実装済み、live未実行） ← 次\n41. **P6-2** AF baseline'
+          new = '40. **P6-1b** task bank全体eligibility拡張 ✅ 2026-09-20完了（initial 45 / hold追加0 / final bank freeze）\n41. **P6-2** AF baseline ← 次'
+          if old not in s:
+              raise SystemExit('P6 checklist anchor missing')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name 'rudy07c'
+          git config user.email 'rudy07c@gmail.com'
+          git add docs/stage1_plan.md
+          git commit -m 'docs(stage1): mark P6-1b complete'
+          git push
