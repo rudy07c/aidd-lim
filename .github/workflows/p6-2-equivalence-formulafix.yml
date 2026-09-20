@@ -1,0 +1,29 @@
+name: P6-2 equivalence formula fix
+
+on:
+  push:
+    branches:
+      - p6-2-equivalence-freeze
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p6-2-equivalence-freeze
+          fetch-depth: 0
+      - name: Repair equivalence formula
+        run: python harness/_tmp_fix_equivalence_formula.py
+      - name: Commit repaired formula
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/stage1_plan.md
+          git diff --cached --exit-code && exit 1 || true
+          git commit -m "docs: repair P6-2 repeat-sizing formula"
+          git push origin HEAD:p6-2-equivalence-freeze
