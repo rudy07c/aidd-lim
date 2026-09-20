@@ -7,7 +7,7 @@ import {
 } from "./failure-classification";
 import { P6_1_EXPECTED_TASK_BANK_SIZE, P6_1_TASK_BANK_VERSION } from "./task-bank-eligibility";
 
-export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v3-equivalence-freeze";
+export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v4-prevariance-hardening";
 export const P6_2_TASK_BANK_VERSION = P6_1_TASK_BANK_VERSION;
 export const P6_2_FAILURE_CLASSIFICATION_VERSION = P6_1_FAILURE_CLASSIFICATION_VERSION;
 

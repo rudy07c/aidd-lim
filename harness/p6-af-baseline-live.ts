@@ -67,7 +67,7 @@ import type { TestSuiteResult, TokenUsage } from "./src/types";
 export const P6_2_MODEL = "gpt-5.6-luna";
 export const P6_2_REASONING = "high" as const;
 export const P6_2_CONDITION = "AF" as const;
-export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v3-equivalence-freeze";
+export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v4-prevariance-hardening";
 export const P6_2_ARTIFACT_LAYOUT_VERSION = "p6-2-af-baseline-artifacts-v2";
 export const P6_2_PROBE_SCHEMA_VERSION = "p6-2-af-boolean-answers-v1";
 export const P6_2_PROBE_PROMPT_VERSION = "p6-2-af-probe-prompt-v1";
@@ -85,6 +85,8 @@ const CRITICAL_SOURCE_FILES = [
   "harness/src/p6/task-bank-live-runtime.ts",
   "harness/src/p6/failure-classification.ts",
   "harness/src/p6/task-bank-eligibility.ts",
+  "harness/src/p6/exact-tost-power.ts",
+  "harness/src/p6/variance-pilot.ts",
   "harness/src/agent-backend/openai.ts",
   "harness/src/agent-backend/openai/shared.ts",
   "harness/src/agent-backend/package-version.ts",
@@ -94,7 +96,7 @@ const CRITICAL_SOURCE_FILES = [
   "calibration/src/probe-scorer.ts",
 ] as const;
 
-interface HeldOutTask {
+export interface HeldOutTask {
   taskId: string;
   type?: string;
   visibleInstruction: string;
@@ -190,7 +192,7 @@ export interface P62ExecutionManifest {
   reasoningEffort: typeof P6_2_REASONING;
   condition: typeof P6_2_CONDITION;
   repeatCount: number;
-  repeatCountSource: "runtime-argument-pre-freeze";
+  repeatCountSource: "runtime-argument-pre-freeze" | "frozen-scientific-repeat-count";
   maxOutputTokens: number;
   probeMaxOutputTokens: number;
   requestTimeoutMs: number;
@@ -264,12 +266,15 @@ export interface P62AfBaselineResult {
       constantAnswerBaseline: number;
       repeatResults: RSemProbeRepeatResult[];
       meanBooleanAccuracy: number | null;
+      protocolValidRepeats: number;
+      protocolEvaluableRepeats: number;
+      protocolReliability: number | null;
     };
   };
   estimatedCostUsd: number;
 }
 
-interface ProbeMaterial {
+export interface ProbeMaterial {
   groundTruthRaw: string;
   namingSchemesRaw: string;
   booleanProbes: GeneratedProbe[];
@@ -277,7 +282,7 @@ interface ProbeMaterial {
   probeSchemaHash: string;
 }
 
-function loadDirRecursive(dir: string, baseDir: string, out: Record<string, string>): void {
+export function loadDirRecursive(dir: string, baseDir: string, out: Record<string, string>): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) loadDirRecursive(full, baseDir, out);
@@ -307,7 +312,7 @@ function sortJson(value: unknown): unknown {
   return value;
 }
 
-function hashRepository(files: Record<string, string>): string {
+export function hashRepository(files: Record<string, string>): string {
   const hash = crypto.createHash("sha256");
   for (const filePath of Object.keys(files).sort()) {
     hash.update(filePath);
@@ -346,7 +351,7 @@ function probePrompt(contextFiles: Record<string, string>, probes: GeneratedProb
   return `REPOSITORY FILES:${repo}\n\nQUESTIONS:\n${questions}\n\nReturn one string answer for every exact probe ID.`;
 }
 
-function loadProbeMaterial(syntheticWorldDir: string): ProbeMaterial {
+export function loadProbeMaterial(syntheticWorldDir: string): ProbeMaterial {
   const groundTruthPath = path.join(syntheticWorldDir, "ground_truth.json");
   const namingSchemesPath = path.join(syntheticWorldDir, "naming_schemes.json");
   const groundTruthRaw = fs.readFileSync(groundTruthPath, "utf8");
@@ -412,7 +417,9 @@ export function buildP62ExecutionManifest(args: {
     reasoningEffort: P6_2_REASONING,
     condition: P6_2_CONDITION,
     repeatCount,
-    repeatCountSource: "runtime-argument-pre-freeze",
+    repeatCountSource: P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT === null
+      ? "runtime-argument-pre-freeze"
+      : "frozen-scientific-repeat-count",
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     probeMaxOutputTokens: PROBE_MAX_OUTPUT_TOKENS,
     requestTimeoutMs: REQUEST_TIMEOUT_MS,
@@ -492,6 +499,9 @@ export function createP62Result(args: {
         constantAnswerBaseline: 0.5,
         repeatResults: [],
         meanBooleanAccuracy: null,
+        protocolValidRepeats: 0,
+        protocolEvaluableRepeats: 0,
+        protocolReliability: null,
       },
     },
     estimatedCostUsd: 0,
@@ -532,6 +542,13 @@ function recomputeResult(result: P62AfBaselineResult): void {
   );
   result.measurements.Rsem.meanBooleanAccuracy = validR.length
     ? validR.reduce((sum, item) => sum + (item.booleanAccuracy ?? 0), 0) / validR.length
+    : null;
+  const protocolEvaluableR = r.filter((item) => item.failureDomain !== "system" && item.failureDomain !== "infrastructure");
+  const protocolValidR = protocolEvaluableR.filter((item) => item.failureDomain !== "protocol");
+  result.measurements.Rsem.protocolEvaluableRepeats = protocolEvaluableR.length;
+  result.measurements.Rsem.protocolValidRepeats = protocolValidR.length;
+  result.measurements.Rsem.protocolReliability = protocolEvaluableR.length
+    ? protocolValidR.length / protocolEvaluableR.length
     : null;
   result.estimatedCostUsd =
     result.measurements.M.repeatResults.reduce((sum, item) => sum + (item.estimatedCostUsd ?? 0), 0) +
@@ -593,7 +610,7 @@ function artifactBundleFromAgent(
   };
 }
 
-async function runMRepeat(
+export async function runMRepeat(
   repository: Record<string, string>,
   syntheticWorldDir: string,
   task: HeldOutTask,
@@ -1221,7 +1238,12 @@ async function main(): Promise<void> {
   recomputeResult(result);
   writeResult(resultPath, result);
   console.log("P6-2 M SUMMARY", JSON.stringify(result.measurements.M.summary));
-  console.log("P6-2 RSEM SUMMARY", JSON.stringify({ meanBooleanAccuracy: result.measurements.Rsem.meanBooleanAccuracy }));
+  console.log("P6-2 RSEM SUMMARY", JSON.stringify({
+    meanBooleanAccuracy: result.measurements.Rsem.meanBooleanAccuracy,
+    protocolValidRepeats: result.measurements.Rsem.protocolValidRepeats,
+    protocolEvaluableRepeats: result.measurements.Rsem.protocolEvaluableRepeats,
+    protocolReliability: result.measurements.Rsem.protocolReliability,
+  }));
   console.log(`P6-2 TOTAL COST $${result.estimatedCostUsd.toFixed(6)}`);
   console.log("RESULT", resultPath);
   console.log("STOP: P6-3 and later phases were not executed.");
