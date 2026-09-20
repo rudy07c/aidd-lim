@@ -30,7 +30,9 @@
     "verify:run-validity": "ts-node verify-run-validity.ts",
     "p6:preflight-live": "DOTENV_CONFIG_PATH=.env ts-node -r dotenv/config p6-preflight-live.ts",
     "verify:p6-failure-classification": "ts-node verify-p6-failure-classification.ts",
-    "p6:reclassify-result": "ts-node reclassify-p6-result.ts"
+    "p6:reclassify-result": "ts-node reclassify-p6-result.ts",
+    "p6:task-bank-eligibility-live": "DOTENV_CONFIG_PATH=.env ts-node -r dotenv/config p6-task-bank-eligibility-live.ts",
+    "verify:p6-task-bank-eligibility": "ts-node verify-p6-task-bank-eligibility.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
