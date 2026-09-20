@@ -42,7 +42,9 @@ import {
   P6_2_SEMANTIC_FLOOR_TASK_IDS,
   P6_2_TASK_BANK_VERSION,
   P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+  P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
   P6_2_VARIANCE_SD_UCB_CONFIDENCE,
+  resolveP62RepeatCountSource,
   classifyP62MRepeat,
   p62MOutcomeDisposition,
   planP62MRepeats,
@@ -67,7 +69,7 @@ import type { TestSuiteResult, TokenUsage } from "./src/types";
 export const P6_2_MODEL = "gpt-5.6-luna";
 export const P6_2_REASONING = "high" as const;
 export const P6_2_CONDITION = "AF" as const;
-export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v3-equivalence-freeze";
+export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v4-exact-power-adjudication";
 export const P6_2_ARTIFACT_LAYOUT_VERSION = "p6-2-af-baseline-artifacts-v2";
 export const P6_2_PROBE_SCHEMA_VERSION = "p6-2-af-boolean-answers-v1";
 export const P6_2_PROBE_PROMPT_VERSION = "p6-2-af-probe-prompt-v1";
@@ -82,6 +84,8 @@ const PROMPT_CACHE_MODE = "implicit" as const;
 const CRITICAL_SOURCE_FILES = [
   "harness/p6-af-baseline-live.ts",
   "harness/src/p6/af-baseline.ts",
+  "harness/src/p6/equivalence-power.ts",
+  "harness/src/p6/adjudication.ts",
   "harness/src/p6/task-bank-live-runtime.ts",
   "harness/src/p6/failure-classification.ts",
   "harness/src/p6/task-bank-eligibility.ts",
@@ -151,6 +155,9 @@ export interface RSemProbeRepeatResult {
   executionStatus: string;
   validity: "valid" | "infrastructure-invalid";
   failureDomain: P62RSemFailureDomain;
+  rawFailureDomain: P62RSemFailureDomain;
+  adjudication: import("./src/p6/adjudication").P62AdjudicationRecord | null;
+  protocolValid: boolean | null;
   failureReason: string | null;
   rawResponse: string;
   modelProvenance: P62RSemModelProvenance;
@@ -182,6 +189,7 @@ export interface P62ExecutionManifest {
   equivalenceCiLevel: number;
   equivalenceTargetPower: number;
   variancePilotPairedAfRepeats: number;
+  variancePilotMaxAttemptsPerPair: number;
   varianceSdUcbConfidence: number;
   minScientificRepeats: number;
   maxScientificRepeats: number;
@@ -190,7 +198,7 @@ export interface P62ExecutionManifest {
   reasoningEffort: typeof P6_2_REASONING;
   condition: typeof P6_2_CONDITION;
   repeatCount: number;
-  repeatCountSource: "runtime-argument-pre-freeze";
+  repeatCountSource: "runtime-argument-pre-freeze" | "frozen-scientific-repeat-count";
   maxOutputTokens: number;
   probeMaxOutputTokens: number;
   requestTimeoutMs: number;
@@ -230,6 +238,8 @@ export interface P62AfBaselineResult {
     failureDomain: string;
     executionStatus: string;
     reason: string | null;
+    resolvedAt?: string | null;
+    adjudication?: import("./src/p6/adjudication").P62AdjudicationRecord | null;
   }>;
   startedAt: string;
   updatedAt: string;
@@ -264,6 +274,11 @@ export interface P62AfBaselineResult {
       constantAnswerBaseline: number;
       repeatResults: RSemProbeRepeatResult[];
       meanBooleanAccuracy: number | null;
+      semanticAccuracyProtocolValid: number | null;
+      protocolEvaluableRepeats: number;
+      protocolValidRepeats: number;
+      protocolFailureRepeats: number;
+      protocolReliability: number | null;
     };
   };
   estimatedCostUsd: number;
@@ -404,6 +419,7 @@ export function buildP62ExecutionManifest(args: {
     equivalenceCiLevel: P6_2_EQUIVALENCE_CI_LEVEL,
     equivalenceTargetPower: P6_2_EQUIVALENCE_TARGET_POWER,
     variancePilotPairedAfRepeats: P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+    variancePilotMaxAttemptsPerPair: P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
     varianceSdUcbConfidence: P6_2_VARIANCE_SD_UCB_CONFIDENCE,
     minScientificRepeats: P6_2_MIN_SCIENTIFIC_REPEATS,
     maxScientificRepeats: P6_2_MAX_SCIENTIFIC_REPEATS,
@@ -412,7 +428,7 @@ export function buildP62ExecutionManifest(args: {
     reasoningEffort: P6_2_REASONING,
     condition: P6_2_CONDITION,
     repeatCount,
-    repeatCountSource: "runtime-argument-pre-freeze",
+    repeatCountSource: resolveP62RepeatCountSource(repeatCount),
     maxOutputTokens: MAX_OUTPUT_TOKENS,
     probeMaxOutputTokens: PROBE_MAX_OUTPUT_TOKENS,
     requestTimeoutMs: REQUEST_TIMEOUT_MS,
@@ -492,6 +508,11 @@ export function createP62Result(args: {
         constantAnswerBaseline: 0.5,
         repeatResults: [],
         meanBooleanAccuracy: null,
+        semanticAccuracyProtocolValid: null,
+        protocolEvaluableRepeats: 0,
+        protocolValidRepeats: 0,
+        protocolFailureRepeats: 0,
+        protocolReliability: null,
       },
     },
     estimatedCostUsd: 0,
@@ -524,15 +545,25 @@ export function assertP62ResumeCompatible(
   }
 }
 
-function recomputeResult(result: P62AfBaselineResult): void {
+export function recomputeP62Result(result: P62AfBaselineResult): void {
   result.measurements.M.summary = summarizeP62M(result.measurements.M.repeatResults);
   const r = result.measurements.Rsem.repeatResults;
   const validR = r.filter((item) =>
-    item.validity === "valid" && item.failureDomain === "none" && item.booleanAccuracy !== null
+    item.validity === "valid" && (item.failureDomain === "none" || item.failureDomain === "semantic") &&
+    item.protocolValid === true && item.booleanAccuracy !== null
   );
-  result.measurements.Rsem.meanBooleanAccuracy = validR.length
+  const semanticAccuracy = validR.length
     ? validR.reduce((sum, item) => sum + (item.booleanAccuracy ?? 0), 0) / validR.length
     : null;
+  result.measurements.Rsem.meanBooleanAccuracy = semanticAccuracy;
+  result.measurements.Rsem.semanticAccuracyProtocolValid = semanticAccuracy;
+  const protocolEvaluable = r.filter((item) => item.protocolValid !== null);
+  const protocolValid = protocolEvaluable.filter((item) => item.protocolValid === true);
+  const protocolFailure = protocolEvaluable.filter((item) => item.protocolValid === false);
+  result.measurements.Rsem.protocolEvaluableRepeats = protocolEvaluable.length;
+  result.measurements.Rsem.protocolValidRepeats = protocolValid.length;
+  result.measurements.Rsem.protocolFailureRepeats = protocolFailure.length;
+  result.measurements.Rsem.protocolReliability = protocolEvaluable.length ? protocolValid.length / protocolEvaluable.length : null;
   result.estimatedCostUsd =
     result.measurements.M.repeatResults.reduce((sum, item) => sum + (item.estimatedCostUsd ?? 0), 0) +
     r.reduce((sum, item) => sum + (item.estimatedCostUsd ?? 0), 0);
@@ -770,6 +801,9 @@ function probeFailure(args: {
     executionStatus: args.executionStatus,
     validity: args.validity,
     failureDomain: args.failureDomain,
+    rawFailureDomain: args.failureDomain,
+    adjudication: null,
+    protocolValid: args.failureDomain === "protocol" ? false : null,
     failureReason: args.failureReason,
     rawResponse: args.rawResponse,
     modelProvenance: probeModelProvenance(args.response, args.providerErrorCode ?? null),
@@ -939,6 +973,9 @@ export async function runRSemRepeat(
     executionStatus: "ok",
     validity: "valid",
     failureDomain: "none",
+    rawFailureDomain: "none",
+    adjudication: null,
+    protocolValid: true,
     failureReason: null,
     rawResponse,
     modelProvenance: probeModelProvenance(response),
@@ -1073,7 +1110,7 @@ function markNeedsAudit(
 ): void {
   result.status = "needs-audit";
   result.auditFlags.push(flag);
-  recomputeResult(result);
+  recomputeP62Result(result);
 }
 
 async function main(): Promise<void> {
@@ -1117,6 +1154,7 @@ async function main(): Promise<void> {
     ciLevel: P6_2_EQUIVALENCE_CI_LEVEL,
     targetPower: P6_2_EQUIVALENCE_TARGET_POWER,
     variancePilotPairedAfRepeats: P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+    variancePilotMaxAttemptsPerPair: P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
     varianceSdUcbConfidence: P6_2_VARIANCE_SD_UCB_CONFIDENCE,
     minScientificRepeats: P6_2_MIN_SCIENTIFIC_REPEATS,
     maxScientificRepeats: P6_2_MAX_SCIENTIFIC_REPEATS,
@@ -1148,7 +1186,7 @@ async function main(): Promise<void> {
         rRecovery.missingArtifactRepeats.length || rRecovery.recoveredArtifactRepeats.length) {
       console.log("P6-2 JOURNAL RECOVERY", JSON.stringify({ M: mRecovery, Rsem: rRecovery }));
     }
-    recomputeResult(result);
+    recomputeP62Result(result);
     writeResult(resultPath, result);
   } else {
     result = createP62Result({
@@ -1174,7 +1212,7 @@ async function main(): Promise<void> {
     const classified = classifyP62MRepeat(execution.result, planned.role) as ClassifiedMRepeatResult;
     commitRepeatArtifactsAtomic(mJournalDirectory(runDir), classified, execution.artifacts);
     result.measurements.M.repeatResults.push(classified);
-    recomputeResult(result);
+    recomputeP62Result(result);
     writeResult(resultPath, result);
     console.log(`P6-2 M ${classified.taskId} repeat=${classified.repeat} role=${classified.role} passed=${classified.passed} domain=${classified.failureDomain}`);
     if (requiresP62MAudit(classified.failureDomain)) {
@@ -1197,7 +1235,7 @@ async function main(): Promise<void> {
     const probeResult = await runRSemRepeat(repository, probeMaterial.booleanProbes, repeat);
     commitProbeResultAtomic(runDir, probeResult);
     result.measurements.Rsem.repeatResults.push(probeResult);
-    recomputeResult(result);
+    recomputeP62Result(result);
     writeResult(resultPath, result);
     console.log(`P6-2 Rsem repeat=${repeat} status=${probeResult.executionStatus} domain=${probeResult.failureDomain} accuracy=${probeResult.booleanAccuracy === null ? "null" : probeResult.booleanAccuracy.toFixed(3)}`);
     if (requiresP62RSemAudit(probeResult.failureDomain)) {
@@ -1218,10 +1256,14 @@ async function main(): Promise<void> {
   result.status = "completed";
   result.completedAt = new Date().toISOString();
   result.updatedAt = result.completedAt;
-  recomputeResult(result);
+  recomputeP62Result(result);
   writeResult(resultPath, result);
   console.log("P6-2 M SUMMARY", JSON.stringify(result.measurements.M.summary));
-  console.log("P6-2 RSEM SUMMARY", JSON.stringify({ meanBooleanAccuracy: result.measurements.Rsem.meanBooleanAccuracy }));
+  console.log("P6-2 RSEM SUMMARY", JSON.stringify({
+    semanticAccuracyProtocolValid: result.measurements.Rsem.semanticAccuracyProtocolValid,
+    protocolReliability: result.measurements.Rsem.protocolReliability,
+    protocolEvaluableRepeats: result.measurements.Rsem.protocolEvaluableRepeats,
+  }));
   console.log(`P6-2 TOTAL COST $${result.estimatedCostUsd.toFixed(6)}`);
   console.log("RESULT", resultPath);
   console.log("STOP: P6-3 and later phases were not executed.");
