@@ -1245,7 +1245,7 @@ Stage 0 / 0.5の既存成果は破棄しない。以下をPre-Stage 1として�
 - equivalence / uncertainty methodがfreeze
 - Stage 1Cの5条件longitudinal harnessが安定
 
-**P6-2 pre-live equivalence freeze（2026-09-20）**：primary \(M\) 12 task / \(R^{sem}\) 12 boolean probeについて、\(\Delta_M=\Delta_R=1/12\approx0.08333\)を事前marginとする。1 task / 1 probe丸ごとの差はequivalentに含めない。\(\alpha=0.05\)のTOSTと整合する90% CI全体がmargin内に入る場合だけequivalence evidenceとする。Mではsemantic/protocol failureをend-to-end failureとして0点・分母内、system/infrastructure/otherは監査前に能力failureへ変換せず`needs-audit`とする。Rsemのprotocol/system/infrastructureもsemantic誤答へ変換せずaudit対象とする。repeat数は8 pairのfresh AF-vs-AF variance pilot、SD片側95% upper bound、target power 0.80から事前式で決め、最低8 repeat、必要数が30を超える場合は丸めず設計監査へ戻す。pilot dataはbaseline本取得へpoolしない。
+**P6-2 pre-live equivalence freeze（2026-09-20）**：primary \(M\) 12 task / \(R^{sem}\) 12 boolean probeについて、\(\Delta_M=\Delta_R=1/12\approx0.08333\)を固定bank上の最小意味単位に基づくoperational equivalence marginとして事前freezeする。1 task / 1 probe丸ごとの差はequivalentに含めない。\(\alpha=0.05\)のTOSTと整合する90% CI全体がmargin内に入る場合だけequivalence evidenceとする。Mではsemantic/protocol failureをend-to-end failureとして0点・分母内、system/infrastructure/otherは監査前に能力failureへ変換せず`needs-audit`とする。Rsemのprotocol/system/infrastructureもsemantic誤答へ変換せずaudit対象とする。repeat数は8 pairのfresh AF-vs-AF variance pilot（奇数AB/偶数BA、infrastructure-invalidは同一pair idを最大3 attemptまでreplacement）、SD片側95% upper boundを用い、n=8〜30の中心t分布によるexact paired-TOST powerを順に計算してtarget power 0.80を満たす最小nへfreezeする。n=30でも不足する場合は丸めず設計監査へ戻す。pilot dataはbaseline本取得へpoolしない。
 
 Stage 1の結果だけを理由に、短期差が小さい条件を安易にStage 2から削除しない。主仮説はlongitudinal selection effectであり、短期performance equivalenceはtrajectory equivalenceを意味しない。
 

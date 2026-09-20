@@ -1583,7 +1583,7 @@ P6-2 live baseline結果を一切観測する前に、primary outcome scale上�
 (-1/12,+1/12)
 \]
 
-のopen intervalとし、差がちょうど \(1/12\) に達する場合はequivalentとは判定しない。このmarginは観測varianceやAF平均から逆算した値ではなく、現在のprimary measurement bankにおける1 semantic unitを実質差の境界とする事前定義である。
+のopen intervalとし、差がちょうど \(1/12\) に達する場合はequivalentとは判定しない。このmarginは観測varianceやAF平均から逆算した値ではなく、**固定bank上の最小意味単位に基づくoperational equivalence margin**である。現在のprimary measurement bankにおける1 task / 1 probeを測定上の最小意味単位とし、その1 unit丸ごとの差をequivalentへ含めない。これはMの1 taskとR^{sem}の1 probeが実世界で同一の価値を持つという主張ではない。
 
 Equivalence判定はTOSTと整合する \(\alpha=0.05\) の **90% CI** を用い、paired differenceの90% CI全体が事前margin内に入った場合にのみequivalence evidenceありとする。CIがmarginをまたぐ場合は、通常の差の検定が非有意であっても「同等」とせず**判定不能**とする。
 
@@ -1603,23 +1603,29 @@ paired analysis unitは、Stage 1Aで同一task/probe・同一repeat id・同一
 repeat数決定用variance pilotも同時に次でfreezeする。
 
 - 独立したfresh-agent **AF-vs-AF twin arm** を用いる
-- pilot pair数：8
+- pilot pair数：8（pair id 1〜8を事前固定）
 - 各pairで同じ12 primary M task / 12 boolean probeを両armへ割り当てる
+- pair単位でA/Bを近接実行し、同一task/probeのpaired call間へ別pairのscientific callを挟まない
+- order effectを一方向へ固定しないため、奇数pairはA→B、偶数pairはB→AとしてAB/BAを交互にcounterbalanceする
+- infrastructure-invalidがいずれかのarmに発生したpair attemptはscientific variance dataへ含めず、**同一pair idを最大3 attempt（初回+2 replacement）**まで再取得する。3 attemptすべてでinfrastructure-invalidなら`needs-audit`として停止する
+- `system` / `other`は自動replacementせず、その場で`needs-audit`とする
+- protocol failureはinfrastructureと別に記録する。Mのprotocol failureは事前規則どおりend-to-end failure=0としてpair scoreへ含める。R^{sem}のprotocol failureはprotocol reliability=0として保存し、semantic-accuracy差には変換しない。R^{sem}でprotocol-valid paired observationが8 pair未満なら追加pairをpost-hocに足さず`needs-audit`とする
 - 各pairのbank-level差 \(d_j\) を作り、そのsample SD \(s_D\) を推定する
 - SDの楽観的過小推定を避けるため、\(df=7\) のchi-squareに基づく**片側95% upper confidence bound** \(\sigma_U\) をrepeat sizingへ使う
-- TOST \(\alpha=0.05\)、真の差0を仮定したtarget power=0.80で、
+- repeat sizingは正規近似を用いない。M/Rそれぞれについてcandidate \(n=8,9,\dots,30\) を順に評価し、真の差0における**exact paired-TOST power**が0.80以上となる最小nを採用する
+- candidate nごとに \(SE=\sigma_U/\sqrt{n}\)、\(\lambda=\Delta/SE\)、\(t_{crit}=t_{1-\alpha,n-1}\) とし、非心t分布ではなく中心t分布 \(T\sim t_{n-1}\) を用いて
 
 \[
-n_{req}=\left\lceil
-\left(
-\frac{(z_{0.95}+z_{0.90})\sigma_U}{\Delta}
-\right)^2
-\right\rceil
+Power(n)=P(t_{crit}-\lambda<T<\lambda-t_{crit})
 \]
 
-をM/Rそれぞれに計算する
+\[
+=F_{t_{n-1}}(\lambda-t_{crit})-F_{t_{n-1}}(t_{crit}-\lambda)
+\]
+
+を計算する。区間上端が下端以下ならpower=0とする
 - Stage 1 primary comparisonの共通repeat数は `max(8, n_M, n_R)` とする
-- `n_req > 30`となる場合は30へ丸めて実行せず、measurement instability / feasibilityの`needs-audit`として停止する
+- n=30でもtarget power=0.80へ到達しない場合は30へ丸めて実行せず、measurement instability / feasibilityの`needs-audit`として停止する
 - variance pilotの観測値をequivalence margin変更やtask reselectionには使用しない
 - variance pilot dataはP6-2 baseline本取得へpoolしない
 - repeat数freeze後はCIがwideでも追加repeatをpost-hocに足さず、equivalenceについては「判定不能」と報告する
@@ -1755,7 +1761,7 @@ P6-2 pre-live freezeとして、
 \Delta_M=\Delta_R=1/12\approx0.08333
 \]
 
-を採用する。1 task / 1 probe丸ごとの差は実質同等に含めず、equivalence regionはopen interval \((-1/12,+1/12)\) とする。
+を、**固定bank上の最小意味単位に基づくoperational equivalence margin**として採用する。1 task / 1 probe丸ごとの差は実質同等に含めず、equivalence regionはopen interval \((-1/12,+1/12)\) とする。Mの1 taskとR^{sem}の1 probeの実世界上の価値が同一であることは仮定しない。
 
 Equivalenceは \(\alpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体がmargin内へ入った場合のみ主張する。marginは観測後のSDや平均から変更しない。repeat数は10.2.5aでfreezeしたAF-vs-AF variance pilot規則から決定する。
 
