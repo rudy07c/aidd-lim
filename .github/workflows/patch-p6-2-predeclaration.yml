@@ -14,29 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Expand Stage 1 P6-2 predeclaration
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('docs/stage1_plan.md')
-          s = p.read_text(encoding='utf-8')
-          old = '''### 10.2 P6-2：AF baseline
-
-selected primary modelで、
-
-- balanced \\(R^{sem}\\)
-- \\(M\\)
-
-のAF baselineを再取得。
-'''
-          new = '''### 10.2 P6-2：AF baseline predeclaration
-
-P6-2の目的は、P6-1bでcapability / analysis roleをfreezeした後の改善版task bankとselected primary modelを用い、**Artifact-Full（AF）条件における2つの独立した測定量のbaseline分布**を取得することである。
-
-- \\(R^{sem}\\)：artifactから意味・関係・invariantを再構成できるかを測る**意味的再構成能力**
-- \\(M\\)：与えられた変更要求をartifactへ正しく反映し、既存behaviorを壊さず変更タスクを完了できるかを測る**機能的継続可能性**
-
-\\(M\\)はhidden testsの合否そのものではない。visible / hidden / task-specific tests等は変更結果を評価するための観測手段であり、\\(M\\)が測る対象は**変更タスクの成功可否**である。したがって、固定artifactにhidden testsを実行して既存機能が保持されていることだけを確認する測定とは区別する。\\(R^{sem}\\)と\\(M\\)は同じAF conditionで取得するが、互いに代替しない独立したmeasurement pathとして保存する。
+        env:
+          OLD_B64: IyMjIDEwLjIgUDYtMu+8mkFGIGJhc2VsaW5lCgpzZWxlY3RlZCBwcmltYXJ5IG1vZGVs44Gn44CBCgotIGJhbGFuY2VkIFwoUl57c2VtfVwpCi0gXChNXCkKCkFGIGJhc2VsaW5l44KS5YaN5Y+W5b6X44CCCg==
+          NEW_B64: IyMjIDEwLjIgUDYtMu+8mkFGIGJhc2VsaW5lIHByZWRlY2xhcmF0aW9uCgpQNi0y44Gu55uu55qE44Gv44CBUDYtMWLjgafjY2FwYWJpbGl0eSAvIGFuYWx5c2lzIHJvbGXjgpJmcmVlemXjgZfjgZ/lvozjga7mlLnlkozniYh0YXNrIGJhbmvjgajjgZvj bGVjdGVkIHByaW1hcnkgbW9kZWzjgpLnlKjjgYTjgIFcKipBcnRpZmFjdC1GdWxs77yIQUbvvInmnaHku7bjgavjgYrjgZHjgosy44Gk44Gu54us56uL44GX44Gf5ris5a6a6YeP44GuYmFzZWxpbmXliIblooPvvIqjgYrlj5blvpfjgZnjgovjgZPjgajjgafjgYLjgovjgIIKCi0gXChSXntzZW19XCnjgpphcnRpZmFjdOOBi+OCi+aEj+WRsyPpq4/jg7vpgrnjg7vjg5tpbnZhcmlhbnTjgpLlho3mp5DjgafjgY3jgovjgYvjgpLmuKzjgovjgIiW6KGh5Yq555qE5YaN5qeL5oiQ6IO95YqbKioKLSBcKE1cKe+8mmkujuS4juOBi+OCieWkieabtOimgeaxguOCkuYXJ0aWZhY3TjgbjmrYvjgZfjgY/lj43mmKDjgZfjgIHml6LlrZjloGVoYXZpb3LjgpLlo4rjgZXjgZrlpInmm7Tjgr/jgrnjgq/jgpLlrpzkuobjgafjgY3jgovjgYvjgpLmuKzjgovjgIqW5qmf6IO955qE57ac57aa5Y+v6IO95oCnKioKClwoTVwp44GvaGlkZGVuIHRlc3Rz44Gu5ZCI5ZCm44Gd44Gu44KC44Gu44Gn44Gv44Gq44GE44CCdmlzaWJsZSAvIGhpZGRlbiAvIHRhc2stc3BlY2lmaWMgdGVzdHPnrYnは変更結果を評価するための観測手段であり、\(M\)が測る対象は**変更タスクの成功可否**である。したがって、固定artifactにhidden testsを実行して既存機能が保持されていることだけを確認する測定とは区別する。\(R^{sem}\)と\(M\)は同じAF conditionで取得するが、互いに代替しない独立したmeasurement pathとして保存する。
 
 #### 10.2.1 task bank / historical result separation
 
@@ -70,16 +50,16 @@ P6-2 live開始時には、少なくとも次をrun provenance / frozen manifest
 
 resumeを実装する場合、これらfrozen provenanceの不一致を同一runへ混入させない。
 
-#### 10.2.3 \\(M\\) baselineの対象task
+#### 10.2.3 \(M\) baselineの対象task
 
 P6-1bでfreeze済みの`capabilityClass`と`analysisRole`をそのまま再利用し、P6-2の結果を見てtaskを再選別しない。
 
 primary baselineは、
 
-\\[
-\\mathcal T_{primary}
-=\\{t\\mid capabilityClass(t)=eligible \\land analysisRole(t)=main\\}
-\\]
+\[
+\mathcal T_{primary}
+=\{t\mid capabilityClass(t)=eligible \land analysisRole(t)=main\}
+\]
 
 の**12 task**とする。
 
@@ -101,7 +81,7 @@ primary baselineは、
 - `T-invariant-stress-1`
 - `T-invariant-stress-3`
 
-はAFで実行可能なdiagnosticとして**primary \\(M\\) baselineとは別集計**する。
+はAFで実行可能なdiagnosticとして**primary \(M\) baselineとは別集計**する。
 
 P6-1bでsemantic-floorに分類済みの6 task、
 
@@ -112,11 +92,11 @@ P6-1bでsemantic-floorに分類済みの6 task、
 - `T-invariant-stress-5`
 - `T-crosscut-6`
 
-はchallenge / floor diagnosticとして分類を保持し、primary \\(M\\) baselineへ混入させない。P6-2はtask eligibilityを再判定するphaseではない。
+はchallenge / floor diagnosticとして分類を保持し、primary \(M\) baselineへ混入させない。P6-2はtask eligibilityを再判定するphaseではない。
 
-#### 10.2.4 \\(R^{sem}\\) AF baseline
+#### 10.2.4 \(R^{sem}\) AF baseline
 
-\\(R^{sem}\\)はP6-0でmeasurement-validityを確認した`stage1-neutral-relation-v2`を用いる。
+\(R^{sem}\)はP6-0でmeasurement-validityを確認した`stage1-neutral-relation-v2`を用いる。
 
 - boolean primary：12問
 - ground-truth true relation：6
@@ -125,7 +105,7 @@ P6-1bでsemantic-floorに分類済みの6 task、
 - true / falseで同一surface形式
 - constant-answer baseline：0.50
 
-AF artifactを提示した条件でbalanced boolean primaryを測定し、constant-answer 0.50に対して後続のEL / PR / ARとの差を測定できる十分なheadroomが存在することを確認する。mc/stp等のreference diagnosticを併記する場合も、boolean primaryの\\(R^{sem}\\)とは混合しない。
+AF artifactを提示した条件でbalanced boolean primaryを測定し、constant-answer 0.50に対して後続のEL / PR / ARとの差を測定できる十分なheadroomが存在することを確認する。mc/stp等のreference diagnosticを併記する場合も、boolean primaryの\(R^{sem}\)とは混合しない。
 
 「十分なheadroom」の最終的な数値基準をP6-2の観測結果からpost-hocに選ばない。必要な数値gate / equivalence interpretationはlive開始前のfreeze事項として扱う。
 
@@ -135,17 +115,17 @@ P6-1bの3 repeatはtask eligibility判定のための設計であり、P6-2以�
 
 まず、
 
-\\[
-\\Delta_M, \\Delta_R
-\\]
+\[
+\Delta_M, \Delta_R
+\]
 
 を、**研究上どの程度の差以下なら実質的に同等と扱うか**というequivalence marginとして、P6-2 baseline結果を見る前にfreezeする。
 
-その後、独立したvariance pilotでAFにおける\\(M\\) / \\(R^{sem}\\)のrepeat間変動を見積もり、そのvarianceと事前freezeした\\(\\Delta_M,\\Delta_R\\)に基づいて、後続比較に必要なrepeat数を決める。
+その後、独立したvariance pilotでAFにおける\(M\) / \(R^{sem}\)のrepeat間変動を見積もり、そのvarianceと事前freezeした\((\Delta_M,\Delta_R)\)に基づいて、後続比較に必要なrepeat数を決める。
 
 したがって順序は、
 
-1. \\(\\Delta_M,\\Delta_R\\)の研究上の意味と値をfreeze
+1. \((\Delta_M,\Delta_R)\)の研究上の意味と値をfreeze
 2. variance pilot
 3. repeat数をfreeze
 4. P6-2 AF baseline本取得
@@ -172,17 +152,17 @@ P6-2の成功条件は、**AFが単に高得点であることではない**。
 
 必要なのは、primary measurementについて概念的に、
 
-\\[
-\\text{floor} < Outcome_{AF} < \\text{non-informative saturation}
-\\]
+\[
+\text{floor} < Outcome_{AF} < \text{non-informative saturation}
+\]
 
 となり、後続の有限context条件（EL / PR / AR）がAFからどの程度変化するかを観測できるmeasurement headroomがあることである。
 
 P6-2完了には少なくとも、
 
-- primary 12 taskについて\\(M\\)のAF baseline分布が保存されている
+- primary 12 taskについて\(M\)のAF baseline分布が保存されている
 - eligible diagnostic 2 taskがprimaryと分離して保存されている
-- balanced `stage1-neutral-relation-v2`による\\(R^{sem}\\)のAF baseline分布が保存されている
+- balanced `stage1-neutral-relation-v2`による\(R^{sem}\)のAF baseline分布が保存されている
 - semantic / protocol / system / infrastructure等のfailure domainを混同せず記録できる
 - model / prompt / schema / SDK / Node / git / repository / task-bank provenanceが保存されている
 - repeat間varianceが保存され、事前freezeしたequivalence設計と接続できる
@@ -190,12 +170,18 @@ P6-2完了には少なくとも、
 
 ことを要求する。
 
-**本節はP6-2 live前のpredeclarationである。runner実装、\\(\\Delta_M,\\Delta_R\\)の具体値確定、variance pilot、live API実行は別作業単位とし、本節の記述だけでは開始しない。**
-'''
+**本節はP6-2 live前のpredeclarationである。runner実装、\((\Delta_M,\Delta_R)\)の具体値確定、variance pilot、live API実行は別作業単位とし、本節の記述だけでは開始しない。**
+        run: |
+          python - <<'PY'
+          import base64, os
+          from pathlib import Path
+          p = Path('docs/stage1_plan.md')
+          s = p.read_text(encoding='utf-8')
+          old = base64.b64decode(os.environ['OLD_B64']).decode('utf-8')
+          new = base64.b64decode(os.environ['NEW_B64']).decode('utf-8')
           if old not in s:
               raise SystemExit('current P6-2 section did not match expected text')
-          s2 = s.replace(old, new, 1)
-          p.write_text(s2, encoding='utf-8')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8')
           PY
           git diff --check
       - name: Commit documentation only
