@@ -126,6 +126,9 @@ jobs:
       - name: Verify P6-2 AF baseline runner offline
         working-directory: harness
         run: npm run verify:p6-af-baseline
+      - name: Verify P6-2 exact power and variance-pilot policy
+        working-directory: harness
+        run: npm run verify:p6-variance-pilot
       - name: Verify installed SDK version provenance
         working-directory: harness
         run: npm run verify:package-version
