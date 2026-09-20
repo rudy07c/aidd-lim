@@ -1,0 +1,608 @@
+name: Apply P6 failure-domain update
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-p6-failure-domain-update.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply failure-domain classification update
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f"replacement anchor not found in {path}: {old[:120]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          classifier = r'''export const P6_1_FAILURE_CLASSIFICATION_VERSION = "p6-1-failure-domain-v2";
+
+export type FailureDomain =
+  | "none"
+  | "semantic"
+  | "protocol"
+  | "system"
+  | "infrastructure"
+  | "other";
+
+export interface FailureLike {
+  passed: boolean;
+  validity?: string | null;
+  failureCategory?: string | null;
+  failureReason?: string | null;
+  executionStatus?: string | null;
+}
+
+export interface FailureClassification {
+  failureDomain: FailureDomain;
+  semanticFailure: boolean;
+  protocolFailure: boolean;
+  systemFailure: boolean;
+  infrastructureFailure: boolean;
+}
+
+export const DEFAULT_P6_1_ELIGIBILITY_RULE = {
+  primaryMinSemanticSuccesses: 2,
+  semanticFloorMinFailures: 2,
+  invalidInfrastructureMin: 2,
+} as const;
+
+export interface TaskRepeatLike extends FailureLike {
+  taskId: string;
+  taskType?: string | null;
+  repeat: number;
+}
+
+export interface P61TaskClassification {
+  taskId: string;
+  taskType: string | null;
+  semanticSuccesses: number;
+  semanticFailures: number;
+  semanticEvaluableRepeats: number;
+  protocolFailures: number;
+  systemFailures: number;
+  otherFailures: number;
+  infrastructureInvalidCount: number;
+  protocolReliabilitySuccesses: number;
+  protocolReliabilityTotal: number;
+  protocolReliability: number | null;
+  classification: string;
+}
+
+const PROTOCOL_CATEGORIES = new Set([
+  "output-parse",
+  "protocol-contract",
+  "mutation-validation",
+]);
+
+const PROTOCOL_STATUSES = new Set([
+  "output-parse-failure",
+  "mutation-validation-failure",
+]);
+
+export function classifyFailure(result: FailureLike): FailureClassification {
+  if (result.passed) return flags("none");
+
+  const category = result.failureCategory ?? "";
+  const status = result.executionStatus ?? "";
+  const reason = result.failureReason ?? "";
+
+  if (
+    result.validity === "infrastructure-invalid" ||
+    category === "provider" ||
+    category === "harness" ||
+    status === "provider-error"
+  ) {
+    return flags("infrastructure");
+  }
+
+  if (category === "test-failure") {
+    // Test-suite execution/compiler failures do not establish semantic inability.
+    if (reason.includes(":execution:")) return flags("system");
+    return flags("semantic");
+  }
+
+  if (PROTOCOL_CATEGORIES.has(category) || PROTOCOL_STATUSES.has(status)) {
+    return flags("protocol");
+  }
+
+  return flags("other");
+}
+
+export function classifyTaskEligibility(
+  results: TaskRepeatLike[],
+  rule: {
+    primaryMinSemanticSuccesses: number;
+    semanticFloorMinFailures: number;
+    invalidInfrastructureMin: number;
+  } = DEFAULT_P6_1_ELIGIBILITY_RULE
+): P61TaskClassification {
+  if (!results.length) throw new Error("classifyTaskEligibility requires at least one repeat");
+
+  const classified = results.map((result) => ({ result, failure: classifyFailure(result) }));
+  const taskId = results[0].taskId;
+  const taskType = results[0].taskType ?? null;
+  if (results.some((result) => result.taskId !== taskId)) {
+    throw new Error("classifyTaskEligibility received mixed task IDs");
+  }
+
+  const semanticSuccesses = classified.filter(({ result }) => result.passed).length;
+  const semanticFailures = classified.filter(({ failure }) => failure.semanticFailure).length;
+  const protocolFailures = classified.filter(({ failure }) => failure.protocolFailure).length;
+  const systemFailures = classified.filter(({ failure }) => failure.systemFailure).length;
+  const infrastructureInvalidCount = classified.filter(({ failure }) => failure.infrastructureFailure).length;
+  const otherFailures = classified.filter(({ result, failure }) => !result.passed && failure.failureDomain === "other").length;
+  const semanticEvaluableRepeats = semanticSuccesses + semanticFailures;
+
+  const protocolReliabilityTotal = results.length - infrastructureInvalidCount;
+  const protocolReliabilitySuccesses = Math.max(0, protocolReliabilityTotal - protocolFailures);
+  const protocolReliability = protocolReliabilityTotal > 0
+    ? protocolReliabilitySuccesses / protocolReliabilityTotal
+    : null;
+
+  let classification: string;
+  if (infrastructureInvalidCount >= rule.invalidInfrastructureMin) {
+    classification = "invalid-capability-classification";
+  } else if (semanticSuccesses === 0 && semanticFailures >= rule.semanticFloorMinFailures) {
+    classification = "T_challenge-semantic-floor";
+  } else if (semanticSuccesses >= rule.primaryMinSemanticSuccesses) {
+    classification = "T_primary-eligible";
+  } else {
+    classification = "hold-more-semantic-repeats";
+  }
+
+  return {
+    taskId,
+    taskType,
+    semanticSuccesses,
+    semanticFailures,
+    semanticEvaluableRepeats,
+    protocolFailures,
+    systemFailures,
+    otherFailures,
+    infrastructureInvalidCount,
+    protocolReliabilitySuccesses,
+    protocolReliabilityTotal,
+    protocolReliability,
+    classification,
+  };
+}
+
+function flags(failureDomain: FailureDomain): FailureClassification {
+  return {
+    failureDomain,
+    semanticFailure: failureDomain === "semantic",
+    protocolFailure: failureDomain === "protocol",
+    systemFailure: failureDomain === "system",
+    infrastructureFailure: failureDomain === "infrastructure",
+  };
+}
+'''
+          Path('harness/src/p6').mkdir(parents=True, exist_ok=True)
+          Path('harness/src/p6/failure-classification.ts').write_text(classifier)
+
+          verify = r'''import assert from "assert";
+import {
+  classifyFailure,
+  classifyTaskEligibility,
+  DEFAULT_P6_1_ELIGIBILITY_RULE,
+} from "./src/p6/failure-classification";
+
+function repeat(
+  taskId: string,
+  repeatNo: number,
+  passed: boolean,
+  failureCategory: string | null = null,
+  executionStatus = "ok",
+  failureReason: string | null = null,
+  validity = "valid"
+) {
+  return {
+    taskId,
+    taskType: taskId.startsWith("T-crosscut") ? "cross_cutting" : taskId.startsWith("T-delayed") ? "delayed_dependency" : "local",
+    repeat: repeatNo,
+    passed,
+    validity,
+    failureCategory,
+    failureReason,
+    executionStatus,
+  };
+}
+
+assert.equal(classifyFailure(repeat("x", 1, false, "test-failure", "ok", "task-specific: invariant mismatch")).failureDomain, "semantic");
+assert.equal(classifyFailure(repeat("x", 1, false, "output-parse", "output-parse-failure", "Duplicate modified file path")).failureDomain, "protocol");
+assert.equal(classifyFailure(repeat("x", 1, false, "protocol-contract", "ok", "contract changed")).failureDomain, "protocol");
+assert.equal(classifyFailure(repeat("x", 1, false, "test-failure", "ok", "visible:execution:tsc failed")).failureDomain, "system");
+assert.equal(classifyFailure(repeat("x", 1, false, "provider", "provider-error", "timeout", "infrastructure-invalid")).failureDomain, "infrastructure");
+
+const historicalP61 = [
+  repeat("T-local-2", 1, true),
+  repeat("T-local-2", 2, false, "output-parse", "output-parse-failure", "Duplicate modified file path: src/vok/rules.ts"),
+  repeat("T-local-2", 3, true),
+
+  repeat("T-crosscut-1", 1, true),
+  repeat("T-crosscut-1", 2, true),
+  repeat("T-crosscut-1", 3, true),
+
+  repeat("T-delayed-1", 1, true),
+  repeat("T-delayed-1", 2, true),
+  repeat("T-delayed-1", 3, true),
+
+  repeat("T-crosscut-2", 1, false, "test-failure", "ok", "task-specific: invariant guard failure"),
+  repeat("T-crosscut-2", 2, false, "test-failure", "ok", "task-specific: state transition failure"),
+  repeat("T-crosscut-2", 3, false, "output-parse", "output-parse-failure", "Duplicate modified file path: src/vok/rules.ts"),
+
+  repeat("T-local-1", 1, false, "test-failure", "ok", "task-specific: invariant guard failure"),
+  repeat("T-local-1", 2, false, "test-failure", "ok", "task-specific: invariant guard failure"),
+  repeat("T-local-1", 3, false, "test-failure", "ok", "task-specific: invariant guard failure"),
+];
+
+const byTask = new Map<string, ReturnType<typeof classifyTaskEligibility>>();
+for (const taskId of [...new Set(historicalP61.map((r) => r.taskId))]) {
+  byTask.set(taskId, classifyTaskEligibility(historicalP61.filter((r) => r.taskId === taskId), DEFAULT_P6_1_ELIGIBILITY_RULE));
+}
+
+assert.deepStrictEqual(
+  pick(byTask.get("T-local-2")!),
+  { semanticSuccesses: 2, semanticFailures: 0, protocolFailures: 1, protocolReliability: 2 / 3, classification: "T_primary-eligible" }
+);
+assert.deepStrictEqual(
+  pick(byTask.get("T-crosscut-1")!),
+  { semanticSuccesses: 3, semanticFailures: 0, protocolFailures: 0, protocolReliability: 1, classification: "T_primary-eligible" }
+);
+assert.deepStrictEqual(
+  pick(byTask.get("T-delayed-1")!),
+  { semanticSuccesses: 3, semanticFailures: 0, protocolFailures: 0, protocolReliability: 1, classification: "T_primary-eligible" }
+);
+assert.deepStrictEqual(
+  pick(byTask.get("T-crosscut-2")!),
+  { semanticSuccesses: 0, semanticFailures: 2, protocolFailures: 1, protocolReliability: 2 / 3, classification: "T_challenge-semantic-floor" }
+);
+assert.deepStrictEqual(
+  pick(byTask.get("T-local-1")!),
+  { semanticSuccesses: 0, semanticFailures: 3, protocolFailures: 0, protocolReliability: 1, classification: "T_challenge-semantic-floor" }
+);
+
+console.log("P6 failure-domain classification verified, including 2026-09-20 5-task reclassification.");
+
+function pick(x: ReturnType<typeof classifyTaskEligibility>) {
+  return {
+    semanticSuccesses: x.semanticSuccesses,
+    semanticFailures: x.semanticFailures,
+    protocolFailures: x.protocolFailures,
+    protocolReliability: x.protocolReliability,
+    classification: x.classification,
+  };
+}
+'''
+          Path('harness/verify-p6-failure-classification.ts').write_text(verify)
+
+          reclassify = r'''import * as fs from "fs";
+import * as path from "path";
+import {
+  classifyFailure,
+  classifyTaskEligibility,
+  DEFAULT_P6_1_ELIGIBILITY_RULE,
+  P6_1_FAILURE_CLASSIFICATION_VERSION,
+} from "./src/p6/failure-classification";
+
+const argPath = process.argv.find((arg) => !arg.startsWith("--") && arg !== process.argv[0] && arg !== process.argv[1]);
+if (!argPath) {
+  throw new Error("Usage: npm run p6:reclassify-result -- <result.json> [--write]");
+}
+
+const resultPath = path.resolve(argPath);
+const data = JSON.parse(fs.readFileSync(resultPath, "utf8"));
+if (!data?.p6_1?.taskResults || !Array.isArray(data.p6_1.taskResults)) {
+  throw new Error("result.json does not contain p6_1.taskResults");
+}
+
+const legacyClassifications = data.p6_1.classifications ?? null;
+const taskResults = data.p6_1.taskResults.map((result: any) => ({
+  ...result,
+  ...classifyFailure(result),
+}));
+const taskIds = data.p6_1.pilotTasks ?? [...new Set(taskResults.map((result: any) => result.taskId))];
+const classifications = taskIds.map((taskId: string) =>
+  classifyTaskEligibility(taskResults.filter((result: any) => result.taskId === taskId), DEFAULT_P6_1_ELIGIBILITY_RULE)
+);
+
+data.criteria = data.criteria ?? {};
+data.criteria.p6_1 = {
+  ...(data.criteria.p6_1 ?? {}),
+  classificationVersion: P6_1_FAILURE_CLASSIFICATION_VERSION,
+  ...DEFAULT_P6_1_ELIGIBILITY_RULE,
+  floorBasis: "semantic-failure-only",
+  protocolFailureRole: "agent-output-reliability-diagnostic-only",
+};
+data.p6_1.taskResults = taskResults;
+if (legacyClassifications && !data.p6_1.legacyClassifications) data.p6_1.legacyClassifications = legacyClassifications;
+data.p6_1.classifications = classifications;
+data.p6_1.reclassification = {
+  version: P6_1_FAILURE_CLASSIFICATION_VERSION,
+  source: "existing failureCategory/failureReason/executionStatus; no API rerun",
+};
+
+const rendered = JSON.stringify(data, null, 2) + "\n";
+if (process.argv.includes("--write")) {
+  fs.writeFileSync(resultPath, rendered);
+  console.error(`Reclassified in place: ${resultPath}`);
+} else {
+  process.stdout.write(rendered);
+}
+'''
+          Path('harness/reclassify-p6-result.ts').write_text(reclassify)
+
+          runner = Path('harness/p6-preflight-live.ts')
+          text = runner.read_text()
+          text = text.replace(
+              'import type { TestSuiteResult, TokenUsage } from "./src/types";\n',
+              'import type { TestSuiteResult, TokenUsage } from "./src/types";\nimport {\n  classifyFailure,\n  classifyTaskEligibility,\n  DEFAULT_P6_1_ELIGIBILITY_RULE,\n  P6_1_FAILURE_CLASSIFICATION_VERSION,\n  type FailureClassification,\n} from "./src/p6/failure-classification";\n',
+              1,
+          )
+          old_rule = '''// Predeclared P6-1 pilot classification rule (3 repeats per task):
+// 2/3+ pass = provisional T_primary eligible; 0/3 = provisional floor/T_challenge candidate;
+// 1/3 = hold; >=2 infrastructure/provider-invalid repeats = capability classification invalid.
+const P6_1_RULE = {
+  repeats: REPEATS,
+  primaryMinPasses: 2,
+  floorPasses: 0,
+  invalidInfrastructureMin: 2,
+} as const;'''
+          new_rule = '''// P6-1 failure-domain rule: semantic capability and agent output reliability are separate axes.
+// Protocol/output-contract failures do not count toward semantic floor classification.
+const P6_1_RULE = {
+  repeats: REPEATS,
+  ...DEFAULT_P6_1_ELIGIBILITY_RULE,
+  floorBasis: "semantic-failure-only",
+  protocolFailureRole: "agent-output-reliability-diagnostic-only",
+  classificationVersion: P6_1_FAILURE_CLASSIFICATION_VERSION,
+} as const;'''
+          if old_rule not in text:
+              raise SystemExit('P6_1_RULE anchor missing')
+          text = text.replace(old_rule, new_rule, 1)
+          anchor = '''interface P61RepeatResult {
+  taskId: string;
+  taskType: string | null;
+  repeat: number;
+  passed: boolean;
+  validity: "valid" | "infrastructure-invalid";
+  failureCategory: string | null;
+  failureReason: string | null;
+  executionStatus: string;
+  visible: ReturnType<typeof suiteDigest> | null;
+  hidden: ReturnType<typeof suiteDigest> | null;
+  taskSpecific: ReturnType<typeof suiteDigest> | null;
+  protocolContractViolated: boolean | null;
+  workingNote: string | null;
+  actualModel: string | null;
+  usage: TokenUsage | null;
+  estimatedCostUsd: number | null;
+}
+'''
+          enriched = anchor + '''
+interface P61ClassifiedRepeatResult extends P61RepeatResult, FailureClassification {}
+
+function classifyP61Repeat(result: P61RepeatResult): P61ClassifiedRepeatResult {
+  return { ...result, ...classifyFailure(result) };
+}
+'''
+          if anchor not in text:
+              raise SystemExit('P61RepeatResult anchor missing')
+          text = text.replace(anchor, enriched, 1)
+          old_loop = '''  const taskResults: P61RepeatResult[] = [];
+  for (const task of selected) {
+    for (let repeat = 1; repeat <= REPEATS; repeat++) {
+      const r = await runTaskRepeat(repository, swDir, task, repeat);
+      taskResults.push(r);
+      console.log(`P6-1 ${task.taskId} repeat=${repeat} passed=${r.passed} validity=${r.validity} category=${r.failureCategory ?? "none"} reason=${r.failureReason ?? "none"} cost=$${(r.estimatedCostUsd ?? 0).toFixed(6)}`);
+    }
+  }
+  const classifications = selected.map((task) => {
+    const rs = taskResults.filter((r) => r.taskId === task.taskId);
+    const valid = rs.filter((r) => r.validity === "valid");
+    const infrastructureInvalidCount = rs.length - valid.length;
+    const passes = valid.filter((r) => r.passed).length;
+    let classification: string;
+    if (infrastructureInvalidCount >= P6_1_RULE.invalidInfrastructureMin) classification = "invalid-capability-classification";
+    else if (passes >= P6_1_RULE.primaryMinPasses) classification = "provisional-T_primary-eligible";
+    else if (passes === P6_1_RULE.floorPasses && valid.length >= 2) classification = "provisional-floor-T_challenge-candidate";
+    else classification = "hold-more-repeats";
+    return { taskId: task.taskId, taskType: task.type ?? null, passes, validRepeats: valid.length, infrastructureInvalidCount, classification };
+  });'''
+          new_loop = '''  const taskResults: P61ClassifiedRepeatResult[] = [];
+  for (const task of selected) {
+    for (let repeat = 1; repeat <= REPEATS; repeat++) {
+      const raw = await runTaskRepeat(repository, swDir, task, repeat);
+      const r = classifyP61Repeat(raw);
+      taskResults.push(r);
+      console.log(`P6-1 ${task.taskId} repeat=${repeat} passed=${r.passed} validity=${r.validity} domain=${r.failureDomain} category=${r.failureCategory ?? "none"} reason=${r.failureReason ?? "none"} cost=$${(r.estimatedCostUsd ?? 0).toFixed(6)}`);
+    }
+  }
+  const classifications = selected.map((task) =>
+    classifyTaskEligibility(taskResults.filter((r) => r.taskId === task.taskId), P6_1_RULE)
+  );'''
+          if old_loop not in text:
+              raise SystemExit('P6-1 classification loop anchor missing')
+          text = text.replace(old_loop, new_loop, 1)
+          runner.write_text(text)
+
+          pkg_path = Path('harness/package.json')
+          pkg = json.loads(pkg_path.read_text())
+          pkg['scripts']['verify:p6-failure-classification'] = 'ts-node verify-p6-failure-classification.ts'
+          pkg['scripts']['p6:reclassify-result'] = 'ts-node reclassify-p6-result.ts'
+          pkg_path.write_text(json.dumps(pkg, indent=2) + '\n')
+
+          ci_anchor = '''      - name: Verify run validity semantics
+        working-directory: harness
+        run: npm run verify:run-validity
+'''
+          ci_insert = ci_anchor + '''      - name: Verify P6 semantic/protocol failure classification
+        working-directory: harness
+        run: npm run verify:p6-failure-classification
+'''
+          replace_once('.github/workflows/harness-ci.yml', ci_anchor, ci_insert)
+
+          stage_path = Path('docs/stage1_plan.md')
+          stage = stage_path.read_text()
+          p60_anchor = '''failure時はmeasurement pathを修正し、P6-1を開始しない。
+
+### 10.1 P6-1：Primary task eligibility
+'''
+          p60_new = '''failure時はmeasurement pathを修正し、P6-1を開始しない。
+
+#### 10.0.4 2026-09-20 Luna live result：P6-0通過
+
+`gpt-5.6-luna`、reasoning=`high`、3 repeatsでrevised gateを再実行し、P6-0は全hard gateを通過した。
+
+| context | boolean primary accuracy | interpretation |
+|---|---:|---|
+| B=0 | 0.500 | chance band内 |
+| B=1K | 0.583 | diagnostic intermediate exposure |
+| Full | 0.917 | headroomあり |
+| visible-tests-only | 0.944 | F5 diagnostic。hard gateではない |
+| protocol-adapter-only | 0.500 | primary structural-inference guard通過 |
+
+`Full - B=0 = 0.417`で事前閾値0.25を超え、B=0 chance / Full headroom / dose-response / adapter-only chanceの4 checkはすべてtrue。reference mc/stpはB=1Kおよびadapter-onlyで1.00となりF9 recurrenceを再確認したため、引き続きreference-onlyとする。P6-0の測定器はStage 1較正へ使用可能と判断する。
+
+### 10.1 P6-1：Primary task eligibility
+'''
+          if p60_anchor not in stage:
+              raise SystemExit('stage1 P6-0 anchor missing')
+          stage = stage.replace(p60_anchor, p60_new, 1)
+
+          old_cap = '''### 10.1.1 Luna capability-floor gate
+
+GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main comparison前にmodel capability floorを明示的に検査する。Artifact-Fullで \\(\\mathcal T_{primary}\\) が恒常的に失敗する、または \\(R^{sem}\\) / \\(M\\) がfloorへ張り付く場合、そのtaskはchallenge setへ移す。primary task全体がfloorとなる場合のみ、model選択自体を再検討する。
+
+このgateはLunaを有利に見せるためのpost-hoc task除外ではなく、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
+
+### 10.2 P6-2：AF baseline
+'''
+          new_cap = '''### 10.1.1 Failure-domain classification / floor rule
+
+P6-1ではoverall success/failureだけでcapability floorを判定しない。repeatごとのfailureを次のdomainへ分類する。
+
+- `semantic`：test assertion failure等、task意味・invariant・behaviorを満たせなかったfailure
+- `protocol`：structured output parse、duplicate modified path、mutation validation、WorldProtocol contract等、agent output / mutation contractのfailure
+- `system`：compiler / test-suite execution自体のfailure
+- `infrastructure`：provider / harness infrastructure invalid
+- `other`：上記へ安全に分類できないfailure
+
+**floor判定に使うのは`semantic`だけ**とする。`protocol`は`agent output reliability`の別diagnostic軸として保存し、semantic capabilityの失敗票には加えない。`system` / `infrastructure`もsemantic floorへ加えない。
+
+3-repeat P6-1 ruleは以下でfreezeする。
+
+- `semanticSuccesses >= 2`：`T_primary` eligible
+- `semanticSuccesses = 0` かつ `semanticFailures >= 2`：semantic floorとして`T_challenge`
+- 上記以外：追加semantic repeatが必要なhold
+- infrastructure invalidが2 repeat以上：capability classification自体をinvalid
+- protocol reliability：infrastructure-invalidを除くattemptのうちprotocol failureでなかった割合。eligibilityとは独立に報告
+
+このruleは「AFでsuccess probabilityがfloorではない」「compiler/system/protocol failureだけで決めない」という既存基準を、機械判定へ落としたものである。
+
+### 10.1.2 Luna capability-floor gate
+
+GPT-5.6 Lunaはcost efficiencyを優先して採用するため、main comparison前にmodel capability floorを明示的に検査する。Artifact-Fullで \\(\\mathcal T_{primary}\\) が恒常的にsemantic failureとなる、または \\(R^{sem}\\) / \\(M\\) がfloorへ張り付く場合、そのtaskはchallenge setへ移す。primary task全体がfloorとなる場合のみ、model選択自体を再検討する。
+
+このgateはLunaを有利に見せるためのpost-hoc task除外ではなく、context conditionを測定できるexperimental organismとして十分なheadroomがあるかをmain condition comparison前に確認するためのmeasurement calibrationである。
+
+### 10.1.3 2026-09-20 P6-1 reclassification / frozen pilot sets
+
+既存live result `p6-preflight-luna__2026-09-20T01-59-44-098Z/result.json` の5 task × 3 repeatは、APIを再実行せず、既存`failureCategory` / `failureReason` / `executionStatus`から`p6-1-failure-domain-v2`で再分類する。
+
+| task | semantic success | semantic failure | protocol failure | protocol reliability | pilot classification |
+|---|---:|---:|---:|---:|---|
+| `T-local-2` | 2/3 | 0/3 | 1/3 (`output-parse`: duplicate path) | 2/3 | `T_primary` |
+| `T-crosscut-1` | 3/3 | 0/3 | 0/3 | 3/3 | `T_primary`（clean） |
+| `T-delayed-1` | 3/3 | 0/3 | 0/3 | 3/3 | `T_primary`（clean） |
+| `T-crosscut-2` | 0/3 | 2/3 | 1/3 (`output-parse`: duplicate path) | 2/3 | `T_challenge`（semantic floor） |
+| `T-local-1` | 0/3 | 3/3 | 0/3 | 3/3 | `T_challenge`（semantic floor） |
+
+したがって、この5-task pilotについてfreezeする集合は：
+
+\\[
+\\mathcal T_{primary}^{pilot}
+=\\{T\\text{-}local\\text{-}2,\\ T\\text{-}crosscut\\text{-}1,\\ T\\text{-}delayed\\text{-}1\\}
+\\]
+
+\\[
+\\mathcal T_{challenge}^{pilot}
+=\\{T\\text{-}local\\text{-}1,\\ T\\text{-}crosscut\\text{-}2\\}
+\\]
+
+である。`T-local-2`のoverall 2/3はsemantic capabilityの不安定さではなくprotocol reliability 2/3を含むため、floorへ落とさない。一方`T-crosscut-2`はprotocol failure 1回をfloor票から除外しても、semanticに評価可能だった2回が双方invariant/behavior failureで、semantic successが0なのでchallengeとする。
+
+最もcleanなprimary coreは`T-crosscut-1` / `T-delayed-1`である。`T-local-2`はprimaryに残すが、protocol reliability diagnosticを必ず併記する。
+
+P6-2へ進む前に、同じfailure-domain ruleをtask bank全体へ適用するeligibility拡張を行い、primary/challenge bankを最終freezeする。
+
+### 10.2 P6-2：AF baseline
+'''
+          if old_cap not in stage:
+              raise SystemExit('stage1 capability anchor missing')
+          stage = stage.replace(old_cap, new_cap, 1)
+
+          phase_old = '''### Phase P6：Recalibration
+
+38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only）
+39. **P6-1** Primary task eligibility + Luna capability-floor pilot / classification
+40. **P6-2** AF baseline
+41. **P6-3** EL static dose-response
+42. **P6-4** PR working-set dose-response
+43. **P6-5** AR smoke/non-floor
+44. **P6-6** MOI serialization + source-tagging / Operational-Full feasibility preflight
+45. **P6-7** \\(B_{expose}\\) freeze
+46. \\(B_{work}\\) freeze
+47. PR/AR共通 \\(E_{max}\\) freeze
+48. MOI schema/size freeze
+49. equivalence margins
+50. variance / repeats freeze
+'''
+          phase_new = '''### Phase P6：Recalibration
+
+38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only） ✅ 2026-09-20通過
+39. **P6-1** Primary task eligibility + Luna capability-floor pilot / semantic-vs-protocol reclassification ✅ 5-task pilot確定
+40. **P6-1b** task bank全体eligibility拡張（同一failure-domain ruleでprimary/challenge最終freeze） ← 次
+41. **P6-2** AF baseline
+42. **P6-3** EL static dose-response
+43. **P6-4** PR working-set dose-response
+44. **P6-5** AR smoke/non-floor
+45. **P6-6** MOI serialization + source-tagging / Operational-Full feasibility preflight
+46. **P6-7** \\(B_{expose}\\) freeze
+47. \\(B_{work}\\) freeze
+48. PR/AR共通 \\(E_{max}\\) freeze
+49. MOI schema/size freeze
+50. equivalence margins
+51. variance / repeats freeze
+'''
+          if phase_old not in stage:
+              raise SystemExit('stage1 Phase P6 anchor missing')
+          stage = stage.replace(phase_old, phase_new, 1)
+          stage_path.write_text(stage)
+          PY
+
+      - name: Commit update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add harness/src/p6/failure-classification.ts harness/verify-p6-failure-classification.ts harness/reclassify-p6-result.ts harness/p6-preflight-live.ts harness/package.json .github/workflows/harness-ci.yml docs/stage1_plan.md
+          git diff --cached --check
+          git commit -m "fix(p6): separate semantic and protocol failures"
+          git push
