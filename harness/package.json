@@ -34,7 +34,9 @@
     "p6:task-bank-eligibility-live": "npm run p6:task-bank-eligibility --",
     "verify:p6-task-bank-eligibility": "ts-node verify-p6-task-bank-eligibility.ts",
     "p6:task-bank-eligibility": "DOTENV_CONFIG_PATH=.env ts-node -r dotenv/config p6-task-bank-eligibility-live.ts",
-    "verify:p6-task-bank-eligibility-runner": "ts-node verify-p6-task-bank-eligibility-runner.ts"
+    "verify:p6-task-bank-eligibility-runner": "ts-node verify-p6-task-bank-eligibility-runner.ts",
+    "verify:package-version": "ts-node verify-package-version.ts",
+    "verify:heldout-invariant-coverage": "ts-node verify-heldout-invariant-coverage.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",

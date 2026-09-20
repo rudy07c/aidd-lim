@@ -5,7 +5,7 @@ import {
   type TaskRepeatLike,
 } from "./failure-classification";
 
-export const P6_1_TASK_BANK_VERSION = "p6-1-full-task-bank-v2";
+export const P6_1_TASK_BANK_VERSION = "p6-1-full-task-bank-v3-postflight-coverage";
 export const P6_1_EXPECTED_TASK_BANK_SIZE = 20;
 export const P6_1_INITIAL_REPEATS = DEFAULT_P6_1_ELIGIBILITY_RULE.initialAttempts;
 export const P6_1_MAX_ATTEMPTS = DEFAULT_P6_1_ELIGIBILITY_RULE.maxAttempts;

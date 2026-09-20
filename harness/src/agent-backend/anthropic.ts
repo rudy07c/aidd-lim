@@ -4,6 +4,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { serializeObservableInteractionForSuccessor } from "../context/observable-interaction";
 import { AgentBackend, AgentInput, AgentResult } from "./types";
+import { getPackageVersion } from "./package-version";
 
 const SYSTEM_PROMPT = `You are an AI software engineer working on a TypeScript repository.
 Your task is to implement the requested change to the repository.
@@ -136,14 +137,5 @@ function parseModifiedFiles(rawResponse: string): { ok: true; modifiedFiles: Rec
     return { ok: true, modifiedFiles: parsed as Record<string, string> };
   } catch {
     return { ok: false, modifiedFiles: {} };
-  }
-}
-
-function getPackageVersion(packageName: string): string | null {
-  try {
-    const pkg = require(`${packageName}/package.json`) as { version?: string };
-    return pkg.version ?? null;
-  } catch {
-    return null;
   }
 }

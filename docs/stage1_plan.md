@@ -1429,6 +1429,23 @@ resume時は`result.json`とartifact journalを照合する。
 **P6-1b live実行は、本実装・unit test・既存回帰・CIがgreenであることを確認した後にのみ開始する。P6-2はまだ実行しない。**
 
 
+### 10.1.5 P6-1b completion record（2026-09-20）
+
+GPT-5.6 Luna / reasoning=`high` / Artifact-Fullで、pilot済み5 taskを除く15 taskのfull-bank eligibilityを実行した。initial phaseは事前計画どおり **45 repeat（15×3）で停止**し、infrastructure-invalid=0、artifact欠損=0、`pending=[]`だった。したがってhold-continuationは明示起動したが追加repeatは0であり、結果を見た後のthreshold変更・task選別は行っていない。P6-1b総costは **$0.149019**。
+
+最終20-task bankは次でfreezeする。
+
+- primary（`eligible ∩ main`）：12
+- eligible diagnostic：2
+- semantic-floor：6
+- AF-unstable：0
+- invalid：0
+- pending：0
+
+semantic-floor 6 taskは、`T-local-1`, `T-crosscut-2`, `T-invariant-stress-2`, `T-invariant-stress-4`, `T-invariant-stress-5`, `T-crosscut-6`。これはStage 0.5 / Claude HaikuでFullを含む高budget域においてfloorだった6-task集合と**完全一致**した。したがって「どのtaskがAFでもfloorになるか」というtask-set levelではモデル横断的な再現が得られた。一方、**各taskの具体的失敗機序までHaikuとLunaで同一だったとは扱わない**。mechanism-level同一性は別途個別artifactを比較して検証する必要がある。
+
+P6-1b完了後のtask-bank auditで、`T-invariant-stress-2`を含む複数のinvariant-stressing taskに、複数preconditionの片側だけを落としたisolated negative testが不足していることを確認した。これはP6-1bの既存resultを事後的に無効化するものではなく、**P6-1b完了後に発見されたtask-bank coverage改善**として扱う。P6-1b result / freeze判断は当時のfrozen task-bank SHAとともに保持し、P6-2以降では改善後task bankを用いる。
+
 ### 10.2 P6-2：AF baseline
 
 selected primary modelで、

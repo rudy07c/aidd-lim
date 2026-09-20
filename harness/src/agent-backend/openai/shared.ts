@@ -284,14 +284,7 @@ export function responseFailureDetails(response: unknown): {
   };
 }
 
-export function getPackageVersion(packageName: string): string | null {
-  try {
-    const pkg = require(`${packageName}/package.json`) as { version?: string };
-    return pkg.version ?? null;
-  } catch {
-    return null;
-  }
-}
+export { getPackageVersion } from "../package-version";
 
 function sha256(value: string): string {
   return crypto.createHash("sha256").update(value, "utf8").digest("hex");
