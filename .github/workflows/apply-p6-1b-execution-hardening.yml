@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '.github/apply_p6_1b_execution_hardening.py'
-      - '.github/workflows/apply-p6-1b-execution-hardening.yml'
+      - '.github/p6_1b_hardening_trigger'
 
 permissions:
   contents: write
