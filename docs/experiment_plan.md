@@ -1036,13 +1036,17 @@ dose-response curveは「budgetに応じ滑らかに改善」パターンを満�
 
 #### Stage 1開始前にfreezeする追加事項（v2.2）
 
-**Primary task eligibility**：Stage 0.5では旧modelでArtifact-Fullでも恒常失敗するtaskが存在したため、既存20 taskを機械的にすべてprimary \(M\) へ入れない。primary model移行後、main comparisonとは独立したcalibration runでtask適格性を判定し、次をfreezeする。
+**Primary task eligibility**：Stage 0.5では旧modelでArtifact-Fullでも恒常失敗するtaskが存在したため、既存20 taskを機械的にすべてprimary \(M\) へ入れない。primary model移行後、main comparisonとは独立したcalibration runでtask適格性を判定する。判定は**能力上のclassと分析上のroleを別軸**としてfreezeする。
 
-- \(\mathcal T_{primary}\)：AFで非floor、system/compiler failure主体でない、measurement leakageがないtask
-- \(\mathcal T_{challenge}\)：AFでも難しいが診断価値を持つtask
-- task bank構成Aをprimary、構成B（invariant-stressingを含む）をdiagnosticとして扱う
+- `capabilityClass ∈ {eligible, semantic-floor, AF-unstable, invalid}`（実行途中のみ`pending`を許す）
+- `analysisRole ∈ {main, diagnostic}`
+- `taskType = invariant_stressing`は`analysisRole = diagnostic`、その他は`main`
+- \(\mathcal T_{primary}=\{t\mid capabilityClass(t)=eligible \land analysisRole(t)=main\}\)
+- `eligible ∩ diagnostic`はprimary outcomeへ混ぜずdiagnosticとして別集計する
+- `semantic-floor`と`AF-unstable`はchallengeとして保持するが、同一カテゴリに潰さず別々に記録する
+- `invalid`はprovider/harness failure過多または最大attempt到達後もsemantic evidence不足のtaskとして、能力floorとは分離する
 
-閾値・repeat数・除外理由は結果観測後に変更しない。
+P6-1bは残り15 taskについてinitial 3 repeat（45回）で一度必ず停止し、停止時の確認は実行健全性に限定する。追加repeatが必要な`pending` taskだけを、別の明示的hold-continuation phaseで事前固定規則に従い最大5 attemptまで機械的に進める。閾値・repeat上限・role・追加対象の規則は結果観測後に変更しない。
 
 **Execution-mode parity**：C1〜C3のprimary comparisonでは、AFだけBatch、PR/ARだけinteractive syncというようにexecution modeを混在させない。model identifier、reasoning、output schema、max model calls、decision opportunity、retry / repair ruleを可能な限り共通化する。Batchはindependent calibration / probe処理へ限定してよい。
 

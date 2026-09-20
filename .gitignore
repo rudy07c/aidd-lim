@@ -7,6 +7,7 @@ dist/
 
 # Generated smoke/calibration run artifacts
 runs/_smoke/
+runs/_calibration/
 
 # OS / editor
 .DS_Store

@@ -1342,9 +1342,18 @@ P6-2へ進む前に、同じfailure-domain ruleをtask bank全体へ適用する
 
 P6-1bは、20 task bankのうち既にP6-1 pilotでfreeze済みの5 taskを再実行せず、残り15 taskをGPT-5.6 Luna / reasoning=`high` / Artifact-Fullで評価する。**本節の規則はlive resultを見る前にfreezeする。**
 
+#### execution phase分離（initial 45 → explicit hold continuation）
+
+P6-1b live executionは1回のrunner呼び出しで最大75 attemptまで連続実行しない。次の2 phaseを明示的に分離する。
+
+- `npm run p6:task-bank-eligibility -- --phase=initial`：残り15 task × 3 repeat、**計45 repeatだけ**を実行し、45回到達時に必ず停止する。途中停止からの再開は同phaseに`--resume <result.json>`を付ける。
+- `npm run p6:task-bank-eligibility -- --phase=hold-continuation --resume <result.json>`：initial phase完了後に別途明示起動し、事前固定規則で`pending`になったtaskだけをrepeat 4→5へ機械的に進める。
+
+initial 45停止時に確認してよいのは、infrastructure-invalid件数、repeat artifact欠損、journal recovery件数などの**実行健全性だけ**である。45回の結果を見てeligibility閾値、task role、追加repeat対象、max attemptを変更しない。hold-continuationの対象は事前規則から機械的に決め、人間が成績を見て選別しない。
+
 #### attempt / hold終了規則
 
-各taskは初期3 attemptを必ず実行する。protocol/system/other failureによりsemantic-evaluable evidenceが不足し、3 attempt後もterminal classificationに到達しない場合のみ追加attemptを許可する。追加は最大2回、したがって**1 taskあたり最大5 attempt**、15 task全体では初期45 attempt・最大75 attemptを上限とする。
+各taskはinitial phaseで3 attemptを必ず実行する。protocol/system/other failureによりsemantic-evaluable evidenceが不足し、3 attempt後もterminal classificationに到達しない場合のみ、明示的なhold-continuation phaseで追加attemptを許可する。追加は最大2回、したがって**1 taskあたり最大5 attempt**、15 task全体では初期45 attempt・最大75 attemptを上限とする。
 
 3 attempt以降のcapability判定は次で固定する。
 
@@ -1381,27 +1390,41 @@ main primary bankは
 
 #### resume freeze / provenance
 
+scientific live開始時はtracked worktreeがcleanであることをgateとし、未commitのtracked変更があれば開始を拒否する。`runs/_calibration/`はgenerated artifactとしてgitignore対象にする。
+
 run開始時にtask bank SHA、baseline repository SHAに加えて、以下をmanifestへ固定する。
 
 - git SHA
+- `taskBankVersion` / `failureClassificationVersion` / `artifactLayoutVersion`
+- eligibility rule全体、`initialRepeatsPerTask`、`maxAttemptsPerTask`
+- model / reasoning / `maxOutputTokens` / timeout / retry / service tier / cache mode
 - OpenAI `promptVersion` / `promptHash`
 - OpenAI `schemaVersion` / `schemaHash`
+- OpenAI SDK version / Node version
 - eligibility runner SHA256
-- runner / OpenAI backend / prompt-schema / classification / scoring等のcritical source fingerprint
+- runner / OpenAI backend / prompt-schema / classification / scoring / live-runtime等のcritical source fingerprint
 
 resume時にいずれかが不一致なら同一runへの追記を拒否する。
 
-#### repeat artifact保存
+#### repeat artifact journal / recovery
 
-各repeatについて`result.json`とは別に、run directory配下の`<taskId>/repeat-N/`へ少なくとも以下を保存する。
+各repeatについて`result.json`とは別に、run directory配下の`<taskId>/repeat-N/`へ以下の5ファイルを保存する。
 
 - `agent_response.txt`：raw response
 - `modified_files.json`：生成された変更内容
 - `model_provenance.json`：model / prompt / schema / SDK等のprovenance
 - `test_results.json`：visible / hidden / task-specific / protocol判定
-- `repeat_meta.json`：execution status / normalized error / runner error
+- `repeat_meta.json`：repeat result本体、execution status / normalized error / runner error
 
-これにより、後からsemantic failureの具体的原因を再監査できるようにする。
+5ファイルは一時directoryへ書き切った後、directory renameでatomic commitする。`repeat_meta.json`はjournal entryとして、artifact commit後・`result.json`更新前にクラッシュしたrepeatをAPI再実行なしで復旧できる情報を持つ。
+
+resume時は`result.json`とartifact journalを照合する。
+
+- `result.json`にrepeatがあるのに5ファイルのどれかが欠ける場合：そのrepeatを記録から外し、該当phaseの再実行対象へ戻す。
+- 5ファイルが完全にcommit済みだが`result.json`にrepeatがない場合：`repeat_meta.json`からrepeat resultを復旧し、重複API callを避ける。
+- incompleteな一時/partial artifact directoryは研究データとして採用しない。
+
+これにより、semantic failureの具体的原因を再監査できるだけでなく、resume時の二重課金と不完全artifact採用を避ける。
 
 **P6-1b live実行は、本実装・unit test・既存回帰・CIがgreenであることを確認した後にのみ開始する。P6-2はまだ実行しない。**
 
