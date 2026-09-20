@@ -27,12 +27,24 @@ import {
 import type { AgentResult } from "./src/agent-backend/types";
 import {
   P6_2_AF_BASELINE_VERSION,
+  P6_2_DELTA_M,
+  P6_2_DELTA_R,
   P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS,
+  P6_2_EQUIVALENCE_ALPHA,
+  P6_2_EQUIVALENCE_CI_LEVEL,
+  P6_2_EQUIVALENCE_DESIGN_VERSION,
+  P6_2_EQUIVALENCE_TARGET_POWER,
   P6_2_FAILURE_CLASSIFICATION_VERSION,
+  P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT,
+  P6_2_MAX_SCIENTIFIC_REPEATS,
+  P6_2_MIN_SCIENTIFIC_REPEATS,
   P6_2_PRIMARY_TASK_IDS,
   P6_2_SEMANTIC_FLOOR_TASK_IDS,
   P6_2_TASK_BANK_VERSION,
+  P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+  P6_2_VARIANCE_SD_UCB_CONFIDENCE,
   classifyP62MRepeat,
+  p62MOutcomeDisposition,
   planP62MRepeats,
   planP62ProbeRepeats,
   selectP62TaskBank,
@@ -55,7 +67,7 @@ import type { TestSuiteResult, TokenUsage } from "./src/types";
 export const P6_2_MODEL = "gpt-5.6-luna";
 export const P6_2_REASONING = "high" as const;
 export const P6_2_CONDITION = "AF" as const;
-export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v2";
+export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v3-equivalence-freeze";
 export const P6_2_ARTIFACT_LAYOUT_VERSION = "p6-2-af-baseline-artifacts-v2";
 export const P6_2_PROBE_SCHEMA_VERSION = "p6-2-af-boolean-answers-v1";
 export const P6_2_PROBE_PROMPT_VERSION = "p6-2-af-probe-prompt-v1";
@@ -163,6 +175,17 @@ export interface P62ExecutionManifest {
   taskBankVersion: typeof P6_2_TASK_BANK_VERSION;
   failureClassificationVersion: typeof P6_2_FAILURE_CLASSIFICATION_VERSION;
   artifactLayoutVersion: typeof P6_2_ARTIFACT_LAYOUT_VERSION;
+  equivalenceDesignVersion: typeof P6_2_EQUIVALENCE_DESIGN_VERSION;
+  deltaM: number;
+  deltaR: number;
+  equivalenceAlpha: number;
+  equivalenceCiLevel: number;
+  equivalenceTargetPower: number;
+  variancePilotPairedAfRepeats: number;
+  varianceSdUcbConfidence: number;
+  minScientificRepeats: number;
+  maxScientificRepeats: number;
+  frozenScientificRepeatCount: number | null;
   model: typeof P6_2_MODEL;
   reasoningEffort: typeof P6_2_REASONING;
   condition: typeof P6_2_CONDITION;
@@ -374,6 +397,17 @@ export function buildP62ExecutionManifest(args: {
     taskBankVersion: P6_2_TASK_BANK_VERSION,
     failureClassificationVersion: P6_2_FAILURE_CLASSIFICATION_VERSION,
     artifactLayoutVersion: P6_2_ARTIFACT_LAYOUT_VERSION,
+    equivalenceDesignVersion: P6_2_EQUIVALENCE_DESIGN_VERSION,
+    deltaM: P6_2_DELTA_M,
+    deltaR: P6_2_DELTA_R,
+    equivalenceAlpha: P6_2_EQUIVALENCE_ALPHA,
+    equivalenceCiLevel: P6_2_EQUIVALENCE_CI_LEVEL,
+    equivalenceTargetPower: P6_2_EQUIVALENCE_TARGET_POWER,
+    variancePilotPairedAfRepeats: P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+    varianceSdUcbConfidence: P6_2_VARIANCE_SD_UCB_CONFIDENCE,
+    minScientificRepeats: P6_2_MIN_SCIENTIFIC_REPEATS,
+    maxScientificRepeats: P6_2_MAX_SCIENTIFIC_REPEATS,
+    frozenScientificRepeatCount: P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT,
     model: P6_2_MODEL,
     reasoningEffort: P6_2_REASONING,
     condition: P6_2_CONDITION,
@@ -1012,8 +1046,25 @@ function createResultPath(repoRoot: string): string {
   return path.join(repoRoot, "runs", "_calibration", `p6-2-af-baseline-luna__${stamp}`, "result.json");
 }
 
-function requiresAudit(failureDomain: string): boolean {
-  return failureDomain === "infrastructure" || failureDomain === "system";
+export function requiresP62MAudit(failureDomain: string): boolean {
+  if (failureDomain === "none" || failureDomain === "semantic" || failureDomain === "protocol") return false;
+  return true;
+}
+
+export function requiresP62RSemAudit(failureDomain: string): boolean {
+  // R^sem is intended to isolate semantic reconstruction. A malformed response
+  // cannot safely be converted into a semantic wrong-answer, so protocol,
+  // system, and infrastructure failures all stop the measurement for audit.
+  return failureDomain === "protocol" || failureDomain === "system" || failureDomain === "infrastructure";
+}
+
+export function assertP62LiveRepeatCountFrozen(repeatCount: number): void {
+  if (P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT === null) {
+    throw new Error("P6-2 live execution refused: scientific repeat count is not frozen; run the predeclared AF-vs-AF variance pilot first");
+  }
+  if (repeatCount !== P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT) {
+    throw new Error(`P6-2 live execution refused: --repeats=${repeatCount} does not match frozen repeat count ${P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT}`);
+  }
 }
 
 function markNeedsAudit(
@@ -1058,12 +1109,26 @@ async function main(): Promise<void> {
     excludedSemanticFloor: [...P6_2_SEMANTIC_FLOOR_TASK_IDS],
   }));
   console.log("P6-2 RSEM", JSON.stringify({ designVersion: STAGE1_BOOLEAN_DESIGN_VERSION, booleanProbes: probeMaterial.booleanProbes.length }));
+  console.log("P6-2 EQUIVALENCE", JSON.stringify({
+    version: P6_2_EQUIVALENCE_DESIGN_VERSION,
+    deltaM: P6_2_DELTA_M,
+    deltaR: P6_2_DELTA_R,
+    alpha: P6_2_EQUIVALENCE_ALPHA,
+    ciLevel: P6_2_EQUIVALENCE_CI_LEVEL,
+    targetPower: P6_2_EQUIVALENCE_TARGET_POWER,
+    variancePilotPairedAfRepeats: P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+    varianceSdUcbConfidence: P6_2_VARIANCE_SD_UCB_CONFIDENCE,
+    minScientificRepeats: P6_2_MIN_SCIENTIFIC_REPEATS,
+    maxScientificRepeats: P6_2_MAX_SCIENTIFIC_REPEATS,
+    frozenScientificRepeatCount: P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT,
+  }));
   console.log("P6-2 REPEATS", repeatCount);
 
   if (!live) {
-    console.log("STOP: dry/offline mode. Add --live only after Delta_M/Delta_R and scientific repeat count are frozen.");
+    console.log("STOP: dry/offline mode. Delta_M/Delta_R are frozen; live remains blocked until the variance pilot freezes scientific repeat count.");
     return;
   }
+  assertP62LiveRepeatCountFrozen(repeatCount);
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is required for P6-2 live execution");
 
   const resultPath = resumePath ?? createResultPath(repoRoot);
@@ -1112,7 +1177,7 @@ async function main(): Promise<void> {
     recomputeResult(result);
     writeResult(resultPath, result);
     console.log(`P6-2 M ${classified.taskId} repeat=${classified.repeat} role=${classified.role} passed=${classified.passed} domain=${classified.failureDomain}`);
-    if (requiresAudit(classified.failureDomain)) {
+    if (requiresP62MAudit(classified.failureDomain)) {
       markNeedsAudit(result, {
         measurement: "M",
         taskId: classified.taskId,
@@ -1135,7 +1200,7 @@ async function main(): Promise<void> {
     recomputeResult(result);
     writeResult(resultPath, result);
     console.log(`P6-2 Rsem repeat=${repeat} status=${probeResult.executionStatus} domain=${probeResult.failureDomain} accuracy=${probeResult.booleanAccuracy === null ? "null" : probeResult.booleanAccuracy.toFixed(3)}`);
-    if (requiresAudit(probeResult.failureDomain)) {
+    if (requiresP62RSemAudit(probeResult.failureDomain)) {
       markNeedsAudit(result, {
         measurement: "Rsem",
         taskId: null,
