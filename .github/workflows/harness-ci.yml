@@ -120,6 +120,9 @@ jobs:
       - name: Verify P6 full task-bank eligibility planning
         working-directory: harness
         run: npm run verify:p6-task-bank-eligibility
+      - name: Verify P6 task-bank live runner hardening offline
+        working-directory: harness
+        run: npm run verify:p6-task-bank-eligibility-runner
       - name: Verify OpenAI backend offline
         working-directory: harness
         run: npm run verify:openai
