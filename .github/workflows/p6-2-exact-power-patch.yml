@@ -1,0 +1,40 @@
+name: P6-2 exact-power patch
+
+on:
+  push:
+    branches:
+      - p6-2-exact-power-adjudication
+    paths:
+      - 'harness/apply-p6-2-exact-power-fix.js'
+      - '.github/workflows/p6-2-exact-power-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Configure git
+        run: |
+          git config user.name 'rudy07c'
+          git config user.email 'rudy07c@gmail.com'
+      - name: Apply predeclaration then implementation commits
+        run: node harness/apply-p6-2-exact-power-fix.js
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-2 offline
+        working-directory: harness
+        run: npm run verify:p6-af-baseline
+      - name: Push generated commits
+        run: git push origin HEAD:p6-2-exact-power-adjudication
