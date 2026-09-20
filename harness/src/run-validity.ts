@@ -1,4 +1,5 @@
 // Shared source of truth for provider/response statuses that censor scientific outcomes.
+// Used by the orchestrator and P6 eligibility classification to prevent semantic drift.
 import type { AgentExecutionStatus } from "./types";
 
 export const CENSORED_AGENT_EXECUTION_STATUSES: ReadonlySet<AgentExecutionStatus> = new Set<AgentExecutionStatus>([
