@@ -117,6 +117,9 @@ jobs:
       - name: Verify P6 semantic/protocol failure classification
         working-directory: harness
         run: npm run verify:p6-failure-classification
+      - name: Verify P6 full task-bank eligibility planning
+        working-directory: harness
+        run: npm run verify:p6-task-bank-eligibility
       - name: Verify OpenAI backend offline
         working-directory: harness
         run: npm run verify:openai
