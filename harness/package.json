@@ -35,6 +35,8 @@
     "verify:p6-task-bank-eligibility": "ts-node verify-p6-task-bank-eligibility.ts",
     "p6:task-bank-eligibility": "DOTENV_CONFIG_PATH=.env ts-node -r dotenv/config p6-task-bank-eligibility-live.ts",
     "verify:p6-task-bank-eligibility-runner": "ts-node verify-p6-task-bank-eligibility-runner.ts",
+    "p6:af-baseline": "DOTENV_CONFIG_PATH=.env ts-node -r dotenv/config p6-af-baseline-live.ts",
+    "verify:p6-af-baseline": "ts-node verify-p6-af-baseline.ts",
     "verify:package-version": "ts-node verify-package-version.ts",
     "verify:heldout-invariant-coverage": "ts-node verify-heldout-invariant-coverage.ts"
   },
