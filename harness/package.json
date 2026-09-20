@@ -38,7 +38,8 @@
     "p6:af-baseline": "DOTENV_CONFIG_PATH=.env ts-node -r dotenv/config p6-af-baseline-live.ts",
     "verify:p6-af-baseline": "ts-node verify-p6-af-baseline.ts",
     "verify:package-version": "ts-node verify-package-version.ts",
-    "verify:heldout-invariant-coverage": "ts-node verify-heldout-invariant-coverage.ts"
+    "verify:heldout-invariant-coverage": "ts-node verify-heldout-invariant-coverage.ts",
+    "p6:adjudicate-af-baseline": "ts-node adjudicate-p6-af-baseline.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",

@@ -24,7 +24,10 @@ import {
   P6_2_SEMANTIC_FLOOR_TASK_IDS,
   P6_2_TASK_BANK_VERSION,
   P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
+  P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
   P6_2_VARIANCE_SD_UCB_CONFIDENCE,
+  p62VariancePilotArmOrder,
+  resolveP62RepeatCountSource,
   classifyP62MRepeat,
   p62MOutcomeDisposition,
   planP62MRepeats,
@@ -32,6 +35,8 @@ import {
   selectP62TaskBank,
   summarizeP62M,
 } from "./src/p6/af-baseline";
+import { exactPairedTostPowerAtZero, findMinimumExactPairedTostN } from "./src/p6/equivalence-power";
+import { applyP62Adjudication } from "./src/p6/adjudication";
 import {
   assertP62ResumeCompatible,
   buildP62ExecutionManifest,
@@ -150,6 +155,12 @@ async function main(): Promise<void> {
   assert.equal(P6_2_EQUIVALENCE_CI_LEVEL, 0.90);
   assert.equal(P6_2_EQUIVALENCE_TARGET_POWER, 0.80);
   assert.equal(P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS, 8);
+  assert.equal(P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR, 3);
+  assert.deepEqual(p62VariancePilotArmOrder(1), ["A", "B"]);
+  assert.deepEqual(p62VariancePilotArmOrder(2), ["B", "A"]);
+  assert.equal(resolveP62RepeatCountSource(8), "runtime-argument-pre-freeze");
+  assert.equal(resolveP62RepeatCountSource(11, 11), "frozen-scientific-repeat-count");
+  assertThrowsMessage(() => resolveP62RepeatCountSource(10, 11), /does not match frozen scientific repeat count/);
   assert.equal(P6_2_VARIANCE_SD_UCB_CONFIDENCE, 0.95);
   assert.equal(P6_2_MIN_SCIENTIFIC_REPEATS, 8);
   assert.equal(P6_2_MAX_SCIENTIFIC_REPEATS, 30);
@@ -167,6 +178,16 @@ async function main(): Promise<void> {
   assert.equal(requiresP62RSemAudit("system"), true);
   assert.equal(requiresP62RSemAudit("infrastructure"), true);
   assertThrowsMessage(() => assertP62LiveRepeatCountFrozen(8), /scientific repeat count is not frozen/);
+
+  // Exact paired-TOST power regression: sigma_U=Delta must not use the old normal approximation.
+  const sigmaEqualsDeltaPower9 = exactPairedTostPowerAtZero({ n: 9, sigma: P6_2_DELTA_M, delta: P6_2_DELTA_M, alpha: 0.05 });
+  assert(Math.abs(sigmaEqualsDeltaPower9 - 0.7129123074) < 1e-6, `unexpected n=9 exact power: ${sigmaEqualsDeltaPower9}`);
+  const exactSearch = findMinimumExactPairedTostN({
+    sigmaUpperBound: P6_2_DELTA_M, delta: P6_2_DELTA_M, targetPower: 0.80, alpha: 0.05, minN: 8, maxN: 30,
+  });
+  assert.equal(exactSearch.requiredN, 11);
+  assert((exactSearch.powers.find((x) => x.n === 10)?.power ?? 1) < 0.80);
+  assert((exactSearch.powers.find((x) => x.n === 11)?.power ?? 0) >= 0.80);
 
   const repoRoot = path.resolve(__dirname, "..");
   const swDir = path.join(repoRoot, "synthetic-world");
@@ -202,7 +223,7 @@ async function main(): Promise<void> {
   const schemes = JSON.parse(namingSchemesRaw) as NamingScheme[];
   const scheme = schemes.find((candidate) => candidate.schemeId === "A-obfuscated");
   assert(scheme, "A-obfuscated naming scheme missing");
-  const probes = generateStage1Probes(groundTruth, scheme, path.join(repositoryDir, "tests/visible.test.ts"));
+  const probes = generateStage1Probes(groundTruth, scheme, path.join(repositoryDir, "tests/rules.visible.test.ts"));
   const audit = assertStage1ProbeBankValid(probes);
   const booleanProbes = probes.filter((probe) => probe.type === "boolean");
   assert.equal(STAGE1_BOOLEAN_DESIGN_VERSION, "stage1-neutral-relation-v2");
@@ -272,6 +293,7 @@ async function main(): Promise<void> {
   assert.equal(result.executionManifest.equivalenceCiLevel, 0.90);
   assert.equal(result.executionManifest.frozenScientificRepeatCount, null);
   assert.notStrictEqual(result.measurements.M, result.measurements.Rsem);
+  assert.equal(result.measurements.Rsem.protocolReliability, null);
 
   // Mock M and R^sem outputs stay in independent fields and journals.
   const semanticMock = classifyP62MRepeat({
@@ -345,12 +367,31 @@ async function main(): Promise<void> {
   assert.equal(denominatorSummary.primary.auditExcludedRepeats, 3);
   assert.equal(denominatorSummary.primary.passRate, 0.5);
 
+  // needs-audit has a provenance-preserving adjudication exit.
+  const adjudicationFixture: any = createP62Result({
+    taskBankPath, taskBankRaw, tasks, repositoryPath: repositoryDir, repository, repeatCount: 1, manifest, booleanProbeIds: booleanProbes.map((probe) => probe.probeId),
+  });
+  const adjudicableSystem = { ...systemMock, role: "primary", modifiedPaths: [], workingNote: null, actualModel: "mock", usage: null, estimatedCostUsd: 0, visible: null, hidden: null, taskSpecific: null, protocolContractViolated: null };
+  adjudicationFixture.measurements.M.repeatResults.push(adjudicableSystem);
+  adjudicationFixture.status = "needs-audit";
+  adjudicationFixture.auditFlags.push({ measurement: "M", taskId: adjudicableSystem.taskId, repeat: adjudicableSystem.repeat, failureDomain: "system", executionStatus: adjudicableSystem.executionStatus, reason: adjudicableSystem.failureReason });
+  applyP62Adjudication(adjudicationFixture, { measurement: "M", taskId: adjudicableSystem.taskId, repeat: adjudicableSystem.repeat, reviewer: "offline-verifier", reason: "artifact-caused compile/runtime failure", finalDisposition: "scientific-failure", adjudicatedAt: "2026-09-20T00:00:00.000Z" }, "mock-tool-sha");
+  const adjudicatedM = adjudicationFixture.measurements.M.repeatResults[0];
+  assert.equal(adjudicatedM.rawFailureDomain, "system");
+  assert.equal(adjudicatedM.failureDomain, "semantic");
+  assert.equal(adjudicatedM.adjudication.finalDisposition, "scientific-failure");
+  assert.equal(adjudicationFixture.status, "running");
+  assert.equal(adjudicationFixture.auditFlags[0].resolvedAt, "2026-09-20T00:00:00.000Z");
+
   const rsemMock: RSemProbeRepeatResult = {
     repeat: 1,
     designVersion: STAGE1_BOOLEAN_DESIGN_VERSION,
     executionStatus: "ok",
     validity: "valid",
     failureDomain: "none",
+    rawFailureDomain: "none",
+    adjudication: null,
+    protocolValid: true,
     failureReason: null,
     rawResponse: "{}",
     modelProvenance: {
@@ -448,6 +489,8 @@ async function main(): Promise<void> {
       fakeProbeFactory(completedProbeResponse(JSON.stringify(correctAnswers)), capturedClientOptions)
     );
     assert.equal(success.failureDomain, "none");
+    assert.equal(success.rawFailureDomain, "none");
+    assert.equal(success.protocolValid, true);
     assert.equal(success.booleanAccuracy, 1);
     assert.deepEqual(capturedClientOptions, [{ timeout: 180000, maxRetries: 2 }]);
 
@@ -460,6 +503,7 @@ async function main(): Promise<void> {
     assert.equal(refusal.executionStatus, "response-refusal");
     assert.equal(refusal.failureDomain, "infrastructure");
     assert.equal(refusal.validity, "infrastructure-invalid");
+    assert.equal(refusal.protocolValid, null);
 
     const incompleteResponse = {
       ...completedProbeResponse(""),
@@ -480,6 +524,7 @@ async function main(): Promise<void> {
     assert.equal(parseFailure.executionStatus, "output-parse-failure");
     assert.equal(parseFailure.failureDomain, "protocol");
     assert.equal(parseFailure.validity, "valid");
+    assert.equal(parseFailure.protocolValid, false);
 
     const apiError = Object.assign(new Error("mock API outage"), { code: "mock_provider_error" });
     const providerFailure = await runRSemRepeat(repository, booleanProbes, 6, fakeProbeFactory(apiError));
@@ -515,7 +560,8 @@ async function main(): Promise<void> {
 
   console.log("P6-2 AF baseline offline verification passed.");
   console.log(`  equivalence: Delta_M=Delta_R=${P6_2_DELTA_M.toFixed(6)}, 90% CI / alpha=0.05, target power=0.80`);
-  console.log(`  variance pilot: paired AF-vs-AF repeats=${P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS}, scientific repeat count still unfrozen/live-blocked`);
+  console.log(`  exact power: sigma_U=Delta gives n=9 power=${sigmaEqualsDeltaPower9.toFixed(6)}, minimum n for power>=0.80 is ${exactSearch.requiredN}`);
+  console.log(`  variance pilot: paired AF-vs-AF repeats=${P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS}, max attempts/pair=${P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR}, AB/BA counterbalanced, scientific repeat count still unfrozen/live-blocked`);
   console.log(`  task bank: primary=${selection.primary.length}, diagnostic=${selection.diagnostic.length}, floor-excluded=${P6_2_SEMANTIC_FLOOR_TASK_IDS.length}`);
   console.log(`  R^sem: ${STAGE1_BOOLEAN_DESIGN_VERSION}, boolean=${booleanProbes.length}, constant-baseline=0.50`);
   console.log(`  provenance: openai=${manifest.openAiSdkVersion}, node=${manifest.nodeVersion}`);

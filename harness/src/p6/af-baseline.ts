@@ -7,7 +7,7 @@ import {
 } from "./failure-classification";
 import { P6_1_EXPECTED_TASK_BANK_SIZE, P6_1_TASK_BANK_VERSION } from "./task-bank-eligibility";
 
-export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v3-equivalence-freeze";
+export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v4-exact-power-adjudication";
 export const P6_2_TASK_BANK_VERSION = P6_1_TASK_BANK_VERSION;
 export const P6_2_FAILURE_CLASSIFICATION_VERSION = P6_1_FAILURE_CLASSIFICATION_VERSION;
 
@@ -57,11 +57,34 @@ export const P6_2_EQUIVALENCE_ALPHA = 0.05;
 export const P6_2_EQUIVALENCE_CI_LEVEL = 0.90;
 export const P6_2_EQUIVALENCE_TARGET_POWER = 0.80;
 export const P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS = 8;
+export const P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR = 3;
 export const P6_2_VARIANCE_SD_UCB_CONFIDENCE = 0.95;
 export const P6_2_MIN_SCIENTIFIC_REPEATS = 8;
 export const P6_2_MAX_SCIENTIFIC_REPEATS = 30;
 // Remains null until the separate AF-vs-AF variance pilot is completed.
 export const P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT: number | null = null;
+
+export type P62RepeatCountSource = "runtime-argument-pre-freeze" | "frozen-scientific-repeat-count";
+
+export function resolveP62RepeatCountSource(
+  repeatCount: number,
+  frozenCount: number | null = P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT
+): P62RepeatCountSource {
+  validateP62RepeatCount(repeatCount);
+  if (frozenCount === null) return "runtime-argument-pre-freeze";
+  if (repeatCount !== frozenCount) {
+    throw new Error(`P6-2 repeat count ${repeatCount} does not match frozen scientific repeat count ${frozenCount}`);
+  }
+  return "frozen-scientific-repeat-count";
+}
+
+export type P62VariancePilotArm = "A" | "B";
+export function p62VariancePilotArmOrder(pairId: number): readonly [P62VariancePilotArm, P62VariancePilotArm] {
+  if (!Number.isInteger(pairId) || pairId < 1 || pairId > P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS) {
+    throw new Error(`Invalid P6-2 variance-pilot pair id: ${pairId}`);
+  }
+  return pairId % 2 === 1 ? ["A", "B"] : ["B", "A"];
+}
 
 export type P62TaskRole = "primary" | "diagnostic";
 
@@ -85,6 +108,8 @@ export interface P62RepeatPlanItem {
 
 export interface P62MRepeatLike extends TaskRepeatLike, FailureClassification {
   role: P62TaskRole;
+  rawFailureDomain?: FailureDomain;
+  adjudication?: import("./adjudication").P62AdjudicationRecord | null;
 }
 
 export interface P62MSummary {
@@ -196,8 +221,9 @@ export function planP62ProbeRepeats(
 export function classifyP62MRepeat<T extends TaskRepeatLike>(
   result: T,
   role = roleForP62Task(result.taskId)
-): T & FailureClassification & { role: P62TaskRole } {
-  return { ...result, ...classifyFailure(result), role };
+): T & FailureClassification & { role: P62TaskRole; rawFailureDomain: FailureDomain; adjudication: null } {
+  const failure = classifyFailure(result);
+  return { ...result, ...failure, rawFailureDomain: failure.failureDomain, adjudication: null, role };
 }
 
 export type P62MOutcomeDisposition = "score" | "needs-audit";
