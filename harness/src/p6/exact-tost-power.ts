@@ -68,6 +68,43 @@ function regularizedIncompleteBeta(x: number, a: number, b: number): number {
   return 1 - (bt * betaContinuedFraction(b, a, 1 - x)) / b;
 }
 
+function regularizedGammaP(a: number, x: number): number {
+  if (!(a > 0)) throw new Error(`regularizedGammaP requires a>0, got ${a}`);
+  if (x <= 0) return 0;
+  const eps = 3e-14;
+  const fpMin = 1e-300;
+  if (x < a + 1) {
+    let ap = a;
+    let sum = 1 / a;
+    let del = sum;
+    for (let n = 1; n <= 500; n++) {
+      ap += 1;
+      del *= x / ap;
+      sum += del;
+      if (Math.abs(del) < Math.abs(sum) * eps) break;
+    }
+    return sum * Math.exp(-x + a * Math.log(x) - logGamma(a));
+  }
+  let b = x + 1 - a;
+  let c = 1 / fpMin;
+  let d = 1 / b;
+  let h = d;
+  for (let i = 1; i <= 500; i++) {
+    const an = -i * (i - a);
+    b += 2;
+    d = an * d + b;
+    if (Math.abs(d) < fpMin) d = fpMin;
+    c = b + an / c;
+    if (Math.abs(c) < fpMin) c = fpMin;
+    d = 1 / d;
+    const del = d * c;
+    h *= del;
+    if (Math.abs(del - 1) < eps) break;
+  }
+  const q = Math.exp(-x + a * Math.log(x) - logGamma(a)) * h;
+  return 1 - q;
+}
+
 export function studentTCdf(t: number, df: number): number {
   if (!(df > 0)) throw new Error(`studentTCdf requires df>0, got ${df}`);
   if (!Number.isFinite(t)) return t < 0 ? 0 : 1;
@@ -91,6 +128,47 @@ export function studentTQuantile(p: number, df: number): number {
     else hi = mid;
   }
   return (lo + hi) / 2;
+}
+
+export function chiSquareCdf(x: number, df: number): number {
+  if (!(df > 0)) throw new Error(`chiSquareCdf requires df>0, got ${df}`);
+  if (x <= 0) return 0;
+  return regularizedGammaP(df / 2, x / 2);
+}
+
+export function chiSquareQuantile(p: number, df: number): number {
+  if (!(p > 0 && p < 1)) throw new Error(`chiSquareQuantile requires 0<p<1, got ${p}`);
+  if (!(df > 0)) throw new Error(`chiSquareQuantile requires df>0, got ${df}`);
+  let lo = 0;
+  let hi = Math.max(1, df);
+  while (chiSquareCdf(hi, df) < p) hi *= 2;
+  for (let i = 0; i < 140; i++) {
+    const mid = (lo + hi) / 2;
+    if (chiSquareCdf(mid, df) < p) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+export function sampleSd(values: number[]): number {
+  if (values.length < 2) throw new Error("sampleSd requires at least two values");
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / (values.length - 1);
+  return Math.sqrt(variance);
+}
+
+export function oneSidedSdUpperConfidenceBound(args: {
+  sampleSd: number;
+  sampleSize: number;
+  confidence: number;
+}): number {
+  if (!(args.sampleSd >= 0)) throw new Error(`sampleSd must be >=0, got ${args.sampleSd}`);
+  if (!Number.isInteger(args.sampleSize) || args.sampleSize < 2) throw new Error("sampleSize must be integer >=2");
+  if (!(args.confidence > 0 && args.confidence < 1)) throw new Error("confidence must be in (0,1)");
+  const df = args.sampleSize - 1;
+  const lowerTail = 1 - args.confidence;
+  const chi2Lower = chiSquareQuantile(lowerTail, df);
+  return Math.sqrt((df * args.sampleSd * args.sampleSd) / chi2Lower);
 }
 
 export function exactPairedTostPower(input: ExactPairedTostPowerInput): number {
