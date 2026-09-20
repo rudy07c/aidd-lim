@@ -40,7 +40,7 @@ jobs:
               body_start = start + len(marker)
               end = s.index('`;'+end_marker, body_start)
               body = s[body_start:end]
-              body = body.replace('`', r'\`').replace('${', r'\${')
+              body = body.replace('\\', '\\\\').replace('`', r'\`').replace('${', r'\${')
               s = s[:start] + f'const {name} = `' + body + '`;' + end_marker + s[end + len('`;'+end_marker):]
           p.write_text(s)
           PY
