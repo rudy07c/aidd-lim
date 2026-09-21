@@ -1,0 +1,80 @@
+name: P6 fresh 11-task variance pilot live
+
+on:
+  push:
+    branches:
+      - fix/p6-2-crosscut5-reclassification
+    paths:
+      - '.github/workflows/p6-fresh-11-task-variance-live.yml'
+
+permissions:
+  contents: write
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+jobs:
+  live-pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/p6-2-crosscut5-reclassification
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            harness/package-lock.json
+            calibration/package-lock.json
+            synthetic-world/package-lock.json
+      - name: Verify API key is configured before any live call
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY GitHub Actions secret is not configured; stopping before live API use."
+            exit 78
+          fi
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Install calibration dependencies
+        working-directory: calibration
+        run: npm ci
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
+        run: npm ci
+      - name: Fresh-pilot preflight
+        working-directory: harness
+        run: |
+          npm run typecheck
+          npm run verify:p6-af-variance-reanalysis
+          npm run verify:p6-variance-pilot
+      - name: Run fresh 11-task AF-vs-AF pilot
+        id: live
+        working-directory: harness
+        shell: bash
+        run: |
+          set +e
+          npm run p6:af-variance-pilot -- --live
+          status=$?
+          set -e
+          echo "exit_status=$status" >> "$GITHUB_OUTPUT"
+          result=$(find ../runs/_calibration -type f -path '*p6-2-af-variance-pilot-luna__*/result.json' -printf '%T@ %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+          if [ -z "$result" ] || [ ! -f "$result" ]; then
+            echo "Fresh pilot did not produce result.json"
+            exit "$status"
+          fi
+          mkdir -p ../docs/findings/evidence/p6-2-variance-pilot-fresh-11-task
+          cp "$result" ../docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json
+          echo "result_path=$result" >> "$GITHUB_OUTPUT"
+      - name: Commit fresh pilot evidence
+        run: |
+          git config user.name "AIDD-ILM Research"
+          git config user.email "researcher@example.com"
+          git add docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json
+          git commit -m "docs: record fresh 11-task P6-2 variance pilot result"
+          git push origin HEAD:fix/p6-2-crosscut5-reclassification
+      - name: Preserve runner exit status
+        if: steps.live.outputs.exit_status != '0'
+        run: exit "${{ steps.live.outputs.exit_status }}"
