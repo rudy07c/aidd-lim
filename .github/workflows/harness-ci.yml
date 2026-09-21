@@ -129,6 +129,9 @@ jobs:
       - name: Verify P6-2 variance pilot offline
         working-directory: harness
         run: npm run verify:p6-variance-pilot
+      - name: Verify P6-2 historical variance reanalysis audit
+        working-directory: harness
+        run: npm run verify:p6-af-variance-reanalysis
       - name: Verify installed SDK version provenance
         working-directory: harness
         run: npm run verify:package-version
