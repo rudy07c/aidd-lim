@@ -4,13 +4,15 @@ on:
   push:
     branches:
       - fix/p6-2-crosscut5-review-hardening
+    paths:
+      - '.github/workflows/apply-p6-review-hardening.yml'
+      - 'tmp_apply_p6_review_hardening.py'
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.event.head_commit.message == 'ci: run P6 review hardening'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
