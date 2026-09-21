@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/apply-p6-review-hardening.yml'
       - 'tmp_apply_p6_review_hardening.py'
+      - 'tmp_finish_p6_review_hardening.py'
 
 permissions:
   contents: write
@@ -26,8 +27,17 @@ jobs:
           cache-dependency-path: |
             harness/package-lock.json
             synthetic-world/package-lock.json
-      - name: Apply patch
-        run: python tmp_apply_p6_review_hardening.py
+      - name: Apply code patch up to known stage1-plan handoff
+        run: |
+          set +e
+          python tmp_apply_p6_review_hardening.py 2> /tmp/p6-patch.err
+          status=$?
+          set -e
+          cat /tmp/p6-patch.err
+          test "$status" -eq 1
+          grep -Fq 'stage1_plan 11.1 replace count=0' /tmp/p6-patch.err
+      - name: Finish plan and experiment documentation patch
+        run: python tmp_finish_p6_review_hardening.py
       - name: Install harness dependencies
         working-directory: harness
         run: npm ci
