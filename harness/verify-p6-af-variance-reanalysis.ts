@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -26,7 +26,7 @@ function main(): void {
   assert.deepEqual(analysis.candidateTaskIds, ["T-crosscut-5"]);
 
   const t5 = analysis.taskAudit.find((row) => row.taskId === "T-crosscut-5");
-  assert(t5);
+  assert.ok(t5, "T-crosscut-5 audit row missing");
   assert.equal(t5.observations, 16);
   assert.equal(t5.successes, 4);
   assert.equal(t5.semanticFailures, 11);
@@ -69,7 +69,7 @@ function main(): void {
     "utf8"
   ));
   const oskFailure = prePilotFailure.testCases.find((x: any) => x.testName.includes("fails when Osk=nim"));
-  assert(oskFailure);
+  assert.ok(oskFailure, "pre-pilot Osk=nim failure evidence missing");
   assert.equal(oskFailure.passed, false);
 
   console.log("P6-2 historical variance reanalysis audit verification passed.");
