@@ -242,12 +242,16 @@ export interface ExactPairedTostPowerInput {
  * integral above. PowerTOST's `method="exact"` / `"owenq"` uses Owen's Q;
  * its `design="paired"` has df=n-1 and is the paired-t TOST of differences.
  *
- * Validation status (2026-09-21): the seven frozen verifier fixtures were
- * independently recomputed by reproducing OwenQ::ipowen4's x-space integral
- * with SciPy adaptive quadrature; maximum absolute discrepancy was ~1.3e-15.
- * R/PowerTOST itself was not executable in the available environment, so an
- * executed PowerTOST cross-check remains pending before scientific repeat-n
- * is frozen. See docs/stage1_plan.md.
+ * Validation status (2026-09-21): the production integral was first checked
+ * independently against OwenQ::ipowen4's x-space integral. It was then
+ * cross-checked in GitHub Actions with R 4.6.1 / PowerTOST 1.5.7 over all 13
+ * frozen fixtures using the public paired API, method="exact". Maximum absolute
+ * discrepancy versus the fixtures was 7.17e-13; public API versus PowerTOST's
+ * internal Owen-Q kernel differed by at most 3.33e-16. The independent
+ * method="mvt" path agreed within 7.37e-06 (its expected looser numerical
+ * tolerance). External-software validation is therefore complete. Scientific
+ * repeat-n remains null until the AF-vs-AF variance pilot supplies sigma_U; it
+ * is no longer blocked by exact-power validation. See docs/stage1_plan.md.
  */
 export function exactPairedTostPowerAtZero(input: ExactPairedTostPowerInput): number {
   const { n, sigma, delta, alpha = 0.05 } = input;

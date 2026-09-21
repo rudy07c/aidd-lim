@@ -22,9 +22,10 @@ import type { HeldOutTask, MRepeatExecution, RSemProbeRepeatResult } from "./p6-
 // by transcribing CRAN OwenQ::ipowen4's published x-space integrand
 // (Owen O_4 / Owen 1965 equality 11) into Python/SciPy adaptive quadrature.
 // The original seven fixtures matched the independent values to <=1.3e-15.
-// This is a source-equivalent independent numerical check, NOT evidence that
-// R/PowerTOST itself was executed; that external-software cross-check remains
-// a precondition for freezing the scientific repeat count.
+// These source-equivalent fixtures were subsequently executed against
+// R 4.6.1 / PowerTOST 1.5.7 (public paired method="exact") in workflow run
+// 35565684947; max fixture discrepancy was 7.17e-13. The fixture set is now
+// externally validated as well as independently derived.
 const REFERENCE_POWER = [
   { n: 8, ratio: 1.0, expected: 0.6350479550768998 },
   { n: 9, ratio: 1.0, expected: 0.7246881164476543 },
