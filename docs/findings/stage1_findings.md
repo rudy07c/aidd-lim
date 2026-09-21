@@ -45,7 +45,7 @@ semantic-floorは以下の6 taskである。
 **Phase**: P6-2 AF-vs-AF variance pilot / statistical-design audit  
 **Source evidence**: `docs/findings/evidence/p6-2-variance-pilot/result.json`（historical 12-task pilot。source manifest git SHA `6551d69309f84bc6646a1bbf50daa08928c423dc`）
 
-P6-1bでは`T-crosscut-5`は3 repeat中 **semantic success 2 / semantic failure 1 / protocol failure 0** で`T_primary-eligible`となった。この判定自体は当時のfrozen ruleと3-repeat sampleに対して正しく、historical resultとして変更しない。
+P6-1bでは`T-crosscut-5`は3 repeat中 **semantic success 2 / semantic failure 1 / protocol failure 0** で`T_primary-eligible`となった。この判定自体は当時のfrozen ruleと3-repeat sampleに対して正しく、historical resultとして変更しない。ただし後続の16-observation AF calibration evidenceを踏まえた現在の解釈では、**P6-1bの3-repeatというサンプル不足により、実際にはAF semantic floor側にあるtaskをeligibleと誤判定した**ものと位置づける。
 
 その後、repeat sizingのために独立実行したAF-vs-AF variance pilotで、accepted 8 pair × 2 arm = **16 AF observations** が得られた。bank全体を同じ基準で横断監査すると、`T-crosscut-5`は **4/16 success**、**11/16 semantic failure**、**1/16 protocol failure**だった。11件のsemantic failureはすべて同一のtask-specific assertion `boostTalFen: fails when Osk=nim` であり、Osk guard欠落という同じ構造的失敗signatureを示した。他の11 primary taskにはsemantic failureは1件もなく、15/16または16/16 successで、残るfailureはprotocolのみだった。
 
