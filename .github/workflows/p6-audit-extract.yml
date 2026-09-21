@@ -1,0 +1,26 @@
+name: P6 audit extract
+
+on:
+  push:
+    branches:
+      - tmp/p6-2-audit-extract
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Reanalyze historical pilot
+        working-directory: harness
+        run: npm run p6:reanalyze-af-variance -- ../docs/findings/evidence/p6-2-variance-pilot/result.json
