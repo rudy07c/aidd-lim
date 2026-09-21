@@ -1610,21 +1610,23 @@ repeat数決定用variance pilotも同時に次でfreezeする。
 - infrastructure-invalidがいずれかのarmに発生したpair attemptはscientific variance dataへ含めず、**同一pair idを最大3 attempt（初回+2 replacement）**まで再取得する。3 attemptすべてでinfrastructure-invalidなら`needs-audit`として停止する
 - `system` / `other`は自動replacementせず、その場で`needs-audit`とする
 - protocol failureはinfrastructureと別に記録する。Mのprotocol failureは事前規則どおりend-to-end failure=0としてpair scoreへ含める。R^{sem}のprotocol failureはprotocol reliability=0として保存し、semantic-accuracy差には変換しない。R^{sem}でprotocol-valid paired observationが8 pair未満なら追加pairをpost-hocに足さず`needs-audit`とする
+- variance pilotの`needs-audit`は2種類へ分離する。`execution audit`はMのsystem/other、R^{sem}のprotocol/system等の実行由来failureをartifact-level adjudicationしてresume可能にする。`statistical-design audit`はexact powerがn=30までに0.80へ到達しない場合であり、execution adjudicationでは解除せず設計判断を要求する
+- R^{sem} protocol reliabilityはpair/armごとに `attempted / evaluable / valid / failure` を保存し、protocol-invalid observationをsemantic accuracyへ0点変換しない
 - 各pairのbank-level差 \(d_j\) を作り、そのsample SD \(s_D\) を推定する
 - SDの楽観的過小推定を避けるため、\(df=7\) のchi-squareに基づく**片側95% upper confidence bound** \(\sigma_U\) をrepeat sizingへ使う
-- repeat sizingは正規近似を用いない。M/Rそれぞれについてcandidate \(n=8,9,\dots,30\) を順に評価し、真の差0における**exact paired-TOST power**が0.80以上となる最小nを採用する
-- candidate nごとに \(SE=\sigma_U/\sqrt{n}\)、\(\lambda=\Delta/SE\)、\(t_{crit}=t_{1-\alpha,n-1}\) とし、非心t分布ではなく中心t分布 \(T\sim t_{n-1}\) を用いて
+- repeat sizingは正規近似またはshifted central-t近似を用いない。paired normal differenceのsample SD自体がランダム量であることを明示的に積分した**true exact paired-TOST power**を用いる。\(df=n-1\)、\(R=S/\sigma\sim\chi_{df}/\sqrt{df}\)、\(\lambda=\Delta\sqrt{n}/\sigma\)、\(t_c=t_{1-\alpha,df}\) とすると、true difference=0でのconditional acceptance probabilityは \(0\le r<\lambda/t_c\) に対して \(2\Phi(\lambda-t_cr)-1\) であり、
 
 \[
-Power(n)=P(t_{crit}-\lambda<T<\lambda-t_{crit})
+Power(n)=\int_0^{\lambda/t_c}\left[2\Phi(\lambda-t_cr)-1\right]f_{\chi_{df}/\sqrt{df}}(r)\,dr
 \]
 
-\[
-=F_{t_{n-1}}(\lambda-t_{crit})-F_{t_{n-1}}(t_{crit}-\lambda)
-\]
-
-を計算する。区間上端が下端以下ならpower=0とする
+  を数値積分する。これはOwen's Qで表されるunknown-variance paired-TOST exact powerと同値の量であり、旧 `central-t CDF difference` はexactとは扱わない
+- 離散12-unit bankかつpilot 8 pairという設計では、偶然すべてのpair差が0でもpopulation SD=0とはみなさない。live観測前のplanning assumptionとして、\(\sigma_{floor,M}=\Delta_M=1/12\)、\(\sigma_{floor,R}=\Delta_R=1/12\) をfreezeする
+- rawな片側95% SD upper bound \(\sigma_U\) はそのまま保存するが、repeat sizingには \(\sigma_{plan}=\max(\sigma_U,\sigma_{floor})\) を用いる。sigma floorはconfidence boundではなく、8 pairの離散pilotから `SD=0 -> n=8` とdegenerateに確定することを防ぐ事前planning ruleであり、pilot観測後に変更しない
+- **exact power外部照合status（2026-09-21）**：`exactPairedTostPowerAtZero()`の数式は、Owen (1965) equality (11) の第4累積関数 `O_4`、CRAN `OwenQ::ipowen4` の独立Gauss–Kronrod積分、およびPhillips型bivariate noncentral-t定式化へ代数的に写像できることを再導出した。さらにGitHub Actions run `35565684947` で **R 4.6.1 / PowerTOST 1.5.7** を実際に導入し、13個のfrozen `(n, sigma/Delta)` fixtureすべてについて `power.TOST(logscale=FALSE, design="paired", method="exact")` を実行した。PowerTOSTのpaired designでは `sem = CV*sqrt(2/n)` なので、paired-difference SD `sigma` に対して `CV=sigma/sqrt(2)` として `sem=sigma/sqrt(n)` を一致させた。fixtureと公開API `method="exact"` の最大絶対差は `7.17e-13`、公開APIとPowerTOST内部Owen-Q kernel `PowerTOST:::.power.TOST` の最大差は `3.33e-16` だった。独立な `method="mvt"` 経路も最大 `7.37e-06` で一致し、同経路の既定数値積分toleranceと整合する。したがってexact power実装についての**外部統計ソフトウェア照合ゲートは完了**とする。`P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT` が `null` のままである理由は、今後AF-vs-AF variance pilotから `sigma_U` / `sigma_plan` を得てrequired nを計算する必要があるためであり、exact power未検証のためではない
 - Stage 1 primary comparisonの共通repeat数は `max(8, n_M, n_R)` とする
+- このAF-vs-AF variance pilotから決まるrepeat数は、現段階では**AF noiseを基準としたplanning value**であり、EL / PR / ARのvarianceがAFより大きい場合にも同じpowerを保証する値とは主張しない
+- 将来、全primary conditionに対してpower保証を求めるconfirmatory designへ進む場合は、P6-3〜P6-5のcondition差の平均を見ずにvariance-only pre-calibrationを行い、事前規則でcondition-specific \(\sigma_U\) のmaxをfreezeする設計を検討する。これは今回は記述のみで実装しない
 - n=30でもtarget power=0.80へ到達しない場合は30へ丸めて実行せず、measurement instability / feasibilityの`needs-audit`として停止する
 - variance pilotの観測値をequivalence margin変更やtask reselectionには使用しない
 - variance pilot dataはP6-2 baseline本取得へpoolしない

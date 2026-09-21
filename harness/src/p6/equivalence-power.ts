@@ -1,4 +1,4 @@
-export const P6_2_EXACT_POWER_METHOD_VERSION = "paired-tost-central-t-exact-v1";
+export const P6_2_EXACT_POWER_METHOD_VERSION = "paired-tost-chi-integrated-exact-v2";
 
 const LANCZOS_COEFFICIENTS = [
   0.99999999999980993,
@@ -93,6 +93,97 @@ export function studentTQuantile(probability: number, degreesOfFreedom: number):
   return (low + high) / 2;
 }
 
+function regularizedGammaP(a: number, x: number): number {
+  if (!(a > 0)) throw new Error("regularizedGammaP requires a > 0");
+  if (x <= 0) return 0;
+  const eps = 3e-14;
+  const fpMin = 1e-300;
+  if (x < a + 1) {
+    let ap = a;
+    let sum = 1 / a;
+    let del = sum;
+    for (let n = 1; n <= 500; n += 1) {
+      ap += 1;
+      del *= x / ap;
+      sum += del;
+      if (Math.abs(del) < Math.abs(sum) * eps) break;
+    }
+    return Math.max(0, Math.min(1, sum * Math.exp(-x + a * Math.log(x) - logGamma(a))));
+  }
+  let b = x + 1 - a;
+  let c = 1 / fpMin;
+  let d = 1 / b;
+  let h = d;
+  for (let i = 1; i <= 500; i += 1) {
+    const an = -i * (i - a);
+    b += 2;
+    d = an * d + b;
+    if (Math.abs(d) < fpMin) d = fpMin;
+    c = b + an / c;
+    if (Math.abs(c) < fpMin) c = fpMin;
+    d = 1 / d;
+    const del = d * c;
+    h *= del;
+    if (Math.abs(del - 1) < eps) break;
+  }
+  return Math.max(0, Math.min(1, 1 - Math.exp(-x + a * Math.log(x) - logGamma(a)) * h));
+}
+
+function standardNormalCdf(z: number): number {
+  if (!Number.isFinite(z)) return z < 0 ? 0 : 1;
+  if (z === 0) return 0.5;
+  const p = regularizedGammaP(0.5, (z * z) / 2);
+  return z > 0 ? 0.5 * (1 + p) : 0.5 * (1 - p);
+}
+
+function chiScaledDensity(r: number, df: number): number {
+  if (r < 0) return 0;
+  if (r === 0) {
+    if (df === 1) {
+      const logCoefficient = (1 - df / 2) * Math.log(2) + (df / 2) * Math.log(df) - logGamma(df / 2);
+      return Math.exp(logCoefficient);
+    }
+    return 0;
+  }
+  const logCoefficient = (1 - df / 2) * Math.log(2) + (df / 2) * Math.log(df) - logGamma(df / 2);
+  const logDensity = logCoefficient + (df - 1) * Math.log(r) - (df * r * r) / 2;
+  return logDensity < -745 ? 0 : Math.exp(logDensity);
+}
+
+function simpson(f: (x: number) => number, a: number, b: number): number {
+  const c = (a + b) / 2;
+  return ((b - a) / 6) * (f(a) + 4 * f(c) + f(b));
+}
+
+function adaptiveSimpson(
+  f: (x: number) => number,
+  a: number,
+  b: number,
+  epsilon: number,
+  whole: number = simpson(f, a, b),
+  depth: number = 0
+): number {
+  const c = (a + b) / 2;
+  const left = simpson(f, a, c);
+  const right = simpson(f, c, b);
+  const delta = left + right - whole;
+  if (depth >= 24 || Math.abs(delta) <= 15 * epsilon) return left + right + delta / 15;
+  return adaptiveSimpson(f, a, c, epsilon / 2, left, depth + 1) +
+    adaptiveSimpson(f, c, b, epsilon / 2, right, depth + 1);
+}
+
+function integrateSegmented(f: (x: number) => number, a: number, b: number, epsilon = 2e-11): number {
+  if (!(b > a)) return 0;
+  const segments = Math.max(1, Math.ceil((b - a) / 0.05));
+  let total = 0;
+  for (let i = 0; i < segments; i += 1) {
+    const lo = a + ((b - a) * i) / segments;
+    const hi = a + ((b - a) * (i + 1)) / segments;
+    total += adaptiveSimpson(f, lo, hi, epsilon / segments);
+  }
+  return total;
+}
+
 export interface ExactPairedTostPowerInput {
   n: number;
   sigma: number;
@@ -100,6 +191,68 @@ export interface ExactPairedTostPowerInput {
   alpha?: number;
 }
 
+/**
+ * Exact paired-TOST power at true paired mean difference mu=0, assuming
+ * iid normal paired differences D_i ~ N(mu, sigma^2).
+ *
+ * MATHEMATICAL BASIS
+ * ------------------
+ * The two one-sided tests accept equivalence (-Delta, +Delta) iff
+ *
+ *   Dbar > -Delta + t_c S/sqrt(n)
+ *   Dbar < +Delta - t_c S/sqrt(n),
+ *
+ * where t_c=t_{1-alpha,nu}, nu=n-1. For normal data,
+ *
+ *   Z = sqrt(n)(Dbar-mu)/sigma ~ N(0,1)
+ *   X = nu S^2/sigma^2       ~ chi-square(nu)
+ *
+ * are independent. At mu=0 define lambda=Delta*sqrt(n)/sigma. Conditioning
+ * on x=sqrt(X) gives the exact rejection probability
+ *
+ *   integral_0^R [ Phi(lambda - t_c*x/sqrt(nu))
+ *                 - Phi(-lambda + t_c*x/sqrt(nu)) ] f_chi_nu(x) dx,
+ *
+ *   R = lambda*sqrt(nu)/t_c.
+ *
+ * By symmetry the bracket is 2*Phi(lambda-t_c*x/sqrt(nu))-1. The code uses
+ * r=x/sqrt(nu)=S/sigma, hence R/sqrt(nu)=lambda/t_c, which yields the
+ * one-dimensional chi-scaled integral implemented below.
+ *
+ * This is NOT a call to Owen's Q. It is direct numerical quadrature of the
+ * same probability. In Owen-distribution notation it is exactly
+ *
+ *   O_4(nu, t_c, -t_c, +lambda, -lambda),
+ *
+ * i.e. the fourth Owen cumulative probability. Owen (1965), "A special case
+ * of a bivariate non-central t-distribution", Biometrika 52(3/4), 437-446,
+ * defines O_4 as equality (11). Phillips (1990), "Power of the Two One-Sided
+ * Tests Procedure in Bioequivalence", J Pharmacokinet Biopharm 18(2),
+ * 137-144, derives TOST power from this bivariate noncentral-t distribution.
+ *
+ * IMPLEMENTATION CROSS-REFERENCE
+ * ------------------------------
+ * CRAN OwenQ::powen4 implements Owen's equality (11). Its independent
+ * RcppNumerical implementation `ipowen4` integrates, for t1>t2 and d1>d2,
+ *
+ *   [Phi(t2*x/sqrt(nu)-d2) - Phi(t1*x/sqrt(nu)-d1)] f_chi_nu(x)
+ *
+ * from 0 to R=(d1-d2)*sqrt(nu)/(t1-t2). Substituting
+ * (t1,t2,d1,d2)=(t_c,-t_c,+lambda,-lambda) reduces algebraically to the
+ * integral above. PowerTOST's `method="exact"` / `"owenq"` uses Owen's Q;
+ * its `design="paired"` has df=n-1 and is the paired-t TOST of differences.
+ *
+ * Validation status (2026-09-21): the production integral was first checked
+ * independently against OwenQ::ipowen4's x-space integral. It was then
+ * cross-checked in GitHub Actions with R 4.6.1 / PowerTOST 1.5.7 over all 13
+ * frozen fixtures using the public paired API, method="exact". Maximum absolute
+ * discrepancy versus the fixtures was 7.17e-13; public API versus PowerTOST's
+ * internal Owen-Q kernel differed by at most 3.33e-16. The independent
+ * method="mvt" path agreed within 7.37e-06 (its expected looser numerical
+ * tolerance). External-software validation is therefore complete. Scientific
+ * repeat-n remains null until the AF-vs-AF variance pilot supplies sigma_U; it
+ * is no longer blocked by exact-power validation. See docs/stage1_plan.md.
+ */
 export function exactPairedTostPowerAtZero(input: ExactPairedTostPowerInput): number {
   const { n, sigma, delta, alpha = 0.05 } = input;
   if (!Number.isInteger(n) || n < 2) throw new Error("n must be an integer >= 2");
@@ -107,14 +260,28 @@ export function exactPairedTostPowerAtZero(input: ExactPairedTostPowerInput): nu
   if (!(delta > 0) || !Number.isFinite(delta)) throw new Error("delta must be finite and > 0");
   if (!(alpha > 0 && alpha < 0.5)) throw new Error("alpha must be in (0,0.5)");
   if (sigma === 0) return 1;
+
   const df = n - 1;
   const tCrit = studentTQuantile(1 - alpha, df);
-  const se = sigma / Math.sqrt(n);
-  const lambda = delta / se;
-  const lower = tCrit - lambda;
-  const upper = lambda - tCrit;
-  if (upper <= lower) return 0;
-  return Math.max(0, Math.min(1, studentTCdf(upper, df) - studentTCdf(lower, df)));
+  const lambda = (delta * Math.sqrt(n)) / sigma;
+  const rMax = lambda / tCrit;
+  if (!(rMax > 0)) return 0;
+
+  // Transform r=S/sigma in [0,rMax] to x=r/(1+r). This keeps the numerical
+  // integration stable even when sigma is very small and rMax is large.
+  const xMax = rMax / (1 + rMax);
+  const integrand = (x: number): number => {
+    if (x < 0 || x > xMax || x >= 1) return 0;
+    const oneMinus = 1 - x;
+    const r = x / oneMinus;
+    const z = lambda - tCrit * r;
+    if (z <= 0) return 0;
+    const conditionalPower = 2 * standardNormalCdf(z) - 1;
+    const jacobian = 1 / (oneMinus * oneMinus);
+    return Math.max(0, conditionalPower) * chiScaledDensity(r, df) * jacobian;
+  };
+
+  return Math.max(0, Math.min(1, integrateSegmented(integrand, 0, xMax)));
 }
 
 export interface ExactPairedTostRepeatSearchInput {
