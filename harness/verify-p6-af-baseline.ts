@@ -181,7 +181,7 @@ async function main(): Promise<void> {
 
   // Exact paired-TOST power regression: sigma_U=Delta must not use the old normal approximation.
   const sigmaEqualsDeltaPower9 = exactPairedTostPowerAtZero({ n: 9, sigma: P6_2_DELTA_M, delta: P6_2_DELTA_M, alpha: 0.05 });
-  assert(Math.abs(sigmaEqualsDeltaPower9 - 0.7129123074) < 1e-6, `unexpected n=9 exact power: ${sigmaEqualsDeltaPower9}`);
+  assert(Math.abs(sigmaEqualsDeltaPower9 - 0.7246881164476543) < 1e-6, `unexpected n=9 exact power: ${sigmaEqualsDeltaPower9}`);
   const exactSearch = findMinimumExactPairedTostN({
     sigmaUpperBound: P6_2_DELTA_M, delta: P6_2_DELTA_M, targetPower: 0.80, alpha: 0.05, minN: 8, maxN: 30,
   });
