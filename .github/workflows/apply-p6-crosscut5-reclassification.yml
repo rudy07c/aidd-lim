@@ -28,6 +28,16 @@ jobs:
         run: npm ci
       - name: Apply amendment patch
         run: python3 .github/scripts/apply_p6_crosscut5_reclassification.py
+      - name: Align variance verifier version literals
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('harness/verify-p6-variance-hardening.ts')
+          s = p.read_text()
+          s = s.replace('pilotVersion: "p6-2-af-variance-pilot-v2-exact-floor-audit"', 'pilotVersion: "p6-2-af-variance-pilot-v3-taskbank-reanalysis"')
+          s = s.replace('sigmaFloorVersion: "p6-2-sigma-floor-v1"', 'sigmaFloorVersion: "p6-2-sigma-floor-v2-primary-bank-unit"')
+          p.write_text(s)
+          PY
       - name: Typecheck
         working-directory: harness
         run: npm run typecheck
