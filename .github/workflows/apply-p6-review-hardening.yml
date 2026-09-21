@@ -67,6 +67,6 @@ jobs:
         run: |
           git config user.name "AIDD-ILM Research"
           git config user.email "researcher@example.com"
-          git add harness docs .github/workflows/harness-ci.yml
+          git add harness docs
           git commit -m "fix(p6): harden post-pilot task selection and provenance"
           git push origin HEAD:fix/p6-2-crosscut5-review-hardening
