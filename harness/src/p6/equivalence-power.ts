@@ -9,7 +9,7 @@ const LANCZOS_COEFFICIENTS = [
   12.507343278686905,
   -0.13857109526572012,
   9.9843695780195716e-6,
-  1.5056327353116e-7,
+  1.5056327351493116e-7,
 ] as const;
 
 function logGamma(z: number): number {
