@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "p6-2-postpilot-task-audit-v1",
+  "status": "task-selection-audit-complete-repeat-sizing-not-freeze-eligible",
+  "sourceResult": "docs/findings/evidence/p6-2-variance-pilot/result.json",
+  "sourceManifestGitSha": "6551d69309f84bc6646a1bbf50daa08928c423dc",
+  "sourceHistoricalPrimaryCount": 12,
+  "screenVersion": "p6-2-postpilot-low-headroom-screen-v1",
+  "screenRule": {
+    "minimumAcceptedAfObservations": 12,
+    "minimumSemanticEvaluableObservations": 12,
+    "maximumSemanticSuccessRateExclusive": 0.3333333333333333,
+    "minimumSemanticFailures": 6,
+    "minimumDominantSignatureShareOfSemanticFailures": 0.6666666666666666,
+    "note": "This is a new post-pilot low-headroom screen, not a mechanical restatement of the historical P6-1b absolute-count classification rule."
+  },
+  "taskAudit": [
+    {"taskId":"T-local-2","observations":16,"successes":16,"semanticFailures":0,"protocolFailures":0,"semanticEvaluable":16,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-crosscut-1","observations":16,"successes":15,"semanticFailures":0,"protocolFailures":1,"semanticEvaluable":15,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-delayed-1","observations":16,"successes":16,"semanticFailures":0,"protocolFailures":0,"semanticEvaluable":16,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-local-3","observations":16,"successes":16,"semanticFailures":0,"protocolFailures":0,"semanticEvaluable":16,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-local-4","observations":16,"successes":15,"semanticFailures":0,"protocolFailures":1,"semanticEvaluable":15,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-local-5","observations":16,"successes":16,"semanticFailures":0,"protocolFailures":0,"semanticEvaluable":16,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-local-6","observations":16,"successes":16,"semanticFailures":0,"protocolFailures":0,"semanticEvaluable":16,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-local-7","observations":16,"successes":15,"semanticFailures":0,"protocolFailures":1,"semanticEvaluable":15,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-crosscut-3","observations":16,"successes":16,"semanticFailures":0,"protocolFailures":0,"semanticEvaluable":16,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-crosscut-4","observations":16,"successes":15,"semanticFailures":0,"protocolFailures":1,"semanticEvaluable":15,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false},
+    {"taskId":"T-crosscut-5","observations":16,"successes":4,"semanticFailures":11,"protocolFailures":1,"semanticEvaluable":15,"semanticSuccessRate":0.26666666666666666,"dominantSemanticFailure":"task-specific:T-crosscut-5: boostTalFen boostTalFen: fails when Osk=nim","dominantSignatureCount":11,"candidate":true},
+    {"taskId":"T-delayed-2","observations":16,"successes":15,"semanticFailures":0,"protocolFailures":1,"semanticEvaluable":15,"semanticSuccessRate":1,"dominantSemanticFailure":null,"dominantSignatureCount":0,"candidate":false}
+  ],
+  "candidateTaskIds": ["T-crosscut-5"],
+  "independentPrePilotEvidence": [
+    {
+      "kind": "oracle-task-design",
+      "path": "harness/fixtures/oracle-patches/T-crosscut-5.ts",
+      "introducedByCommit": "3fc9838d034c759c03bce2aaab1735723907543d",
+      "commitDate": "2026-09-06T13:08:58Z",
+      "evidence": "The oracle patch explicitly states preconditions: Osk(E5)=q2(pex) and documents that boostTalFen inherits the Osk=pex dependency from advanceFen1."
+    },
+    {
+      "kind": "pre-pilot-observed-failure",
+      "path": "runs/stage0_5/stage0_5-alltask-anthropic-claude-haiku-4-5-20251001__2026-09-07T08-25-10/system2/B1K/T-crosscut-5/task_specific_test_result.json",
+      "introducedByCommit": "f89b12a631defd883ff0bc14b67133ab3a72279e",
+      "commitDate": "2026-09-07T08:30:33Z",
+      "evidence": "The task-specific case 'boostTalFen: fails when Osk=nim' failed before the P6-2 variance pilot."
+    }
+  ],
+  "classificationDecision": {
+    "historicalP6_1bClassification": "T_primary-eligible",
+    "currentP6_2PlusClassification": "post-pilot-low-headroom",
+    "semanticFloor": false,
+    "excludedFromPrimaryM": true,
+    "reason": "The Osk dependency is independently pre-pilot and the later AF-only bank-wide audit shows uniquely persistent low headroom, but 4 semantic successes mean the historical P6-1b semantic-floor label is not semantically appropriate."
+  },
+  "historicalElevenTaskReanalysis": {
+    "purpose": "diagnostic-only-post-selection",
+    "freezeEligible": false,
+    "mDifferencesAminusB": [0,-0.09090909090909091,0,0.09090909090909091,0.09090909090909091,-0.09090909090909091,0,-0.09090909090909091],
+    "deltaM": 0.09090909090909091,
+    "deltaR": 0.08333333333333333,
+    "mSampleSd": 0.07586572367238914,
+    "mRawSigmaUpper95": 0.13634214080510768,
+    "mRequiredN": 21,
+    "rsemRequiredN": 11,
+    "diagnosticCommonRepeatCandidate": 21,
+    "limitation": "The same historical 8 pairs contributed to both task-selection evidence and this reaggregation, so these sizing values must not be used to freeze the scientific repeat count. A fresh 11-task AF-vs-AF pilot is required."
+  }
+}
