@@ -69,4 +69,4 @@ historical 8 accepted pairのraw M outcomesから`T-crosscut-5`だけを除い�
 - Rsem requiredN: **11**（measurement/bank unchanged）
 - common repeat candidate: **21**
 
-したがって、11-task bankでは事前feasibility ceiling `n<=30` 内へ戻る。ここではrepeat数をまだ正式freezeせず、このamendment・コード・回帰検証を先に確定する。
+したがって、11-task bankでは事前feasibility ceiling `n<=30` 内へ戻る。ここではrepeat数をまだ正式freezeせず、このamendment・コード・回帰検証を先に確定する。検証ログでも、bank変更後は `Delta_M=1/11` と不変の `Delta_R=1/12` を別々に表示・assertし、両marginを混同しない。
