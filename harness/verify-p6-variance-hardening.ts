@@ -43,9 +43,9 @@ const REFERENCE_POWER = [
 ] as const;
 
 function manifest(): PilotManifest { return {
-  schemaVersion: "p6-2-af-variance-pilot-result-v2-hardening", pilotVersion: "p6-2-af-variance-pilot-v2-exact-floor-audit",
-  exactPowerMethodVersion: P6_2_EXACT_POWER_METHOD_VERSION, sigmaFloorVersion: "p6-2-sigma-floor-v1", gitSha: "mock", model: "gpt-5.6-luna", reasoningEffort: "high",
-  condition: "AF-vs-AF", deltaM: 1/12, deltaR: 1/12, equivalenceAlpha: .05, targetPower: .8, sdUcbConfidence: .95, sigmaFloorM: 1/12, sigmaFloorR: 1/12,
+  schemaVersion: "p6-2-af-variance-pilot-result-v2-hardening", pilotVersion: "p6-2-af-variance-pilot-v3-taskbank-reanalysis",
+  exactPowerMethodVersion: P6_2_EXACT_POWER_METHOD_VERSION, sigmaFloorVersion: "p6-2-sigma-floor-v2-primary-bank-unit", gitSha: "mock", model: "gpt-5.6-luna", reasoningEffort: "high",
+  condition: "AF-vs-AF", deltaM: P6_2_DELTA_M, deltaR: 1/12, equivalenceAlpha: .05, targetPower: .8, sdUcbConfidence: .95, sigmaFloorM: P6_2_VARIANCE_SIGMA_FLOOR_M, sigmaFloorR: 1/12,
   minScientificRepeats: 8, maxScientificRepeats: 30, pairedAfRepeats: 8, maxAttemptsPerPair: 3, taskBankVersion: "mock", taskBankSha256: "mock",
   repositorySha256: "mock", booleanProbeBankSha256: "mock", probeSchemaHash: "mock", primaryTaskIds: [...P6_2_PRIMARY_TASK_IDS], nodeVersion: process.version,
   openAiSdkVersion: "mock", requestTimeoutMs: 180000, maxRetries: 2, maxOutputTokens: 7000, probeMaxOutputTokens: 8000, serviceTier: "default", promptCacheMode: "implicit",
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
   const dir3 = fs.mkdtempSync(path.join(os.tmpdir(), "p62-var-partial-")); const partial = emptyVarianceResult(manifest()); let calls = 0;
   const crashDeps = successfulDeps(); crashDeps.runM = async (_r,_s,t,_role,repeat) => { calls++; if (calls === 4) throw new Error("synthetic crash"); return mExec(t.taskId, repeat); };
   let crashed = false; try { await drive(partial, dir3, crashDeps); } catch { crashed = true; } assert(crashed); const before = partial.attempts[0].events.filter((e) => e.kind === "M").length; assert(before > 0);
-  const resumeCounter = {m:0,r:0}; await drive(partial, dir3, successfulDeps(resumeCounter)); assert.equal(partial.status, "completed-awaiting-repeat-freeze"); assert(resumeCounter.m < 8*12*2, "resume replayed the whole pilot");
+  const resumeCounter = {m:0,r:0}; await drive(partial, dir3, successfulDeps(resumeCounter)); assert.equal(partial.status, "completed-awaiting-repeat-freeze"); assert(resumeCounter.m < 8*P6_2_PRIMARY_TASK_IDS.length*2, "resume replayed the whole pilot");
 
   const acceptedCounter = {m:0,r:0}; await drive(full, dir1, successfulDeps(acceptedCounter)); assert.equal(acceptedCounter.m, 0); assert.equal(acceptedCounter.r, 0); assert.equal(full.acceptedPairs.length, 8);
 

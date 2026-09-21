@@ -1489,7 +1489,7 @@ resumeを実装する場合、これらfrozen provenanceの不一致を同一run
 
 #### 10.2.3 \(M\) baselineの対象task
 
-P6-1bでfreeze済みの`capabilityClass`と`analysisRole`をそのまま再利用し、P6-2の結果を見てtaskを再選別しない。
+P6-1b時点の`capabilityClass`と`analysisRole`はhistorical classificationとして保持する。ただし2026-09-21のpost-pilot bank-wide再監査（§10.2.5b）により、P6-2以降のeffective bankでは`T-crosscut-5`をsemantic-floorへ再分類する。このamendment以外に、P6-2の結果を見た任意のtask再選別は行わない。
 
 primary baselineは、
 
@@ -1498,7 +1498,7 @@ primary baselineは、
 =\{t\mid capabilityClass(t)=eligible \land analysisRole(t)=main\}
 \]
 
-の**12 task**とする。
+の**11 task**とする。
 
 - `T-local-2`
 - `T-crosscut-1`
@@ -1510,7 +1510,6 @@ primary baselineは、
 - `T-local-7`
 - `T-crosscut-3`
 - `T-crosscut-4`
-- `T-crosscut-5`
 - `T-delayed-2`
 
 `eligible ∩ diagnostic`の2 task、
@@ -1520,10 +1519,11 @@ primary baselineは、
 
 はAFで実行可能なdiagnosticとして**primary \(M\) baselineとは別集計**する。
 
-P6-1bでsemantic-floorに分類済みの6 task、
+P6-1b historical floor 6 taskにpost-pilot再分類の`T-crosscut-5`を加えた7 task、
 
 - `T-local-1`
 - `T-crosscut-2`
+- `T-crosscut-5`
 - `T-invariant-stress-2`
 - `T-invariant-stress-4`
 - `T-invariant-stress-5`
@@ -1634,9 +1634,32 @@ Power(n)=\int_0^{\lambda/t_c}\left[2\Phi(\lambda-t_cr)-1\right]f_{\chi_{df}/\sqr
 
 この時点ではvariance pilot自体はまだlive実行しない。scientific repeat countは`null`のままとし、P6-2 baseline runnerはrepeat数がfreezeされるまで`--live`を拒否する。
 
+#### 10.2.5b 2026-09-21 post-pilot task-bank reclassification amendment
+
+上記pre-live freezeの後、AF-vs-AF variance pilotを12-task bankで実行し、raw resultを `docs/findings/evidence/p6-2-variance-pilot/result.json` として**設計変更より先に保存**した。そのbank-wide監査で`T-crosscut-5`だけが16 AF observations中4 success / 11 semantic failure / 1 protocol failureとなり、11 semantic failureはすべて同一の `boostTalFen: fails when Osk=nim` assertionだった。他11 primary taskにはsemantic failureがなかった。
+
+P6-1bの3-repeat ruleは小標本で `2/3以上 -> eligible`, `0/3 -> floor`, `1/3 -> hold` を実装した。P6-2以降でより大きい**独立AF calibration sample**が既に存在する場合の再監査は、このordinal ruleを率へ一般化して機械適用する：
+
+- semantic-evaluable success rate `< 1/3` -> floor candidate
+- `1/3 <= rate < 2/3` -> hold / unstable candidate
+- `rate >= 2/3` -> eligible candidate
+
+ただし、観測後の都合のよいtask除外を防ぐため、primary bankを実際に変更できるのは次の全条件を満たす場合に限る。
+
+1. **時点制約**：scientific repeat countの正式freeze前、かつAF/EL/PR/AR等のprimary condition contrastを1件も観測する前であること。これ以後に判明した問題は現行bankを変更せず、次versionまたはsensitivity analysisへ送る。
+2. **evidence source制約**：AF-onlyのeligibility / variance / measurement calibrationとして独立に取得された観測のみを使う。condition差や望ましい研究結論を見てtaskを選ばない。
+3. **最低標本数**：同一taskについてaccepted AF observationが12以上、かつsemantic-evaluable observation（success + semantic failure）が12以上あること。protocol/system/infrastructure/otherはfloor evidenceへ数えない。
+4. **率の機械判定**：上記success-rate bandをbank内の全taskへ一括適用し、人間が特定taskだけを候補にしない。
+5. **構造的一貫性**：floorへ再分類する場合、semantic failureの少なくとも2/3、かつ6件以上が同一のnormalized task-specific assertion / invariant / dependency failure signatureへ収束していること。異質なfailure集合だけではfloorへ落とさない。
+6. **provenance**：元resultをimmutable evidenceとして残し、旧classification・新classification・全taskの監査表・変更理由・marginへの機械的影響をfindingsへ記録する。元resultを上書きしない。
+
+この規則を今回の12 primary taskすべてへ適用すると、再分類対象は`T-crosscut-5`だけである。したがってP6-2以降のeffective M primary bankは11 task、semantic-floorは7 taskとなる。equivalence marginの**規則**は変更せず `Delta_M=1/|T_primary|=1/11`、`sigma_floor,M=Delta_M=1/11` と自動追従させる。Rsem bankは12 probeのままなので `Delta_R=sigma_floor,R=1/12` のまま。alpha、target power、SD-UCB confidence、exact paired-TOST、failure semanticsは変更しない。
+
+historical 8 pairから`T-crosscut-5`を除いて再集約するとM sample SD=`0.07586572367238911`、raw 95% SD-UCB=`0.13634214080510768`、requiredN_M=21（n=20 power=`0.7806622581813019`, n=21=`0.8080484931622317`）。Rsem requiredN=11のためcommon repeat candidateは21で、predeclared max n=30以内に収まる。repeat数の正式freezeはこのamendmentの回帰確認後に別stepで行う。
+
 #### 10.2.6 post-hoc task reselection禁止 / abnormal baseline handling
 
-P6-2でAF baselineが想定外に低い、分散が異常に大きい、protocol / infrastructure failureが多い、または測定不能な挙動を示した場合、その結果を理由にprimary taskを除外したり、diagnostic / semantic-floorとの分類を入れ替えたりしない。
+§10.2.5bの明示的amendment完了後は、P6-2でAF baselineが想定外に低い、分散が異常に大きい、protocol / infrastructure failureが多い、または測定不能な挙動を示した場合、その結果を理由にprimary taskを除外したり、diagnostic / semantic-floorとの分類を入れ替えたりしない。
 
 異常時は、
 

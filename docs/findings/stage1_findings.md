@@ -37,3 +37,36 @@ semantic-floorは以下の6 taskである。
 さらに、oracle `jumpFen`からTal guardだけを除いたmock実装を構成し、新しい`T-invariant-stress-2` Tal-isolation testがその実装をfailさせることをoffline regressionで固定した。
 
 この修正は**P6-1b既存resultを無効化しない**。P6-1bは当時freeze済みのtask bankに対する結果として保持し、本修正はP6-2以降のtask bank品質改善としてversion/provenance上区別して扱う。
+
+
+## F16: T-crosscut-5 post-pilot再分類と11-task variance再解析
+
+**日付**: 2026-09-21  
+**Phase**: P6-2 AF-vs-AF variance pilot / statistical-design audit  
+**Source evidence**: `docs/findings/evidence/p6-2-variance-pilot/result.json`（historical 12-task pilot。source manifest git SHA `6551d69309f84bc6646a1bbf50daa08928c423dc`）
+
+P6-1bでは`T-crosscut-5`は3 repeat中 **semantic success 2 / semantic failure 1 / protocol failure 0** で`T_primary-eligible`となった。この判定自体は当時のfrozen ruleと3-repeat sampleに対して正しく、historical resultとして変更しない。
+
+その後、repeat sizingのために独立実行したAF-vs-AF variance pilotで、accepted 8 pair × 2 arm = **16 AF observations** が得られた。bank全体を同じ基準で横断監査すると、`T-crosscut-5`は **4/16 success**、**11/16 semantic failure**、**1/16 protocol failure**だった。11件のsemantic failureはすべて同一のtask-specific assertion `boostTalFen: fails when Osk=nim` であり、Osk guard欠落という同じ構造的失敗signatureを示した。他の11 primary taskにはsemantic failureは1件もなく、15/16または16/16 successで、残るfailureはprotocolのみだった。
+
+したがって本件は、varianceを小さくするために特定taskを任意除外したものではなく、**P6-1bの小標本判定を、より大きいAF calibration sampleでbank-wideに再監査した結果、T-crosscut-5のみがfloor側の条件を満たした**ものと扱う。元のP6-1b分類は過去時点の結果として保持し、P6-2以降のeffective primary bankだけを11 taskへversion updateする。これはpre-live §10.2.6の「varianceを見てtask reselectionしない」という原則に対する黙示的例外ではなく、一次pilot resultを先にimmutable evidenceとして保存したうえで行う**明示的post-pilot protocol amendment**である。
+
+P6-2以降のprimary M bankから`T-crosscut-5`を外し、semantic-floorへ移す。margin rule自体は変更せず、既存の `Delta_M = 1 / |primary tasks|` を適用するため、`Delta_M`およびM sigma floorは **1/11** となる。`Delta_R=1/12`、alpha=0.05、target power=0.80、片側95% SD-UCB、exact paired-TOST、M/Rsemのfailure semanticsは変更しない。
+
+historical 8 accepted pairのraw M outcomesから`T-crosscut-5`だけを除いて再集約した11-task pair differenceは、
+
+`[0, -1/11, 0, +1/11, +1/11, -1/11, 0, -1/11]`
+
+となった。再計算結果は以下。
+
+- M sample SD: `0.07586572367238911`
+- M raw one-sided 95% SD-UCB: `0.13634214080510768`
+- M sigma floor: `1/11 = 0.09090909090909091`
+- M planning sigma: `0.13634214080510768`
+- exact power at n=20: `0.7806622581813019`
+- exact power at n=21: `0.8080484931622317`
+- **M requiredN: 21**
+- Rsem requiredN: **11**（measurement/bank unchanged）
+- common repeat candidate: **21**
+
+したがって、11-task bankでは事前feasibility ceiling `n<=30` 内へ戻る。ここではrepeat数をまだ正式freezeせず、このamendment・コード・回帰検証を先に確定する。

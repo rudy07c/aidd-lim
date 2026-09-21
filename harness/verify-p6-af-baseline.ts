@@ -148,8 +148,8 @@ function fakeProbeFactory(
 
 async function main(): Promise<void> {
   // Equivalence semantics are frozen independently of any live AF outcome.
-  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v1");
-  assert.equal(P6_2_DELTA_M, 1 / 12);
+  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v2-taskbank-amendment");
+  assert.equal(P6_2_DELTA_M, 1 / 11);
   assert.equal(P6_2_DELTA_R, 1 / 12);
   assert.equal(P6_2_EQUIVALENCE_ALPHA, 0.05);
   assert.equal(P6_2_EQUIVALENCE_CI_LEVEL, 0.90);
@@ -198,21 +198,21 @@ async function main(): Promise<void> {
   const repository: Record<string, string> = {};
   loadRepository(repositoryDir, repositoryDir, repository);
 
-  // Frozen P6-1b classifications are reused as-is: 12 primary + 2 eligible diagnostic; floor 6 excluded.
+  // P6-2 post-pilot amendment: 11 primary + 2 eligible diagnostic; 7 semantic-floor excluded.
   assert.equal(P6_2_TASK_BANK_VERSION, "p6-1-full-task-bank-v3-postflight-coverage");
   const selection = selectP62TaskBank(tasks);
   assert.deepEqual(selection.primary.map((task) => task.taskId), [...P6_2_PRIMARY_TASK_IDS]);
   assert.deepEqual(selection.diagnostic.map((task) => task.taskId), [...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS]);
   assert.deepEqual(selection.excludedSemanticFloorTaskIds, [...P6_2_SEMANTIC_FLOOR_TASK_IDS]);
-  assert.equal(selection.primary.length, 12);
+  assert.equal(selection.primary.length, 11);
   assert.equal(selection.diagnostic.length, 2);
-  assert.equal(selection.measured.length, 14);
+  assert.equal(selection.measured.length, 13);
   for (const floorId of P6_2_SEMANTIC_FLOOR_TASK_IDS) {
     assert(!selection.measured.some((task) => task.taskId === floorId), `${floorId} leaked into P6-2 measured tasks`);
   }
   const oneRepeatPlan = planP62MRepeats(selection, 1);
-  assert.equal(oneRepeatPlan.length, 14);
-  assert.equal(oneRepeatPlan.filter((item) => item.role === "primary").length, 12);
+  assert.equal(oneRepeatPlan.length, 13);
+  assert.equal(oneRepeatPlan.filter((item) => item.role === "primary").length, 11);
   assert.equal(oneRepeatPlan.filter((item) => item.role === "diagnostic").length, 2);
   assert.deepEqual(planP62ProbeRepeats(1), [1]);
 
@@ -288,7 +288,7 @@ async function main(): Promise<void> {
   assert.equal(result.measurements.Rsem.designVersion, "stage1-neutral-relation-v2");
   assert.equal(result.measurements.Rsem.booleanProbeIds.length, 12);
   assert.equal(result.executionManifest.equivalenceDesignVersion, P6_2_EQUIVALENCE_DESIGN_VERSION);
-  assert.equal(result.executionManifest.deltaM, 1 / 12);
+  assert.equal(result.executionManifest.deltaM, 1 / 11);
   assert.equal(result.executionManifest.deltaR, 1 / 12);
   assert.equal(result.executionManifest.equivalenceCiLevel, 0.90);
   assert.equal(result.executionManifest.frozenScientificRepeatCount, null);
