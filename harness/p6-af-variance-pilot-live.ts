@@ -9,7 +9,7 @@ import {
 import {
   P6_2_DELTA_M, P6_2_DELTA_R, P6_2_EQUIVALENCE_ALPHA, P6_2_EQUIVALENCE_TARGET_POWER,
   P6_2_MAX_SCIENTIFIC_REPEATS, P6_2_MIN_SCIENTIFIC_REPEATS, P6_2_PRIMARY_TASK_IDS,
-  P6_2_TASK_BANK_VERSION, P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
+  P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS, P6_2_TASK_BANK_VERSION, P6_2_TASK_SELECTION_VERSION, P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
   P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS, P6_2_VARIANCE_SD_UCB_CONFIDENCE,
   classifyP62MRepeat, p62VariancePilotArmOrder, selectP62TaskBank, type P62VariancePilotArm,
 } from "./src/p6/af-baseline";
@@ -25,7 +25,7 @@ import {
 } from "./src/agent-backend/openai/shared";
 import type { RepeatArtifactBundle } from "./src/p6/task-bank-live-runtime";
 
-export const P6_2_VARIANCE_RESULT_SCHEMA = "p6-2-af-variance-pilot-result-v2-hardening";
+export const P6_2_VARIANCE_RESULT_SCHEMA = "p6-2-af-variance-pilot-result-v3-task-selection-freeze";
 export const P6_2_VARIANCE_ARTIFACT_LAYOUT_VERSION = "p6-2-af-variance-artifacts-v1";
 export const P6_2_VARIANCE_ADJUDICATION_VERSION = "p6-2-variance-adjudication-v1";
 const REQUEST_TIMEOUT_MS = 180000, MAX_RETRIES = 2, MAX_OUTPUT_TOKENS = 7000, PROBE_MAX_OUTPUT_TOKENS = 8000;
@@ -52,7 +52,8 @@ export interface PilotManifest {
   gitSha: string; model: typeof P6_2_MODEL; reasoningEffort: typeof P6_2_REASONING; condition: "AF-vs-AF";
   deltaM: number; deltaR: number; equivalenceAlpha: number; targetPower: number; sdUcbConfidence: number;
   sigmaFloorM: number; sigmaFloorR: number; minScientificRepeats: number; maxScientificRepeats: number;
-  pairedAfRepeats: number; maxAttemptsPerPair: number; taskBankVersion: string; taskBankSha256: string; repositorySha256: string;
+  pairedAfRepeats: number; maxAttemptsPerPair: number; taskBankVersion: string; taskSelectionVersion: string; taskBankSha256: string; repositorySha256: string;
+  primaryTaskIdsSha256: string; postPilotLowHeadroomTaskIds: string[];
   booleanProbeBankSha256: string; probeSchemaHash: string; primaryTaskIds: string[]; nodeVersion: string; openAiSdkVersion: string;
   requestTimeoutMs: number; maxRetries: number; maxOutputTokens: number; probeMaxOutputTokens: number; serviceTier: string; promptCacheMode: string;
   mutationPromptVersion: string; mutationPromptHash: string; mutationSchemaVersion: string; mutationSchemaHash: string;
@@ -76,6 +77,7 @@ export interface VariancePilotDependencies {
 
 const CRITICAL_SOURCE_FILES = [
   "harness/p6-af-variance-pilot-live.ts", "harness/p6-af-baseline-live.ts", "harness/src/p6/variance-pilot.ts",
+  "harness/src/p6/af-baseline.ts",
   "harness/src/p6/equivalence-power.ts", "harness/src/p6/failure-classification.ts", "harness/src/p6/task-bank-live-runtime.ts",
   "harness/src/agent-backend/openai/shared.ts", "calibration/src/stage1-probes.ts", "calibration/src/probe-scorer.ts",
 ] as const;
@@ -124,8 +126,9 @@ export function buildVariancePilotManifest(args: { repoRoot: string; taskBankRaw
     equivalenceAlpha: P6_2_EQUIVALENCE_ALPHA, targetPower: P6_2_EQUIVALENCE_TARGET_POWER, sdUcbConfidence: P6_2_VARIANCE_SD_UCB_CONFIDENCE,
     sigmaFloorM: P6_2_VARIANCE_SIGMA_FLOOR_M, sigmaFloorR: P6_2_VARIANCE_SIGMA_FLOOR_R, minScientificRepeats: P6_2_MIN_SCIENTIFIC_REPEATS,
     maxScientificRepeats: P6_2_MAX_SCIENTIFIC_REPEATS, pairedAfRepeats: P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS, maxAttemptsPerPair: P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
-    taskBankVersion: P6_2_TASK_BANK_VERSION, taskBankSha256: hash(args.taskBankRaw), repositorySha256: hashRepository(args.repository), booleanProbeBankSha256: args.probeBankSha256,
-    probeSchemaHash: args.probeSchemaHash, primaryTaskIds: [...P6_2_PRIMARY_TASK_IDS], nodeVersion: process.version, openAiSdkVersion: sdk,
+    taskBankVersion: P6_2_TASK_BANK_VERSION, taskSelectionVersion: P6_2_TASK_SELECTION_VERSION, taskBankSha256: hash(args.taskBankRaw), repositorySha256: hashRepository(args.repository), booleanProbeBankSha256: args.probeBankSha256,
+    probeSchemaHash: args.probeSchemaHash, primaryTaskIds: [...P6_2_PRIMARY_TASK_IDS], primaryTaskIdsSha256: hash(stable([...P6_2_PRIMARY_TASK_IDS])),
+    postPilotLowHeadroomTaskIds: [...P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS], nodeVersion: process.version, openAiSdkVersion: sdk,
     requestTimeoutMs: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES, maxOutputTokens: MAX_OUTPUT_TOKENS, probeMaxOutputTokens: PROBE_MAX_OUTPUT_TOKENS,
     serviceTier: SERVICE_TIER, promptCacheMode: PROMPT_CACHE_MODE, mutationPromptVersion: OPENAI_PROMPT_VERSION, mutationPromptHash: OPENAI_PROMPT_HASH,
     mutationSchemaVersion: OPENAI_MUTATION_SCHEMA_VERSION, mutationSchemaHash: OPENAI_SCHEMA_HASH, runnerSha256: hash(fs.readFileSync(runner)),

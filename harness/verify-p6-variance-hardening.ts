@@ -4,6 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import {
   P6_2_DELTA_M, P6_2_PRIMARY_TASK_IDS, P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
+  P6_2_TASK_SELECTION_VERSION, P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS,
   p62VariancePilotArmOrder,
 } from "./src/p6/af-baseline";
 import { exactPairedTostPowerAtZero, findMinimumExactPairedTostN, P6_2_EXACT_POWER_METHOD_VERSION } from "./src/p6/equivalence-power";
@@ -43,11 +44,11 @@ const REFERENCE_POWER = [
 ] as const;
 
 function manifest(): PilotManifest { return {
-  schemaVersion: "p6-2-af-variance-pilot-result-v2-hardening", pilotVersion: "p6-2-af-variance-pilot-v3-taskbank-reanalysis",
+  schemaVersion: "p6-2-af-variance-pilot-result-v3-task-selection-freeze", pilotVersion: "p6-2-af-variance-pilot-v4-fresh-after-task-selection-freeze",
   exactPowerMethodVersion: P6_2_EXACT_POWER_METHOD_VERSION, sigmaFloorVersion: "p6-2-sigma-floor-v2-primary-bank-unit", gitSha: "mock", model: "gpt-5.6-luna", reasoningEffort: "high",
   condition: "AF-vs-AF", deltaM: P6_2_DELTA_M, deltaR: 1/12, equivalenceAlpha: .05, targetPower: .8, sdUcbConfidence: .95, sigmaFloorM: P6_2_VARIANCE_SIGMA_FLOOR_M, sigmaFloorR: 1/12,
-  minScientificRepeats: 8, maxScientificRepeats: 30, pairedAfRepeats: 8, maxAttemptsPerPair: 3, taskBankVersion: "mock", taskBankSha256: "mock",
-  repositorySha256: "mock", booleanProbeBankSha256: "mock", probeSchemaHash: "mock", primaryTaskIds: [...P6_2_PRIMARY_TASK_IDS], nodeVersion: process.version,
+  minScientificRepeats: 8, maxScientificRepeats: 30, pairedAfRepeats: 8, maxAttemptsPerPair: 3, taskBankVersion: "mock", taskSelectionVersion: P6_2_TASK_SELECTION_VERSION, taskBankSha256: "mock",
+  repositorySha256: "mock", booleanProbeBankSha256: "mock", probeSchemaHash: "mock", primaryTaskIds: [...P6_2_PRIMARY_TASK_IDS], primaryTaskIdsSha256: "mock", postPilotLowHeadroomTaskIds: [...P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS], nodeVersion: process.version,
   openAiSdkVersion: "mock", requestTimeoutMs: 180000, maxRetries: 2, maxOutputTokens: 7000, probeMaxOutputTokens: 8000, serviceTier: "default", promptCacheMode: "implicit",
   mutationPromptVersion: "mock", mutationPromptHash: "mock", mutationSchemaVersion: "mock", mutationSchemaHash: "mock", runnerSha256: "mock", criticalSourceFingerprint: "mock",
   criticalSourceFiles: [], pairExecutionPolicy: "matched-unit-near-ABBA", infrastructureReplacementPolicy: "discard-whole-attempt-same-pair-id", repeatPlanningScope: "AF-noise-reference",

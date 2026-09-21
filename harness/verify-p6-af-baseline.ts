@@ -148,7 +148,7 @@ function fakeProbeFactory(
 
 async function main(): Promise<void> {
   // Equivalence semantics are frozen independently of any live AF outcome.
-  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v2-taskbank-amendment");
+  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v3-11-task-selection-freeze");
   assert.equal(P6_2_DELTA_M, 1 / 11);
   assert.equal(P6_2_DELTA_R, 1 / 12);
   assert.equal(P6_2_EQUIVALENCE_ALPHA, 0.05);
@@ -198,12 +198,14 @@ async function main(): Promise<void> {
   const repository: Record<string, string> = {};
   loadRepository(repositoryDir, repositoryDir, repository);
 
-  // P6-2 post-pilot amendment: 11 primary + 2 eligible diagnostic; 7 semantic-floor excluded.
+  // P6-2 task-selection freeze: 11 primary + 2 eligible diagnostic; 6 historical semantic-floor + 1 post-pilot low-headroom excluded.
   assert.equal(P6_2_TASK_BANK_VERSION, "p6-1-full-task-bank-v3-postflight-coverage");
   const selection = selectP62TaskBank(tasks);
   assert.deepEqual(selection.primary.map((task) => task.taskId), [...P6_2_PRIMARY_TASK_IDS]);
   assert.deepEqual(selection.diagnostic.map((task) => task.taskId), [...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS]);
   assert.deepEqual(selection.excludedSemanticFloorTaskIds, [...P6_2_SEMANTIC_FLOOR_TASK_IDS]);
+  assert.deepEqual(selection.excludedPostPilotLowHeadroomTaskIds, ["T-crosscut-5"]);
+  assert.equal(P6_2_SEMANTIC_FLOOR_TASK_IDS.length, 6);
   assert.equal(selection.primary.length, 11);
   assert.equal(selection.diagnostic.length, 2);
   assert.equal(selection.measured.length, 13);
@@ -288,6 +290,9 @@ async function main(): Promise<void> {
   assert.equal(result.measurements.Rsem.designVersion, "stage1-neutral-relation-v2");
   assert.equal(result.measurements.Rsem.booleanProbeIds.length, 12);
   assert.equal(result.executionManifest.equivalenceDesignVersion, P6_2_EQUIVALENCE_DESIGN_VERSION);
+  assert.equal(result.executionManifest.taskSelectionVersion, "p6-2-task-selection-v2-postpilot-low-headroom-frozen");
+  assert.deepEqual(result.executionManifest.primaryTaskIds, [...P6_2_PRIMARY_TASK_IDS]);
+  assert.deepEqual(result.executionManifest.postPilotLowHeadroomTaskIds, ["T-crosscut-5"]);
   assert.equal(result.executionManifest.deltaM, 1 / 11);
   assert.equal(result.executionManifest.deltaR, 1 / 12);
   assert.equal(result.executionManifest.equivalenceCiLevel, 0.90);

@@ -13,7 +13,7 @@ import {
 } from "./af-baseline";
 import { findMinimumExactPairedTostN } from "./equivalence-power";
 
-export const P6_2_VARIANCE_PILOT_VERSION = "p6-2-af-variance-pilot-v3-taskbank-reanalysis";
+export const P6_2_VARIANCE_PILOT_VERSION = "p6-2-af-variance-pilot-v4-fresh-after-task-selection-freeze";
 export const P6_2_VARIANCE_SIGMA_FLOOR_VERSION = "p6-2-sigma-floor-v2-primary-bank-unit";
 // The floor rule is unchanged: it is the smallest meaningful unit on each
 // current outcome scale. For M, the 2026-09-21 bank amendment changes only
