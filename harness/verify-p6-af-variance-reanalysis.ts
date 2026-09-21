@@ -73,6 +73,8 @@ function main(): void {
   assert.ok(oskFailure, "pre-pilot Osk=nim failure evidence missing");
   assert.equal(oskFailure.passed, false);
 
+  // The formal repeat freeze is mechanically bound to this independently acquired
+  // fresh 11-task pilot; the historical post-selection reanalysis above remains diagnostic-only.
   const freshPath = path.join(
     repoRoot,
     "docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json"
