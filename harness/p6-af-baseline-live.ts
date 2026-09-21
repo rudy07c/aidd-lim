@@ -98,7 +98,7 @@ const CRITICAL_SOURCE_FILES = [
   "calibration/src/probe-scorer.ts",
 ] as const;
 
-interface HeldOutTask {
+export interface HeldOutTask {
   taskId: string;
   type?: string;
   visibleInstruction: string;
@@ -128,7 +128,7 @@ interface MRepeatResult {
 
 type ClassifiedMRepeatResult = MRepeatResult & P62MRepeatLike;
 
-interface MRepeatExecution {
+export interface MRepeatExecution {
   result: MRepeatResult;
   artifacts: RepeatArtifactBundle;
 }
@@ -284,7 +284,7 @@ export interface P62AfBaselineResult {
   estimatedCostUsd: number;
 }
 
-interface ProbeMaterial {
+export interface ProbeMaterial {
   groundTruthRaw: string;
   namingSchemesRaw: string;
   booleanProbes: GeneratedProbe[];
@@ -292,7 +292,7 @@ interface ProbeMaterial {
   probeSchemaHash: string;
 }
 
-function loadDirRecursive(dir: string, baseDir: string, out: Record<string, string>): void {
+export function loadDirRecursive(dir: string, baseDir: string, out: Record<string, string>): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) loadDirRecursive(full, baseDir, out);
@@ -322,7 +322,7 @@ function sortJson(value: unknown): unknown {
   return value;
 }
 
-function hashRepository(files: Record<string, string>): string {
+export function hashRepository(files: Record<string, string>): string {
   const hash = crypto.createHash("sha256");
   for (const filePath of Object.keys(files).sort()) {
     hash.update(filePath);
@@ -361,7 +361,7 @@ function probePrompt(contextFiles: Record<string, string>, probes: GeneratedProb
   return `REPOSITORY FILES:${repo}\n\nQUESTIONS:\n${questions}\n\nReturn one string answer for every exact probe ID.`;
 }
 
-function loadProbeMaterial(syntheticWorldDir: string): ProbeMaterial {
+export function loadProbeMaterial(syntheticWorldDir: string): ProbeMaterial {
   const groundTruthPath = path.join(syntheticWorldDir, "ground_truth.json");
   const namingSchemesPath = path.join(syntheticWorldDir, "naming_schemes.json");
   const groundTruthRaw = fs.readFileSync(groundTruthPath, "utf8");
@@ -624,7 +624,7 @@ function artifactBundleFromAgent(
   };
 }
 
-async function runMRepeat(
+export async function runMRepeat(
   repository: Record<string, string>,
   syntheticWorldDir: string,
   task: HeldOutTask,
