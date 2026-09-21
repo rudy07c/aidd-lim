@@ -4,14 +4,14 @@ import * as os from "os";
 import * as path from "path";
 import {
   P6_2_DELTA_M, P6_2_PRIMARY_TASK_IDS, P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
-  p62VariancePilotArmOrder, selectP62TaskBank,
+  p62VariancePilotArmOrder,
 } from "./src/p6/af-baseline";
 import { exactPairedTostPowerAtZero, findMinimumExactPairedTostN, P6_2_EXACT_POWER_METHOD_VERSION } from "./src/p6/equivalence-power";
 import {
   P6_2_VARIANCE_SIGMA_FLOOR_M, chiSquareQuantile, sizeP62PairedDifferences,
 } from "./src/p6/variance-pilot";
 import {
-  emptyVarianceResult, runVariancePilotEngine, type MEvent, type PilotManifest,
+  emptyVarianceResult, runVariancePilotEngine, type PilotManifest,
   type P62VariancePilotResult, type VariancePilotDependencies,
 } from "./p6-af-variance-pilot-live";
 import { applyVariancePilotAdjudication } from "./adjudicate-p6-af-variance-pilot";
@@ -47,7 +47,7 @@ function mExec(taskId: string, repeat: number, mode: "ok"|"infra"|"system" = "ok
 }
 function rExec(repeat: number): RSemProbeRepeatResult { return { repeat, designVersion: "stage1-neutral-relation-v2", executionStatus: "ok", validity: "valid", failureDomain: "none", rawFailureDomain: "none", adjudication: null,
   protocolValid: true, failureReason: null, rawResponse: "{}", modelProvenance: { provider: "openai", requestedModel: "gpt-5.6-luna", actualModel: "mock", responseId: "mock", responseStatus: "completed", reasoningEffort: "high", maxOutputTokens: 8000, requestTimeoutMs: 180000, maxRetries: 2, sdkVersion: "mock", providerErrorCode: null },
-  booleanCorrect: 12, booleanTotal: 12, booleanAccuracy: 1, probeDetails: [], actualModel: "mock", usage: { input_tokens: 0, output_tokens: 0, total_tokens: 0 }, estimatedCostUsd: 0 } as RSemProbeRepeatResult; }
+  booleanCorrect: 12, booleanTotal: 12, booleanAccuracy: 1, probeDetails: [], actualModel: "mock", usage: { input: 0, output: 0, total: 0 }, estimatedCostUsd: 0 }; }
 function successfulDeps(counter?: { m: number; r: number }): VariancePilotDependencies { return { runM: async (_repo,_sw,task,_role,repeat) => { if (counter) counter.m++; return mExec(task.taskId, repeat); }, runR: async (_repo,_probes,repeat) => { if (counter) counter.r++; return rExec(repeat); } }; }
 async function drive(result: P62VariancePilotResult, runDir: string, deps: VariancePilotDependencies): Promise<void> { const taskById = new Map(tasks().map((t) => [t.taskId, t])); await runVariancePilotEngine({ result, runDir, repository: {}, syntheticWorldDir: runDir, taskById, probes: [] as any, deps, persist: () => {} }); }
 
@@ -59,26 +59,21 @@ async function main(): Promise<void> {
   const zero = sizeP62PairedDifferences(Array(8).fill(0), P6_2_DELTA_M); assert.equal(zero.sampleSd, 0); assert.equal(zero.rawSigmaUpper, 0); assert.equal(zero.sigmaFloor, P6_2_VARIANCE_SIGMA_FLOOR_M); assert.equal(zero.sigmaUpper, P6_2_VARIANCE_SIGMA_FLOOR_M); assert.equal(zero.requiredN, 11);
   assert.deepEqual(p62VariancePilotArmOrder(1), ["A","B"]); assert.deepEqual(p62VariancePilotArmOrder(2), ["B","A"]); assert.equal(P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR, 3);
 
-  // Mocked 8-pair completion and Rsem paired protocol diagnostics.
   const dir1 = fs.mkdtempSync(path.join(os.tmpdir(), "p62-var-full-")); const full = emptyVarianceResult(manifest()); await drive(full, dir1, successfulDeps());
   assert.equal(full.acceptedPairs.length, 8); assert.equal(full.status, "completed-awaiting-repeat-freeze"); assert.equal(full.acceptedPairs[0].armA.rsemProtocolDiagnostic.attempted, 1); assert.equal(full.acceptedPairs[0].armA.rsemProtocolDiagnostic.valid, 1);
   assert(fs.existsSync(path.join(dir1, "pair-1", "attempt-1", "A", P6_2_PRIMARY_TASK_IDS[0], "agent_response.txt")));
 
-  // Whole-pair replacement after infrastructure failure.
   const dir2 = fs.mkdtempSync(path.join(os.tmpdir(), "p62-var-infra-")); const repl = emptyVarianceResult(manifest()); let first = true;
   const replDeps = successfulDeps(); replDeps.runM = async (_r,_s,t,_role,repeat) => { if (first) { first = false; return mExec(t.taskId, repeat, "infra"); } return mExec(t.taskId, repeat); };
   await drive(repl, dir2, replDeps); assert.equal(repl.attempts.find((a) => a.pairId===1 && a.attempt===1)?.status, "replace-infrastructure"); assert.equal(repl.acceptedPairs.find((p) => p.pairId===1)?.attempt, 2);
 
-  // Partial attempt crash then resume without replaying completed M events.
   const dir3 = fs.mkdtempSync(path.join(os.tmpdir(), "p62-var-partial-")); const partial = emptyVarianceResult(manifest()); let calls = 0;
   const crashDeps = successfulDeps(); crashDeps.runM = async (_r,_s,t,_role,repeat) => { calls++; if (calls === 4) throw new Error("synthetic crash"); return mExec(t.taskId, repeat); };
   let crashed = false; try { await drive(partial, dir3, crashDeps); } catch { crashed = true; } assert(crashed); const before = partial.attempts[0].events.filter((e) => e.kind === "M").length; assert(before > 0);
   const resumeCounter = {m:0,r:0}; await drive(partial, dir3, successfulDeps(resumeCounter)); assert.equal(partial.status, "completed-awaiting-repeat-freeze"); assert(resumeCounter.m < 8*12*2, "resume replayed the whole pilot");
 
-  // Resume immediately after accepted result is idempotent.
   const acceptedCounter = {m:0,r:0}; await drive(full, dir1, successfulDeps(acceptedCounter)); assert.equal(acceptedCounter.m, 0); assert.equal(acceptedCounter.r, 0); assert.equal(full.acceptedPairs.length, 8);
 
-  // needs-audit -> adjudication -> resume.
   const dir4 = fs.mkdtempSync(path.join(os.tmpdir(), "p62-var-audit-")); const audited = emptyVarianceResult(manifest()); let systemOnce = true;
   const auditDeps = successfulDeps(); auditDeps.runM = async (_r,_s,t,_role,repeat) => { if (systemOnce) { systemOnce=false; return mExec(t.taskId, repeat, "system"); } return mExec(t.taskId, repeat); };
   await drive(audited, dir4, auditDeps); assert.equal(audited.status, "execution-needs-audit"); const flag = audited.auditFlags.find((f) => f.kind === "execution" && !f.resolvedAt); assert(flag);
