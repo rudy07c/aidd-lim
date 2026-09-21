@@ -22,9 +22,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: harness/package-lock.json
+          cache-dependency-path: |
+            harness/package-lock.json
+            synthetic-world/package-lock.json
       - name: Install harness dependencies
         working-directory: harness
+        run: npm ci
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
         run: npm ci
       - name: Apply amendment patch
         run: python3 .github/scripts/apply_p6_crosscut5_reclassification.py
