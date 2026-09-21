@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/apply-p6-repeat-freeze.yml'
       - 'tmp_apply_p6_repeat_freeze.py'
+      - 'tmp_fix_p6_repeat_freeze_verifier.py'
 
 permissions:
   contents: write
@@ -29,6 +30,8 @@ jobs:
             synthetic-world/package-lock.json
       - name: Apply repeat freeze patch
         run: python tmp_apply_p6_repeat_freeze.py
+      - name: Update frozen-count verifier fixtures
+        run: python tmp_fix_p6_repeat_freeze_verifier.py
       - name: Install harness dependencies
         working-directory: harness
         run: npm ci
