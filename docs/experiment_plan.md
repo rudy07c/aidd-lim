@@ -1,8 +1,15 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.7
+**版**: v2.8
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.8での変更点（P6-2 task-selection amendment / fresh variance repeat freeze）**：
+- historical 12-task AF-vs-AF variance pilotはimmutable evidenceとして保持し、n<=30ではM power不足（同じexact式をceiling外へ診断的に延長するとn=37相当）だった結果を保存
+- bank-wide auditとpre-pilot Osk依存証拠に基づき`T-crosscut-5`をhistorical `semantic-floor`へ遡及させず、P6-2+専用`post-pilot-low-headroom`として分離し、current primary M bankを11 taskでfreeze
+- post-selection optimismを避けるためhistorical 8 pairの11-task再集約N=21はdiagnostic-onlyとし、正式sizingには旧観測を再利用しないfresh 11-task AF-vs-AF 8 pairのみを使用
+- fresh pilotでM requiredN=21、Rsem requiredN=16、needsAudit=falseを確認し、predeclared `max(8,n_M,n_R)` ruleからscientific repeat countを**21**へfreeze
+- current marginは`Delta_M=1/11`, `Delta_R=1/12`、alpha=0.05、target power=0.80、片側95% SD-UCB、true exact paired-TOSTを維持
 
 **v2.7での変更点（Pre-Stage 1 P5.5完了・現在地同期）**：
 - `docs/stage1_plan.md`の実装順序にP5.5を正式追加し、condition dispatcher接続、GenerationLog配線、OpenAI PR executor、PR/AR reread parity、evidence-exhaustion signal、RepositoryAccessor clamp契約、Luna live smoke、F11記録までを完了済みphaseとして固定
@@ -1248,6 +1255,8 @@ Stage 0 / 0.5の既存成果は破棄しない。以下をPre-Stage 1として�
 **P6-2 pre-live equivalence freeze（2026-09-20）**：primary \(M\) 12 task / \(R^{sem}\) 12 boolean probeについて、\(\Delta_M=\Delta_R=1/12\approx0.08333\)を固定bank上の最小意味単位に基づくoperational equivalence marginとして事前freezeする。1 task / 1 probe丸ごとの差はequivalentに含めない。\(\alpha=0.05\)のTOSTと整合する90% CI全体がmargin内に入る場合だけequivalence evidenceとする。Mではsemantic/protocol failureをend-to-end failureとして0点・分母内、system/infrastructure/otherは監査前に能力failureへ変換せず`needs-audit`とする。Rsemのprotocol/system/infrastructureもsemantic誤答へ変換せずaudit対象とする。repeat数は8 pairのfresh AF-vs-AF variance pilot（奇数AB/偶数BA、infrastructure-invalidは同一pair idを最大3 attemptまでreplacement）、SD片側95% upper boundを用い、paired normal differenceのsample SDの不確実性をchi分布で積分したtrue exact paired-TOST powerをn=8〜30で順に計算してtarget power 0.80を満たす最小nへfreezeする。n=30でも不足する場合は丸めず設計監査へ戻す。pilot dataはbaseline本取得へpoolしない。
 
 **P6-2 post-pilot task-selection amendment（2026-09-21）**：historical 12-task AF-vs-AF variance pilotのraw resultを先にimmutable evidenceとして保存した後、bank-wide監査で`T-crosscut-5`だけが16 AF observations中4 success / 11 semantic failure / 1 protocol failure、かつ11 semantic failureが同一Osk guard欠落signatureへ収束することを確認した。これはhistorical P6-1b `semantic-floor`へ遡及分類せず、P6-2+専用の`post-pilot-low-headroom`としてprimary Mから除外する。Osk依存は2026-09-06のoracle fixture、同型failureは2026-09-07のStage 0.5 resultにpre-pilot evidenceがある。一方、AFでのlow-headroom頻度はpost-pilotに確定したため、historical 8 pairを11-taskで再集約したrequiredN_M=21 / Rsem=11はdiagnostic-onlyでformal freezeへ使わない。current task selectionを11 primaryへfreezeし、`Delta_M=1/11`, `Delta_R=1/12`としたうえで、旧16 observationsを再利用しないfresh 11-task AF-vs-AF 8 pairから正式repeat数を決める。historical 12-task結果（n<=30ではpower不足、ceiling外診断ではn=37相当）とfresh 11-task結果は最終報告で併記する。
+
+**P6-2 fresh 11-task variance repeat freeze（2026-09-21）**：旧16 observationsを再利用しないfresh 8 accepted pairを取得し、M sample SD=`0.07586572367238911` / 95% SD-UCB=`0.13634214080510762` / requiredN=`21`、Rsem sample SD=`0.05892556509887899` / 95% SD-UCB=`0.1058981224304308` / requiredN=`16`、`needsAudit=false`を得た。predeclared `max(8,n_M,n_R)` ruleにより共通scientific repeat countを**21**へfreezeする。fresh resultは `docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json` に保存し、AF baseline本取得へpoolしない。
 
 Stage 1の結果だけを理由に、短期差が小さい条件を安易にStage 2から削除しない。主仮説はlongitudinal selection effectであり、短期performance equivalenceはtrajectory equivalenceを意味しない。
 

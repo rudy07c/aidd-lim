@@ -2,6 +2,7 @@ import assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import {
+  P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT,
   P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS,
   P6_2_PRIMARY_TASK_IDS,
   P6_2_SEMANTIC_FLOOR_TASK_IDS,
@@ -72,10 +73,35 @@ function main(): void {
   assert.ok(oskFailure, "pre-pilot Osk=nim failure evidence missing");
   assert.equal(oskFailure.passed, false);
 
+  const freshPath = path.join(
+    repoRoot,
+    "docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json"
+  );
+  const fresh = JSON.parse(fs.readFileSync(freshPath, "utf8"));
+  assert.equal(fresh.status, "completed-awaiting-repeat-freeze");
+  assert.equal(fresh.manifest.gitSha, "6d133b480f90e297970991f1c10c8b016b32d066");
+  assert.equal(fresh.manifest.taskSelectionVersion, P6_2_TASK_SELECTION_VERSION);
+  assert.deepEqual(fresh.manifest.primaryTaskIds, [...P6_2_PRIMARY_TASK_IDS]);
+  assert.deepEqual(fresh.manifest.postPilotLowHeadroomTaskIds, ["T-crosscut-5"]);
+  assert.equal(fresh.manifest.deltaM, 1 / 11);
+  assert.equal(fresh.manifest.deltaR, 1 / 12);
+  assert.equal(fresh.acceptedPairs.length, 8);
+  assert.equal(fresh.sizing.needsAudit, false);
+  assert.equal(fresh.sizing.auditKind, null);
+  assert.equal(fresh.sizing.m.requiredN, 21);
+  assert.equal(fresh.sizing.rsem.requiredN, 16);
+  assert.equal(fresh.sizing.frozenScientificRepeatCount, 21);
+  assert(Math.abs(fresh.sizing.m.sampleSd - 0.07586572367238911) < 1e-12);
+  assert(Math.abs(fresh.sizing.m.rawSigmaUpper - 0.13634214080510762) < 1e-12);
+  assert(Math.abs(fresh.sizing.rsem.sampleSd - 0.05892556509887899) < 1e-12);
+  assert(Math.abs(fresh.sizing.rsem.rawSigmaUpper - 0.1058981224304308) < 1e-12);
+  assert.equal(P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT, 21);
+
   console.log("P6-2 historical variance reanalysis audit verification passed.");
   console.log("  candidate: T-crosscut-5 only; label=post-pilot-low-headroom (not semantic-floor)");
   console.log("  historical 11-task reanalysis is diagnostic-only: M requiredN=21, Rsem=11, freezeEligible=false");
   console.log("  independent pre-pilot Osk-dependency evidence verified from oracle fixture and Stage 0.5 result");
+  console.log("  fresh 11-task pilot verified: M requiredN=21, Rsem=16, frozen repeat=21, needsAudit=false");
 }
 
 main();

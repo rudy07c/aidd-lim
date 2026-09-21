@@ -1662,6 +1662,8 @@ current margin ruleは固定bankの最小1 unitを無視しないという原則
 
 historical 8 pairを11-taskへ再集約するとdiagnosticにM requiredN=21、Rsem requiredN=11となるが、**これはformal repeat freezeへ使用しない**。同じ8 pairがtask-selection evidenceとselection後varianceの双方へ使われるためpost-selection optimismを否定できない。formal sizingには、旧16 AF observationsを再利用しないfreshな11-task AF-vs-AF 8 pairを新規取得し、そのfresh dataのみからrequiredNを決める。fresh pilot開始後はtask membershipを一切変更しない。
 
+**fresh 11-task variance pilot result / repeat freeze（2026-09-21）**：旧16 observationsを一切poolせず、新規8 accepted pairを取得した。Mはsample SD=`0.07586572367238911`、片側95% SD-UCB=`0.13634214080510762`、requiredN=`21`。Rsemはsample SD=`0.05892556509887899`、片側95% SD-UCB=`0.1058981224304308`、requiredN=`16`。したがってpredeclared rule `max(8,n_M,n_R)` によりscientific repeat countを**21**へfreezeする。fresh resultは `docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json` にimmutable evidenceとして保存し、pilot dataはP6-2 AF baseline本取得へpoolしない。historical 12-task designはn<=30でpower不足（ceiling外診断n=37相当）だった事実を併記し、11-task amendmentによる結論変化を隠さない。
+
 #### 10.2.6 post-hoc task reselection禁止 / abnormal baseline handling
 
 §10.2.5bの明示的amendment完了後は、P6-2でAF baselineが想定外に低い、分散が異常に大きい、protocol / infrastructure failureが多い、または測定不能な挙動を示した場合、その結果を理由にprimary taskを除外したり、diagnostic / semantic-floorとの分類を入れ替えたりしない。
@@ -1801,7 +1803,7 @@ Stage 1本実験前に：
 
 とする。Mの1 taskとR^{sem}の1 probeの実世界上の価値が同一であることは仮定しない。M bank membership変更後の`Delta_M`変更は観測SDへ合わせたmargin tuningではなく、事前定義済み `1/|primary task|` ruleの機械的帰結としてversioned amendmentに記録する。
 
-Equivalenceは \(\alpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体が各measurement固有のmargin内へ入った場合のみ主張する。repeat数はfresh 11-task AF-vs-AF variance pilotから決定し、historical 8 pairのpost-selection再集約値は正式freezeへ使用しない。
+Equivalenceは \(\alpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体が各measurement固有のmargin内へ入った場合のみ主張する。repeat数はfresh 11-task AF-vs-AF variance pilotのみから決定し、historical 8 pairのpost-selection再集約値は正式freezeへ使用しない。2026-09-21のfresh 8 pairではM requiredN=21、Rsem requiredN=16となったため、共通scientific repeat countを21へfreezeした。
 
 ### 11.2 Stage 1A paired design
 

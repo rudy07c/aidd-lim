@@ -148,7 +148,7 @@ function fakeProbeFactory(
 
 async function main(): Promise<void> {
   // Equivalence semantics are frozen independently of any live AF outcome.
-  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v3-11-task-selection-freeze");
+  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v4-11-task-repeat21-freeze");
   assert.equal(P6_2_DELTA_M, 1 / 11);
   assert.equal(P6_2_DELTA_R, 1 / 12);
   assert.equal(P6_2_EQUIVALENCE_ALPHA, 0.05);
@@ -158,13 +158,13 @@ async function main(): Promise<void> {
   assert.equal(P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR, 3);
   assert.deepEqual(p62VariancePilotArmOrder(1), ["A", "B"]);
   assert.deepEqual(p62VariancePilotArmOrder(2), ["B", "A"]);
-  assert.equal(resolveP62RepeatCountSource(8), "runtime-argument-pre-freeze");
+  assert.equal(resolveP62RepeatCountSource(21), "frozen-scientific-repeat-count");
   assert.equal(resolveP62RepeatCountSource(11, 11), "frozen-scientific-repeat-count");
   assertThrowsMessage(() => resolveP62RepeatCountSource(10, 11), /does not match frozen scientific repeat count/);
   assert.equal(P6_2_VARIANCE_SD_UCB_CONFIDENCE, 0.95);
   assert.equal(P6_2_MIN_SCIENTIFIC_REPEATS, 8);
   assert.equal(P6_2_MAX_SCIENTIFIC_REPEATS, 30);
-  assert.equal(P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT, null);
+  assert.equal(P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT, 21);
   assert.equal(p62MOutcomeDisposition("semantic"), "score");
   assert.equal(p62MOutcomeDisposition("protocol"), "score");
   assert.equal(p62MOutcomeDisposition("system"), "needs-audit");
@@ -177,7 +177,8 @@ async function main(): Promise<void> {
   assert.equal(requiresP62RSemAudit("protocol"), true);
   assert.equal(requiresP62RSemAudit("system"), true);
   assert.equal(requiresP62RSemAudit("infrastructure"), true);
-  assertThrowsMessage(() => assertP62LiveRepeatCountFrozen(8), /scientific repeat count is not frozen/);
+  assert.doesNotThrow(() => assertP62LiveRepeatCountFrozen(21));
+  assertThrowsMessage(() => assertP62LiveRepeatCountFrozen(20), /does not match frozen repeat count 21/);
 
   // Exact paired-TOST power regression: sigma_U=Delta must not use the old normal approximation.
   const sigmaEqualsDeltaPower9 = exactPairedTostPowerAtZero({ n: 9, sigma: P6_2_DELTA_M, delta: P6_2_DELTA_M, alpha: 0.05 });
@@ -255,7 +256,7 @@ async function main(): Promise<void> {
   assert(sdkVersion && sdkVersion.length > 0);
   const manifest = buildP62ExecutionManifest({
     repoRoot,
-    repeatCount: 1,
+    repeatCount: 21,
     taskBankSha256: hashText(taskBankRaw),
     baselineRepositorySha256: hashRepository(repository),
     probeMaterial,
@@ -280,7 +281,7 @@ async function main(): Promise<void> {
     tasks,
     repositoryPath: repositoryDir,
     repository,
-    repeatCount: 1,
+    repeatCount: 21,
     manifest,
     booleanProbeIds: booleanProbes.map((probe) => probe.probeId),
   });
@@ -296,7 +297,7 @@ async function main(): Promise<void> {
   assert.equal(result.executionManifest.deltaM, 1 / 11);
   assert.equal(result.executionManifest.deltaR, 1 / 12);
   assert.equal(result.executionManifest.equivalenceCiLevel, 0.90);
-  assert.equal(result.executionManifest.frozenScientificRepeatCount, null);
+  assert.equal(result.executionManifest.frozenScientificRepeatCount, 21);
   assert.notStrictEqual(result.measurements.M, result.measurements.Rsem);
   assert.equal(result.measurements.Rsem.protocolReliability, null);
 
@@ -374,7 +375,7 @@ async function main(): Promise<void> {
 
   // needs-audit has a provenance-preserving adjudication exit.
   const adjudicationFixture: any = createP62Result({
-    taskBankPath, taskBankRaw, tasks, repositoryPath: repositoryDir, repository, repeatCount: 1, manifest, booleanProbeIds: booleanProbes.map((probe) => probe.probeId),
+    taskBankPath, taskBankRaw, tasks, repositoryPath: repositoryDir, repository, repeatCount: 21, manifest, booleanProbeIds: booleanProbes.map((probe) => probe.probeId),
   });
   const adjudicableSystem = { ...systemMock, role: "primary", modifiedPaths: [], workingNote: null, actualModel: "mock", usage: null, estimatedCostUsd: 0, visible: null, hidden: null, taskSpecific: null, protocolContractViolated: null };
   adjudicationFixture.measurements.M.repeatResults.push(adjudicableSystem);
