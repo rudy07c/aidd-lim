@@ -1,0 +1,130 @@
+name: P6 Exact PowerTOST Crosscheck
+
+on:
+  push:
+    branches:
+      - fix/p6-2-variance-hardening
+    paths:
+      - .github/workflows/p6-exact-powertost-crosscheck.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  powertost-crosscheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - name: Install PowerTOST
+        shell: Rscript {0}
+        run: |
+          install.packages("PowerTOST", repos = "https://cloud.r-project.org")
+          cat("R version:", R.version.string, "\n")
+          cat("PowerTOST version:", as.character(packageVersion("PowerTOST")), "\n")
+
+      - name: Cross-check 13 exact-power fixtures
+        shell: Rscript {0}
+        run: |
+          library(PowerTOST)
+
+          fixtures <- data.frame(
+            n = c(8, 9, 10, 11, 14, 15, 8, 12, 13, 20, 30, 8, 30),
+            ratio = c(1.0, 1.0, 1.0, 1.0, 1.2, 1.2, 0.8, 1.05, 1.1, 1.5, 2.0, 1.5, 0.7),
+            expected = c(
+              0.6350479550768998,
+              0.7246881164476543,
+              0.7952072667058989,
+              0.8489996576730163,
+              0.8081012203363216,
+              0.8446748068352706,
+              0.8724593815330828,
+              0.8506785557630506,
+              0.8501920240426855,
+              0.7804925226676869,
+              0.6965086141640441,
+              0.17121212404861366,
+              0.9999999978502166
+            )
+          )
+
+          delta <- 1.0
+          alpha <- 0.05
+
+          calc <- function(n, ratio, expected) {
+            sigma <- ratio * delta
+
+            # Public PowerTOST paired API. For design="paired", PowerTOST uses
+            # sem = CV * sqrt(2/n), so CV=sigma/sqrt(2) maps to paired-difference
+            # standard error sigma/sqrt(n).
+            public_exact <- power.TOST(
+              alpha = alpha,
+              logscale = FALSE,
+              theta1 = -delta,
+              theta2 = delta,
+              theta0 = 0,
+              CV = sigma / sqrt(2),
+              n = n,
+              design = "paired",
+              method = "exact"
+            )
+
+            # Independent call into PowerTOST's exact Owen-Q kernel with the
+            # paired-difference standard error supplied directly.
+            kernel_exact <- PowerTOST:::.power.TOST(
+              alpha = alpha,
+              ltheta1 = -delta,
+              ltheta2 = delta,
+              diffm = 0,
+              sem = sigma / sqrt(n),
+              df = n - 1
+            )
+
+            # A second PowerTOST implementation path using mvtnorm's bivariate
+            # noncentral-t integration. Its default numerical tolerance is looser,
+            # so it is diagnostic rather than the machine-precision acceptance gate.
+            public_mvt <- power.TOST(
+              alpha = alpha,
+              logscale = FALSE,
+              theta1 = -delta,
+              theta2 = delta,
+              theta0 = 0,
+              CV = sigma / sqrt(2),
+              n = n,
+              design = "paired",
+              method = "mvt"
+            )
+
+            data.frame(
+              n = n,
+              ratio = ratio,
+              expected = expected,
+              PowerTOST_exact = as.numeric(public_exact),
+              PowerTOST_kernel = as.numeric(kernel_exact),
+              PowerTOST_mvt = as.numeric(public_mvt),
+              exact_abs_diff = abs(as.numeric(public_exact) - expected),
+              kernel_abs_diff = abs(as.numeric(kernel_exact) - expected),
+              public_kernel_abs_diff = abs(as.numeric(public_exact) - as.numeric(kernel_exact)),
+              mvt_abs_diff = abs(as.numeric(public_mvt) - expected)
+            )
+          }
+
+          rows <- Map(calc, fixtures$n, fixtures$ratio, fixtures$expected)
+          out <- do.call(rbind, rows)
+          print(out, digits = 17)
+
+          cat("max exact abs diff:", format(max(out$exact_abs_diff), digits = 17), "\n")
+          cat("max kernel abs diff:", format(max(out$kernel_abs_diff), digits = 17), "\n")
+          cat("max public/kernel abs diff:", format(max(out$public_kernel_abs_diff), digits = 17), "\n")
+          cat("max mvt abs diff:", format(max(out$mvt_abs_diff), digits = 17), "\n")
+
+          stopifnot(max(out$exact_abs_diff) < 1e-10)
+          stopifnot(max(out$kernel_abs_diff) < 1e-10)
+          stopifnot(max(out$public_kernel_abs_diff) < 1e-12)
+          stopifnot(max(out$mvt_abs_diff) < 5e-5)
