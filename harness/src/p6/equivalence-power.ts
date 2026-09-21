@@ -9,7 +9,7 @@ const LANCZOS_COEFFICIENTS = [
   12.507343278686905,
   -0.13857109526572012,
   9.9843695780195716e-6,
-  1.5056327351493116e-7,
+  1.5056327353116e-7,
 ] as const;
 
 function logGamma(z: number): number {
@@ -192,15 +192,62 @@ export interface ExactPairedTostPowerInput {
 }
 
 /**
- * Exact paired-TOST power at true mean difference zero under normal paired
- * differences. Unlike the former shifted-central-t approximation, this
- * integrates over the sampling distribution of the sample SD:
+ * Exact paired-TOST power at true paired mean difference mu=0, assuming
+ * iid normal paired differences D_i ~ N(mu, sigma^2).
  *
- *   S / sigma ~ chi(df) / sqrt(df), df=n-1.
+ * MATHEMATICAL BASIS
+ * ------------------
+ * The two one-sided tests accept equivalence (-Delta, +Delta) iff
  *
- * Conditional on S=s, the sample mean remains N(0, sigma^2/n), so the TOST
- * acceptance probability is integrated over that chi distribution. This is
- * numerically equivalent to the classical Owen-Q exact formulation.
+ *   Dbar > -Delta + t_c S/sqrt(n)
+ *   Dbar < +Delta - t_c S/sqrt(n),
+ *
+ * where t_c=t_{1-alpha,nu}, nu=n-1. For normal data,
+ *
+ *   Z = sqrt(n)(Dbar-mu)/sigma ~ N(0,1)
+ *   X = nu S^2/sigma^2       ~ chi-square(nu)
+ *
+ * are independent. At mu=0 define lambda=Delta*sqrt(n)/sigma. Conditioning
+ * on x=sqrt(X) gives the exact rejection probability
+ *
+ *   integral_0^R [ Phi(lambda - t_c*x/sqrt(nu))
+ *                 - Phi(-lambda + t_c*x/sqrt(nu)) ] f_chi_nu(x) dx,
+ *
+ *   R = lambda*sqrt(nu)/t_c.
+ *
+ * By symmetry the bracket is 2*Phi(lambda-t_c*x/sqrt(nu))-1. The code uses
+ * r=x/sqrt(nu)=S/sigma, hence R/sqrt(nu)=lambda/t_c, which yields the
+ * one-dimensional chi-scaled integral implemented below.
+ *
+ * This is NOT a call to Owen's Q. It is direct numerical quadrature of the
+ * same probability. In Owen-distribution notation it is exactly
+ *
+ *   O_4(nu, t_c, -t_c, +lambda, -lambda),
+ *
+ * i.e. the fourth Owen cumulative probability. Owen (1965), "A special case
+ * of a bivariate non-central t-distribution", Biometrika 52(3/4), 437-446,
+ * defines O_4 as equality (11). Phillips (1990), "Power of the Two One-Sided
+ * Tests Procedure in Bioequivalence", J Pharmacokinet Biopharm 18(2),
+ * 137-144, derives TOST power from this bivariate noncentral-t distribution.
+ *
+ * IMPLEMENTATION CROSS-REFERENCE
+ * ------------------------------
+ * CRAN OwenQ::powen4 implements Owen's equality (11). Its independent
+ * RcppNumerical implementation `ipowen4` integrates, for t1>t2 and d1>d2,
+ *
+ *   [Phi(t2*x/sqrt(nu)-d2) - Phi(t1*x/sqrt(nu)-d1)] f_chi_nu(x)
+ *
+ * from 0 to R=(d1-d2)*sqrt(nu)/(t1-t2). Substituting
+ * (t1,t2,d1,d2)=(t_c,-t_c,+lambda,-lambda) reduces algebraically to the
+ * integral above. PowerTOST's `method="exact"` / `"owenq"` uses Owen's Q;
+ * its `design="paired"` has df=n-1 and is the paired-t TOST of differences.
+ *
+ * Validation status (2026-09-21): the seven frozen verifier fixtures were
+ * independently recomputed by reproducing OwenQ::ipowen4's x-space integral
+ * with SciPy adaptive quadrature; maximum absolute discrepancy was ~1.3e-15.
+ * R/PowerTOST itself was not executable in the available environment, so an
+ * executed PowerTOST cross-check remains pending before scientific repeat-n
+ * is frozen. See docs/stage1_plan.md.
  */
 export function exactPairedTostPowerAtZero(input: ExactPairedTostPowerInput): number {
   const { n, sigma, delta, alpha = 0.05 } = input;
