@@ -559,7 +559,7 @@ async function main(): Promise<void> {
   assert.deepEqual(afterMockOutcomes.diagnostic.map((task) => task.taskId), [...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS]);
 
   console.log("P6-2 AF baseline offline verification passed.");
-  console.log(`  equivalence: Delta_M=Delta_R=${P6_2_DELTA_M.toFixed(6)}, 90% CI / alpha=0.05, target power=0.80`);
+  console.log(`  equivalence: Delta_M=${P6_2_DELTA_M.toFixed(6)}, Delta_R=${P6_2_DELTA_R.toFixed(6)}, 90% CI / alpha=0.05, target power=0.80`);
   console.log(`  exact power: sigma_U=Delta gives n=9 power=${sigmaEqualsDeltaPower9.toFixed(6)}, minimum n for power>=0.80 is ${exactSearch.requiredN}`);
   console.log(`  variance pilot: paired AF-vs-AF repeats=${P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS}, max attempts/pair=${P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR}, AB/BA counterbalanced, scientific repeat count still unfrozen/live-blocked`);
   console.log(`  task bank: primary=${selection.primary.length}, diagnostic=${selection.diagnostic.length}, floor-excluded=${P6_2_SEMANTIC_FLOOR_TASK_IDS.length}`);
