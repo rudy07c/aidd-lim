@@ -17,6 +17,14 @@ import {
 import { applyVariancePilotAdjudication } from "./adjudicate-p6-af-variance-pilot";
 import type { HeldOutTask, MRepeatExecution, RSemProbeRepeatResult } from "./p6-af-baseline-live";
 
+// Independent exact-power reference provenance (2026-09-21):
+// These fixtures were recomputed independently from the production TS integrator
+// by transcribing CRAN OwenQ::ipowen4's published x-space integrand
+// (Owen O_4 / Owen 1965 equality 11) into Python/SciPy adaptive quadrature.
+// The original seven fixtures matched the independent values to <=1.3e-15.
+// This is a source-equivalent independent numerical check, NOT evidence that
+// R/PowerTOST itself was executed; that external-software cross-check remains
+// a precondition for freezing the scientific repeat count.
 const REFERENCE_POWER = [
   { n: 8, ratio: 1.0, expected: 0.6350479550768998 },
   { n: 9, ratio: 1.0, expected: 0.7246881164476543 },
@@ -25,6 +33,12 @@ const REFERENCE_POWER = [
   { n: 14, ratio: 1.2, expected: 0.8081012203363216 },
   { n: 15, ratio: 1.2, expected: 0.8446748068352706 },
   { n: 8, ratio: 0.8, expected: 0.8724593815330828 },
+  { n: 12, ratio: 1.05, expected: 0.8506785557630506 },
+  { n: 13, ratio: 1.1, expected: 0.8501920240426855 },
+  { n: 20, ratio: 1.5, expected: 0.7804925226676869 },
+  { n: 30, ratio: 2.0, expected: 0.6965086141640441 },
+  { n: 8, ratio: 1.5, expected: 0.17121212404861366 },
+  { n: 30, ratio: 0.7, expected: 0.9999999978502166 },
 ] as const;
 
 function manifest(): PilotManifest { return {
