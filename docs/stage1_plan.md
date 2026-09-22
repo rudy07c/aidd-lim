@@ -1740,6 +1740,8 @@ P6-2 baseline manifestの少なくとも `mutationPromptVersion=stage1-worker-v3
 
 Rsemについても、primary 12-probe bank、forced boolean answer semantics、parse / failure-domain semanticsをP6-2から維持する。ELで必要なcontext wrapper差以外にanswer protocolを変更しない。
 
+AFをP6-3 dose-responseの上限anchorとして用いるため、**ELのfull static exposure時にworkerへ見えるartifact payloadがAFのartifact payloadと表現上同等であること**をstructural parity gateにする。file ordering / path framing / line metadata / raw content / separator等、意味以外のserialization差がbudgetと同時に変化しないようにする。exact parityを実装できない場合は、`EL-full` representation-controlを別に設けてAFとの差を先に診断し、parityが未解決のまま`AF`をEL dose-responseの同一continuum endpointとは扱わない。
+
 #### 10.3.2 calibration dataとStage 1A confirmatory dataを分離する
 
 P6-3の目的は`B_expose`の選択であり、その選択に使ったdataを同じbudgetの効果推定へ再利用しない。
@@ -1914,6 +1916,7 @@ P6-3のbudget-selection ruleにはaggregate 12-probe Rsemだけを用い、r11�
 EL runtime実装後であっても、以下がすべてimmutable manifest / offline verifierで確認されるまでP6-3 live calibrationを拒否する。
 
 - mutation prompt / schema / parser / validation semanticsがP6-2 AF baselineと一致
+- EL full static exposureとAFのmodel-visible artifact payload serialization parityがoffline検証済み（parity不能なら`EL-full` controlを別扱い）
 - primary task bank 11 / Rsem 12-probe bankがfreeze済み
 - canonical tokenizer / ArtifactUnit serializer / chunkerがfreeze済み
 - `T_EL`と6-level budget gridがfreeze済み
