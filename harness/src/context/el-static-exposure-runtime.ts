@@ -27,6 +27,10 @@ export interface ELTaskDescriptor {
   groundTruthDelta?: GroundTruthDelta;
 }
 
+export type ELRuntimeConfig = RunConfig & {
+  staticExposureMaxTokensPerUnit?: number;
+};
+
 /**
  * Build the one-shot static repository exposure for an EL mutation task.
  * Evaluator-side privileged data is used only to rank repository files before
@@ -34,7 +38,7 @@ export interface ELTaskDescriptor {
  * and has no repository retrieval path afterwards.
  */
 export function assembleELTaskStaticExposure(args: {
-  config: RunConfig;
+  config: ELRuntimeConfig;
   task: ELTaskDescriptor;
   repositoryFiles: Readonly<Record<string, string>>;
 }): StaticExposurePrefixResult {
