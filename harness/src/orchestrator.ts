@@ -15,10 +15,7 @@ import { MockOracleBackend } from "./agent-backend/mock-oracle";
 import { AnthropicBackend } from "./agent-backend/anthropic";
 import { OpenAIBackend } from "./agent-backend/openai";
 import { assembleContext, estimateTokenCount } from "./context/assembler";
-import {
-  assembleELTaskStaticExposure,
-  ELRuntimeConfig,
-} from "./context/el-static-exposure-runtime";
+import { assembleELTaskStaticExposure } from "./context/el-static-exposure-runtime";
 import type { ELStaticExposureLog } from "./context/static-exposure";
 import {
   ObservableInteractionRecord,
@@ -123,7 +120,7 @@ async function runOneGeneration(
     contextFiles = {};
   } else if (config.condition === "EL") {
     const exposure = assembleELTaskStaticExposure({
-      config: config as ELRuntimeConfig,
+      config,
       task,
       repositoryFiles: currentFiles,
     });
