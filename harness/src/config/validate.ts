@@ -20,6 +20,9 @@ const RETRIEVED_LIMIT_FIELDS = [
   "maxModelCalls",
   "maxDecisionRounds",
 ] as const;
+const EL_MAX_TOKENS_PER_UNIT_FIELD = "staticExposureMaxTokensPerUnit" as const;
+
+type ELRunConfig = RunConfig & { staticExposureMaxTokensPerUnit?: number };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -50,6 +53,7 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
     "requestTimeoutMs",
     "maxRetries",
     "maxToolRounds",
+    EL_MAX_TOKENS_PER_UNIT_FIELD,
     ...RETRIEVED_LIMIT_FIELDS,
   ] as const) {
     const v = value[key];
@@ -82,6 +86,18 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
     for (const key of RETRIEVED_LIMIT_FIELDS) requireOwn(value, key);
     if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget <= 0) {
       throw new Error(`${value.condition} requires a positive integer contextBudget representing B_work`);
+    }
+  }
+
+  if (value.condition === "EL") {
+    requireOwn(value, "contextBudget");
+    requireOwn(value, EL_MAX_TOKENS_PER_UNIT_FIELD);
+    if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget < 0) {
+      throw new Error("EL requires a non-negative integer contextBudget representing B_expose");
+    }
+    const maxTokensPerUnit = value[EL_MAX_TOKENS_PER_UNIT_FIELD];
+    if (typeof maxTokensPerUnit !== "number" || !Number.isInteger(maxTokensPerUnit) || maxTokensPerUnit <= 0) {
+      throw new Error("EL requires staticExposureMaxTokensPerUnit to be a positive integer");
     }
   }
 
@@ -121,6 +137,20 @@ export function validateResolvedRunConfig(config: RunConfig): void {
   }
   if ((config.condition === "AF" || config.condition === "MOI") && config.contextBudget !== "full") {
     throw new Error(`${config.condition} requires contextBudget="full"; numeric context budgets would misrepresent Operational-Full semantics`);
+  }
+
+  if (config.condition === "EL") {
+    const elConfig = config as ELRunConfig;
+    if (typeof config.contextBudget !== "number" || !Number.isInteger(config.contextBudget) || config.contextBudget < 0) {
+      throw new Error("EL requires a non-negative integer B_expose contextBudget");
+    }
+    if (
+      elConfig.staticExposureMaxTokensPerUnit === undefined ||
+      !Number.isInteger(elConfig.staticExposureMaxTokensPerUnit) ||
+      elConfig.staticExposureMaxTokensPerUnit <= 0
+    ) {
+      throw new Error("EL requires staticExposureMaxTokensPerUnit to be a positive integer");
+    }
   }
 
   if (config.condition === "PR" || config.condition === "AR") {
