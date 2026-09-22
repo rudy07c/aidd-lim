@@ -39,6 +39,21 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
     task_id: log.task_id,
     context_budget: log.context_budget,
     actual_context_tokens: log.actual_context_tokens,
+    static_exposure: log.static_exposure_log
+      ? {
+          schema_version: log.static_exposure_log.schemaVersion,
+          selector_policy_version: log.static_exposure_log.selectorPolicyVersion,
+          ranking_policy_version: log.static_exposure_log.rankingPolicyVersion,
+          serializer_version: log.static_exposure_log.staticRepositorySerializerVersion,
+          canonical_token_count_method: log.static_exposure_log.canonicalTokenCountMethod,
+          nominal_budget_tokens: log.static_exposure_log.nominalBudgetTokens,
+          actual_payload_tokens: log.static_exposure_log.actualPayloadTokens,
+          full_payload_tokens: log.static_exposure_log.fullPayloadTokens,
+          max_tokens_per_unit: log.static_exposure_log.maxTokensPerUnit,
+          ordered_plan_sha256: log.static_exposure_log.orderedPlanSha256,
+          exposure_sha256: log.static_exposure_log.exposureSha256,
+        }
+      : null,
     observable_interaction: {
       schema_version: log.observable_interaction_record.schemaVersion,
       content_hash: log.observable_interaction_record.contentHash,
@@ -77,6 +92,9 @@ export function writeGenerationLog(log: GenerationLog, runsDir: string): string 
   writeJson(generationDir, "meta.json", meta);
 
   writeJson(generationDir, "context_contents.json", log.context_contents);
+  if (log.static_exposure_log) {
+    writeJson(generationDir, "static_exposure.json", log.static_exposure_log);
+  }
   writeJson(generationDir, "agent_prompt.json", { prompt: log.agent_prompt });
   writeJson(generationDir, "agent_response.json", {
     response: log.agent_response,

@@ -29,20 +29,16 @@ export function assembleContext(
     case "MOI":
       return assembleFull(repositoryFiles);
     case "EL":
-      throw stage1RuntimeNotImplemented("EL", "static exposure selector / B_expose runtime");
+      throw new Error(
+        "Context condition EL requires the task-aware static exposure dispatcher; " +
+          "generic assembleContext() has no task/ground-truth inputs. Refusing legacy fallback."
+      );
     case "PR":
     case "AR":
       // Deliberately no static repository exposure. The dynamic WorkingSetManager /
       // RepositoryAccessor path is the only model-visible artifact source for PR/AR.
       return {};
   }
-}
-
-function stage1RuntimeNotImplemented(condition: string, dependency: string): Error {
-  return new Error(
-    `Context condition ${condition} is defined but its execution semantics are not implemented yet (${dependency}). ` +
-    `Refusing to fall back to a legacy context mode.`
-  );
 }
 
 function assembleFull(repositoryFiles: Record<string, string>): Record<string, string> {

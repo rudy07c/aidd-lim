@@ -50,6 +50,7 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
     "requestTimeoutMs",
     "maxRetries",
     "maxToolRounds",
+    "staticExposureMaxTokensPerUnit",
     ...RETRIEVED_LIMIT_FIELDS,
   ] as const) {
     const v = value[key];
@@ -82,6 +83,19 @@ export function validateRawRunConfig(value: unknown): asserts value is Partial<R
     for (const key of RETRIEVED_LIMIT_FIELDS) requireOwn(value, key);
     if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget <= 0) {
       throw new Error(`${value.condition} requires a positive integer contextBudget representing B_work`);
+    }
+  }
+
+  if (value.condition === "EL") {
+    requireOwn(value, "contextBudget");
+    requireOwn(value, "staticExposureMaxTokensPerUnit");
+    if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget < 0) {
+      throw new Error("EL requires a non-negative integer contextBudget representing B_expose");
+    }
+    if (typeof value.staticExposureMaxTokensPerUnit !== "number" ||
+        !Number.isInteger(value.staticExposureMaxTokensPerUnit) ||
+        value.staticExposureMaxTokensPerUnit <= 0) {
+      throw new Error("EL requires a positive integer staticExposureMaxTokensPerUnit");
     }
   }
 
@@ -121,6 +135,17 @@ export function validateResolvedRunConfig(config: RunConfig): void {
   }
   if ((config.condition === "AF" || config.condition === "MOI") && config.contextBudget !== "full") {
     throw new Error(`${config.condition} requires contextBudget="full"; numeric context budgets would misrepresent Operational-Full semantics`);
+  }
+
+  if (config.condition === "EL") {
+    if (typeof config.contextBudget !== "number" || !Number.isInteger(config.contextBudget) || config.contextBudget < 0) {
+      throw new Error("EL requires a non-negative integer B_expose contextBudget");
+    }
+    if (config.staticExposureMaxTokensPerUnit === undefined ||
+        !Number.isInteger(config.staticExposureMaxTokensPerUnit) ||
+        config.staticExposureMaxTokensPerUnit <= 0) {
+      throw new Error("EL requires staticExposureMaxTokensPerUnit to be a positive integer");
+    }
   }
 
   if (config.condition === "PR" || config.condition === "AR") {

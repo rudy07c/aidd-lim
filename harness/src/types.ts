@@ -6,6 +6,7 @@ import type {
   OperationalFullFeasibility,
 } from "./context/observable-interaction";
 import type { RetrievedGenerationLog } from "./context/retrieved-generation-log";
+import type { ElStaticExposureLog } from "./context/el-static-exposure";
 
 /**
  * Config / log上で永続化するcondition identifier。
@@ -211,8 +212,10 @@ export interface RunConfig {
   runClass: RunClass;
   backend: BackendType;
   condition: ContextConditionName;
-  /** AF/MOI/legacy context budget or PR/AR B_work. */
+  /** AF/MOI/legacy context budget, EL B_expose, or PR/AR B_work. */
   contextBudget: number | "full";
+  /** EL ArtifactUnit selector granularity; freeze before any EL live execution. */
+  staticExposureMaxTokensPerUnit?: number;
   generations: number;
   tasks: string[];
   model?: string;
@@ -287,6 +290,8 @@ export interface GenerationLog {
   git_diff: string;
   context_budget: number | "full";
   actual_context_tokens: number;
+  /** Present for task-aware EL static exposure; absent/null for other conditions and historical logs. */
+  static_exposure_log?: ElStaticExposureLog | null;
   context_contents: Record<string, string>;
   agent_prompt: string;
   agent_response: string;

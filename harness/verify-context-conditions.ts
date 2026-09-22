@@ -99,12 +99,12 @@ assert.deepStrictEqual(
 const legacyLimited = assembleContext(repository, "simple-limited");
 assert.ok(Object.values(legacyLimited).join("").length <= 6_000);
 
-// EL is still intentionally unimplemented. PR/AR are dynamic retrieval conditions:
-// the static assembler must expose zero repository evidence so the common retrieved
-// episode runtime remains the only path to model-visible artifact evidence.
+// EL is executable only through the task-aware static exposure dispatcher.
+// The generic assembler lacks task/ground-truth inputs and must fail closed instead of
+// silently falling back to the legacy simple-limited context. PR/AR remain dynamic.
 assert.throws(
   () => assembleContext(repository, "EL"),
-  /Context condition EL is defined but its execution semantics are not implemented yet/
+  /requires the task-aware static exposure dispatcher/
 );
 assert.deepStrictEqual(assembleContext(repository, "PR"), {});
 assert.deepStrictEqual(assembleContext(repository, "AR"), {});
@@ -113,6 +113,6 @@ console.log(JSON.stringify({
   status: "ok",
   legacy: ["full", "simple-limited"].map((name) => getContextCondition(name as "full" | "simple-limited")),
   stage1: STAGE1_CONTEXT_CONDITION_NAMES.map((name) => getContextCondition(name)),
-  staticExecutable: ["AF", "MOI"],
+  staticExecutable: ["AF", "MOI", "EL-via-task-aware-dispatcher"],
   dynamicRetrievedExecutable: ["PR", "AR"],
 }, null, 2));

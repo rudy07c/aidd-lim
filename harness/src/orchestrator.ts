@@ -21,6 +21,7 @@ import {
   evaluateOperationalFullFeasibility,
 } from "./context/observable-interaction";
 import { runRetrievedCondition } from "./context/retrieved-condition-dispatcher";
+import { buildElStaticExposureForTask } from "./context/el-static-exposure-dispatcher";
 import type { RetrievedGenerationLog } from "./context/retrieved-generation-log";
 import { runScoring } from "./scoring";
 import { writeGenerationLog, generateDiff } from "./logging";
@@ -112,7 +113,14 @@ async function runOneGeneration(
 }> {
   const repositoryBefore = { ...currentFiles };
   const retrievedCondition = config.condition === "PR" || config.condition === "AR";
-  const contextFiles = retrievedCondition ? {} : assembleContext(currentFiles, config.condition);
+  const staticExposure = config.condition === "EL"
+    ? buildElStaticExposureForTask({ config, task, repositoryFiles: currentFiles })
+    : null;
+  const contextFiles = retrievedCondition
+    ? {}
+    : staticExposure
+      ? staticExposure.contextFiles
+      : assembleContext(currentFiles, config.condition);
   const inheritedInteractionRecord = selectInheritedInteractionRecord(
     config.condition,
     previousInteractionRecord
@@ -154,7 +162,7 @@ async function runOneGeneration(
       retrieved.retrievedLog
     );
   } else {
-    actualContextTokens = estimateTokenCount(contextFiles);
+    actualContextTokens = staticExposure?.log.actualPayloadTokens ?? estimateTokenCount(contextFiles);
     agentPromptSummary = buildAgentPromptSummary(
       contextFiles,
       task.visibleInstruction,
@@ -232,6 +240,7 @@ async function runOneGeneration(
     git_diff: gitDiff,
     context_budget: config.contextBudget,
     actual_context_tokens: actualContextTokens,
+    static_exposure_log: staticExposure?.log ?? null,
     context_contents: contextFiles,
     agent_prompt: agentPromptSummary,
     agent_response: agentResult.rawResponse,
