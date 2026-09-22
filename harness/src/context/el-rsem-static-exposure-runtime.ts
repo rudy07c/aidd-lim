@@ -109,6 +109,8 @@ export function assembleELRSemBankStaticExposure(args: {
     selectorKind: "rsem-bank-prompt-union-ranking",
     selectorId: `${EL_RSEM_BANK_SELECTOR_VERSION}:${namingSchemeId}`,
     rankingPolicyVersion: PRIVILEGED_RETRIEVAL_POLICY_VERSION,
+    selectorSurfaceEntities: ranking.surfaceEntities,
+    selectorSemanticEntities: ranking.semanticEntities,
   });
 }
 
