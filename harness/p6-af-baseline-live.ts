@@ -1078,7 +1078,7 @@ export function reconcileProbeJournal(
 
 function parseRepeatCount(argv: string[]): number {
   const token = argv.find((arg) => arg.startsWith("--repeats="));
-  if (!token) throw new Error("P6-2 requires explicit --repeats=N; no scientific repeat count is frozen yet");
+  if (!token) throw new Error("P6-2 requires explicit --repeats=N; the supplied value must match the frozen scientific repeat count");
   return validateP62RepeatCount(Number(token.slice("--repeats=".length)));
 }
 
@@ -1175,7 +1175,7 @@ async function main(): Promise<void> {
   console.log("P6-2 REPEATS", repeatCount);
 
   if (!live) {
-    console.log("STOP: dry/offline mode. Delta_M/Delta_R are frozen; live remains blocked until the variance pilot freezes scientific repeat count.");
+    console.log("STOP: dry/offline mode. Delta_M/Delta_R and the scientific repeat count are frozen; no live execution was requested.");
     return;
   }
   assertP62LiveRepeatCountFrozen(repeatCount);
