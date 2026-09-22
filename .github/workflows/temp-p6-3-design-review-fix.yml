@@ -1,0 +1,31 @@
+name: Temp P6-3 design review fix
+
+on:
+  push:
+    branches:
+      - docs/p6-2-findings-p6-3-prefreeze
+    paths:
+      - .github/workflows/temp-p6-3-design-review-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/p6-2-findings-p6-3-prefreeze
+          fetch-depth: 0
+      - name: Apply P6-3 design review fixes
+        run: python .github/scripts/_tmp_patch_p6_3_design_review.py
+      - name: Commit reviewed predeclaration and remove temporary helpers
+        run: |
+          rm .github/scripts/_tmp_patch_p6_3_design_review.py
+          rm .github/workflows/temp-p6-3-design-review-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/stage1_plan.md .github/scripts/_tmp_patch_p6_3_design_review.py .github/workflows/temp-p6-3-design-review-fix.yml
+          git commit -m "docs: harden P6-3 calibration predeclaration after review"
+          git push origin HEAD:docs/p6-2-findings-p6-3-prefreeze
