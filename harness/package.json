@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "verify:context-conditions": "ts-node verify-context-conditions.ts",
     "verify:el-static-exposure": "ts-node verify-el-static-exposure.ts",
+    "p6:el-structural-preflight": "ts-node p6-el-structural-preflight.ts",
     "verify:observable-interaction": "ts-node verify-observable-interaction.ts",
     "verify:working-set": "ts-node verify-working-set-manager.ts",
     "verify:working-set-reread": "ts-node verify-working-set-reread.ts",
