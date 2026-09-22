@@ -31,7 +31,11 @@ export function buildElStaticExposureForTask(args: {
     throw new Error("EL requires numeric B_expose in contextBudget");
   }
   const maxTokensPerUnit = config.staticExposureMaxTokensPerUnit;
-  if (!Number.isInteger(maxTokensPerUnit) || (maxTokensPerUnit ?? 0) <= 0) {
+  if (
+    typeof maxTokensPerUnit !== "number" ||
+    !Number.isInteger(maxTokensPerUnit) ||
+    maxTokensPerUnit <= 0
+  ) {
     throw new Error(
       "EL requires positive integer staticExposureMaxTokensPerUnit frozen before live execution"
     );
@@ -44,7 +48,7 @@ export function buildElStaticExposureForTask(args: {
     delta: privileged.delta,
     namingScheme: privileged.namingScheme,
     budgetTokens: config.contextBudget,
-    maxTokensPerUnit: maxTokensPerUnit!,
+    maxTokensPerUnit,
   });
 }
 
