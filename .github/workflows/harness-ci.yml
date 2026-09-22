@@ -61,6 +61,9 @@ jobs:
       - name: Verify Stage 1 context condition metadata
         working-directory: harness
         run: npm run verify:context-conditions
+      - name: Verify P6-3 EL static exposure runtime
+        working-directory: harness
+        run: npm run verify:el-static-exposure
       - name: Verify P2 observable interaction runtime
         working-directory: harness
         run: npm run verify:observable-interaction
