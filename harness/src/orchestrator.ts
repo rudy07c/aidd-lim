@@ -16,6 +16,11 @@ import { AnthropicBackend } from "./agent-backend/anthropic";
 import { OpenAIBackend } from "./agent-backend/openai";
 import { assembleContext, estimateTokenCount } from "./context/assembler";
 import {
+  assembleELTaskStaticExposure,
+  ELRuntimeConfig,
+} from "./context/el-static-exposure-runtime";
+import type { ELStaticExposureLog } from "./context/static-exposure";
+import {
   ObservableInteractionRecord,
   buildObservableInteractionRecord,
   evaluateOperationalFullFeasibility,
@@ -112,7 +117,21 @@ async function runOneGeneration(
 }> {
   const repositoryBefore = { ...currentFiles };
   const retrievedCondition = config.condition === "PR" || config.condition === "AR";
-  const contextFiles = retrievedCondition ? {} : assembleContext(currentFiles, config.condition);
+  let elStaticExposureLog: ELStaticExposureLog | null = null;
+  let contextFiles: Record<string, string>;
+  if (retrievedCondition) {
+    contextFiles = {};
+  } else if (config.condition === "EL") {
+    const exposure = assembleELTaskStaticExposure({
+      config: config as ELRuntimeConfig,
+      task,
+      repositoryFiles: currentFiles,
+    });
+    contextFiles = exposure.contextFiles;
+    elStaticExposureLog = exposure.log;
+  } else {
+    contextFiles = assembleContext(currentFiles, config.condition);
+  }
   const inheritedInteractionRecord = selectInheritedInteractionRecord(
     config.condition,
     previousInteractionRecord
@@ -154,7 +173,8 @@ async function runOneGeneration(
       retrieved.retrievedLog
     );
   } else {
-    actualContextTokens = estimateTokenCount(contextFiles);
+    actualContextTokens =
+      elStaticExposureLog?.actualExposedTokens ?? estimateTokenCount(contextFiles);
     agentPromptSummary = buildAgentPromptSummary(
       contextFiles,
       task.visibleInstruction,
@@ -257,6 +277,13 @@ async function runOneGeneration(
   };
 
   const logDir = writeGenerationLog(log, config.runsDir);
+  if (elStaticExposureLog) {
+    fs.writeFileSync(
+      path.join(logDir, "el_static_exposure.json"),
+      JSON.stringify(elStaticExposureLog, null, 2),
+      "utf8"
+    );
+  }
   return { logDir, repositoryAfter, interactionRecord };
 }
 
