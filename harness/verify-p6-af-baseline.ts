@@ -148,8 +148,8 @@ function fakeProbeFactory(
 
 async function main(): Promise<void> {
   // Equivalence semantics are frozen independently of any live AF outcome.
-  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v1");
-  assert.equal(P6_2_DELTA_M, 1 / 12);
+  assert.equal(P6_2_EQUIVALENCE_DESIGN_VERSION, "p6-2-equivalence-v4-11-task-repeat21-freeze");
+  assert.equal(P6_2_DELTA_M, 1 / 11);
   assert.equal(P6_2_DELTA_R, 1 / 12);
   assert.equal(P6_2_EQUIVALENCE_ALPHA, 0.05);
   assert.equal(P6_2_EQUIVALENCE_CI_LEVEL, 0.90);
@@ -158,13 +158,13 @@ async function main(): Promise<void> {
   assert.equal(P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR, 3);
   assert.deepEqual(p62VariancePilotArmOrder(1), ["A", "B"]);
   assert.deepEqual(p62VariancePilotArmOrder(2), ["B", "A"]);
-  assert.equal(resolveP62RepeatCountSource(8), "runtime-argument-pre-freeze");
+  assert.equal(resolveP62RepeatCountSource(21), "frozen-scientific-repeat-count");
   assert.equal(resolveP62RepeatCountSource(11, 11), "frozen-scientific-repeat-count");
   assertThrowsMessage(() => resolveP62RepeatCountSource(10, 11), /does not match frozen scientific repeat count/);
   assert.equal(P6_2_VARIANCE_SD_UCB_CONFIDENCE, 0.95);
   assert.equal(P6_2_MIN_SCIENTIFIC_REPEATS, 8);
   assert.equal(P6_2_MAX_SCIENTIFIC_REPEATS, 30);
-  assert.equal(P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT, null);
+  assert.equal(P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT, 21);
   assert.equal(p62MOutcomeDisposition("semantic"), "score");
   assert.equal(p62MOutcomeDisposition("protocol"), "score");
   assert.equal(p62MOutcomeDisposition("system"), "needs-audit");
@@ -177,7 +177,8 @@ async function main(): Promise<void> {
   assert.equal(requiresP62RSemAudit("protocol"), true);
   assert.equal(requiresP62RSemAudit("system"), true);
   assert.equal(requiresP62RSemAudit("infrastructure"), true);
-  assertThrowsMessage(() => assertP62LiveRepeatCountFrozen(8), /scientific repeat count is not frozen/);
+  assert.doesNotThrow(() => assertP62LiveRepeatCountFrozen(21));
+  assertThrowsMessage(() => assertP62LiveRepeatCountFrozen(20), /does not match frozen repeat count 21/);
 
   // Exact paired-TOST power regression: sigma_U=Delta must not use the old normal approximation.
   const sigmaEqualsDeltaPower9 = exactPairedTostPowerAtZero({ n: 9, sigma: P6_2_DELTA_M, delta: P6_2_DELTA_M, alpha: 0.05 });
@@ -198,21 +199,23 @@ async function main(): Promise<void> {
   const repository: Record<string, string> = {};
   loadRepository(repositoryDir, repositoryDir, repository);
 
-  // Frozen P6-1b classifications are reused as-is: 12 primary + 2 eligible diagnostic; floor 6 excluded.
+  // P6-2 task-selection freeze: 11 primary + 2 eligible diagnostic; 6 historical semantic-floor + 1 post-pilot low-headroom excluded.
   assert.equal(P6_2_TASK_BANK_VERSION, "p6-1-full-task-bank-v3-postflight-coverage");
   const selection = selectP62TaskBank(tasks);
   assert.deepEqual(selection.primary.map((task) => task.taskId), [...P6_2_PRIMARY_TASK_IDS]);
   assert.deepEqual(selection.diagnostic.map((task) => task.taskId), [...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS]);
   assert.deepEqual(selection.excludedSemanticFloorTaskIds, [...P6_2_SEMANTIC_FLOOR_TASK_IDS]);
-  assert.equal(selection.primary.length, 12);
+  assert.deepEqual(selection.excludedPostPilotLowHeadroomTaskIds, ["T-crosscut-5"]);
+  assert.equal(P6_2_SEMANTIC_FLOOR_TASK_IDS.length, 6);
+  assert.equal(selection.primary.length, 11);
   assert.equal(selection.diagnostic.length, 2);
-  assert.equal(selection.measured.length, 14);
+  assert.equal(selection.measured.length, 13);
   for (const floorId of P6_2_SEMANTIC_FLOOR_TASK_IDS) {
     assert(!selection.measured.some((task) => task.taskId === floorId), `${floorId} leaked into P6-2 measured tasks`);
   }
   const oneRepeatPlan = planP62MRepeats(selection, 1);
-  assert.equal(oneRepeatPlan.length, 14);
-  assert.equal(oneRepeatPlan.filter((item) => item.role === "primary").length, 12);
+  assert.equal(oneRepeatPlan.length, 13);
+  assert.equal(oneRepeatPlan.filter((item) => item.role === "primary").length, 11);
   assert.equal(oneRepeatPlan.filter((item) => item.role === "diagnostic").length, 2);
   assert.deepEqual(planP62ProbeRepeats(1), [1]);
 
@@ -253,7 +256,7 @@ async function main(): Promise<void> {
   assert(sdkVersion && sdkVersion.length > 0);
   const manifest = buildP62ExecutionManifest({
     repoRoot,
-    repeatCount: 1,
+    repeatCount: 21,
     taskBankSha256: hashText(taskBankRaw),
     baselineRepositorySha256: hashRepository(repository),
     probeMaterial,
@@ -278,7 +281,7 @@ async function main(): Promise<void> {
     tasks,
     repositoryPath: repositoryDir,
     repository,
-    repeatCount: 1,
+    repeatCount: 21,
     manifest,
     booleanProbeIds: booleanProbes.map((probe) => probe.probeId),
   });
@@ -288,10 +291,13 @@ async function main(): Promise<void> {
   assert.equal(result.measurements.Rsem.designVersion, "stage1-neutral-relation-v2");
   assert.equal(result.measurements.Rsem.booleanProbeIds.length, 12);
   assert.equal(result.executionManifest.equivalenceDesignVersion, P6_2_EQUIVALENCE_DESIGN_VERSION);
-  assert.equal(result.executionManifest.deltaM, 1 / 12);
+  assert.equal(result.executionManifest.taskSelectionVersion, "p6-2-task-selection-v2-postpilot-low-headroom-frozen");
+  assert.deepEqual(result.executionManifest.primaryTaskIds, [...P6_2_PRIMARY_TASK_IDS]);
+  assert.deepEqual(result.executionManifest.postPilotLowHeadroomTaskIds, ["T-crosscut-5"]);
+  assert.equal(result.executionManifest.deltaM, 1 / 11);
   assert.equal(result.executionManifest.deltaR, 1 / 12);
   assert.equal(result.executionManifest.equivalenceCiLevel, 0.90);
-  assert.equal(result.executionManifest.frozenScientificRepeatCount, null);
+  assert.equal(result.executionManifest.frozenScientificRepeatCount, 21);
   assert.notStrictEqual(result.measurements.M, result.measurements.Rsem);
   assert.equal(result.measurements.Rsem.protocolReliability, null);
 
@@ -369,7 +375,7 @@ async function main(): Promise<void> {
 
   // needs-audit has a provenance-preserving adjudication exit.
   const adjudicationFixture: any = createP62Result({
-    taskBankPath, taskBankRaw, tasks, repositoryPath: repositoryDir, repository, repeatCount: 1, manifest, booleanProbeIds: booleanProbes.map((probe) => probe.probeId),
+    taskBankPath, taskBankRaw, tasks, repositoryPath: repositoryDir, repository, repeatCount: 21, manifest, booleanProbeIds: booleanProbes.map((probe) => probe.probeId),
   });
   const adjudicableSystem = { ...systemMock, role: "primary", modifiedPaths: [], workingNote: null, actualModel: "mock", usage: null, estimatedCostUsd: 0, visible: null, hidden: null, taskSpecific: null, protocolContractViolated: null };
   adjudicationFixture.measurements.M.repeatResults.push(adjudicableSystem);
@@ -559,7 +565,7 @@ async function main(): Promise<void> {
   assert.deepEqual(afterMockOutcomes.diagnostic.map((task) => task.taskId), [...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS]);
 
   console.log("P6-2 AF baseline offline verification passed.");
-  console.log(`  equivalence: Delta_M=Delta_R=${P6_2_DELTA_M.toFixed(6)}, 90% CI / alpha=0.05, target power=0.80`);
+  console.log(`  equivalence: Delta_M=${P6_2_DELTA_M.toFixed(6)}, Delta_R=${P6_2_DELTA_R.toFixed(6)}, 90% CI / alpha=0.05, target power=0.80`);
   console.log(`  exact power: sigma_U=Delta gives n=9 power=${sigmaEqualsDeltaPower9.toFixed(6)}, minimum n for power>=0.80 is ${exactSearch.requiredN}`);
   console.log(`  variance pilot: paired AF-vs-AF repeats=${P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS}, max attempts/pair=${P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR}, AB/BA counterbalanced, scientific repeat count still unfrozen/live-blocked`);
   console.log(`  task bank: primary=${selection.primary.length}, diagnostic=${selection.diagnostic.length}, floor-excluded=${P6_2_SEMANTIC_FLOOR_TASK_IDS.length}`);

@@ -13,11 +13,11 @@ import {
 } from "./af-baseline";
 import { findMinimumExactPairedTostN } from "./equivalence-power";
 
-export const P6_2_VARIANCE_PILOT_VERSION = "p6-2-af-variance-pilot-v2-exact-floor-audit";
-export const P6_2_VARIANCE_SIGMA_FLOOR_VERSION = "p6-2-sigma-floor-v1";
-// Pre-live research decision: the floor is the smallest meaningful unit on
-// the frozen 12-unit outcome scale. It is deliberately non-zero so an 8-pair
-// all-zero pilot cannot imply a degenerate population variance.
+export const P6_2_VARIANCE_PILOT_VERSION = "p6-2-af-variance-pilot-v4-fresh-after-task-selection-freeze";
+export const P6_2_VARIANCE_SIGMA_FLOOR_VERSION = "p6-2-sigma-floor-v2-primary-bank-unit";
+// The floor rule is unchanged: it is the smallest meaningful unit on each
+// current outcome scale. For M, the 2026-09-21 bank amendment changes only
+// the unit denominator (12 -> 11); it does not tune the floor rule to variance.
 export const P6_2_VARIANCE_SIGMA_FLOOR_M = P6_2_DELTA_M;
 export const P6_2_VARIANCE_SIGMA_FLOOR_R = P6_2_DELTA_R;
 

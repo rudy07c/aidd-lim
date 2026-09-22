@@ -7,8 +7,13 @@ import {
 } from "./failure-classification";
 import { P6_1_EXPECTED_TASK_BANK_SIZE, P6_1_TASK_BANK_VERSION } from "./task-bank-eligibility";
 
-export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v4-exact-power-adjudication";
+export const P6_2_AF_BASELINE_VERSION = "p6-2-af-baseline-v7-repeat21-freeze";
 export const P6_2_TASK_BANK_VERSION = P6_1_TASK_BANK_VERSION;
+// Source task-bank version remains the historical P6-1b 20-task bank.
+// Selection membership is versioned separately so provenance does not imply
+// that the P6-1b classification itself was rewritten.
+export const P6_2_TASK_SELECTION_VERSION = "p6-2-task-selection-v2-postpilot-low-headroom-frozen";
+export const P6_2_TASK_SELECTION_FROZEN_AT = "2026-09-21";
 export const P6_2_FAILURE_CLASSIFICATION_VERSION = P6_1_FAILURE_CLASSIFICATION_VERSION;
 
 export const P6_2_PRIMARY_TASK_IDS = [
@@ -22,7 +27,6 @@ export const P6_2_PRIMARY_TASK_IDS = [
   "T-local-7",
   "T-crosscut-3",
   "T-crosscut-4",
-  "T-crosscut-5",
   "T-delayed-2",
 ] as const;
 
@@ -40,16 +44,28 @@ export const P6_2_SEMANTIC_FLOOR_TASK_IDS = [
   "T-crosscut-6",
 ] as const;
 
+// T-crosscut-5 is deliberately not relabeled as historical semantic-floor.
+// It had 4 semantic successes in the 16-observation AF calibration sample and
+// is excluded only by the explicit post-pilot low-headroom amendment.
+export const P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS = [
+  "T-crosscut-5",
+] as const;
+
+export const P6_2_EXCLUDED_TASK_IDS = [
+  ...P6_2_SEMANTIC_FLOOR_TASK_IDS,
+  ...P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS,
+] as const;
+
 export const P6_2_MEASURED_TASK_IDS = [
   ...P6_2_PRIMARY_TASK_IDS,
   ...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS,
 ] as const;
 
-// P6-2 pre-live equivalence design. These values are frozen before any AF
-// baseline/variance result is observed. One full primary task/probe (1/12) is
-// the smallest difference that is considered substantively meaningful; the
-// equivalence interval is therefore open at +/- 1/12.
-export const P6_2_EQUIVALENCE_DESIGN_VERSION = "p6-2-equivalence-v1";
+// P6-2 equivalence rule: one whole primary-bank unit is the smallest
+// substantively meaningful difference. The rule is unchanged by the 2026-09-21
+// post-pilot task-bank amendment; only |primary tasks| changed from 12 to 11,
+// so Delta_M follows the already-defined 1/|primary tasks| rule automatically.
+export const P6_2_EQUIVALENCE_DESIGN_VERSION = "p6-2-equivalence-v4-11-task-repeat21-freeze";
 export const P6_2_RSEM_PRIMARY_PROBE_COUNT = 12;
 export const P6_2_DELTA_M = 1 / P6_2_PRIMARY_TASK_IDS.length;
 export const P6_2_DELTA_R = 1 / P6_2_RSEM_PRIMARY_PROBE_COUNT;
@@ -61,8 +77,10 @@ export const P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR = 3;
 export const P6_2_VARIANCE_SD_UCB_CONFIDENCE = 0.95;
 export const P6_2_MIN_SCIENTIFIC_REPEATS = 8;
 export const P6_2_MAX_SCIENTIFIC_REPEATS = 30;
-// Remains null until the separate AF-vs-AF variance pilot is completed.
-export const P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT: number | null = null;
+// Frozen from the fresh post-selection 11-task AF-vs-AF variance pilot recorded at
+// docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json.
+// Fresh sizing: M requiredN=21, Rsem requiredN=16, common repeat=21.
+export const P6_2_FROZEN_SCIENTIFIC_REPEAT_COUNT: number | null = 21;
 
 export type P62RepeatCountSource = "runtime-argument-pre-freeze" | "frozen-scientific-repeat-count";
 
@@ -98,6 +116,7 @@ export interface P62TaskSelection<T extends P62TaskIdentity> {
   diagnostic: T[];
   measured: T[];
   excludedSemanticFloorTaskIds: string[];
+  excludedPostPilotLowHeadroomTaskIds: string[];
 }
 
 export interface P62RepeatPlanItem {
@@ -148,6 +167,7 @@ export function selectP62TaskBank<T extends P62TaskIdentity>(tasks: T[]): P62Tas
     ...P6_2_PRIMARY_TASK_IDS,
     ...P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS,
     ...P6_2_SEMANTIC_FLOOR_TASK_IDS,
+    ...P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS,
   ];
   const partitionSet = new Set<string>(expectedPartition);
   if (partitionSet.size !== P6_1_EXPECTED_TASK_BANK_SIZE) {
@@ -165,8 +185,8 @@ export function selectP62TaskBank<T extends P62TaskIdentity>(tasks: T[]): P62Tas
   const diagnostic = P6_2_ELIGIBLE_DIAGNOSTIC_TASK_IDS.map((taskId) => byId.get(taskId)!);
   const measured = [...primary, ...diagnostic];
   const measuredIds = new Set(measured.map((task) => task.taskId));
-  for (const floorTaskId of P6_2_SEMANTIC_FLOOR_TASK_IDS) {
-    if (measuredIds.has(floorTaskId)) throw new Error(`Semantic-floor task leaked into P6-2 measured bank: ${floorTaskId}`);
+  for (const excludedTaskId of P6_2_EXCLUDED_TASK_IDS) {
+    if (measuredIds.has(excludedTaskId)) throw new Error(`Excluded task leaked into P6-2 measured bank: ${excludedTaskId}`);
   }
 
   return {
@@ -174,6 +194,7 @@ export function selectP62TaskBank<T extends P62TaskIdentity>(tasks: T[]): P62Tas
     diagnostic,
     measured,
     excludedSemanticFloorTaskIds: [...P6_2_SEMANTIC_FLOOR_TASK_IDS],
+    excludedPostPilotLowHeadroomTaskIds: [...P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS],
   };
 }
 

@@ -40,7 +40,9 @@ import {
   P6_2_MIN_SCIENTIFIC_REPEATS,
   P6_2_PRIMARY_TASK_IDS,
   P6_2_SEMANTIC_FLOOR_TASK_IDS,
+  P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS,
   P6_2_TASK_BANK_VERSION,
+  P6_2_TASK_SELECTION_VERSION,
   P6_2_VARIANCE_PILOT_PAIRED_AF_REPEATS,
   P6_2_VARIANCE_PILOT_MAX_ATTEMPTS_PER_PAIR,
   P6_2_VARIANCE_SD_UCB_CONFIDENCE,
@@ -69,7 +71,7 @@ import type { TestSuiteResult, TokenUsage } from "./src/types";
 export const P6_2_MODEL = "gpt-5.6-luna";
 export const P6_2_REASONING = "high" as const;
 export const P6_2_CONDITION = "AF" as const;
-export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v4-exact-power-adjudication";
+export const P6_2_RUN_SCHEMA_VERSION = "p6-2-af-baseline-result-v5-task-selection-freeze";
 export const P6_2_ARTIFACT_LAYOUT_VERSION = "p6-2-af-baseline-artifacts-v2";
 export const P6_2_PROBE_SCHEMA_VERSION = "p6-2-af-boolean-answers-v1";
 export const P6_2_PROBE_PROMPT_VERSION = "p6-2-af-probe-prompt-v1";
@@ -180,6 +182,10 @@ export interface P62ExecutionManifest {
   gitSha: string;
   baselineVersion: typeof P6_2_AF_BASELINE_VERSION;
   taskBankVersion: typeof P6_2_TASK_BANK_VERSION;
+  taskSelectionVersion: typeof P6_2_TASK_SELECTION_VERSION;
+  primaryTaskIds: string[];
+  primaryTaskIdsSha256: string;
+  postPilotLowHeadroomTaskIds: string[];
   failureClassificationVersion: typeof P6_2_FAILURE_CLASSIFICATION_VERSION;
   artifactLayoutVersion: typeof P6_2_ARTIFACT_LAYOUT_VERSION;
   equivalenceDesignVersion: typeof P6_2_EQUIVALENCE_DESIGN_VERSION;
@@ -265,6 +271,7 @@ export interface P62AfBaselineResult {
       primaryTaskIds: string[];
       eligibleDiagnosticTaskIds: string[];
       excludedSemanticFloorTaskIds: string[];
+      excludedPostPilotLowHeadroomTaskIds: string[];
       repeatResults: ClassifiedMRepeatResult[];
       summary: ReturnType<typeof summarizeP62M>;
     };
@@ -410,6 +417,10 @@ export function buildP62ExecutionManifest(args: {
     gitSha: childProcess.execFileSync("git", ["rev-parse", "HEAD"], { cwd: args.repoRoot, encoding: "utf8" }).trim(),
     baselineVersion: P6_2_AF_BASELINE_VERSION,
     taskBankVersion: P6_2_TASK_BANK_VERSION,
+    taskSelectionVersion: P6_2_TASK_SELECTION_VERSION,
+    primaryTaskIds: [...P6_2_PRIMARY_TASK_IDS],
+    primaryTaskIdsSha256: hashText(stableJson([...P6_2_PRIMARY_TASK_IDS])),
+    postPilotLowHeadroomTaskIds: [...P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS],
     failureClassificationVersion: P6_2_FAILURE_CLASSIFICATION_VERSION,
     artifactLayoutVersion: P6_2_ARTIFACT_LAYOUT_VERSION,
     equivalenceDesignVersion: P6_2_EQUIVALENCE_DESIGN_VERSION,
@@ -499,6 +510,7 @@ export function createP62Result(args: {
         primaryTaskIds: selection.primary.map((task) => task.taskId),
         eligibleDiagnosticTaskIds: selection.diagnostic.map((task) => task.taskId),
         excludedSemanticFloorTaskIds: [...P6_2_SEMANTIC_FLOOR_TASK_IDS],
+        excludedPostPilotLowHeadroomTaskIds: [...P6_2_POST_PILOT_LOW_HEADROOM_TASK_IDS],
         repeatResults: [],
         summary: summarizeP62M([]),
       },
@@ -1066,7 +1078,7 @@ export function reconcileProbeJournal(
 
 function parseRepeatCount(argv: string[]): number {
   const token = argv.find((arg) => arg.startsWith("--repeats="));
-  if (!token) throw new Error("P6-2 requires explicit --repeats=N; no scientific repeat count is frozen yet");
+  if (!token) throw new Error("P6-2 requires explicit --repeats=N; the supplied value must match the frozen scientific repeat count");
   return validateP62RepeatCount(Number(token.slice("--repeats=".length)));
 }
 
@@ -1163,7 +1175,7 @@ async function main(): Promise<void> {
   console.log("P6-2 REPEATS", repeatCount);
 
   if (!live) {
-    console.log("STOP: dry/offline mode. Delta_M/Delta_R are frozen; live remains blocked until the variance pilot freezes scientific repeat count.");
+    console.log("STOP: dry/offline mode. Delta_M/Delta_R and the scientific repeat count are frozen; no live execution was requested.");
     return;
   }
   assertP62LiveRepeatCountFrozen(repeatCount);

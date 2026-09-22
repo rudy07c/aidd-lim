@@ -1489,7 +1489,7 @@ resumeを実装する場合、これらfrozen provenanceの不一致を同一run
 
 #### 10.2.3 \(M\) baselineの対象task
 
-P6-1bでfreeze済みの`capabilityClass`と`analysisRole`をそのまま再利用し、P6-2の結果を見てtaskを再選別しない。
+P6-1b時点の`capabilityClass`と`analysisRole`はhistorical classificationとして保持する。ただし2026-09-21のpost-pilot bank-wide再監査（§10.2.5b）により、P6-2以降のeffective bankでは`T-crosscut-5`をsemantic-floorへ再分類する。このamendment以外に、P6-2の結果を見た任意のtask再選別は行わない。
 
 primary baselineは、
 
@@ -1498,7 +1498,7 @@ primary baselineは、
 =\{t\mid capabilityClass(t)=eligible \land analysisRole(t)=main\}
 \]
 
-の**12 task**とする。
+の**11 task**とする。
 
 - `T-local-2`
 - `T-crosscut-1`
@@ -1510,7 +1510,6 @@ primary baselineは、
 - `T-local-7`
 - `T-crosscut-3`
 - `T-crosscut-4`
-- `T-crosscut-5`
 - `T-delayed-2`
 
 `eligible ∩ diagnostic`の2 task、
@@ -1520,10 +1519,11 @@ primary baselineは、
 
 はAFで実行可能なdiagnosticとして**primary \(M\) baselineとは別集計**する。
 
-P6-1bでsemantic-floorに分類済みの6 task、
+P6-1b historical floor 6 taskにpost-pilot再分類の`T-crosscut-5`を加えた7 task、
 
 - `T-local-1`
 - `T-crosscut-2`
+- `T-crosscut-5`
 - `T-invariant-stress-2`
 - `T-invariant-stress-4`
 - `T-invariant-stress-5`
@@ -1634,9 +1634,39 @@ Power(n)=\int_0^{\lambda/t_c}\left[2\Phi(\lambda-t_cr)-1\right]f_{\chi_{df}/\sqr
 
 この時点ではvariance pilot自体はまだlive実行しない。scientific repeat countは`null`のままとし、P6-2 baseline runnerはrepeat数がfreezeされるまで`--live`を拒否する。
 
+#### 10.2.5b 2026-09-21 post-pilot task-selection amendment and freeze
+
+2026-09-20のpre-live designはhistorical designとして保持する。その設計ではprimary M=12 task、`Delta_M=1/12`でAF-vs-AF variance pilotを実行し、raw resultを `docs/findings/evidence/p6-2-variance-pilot/result.json` として**設計変更より先にimmutable evidence化**した。結果はMのn=30 power=`0.6816437585696477`で、predeclared ceiling内ではrequiredN=`null`、`statistical-design-needs-audit`となった。同じexact式をceiling外へ診断的に延長すると最小nは37相当である。
+
+その後のbank-wide auditで、historical primary 12 taskのうち`T-crosscut-5`だけが16 AF observations中4 success / 11 semantic failure / 1 protocol failureとなり、11 semantic failureはすべて同一の `boostTalFen: fails when Osk=nim` signatureへ収束した。他11 taskのsemantic failureは0だった。全taskの機械集計は `docs/findings/evidence/p6-2-variance-pilot/postpilot-task-audit.json` に保存する。
+
+この判定を**P6-1b classification ruleの率への一般化とは扱わない**。P6-1bの実装済みruleはabsolute countであり、`semanticSuccesses >= 2 -> eligible`、`0 success && semanticFailures >= 2 -> semantic-floor`、`1 success && semanticFailures >= 2 -> AF-unstable`である。`T-crosscut-5`はhistorical 3 repeatで2 success / 1 semantic failureなので、その時点の`T_primary-eligible`は正しいhistorical classificationとして保持する。
+
+P6-2以降では、repeat freeze前かつprimary condition contrast観測前に限る新しい**post-pilot low-headroom screen**を別規則として導入する。候補化には次をすべて要求する。
+
+1. AF-only calibration evidenceであること。
+2. accepted AF observations >=12、かつsemantic-evaluable observations（success + semantic failure）>=12。
+3. semantic success rate `<1/3`。
+4. semantic failure >=6。
+5. dominant normalized semantic failure signatureがsemantic failuresの`>=2/3`を占め、かつ同一signatureが6件以上。
+6. historical primary bank全taskへ同一規則を機械適用し、人間が特定taskだけを選ばない。
+7. 元result・全task audit・旧/新classification・selectionによるsizingへの影響をprovenance付きで保存する。
+
+このscreenを12 historical primary task全部へ適用すると該当は`T-crosscut-5`だけである。`T-crosscut-5`は4 semantic successを持つためhistorical `semantic-floor`へは移さず、P6-2+専用の **`post-pilot-low-headroom`** としてprimary Mから除外する。P6-1b historical semantic-floor 6 taskはそのまま維持する。
+
+failure signatureの意味論的根拠はpost-pilotに作られたものではない。`harness/fixtures/oracle-patches/T-crosscut-5.ts`はcommit `3fc9838d034c759c03bce2aaab1735723907543d`（2026-09-06）で既に`Osk(E5)=q2(pex)`をground-truth preconditionとして明示しており、commit `f89b12a631defd883ff0bc14b67133ab3a72279e`（2026-09-07）で保存されたStage 0.5のB1K resultでも `boostTalFen: fails when Osk=nim` が実際にfailしている。したがってOsk依存と同型failureにはvariance-pilot以前の独立証拠がある。ただしGPT-5.6 Luna / AFでのpersistent low-headroom頻度を確定したのは今回のpilotであり、この点はpost-pilot selectionである。
+
+current P6-2 task selectionは11 primary task + 2 eligible diagnostic + historical semantic-floor 6 + post-pilot-low-headroom 1として**ここでfreeze**する。selection versionは `p6-2-task-selection-v2-postpilot-low-headroom-frozen`。fresh variance pilotとscientific repeat freezeが完了するまでtask membershipを再変更しない。以後に見つかるtask問題は現行bankから除外せず、次versionまたはsensitivity analysisへ送る。
+
+current margin ruleは固定bankの最小1 unitを無視しないという原則を維持し、Mは11 taskなので `Delta_M=sigma_floor,M=1/11`、Rsemは12 probeのままなので `Delta_R=sigma_floor,R=1/12` とする。alpha=0.05、target power=0.80、片側95% SD-UCB、true exact paired-TOST power、failure semanticsは変更しない。
+
+historical 8 pairを11-taskへ再集約するとdiagnosticにM requiredN=21、Rsem requiredN=11となるが、**これはformal repeat freezeへ使用しない**。同じ8 pairがtask-selection evidenceとselection後varianceの双方へ使われるためpost-selection optimismを否定できない。formal sizingには、旧16 AF observationsを再利用しないfreshな11-task AF-vs-AF 8 pairを新規取得し、そのfresh dataのみからrequiredNを決める。fresh pilot開始後はtask membershipを一切変更しない。
+
+**fresh 11-task variance pilot result / repeat freeze（2026-09-21）**：旧16 observationsを一切poolせず、新規8 accepted pairを取得した。Mはsample SD=`0.07586572367238911`、片側95% SD-UCB=`0.13634214080510762`、requiredN=`21`。Rsemはsample SD=`0.05892556509887899`、片側95% SD-UCB=`0.1058981224304308`、requiredN=`16`。したがってpredeclared rule `max(8,n_M,n_R)` によりscientific repeat countを**21**へfreezeする。fresh resultは `docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json` にimmutable evidenceとして保存し、pilot dataはP6-2 AF baseline本取得へpoolしない。historical 12-task designはn<=30でpower不足（ceiling外診断n=37相当）だった事実を併記し、11-task amendmentによる結論変化を隠さない。
+
 #### 10.2.6 post-hoc task reselection禁止 / abnormal baseline handling
 
-P6-2でAF baselineが想定外に低い、分散が異常に大きい、protocol / infrastructure failureが多い、または測定不能な挙動を示した場合、その結果を理由にprimary taskを除外したり、diagnostic / semantic-floorとの分類を入れ替えたりしない。
+§10.2.5bの明示的amendment完了後は、P6-2でAF baselineが想定外に低い、分散が異常に大きい、protocol / infrastructure failureが多い、または測定不能な挙動を示した場合、その結果を理由にprimary taskを除外したり、diagnostic / semantic-floorとの分類を入れ替えたりしない。
 
 異常時は、
 
@@ -1662,7 +1692,7 @@ P6-2の成功条件は、**AFが単に高得点であることではない**。
 
 P6-2完了には少なくとも、
 
-- primary 12 taskについて\(M\)のAF baseline分布が保存されている
+- primary 11 taskについて\(M\)のAF baseline分布が保存されている
 - eligible diagnostic 2 taskがprimaryと分離して保存されている
 - balanced `stage1-neutral-relation-v2`による\(R^{sem}\)のAF baseline分布が保存されている
 - semantic / protocol / system / infrastructure等のfailure domainを混同せず記録できる
@@ -1672,7 +1702,7 @@ P6-2完了には少なくとも、
 
 ことを要求する。
 
-**本節はP6-2 live前のpredeclarationである。runner実装、\((\Delta_M,\Delta_R)\)の具体値確定、variance pilot、live API実行は別作業単位とし、本節の記述だけでは開始しない。**
+**2026-09-20のpre-live freezeはhistorical designとして保持し、2026-09-21の§10.2.5b amendmentがcurrent P6-2 task selection / margin / fresh-pilot手順をsupersedeする。**
 
 ### 10.3 P6-3：EL static exposure
 
@@ -1755,17 +1785,25 @@ Stage 1本実験前に：
 
 ## 11. Equivalence / Uncertainty設計
 
-### 11.1 \(\Delta_M,\Delta_R\)（freeze済み）
+### 11.1 \(\Delta_M,\Delta_R\)（historical freeze + current amendment）
 
-P6-2 pre-live freezeとして、
+2026-09-20 historical 12-task designでは、
 
 \[
-\Delta_M=\Delta_R=1/12\approx0.08333
+\Delta_M=\Delta_R=1/12
 \]
 
-を、**固定bank上の最小意味単位に基づくoperational equivalence margin**として採用する。1 task / 1 probe丸ごとの差は実質同等に含めず、equivalence regionはopen interval \((-1/12,+1/12)\) とする。Mの1 taskとR^{sem}の1 probeの実世界上の価値が同一であることは仮定しない。
+をpre-live freezeしてvariance pilotを実行した。このhistorical design/resultは改変せず保存する。
 
-Equivalenceは \(\alpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体がmargin内へ入った場合のみ主張する。marginは観測後のSDや平均から変更しない。repeat数は10.2.5aでfreezeしたAF-vs-AF variance pilot規則から決定する。
+2026-09-21のtask-selection amendment後に有効なcurrent designは、固定bank上の最小1 unitを無視しない同じoperational ruleを維持し、
+
+\[
+\Delta_M=1/11,\qquad \Delta_R=1/12
+\]
+
+とする。Mの1 taskとR^{sem}の1 probeの実世界上の価値が同一であることは仮定しない。M bank membership変更後の`Delta_M`変更は観測SDへ合わせたmargin tuningではなく、事前定義済み `1/|primary task|` ruleの機械的帰結としてversioned amendmentに記録する。
+
+Equivalenceは \(\alpha=0.05\) のTOSTと整合する90% CIで評価し、paired differenceのCI全体が各measurement固有のmargin内へ入った場合のみ主張する。repeat数はfresh 11-task AF-vs-AF variance pilotのみから決定し、historical 8 pairのpost-selection再集約値は正式freezeへ使用しない。2026-09-21のfresh 8 pairではM requiredN=21、Rsem requiredN=16となったため、共通scientific repeat countを21へfreezeした。
 
 ### 11.2 Stage 1A paired design
 
