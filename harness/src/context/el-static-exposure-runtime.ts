@@ -105,6 +105,8 @@ export function assembleELTaskStaticExposure(args: {
     selectorKind: "task-privileged-ranking",
     selectorId: `${EL_TASK_SELECTOR_VERSION}:${task.taskId}`,
     rankingPolicyVersion: PRIVILEGED_RETRIEVAL_POLICY_VERSION,
+    selectorSurfaceEntities: ranking.surfaceEntities,
+    selectorSemanticEntities: ranking.semanticEntities,
   });
 }
 
