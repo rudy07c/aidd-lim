@@ -163,6 +163,42 @@ function main(): void {
     String(row.failureReason).replace(/^Duplicate modified file path: /, "")
   ));
   const protocolByTaskAndReason = sortedRecord(countBy(protocolRows, (row: any) => `${row.taskId} :: ${row.failureReason}`));
+  assert.deepEqual(protocolByTask, sortedRecord({
+    "T-crosscut-1": 1,
+    "T-crosscut-3": 1,
+    "T-crosscut-4": 2,
+    "T-delayed-2": 3,
+    "T-invariant-stress-3": 5,
+    "T-local-2": 1,
+    "T-local-3": 1,
+    "T-local-4": 3,
+    "T-local-5": 1,
+    "T-local-7": 1,
+  }));
+  assert.deepEqual(duplicateByPath, sortedRecord({
+    "src/fen/rules.ts": 3,
+    "src/osk/rules.ts": 1,
+    "src/protocol_adapter.ts": 1,
+    "src/rush/rules.ts": 3,
+    "src/rushZefFen.ts": 1,
+    "src/tal/rules.ts": 3,
+    "src/vok/rules.ts": 4,
+    "src/zef/rules.ts": 2,
+  }));
+  assert.deepEqual(protocolByTaskAndReason, sortedRecord({
+    "T-crosscut-1 :: Duplicate modified file path: src/protocol_adapter.ts": 1,
+    "T-crosscut-3 :: Duplicate modified file path: src/osk/rules.ts": 1,
+    "T-crosscut-4 :: Duplicate modified file path: src/fen/rules.ts": 2,
+    "T-delayed-2 :: Duplicate modified file path: src/tal/rules.ts": 3,
+    "T-invariant-stress-3 :: Duplicate modified file path: src/rush/rules.ts": 3,
+    "T-invariant-stress-3 :: Duplicate modified file path: src/rushZefFen.ts": 1,
+    "T-invariant-stress-3 :: Duplicate modified file path: src/zef/rules.ts": 1,
+    "T-local-2 :: write-outside-repository-contract:workingNote": 1,
+    "T-local-3 :: Duplicate modified file path: src/fen/rules.ts": 1,
+    "T-local-4 :: Duplicate modified file path: src/vok/rules.ts": 3,
+    "T-local-5 :: Duplicate modified file path: src/zef/rules.ts": 1,
+    "T-local-7 :: Duplicate modified file path: src/vok/rules.ts": 1,
+  }));
 
   const r = result.measurements.Rsem;
   assert.equal(r.designVersion, "stage1-neutral-relation-v2");
@@ -202,6 +238,7 @@ function main(): void {
   assert(r11, "missing r11 fixture");
   assert.equal(r11.correctAnswer, false);
   assert.equal(r11.derivedFrom?.candidateSource, "reachable-counterexample");
+  assert.equal(r11.derivedFrom?.matchedInvariantId, "I1");
   for (const id of REACHABLE_COUNTEREXAMPLE_BOOLEAN_IDS) {
     const probe: any = fixtureById.get(id);
     assert(probe, `missing counterexample fixture ${id}`);
