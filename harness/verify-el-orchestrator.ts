@@ -3,8 +3,8 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { runGenerationLoop } from "./src/orchestrator";
-import type { ELRuntimeConfig } from "./src/context/el-static-exposure-runtime";
 import { countStaticRepositoryPayloadTokens } from "./src/context/static-exposure";
+import type { RunConfig } from "./src/types";
 
 async function main(): Promise<void> {
   const repoRoot = path.resolve(__dirname, "..");
@@ -14,7 +14,7 @@ async function main(): Promise<void> {
   const runsDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-ilm-el-orchestrator-"));
 
   try {
-    const config: ELRuntimeConfig = {
+    const config: RunConfig = {
       experimentId: "verify-el-orchestrator",
       lineageId: "lineage-0",
       runClass: "smoke",
