@@ -2,6 +2,8 @@ import { P6_2_DELTA_M, P6_2_DELTA_R } from "./af-baseline";
 
 export const P6_3_EL_CALIBRATION_DESIGN_VERSION =
   "p6-3-el-calibration-v1-static-prefix-six-level" as const;
+export const P6_3_STRUCTURAL_PREFLIGHT_VERSION =
+  "p6-3-el-structural-preflight-v1" as const;
 export const P6_3_CALIBRATION_REPEAT_COUNT = 12;
 export const P6_3_MAX_ATTEMPTS_PER_LOGICAL_CELL = 3;
 
@@ -27,6 +29,17 @@ export const P6_3_MAX_TOKENS_PER_UNIT_CANDIDATES = [
   96,
   64,
 ] as const;
+
+/**
+ * Frozen from the outcome-independent 2026-09-22 structural preflight.
+ * All seven predeclared candidates passed every primary-M and Rsem structural gate,
+ * so the predeclared largest-candidate tie-break selects 512.
+ */
+export const P6_3_FROZEN_MAX_TOKENS_PER_UNIT = 512;
+export const P6_3_FROZEN_FULL_PAYLOAD_TOKENS = 4046;
+export const P6_3_FROZEN_FINITE_BUDGET_TOKENS = [0, 505, 1011, 2023, 3034] as const;
+export const P6_3_FROZEN_RSEM_PLAN_INPUT_SHA256 =
+  "bd3a97e57f16929b5cb27a23d725b70c1e7e0251c096300601dce3ccab0c8b23" as const;
 
 export type P63FiniteBudgetLabel = "B0" | "B1" | "B2" | "B3" | "B4";
 export type P63BudgetLabel = P63FiniteBudgetLabel | "AF";
@@ -68,6 +81,20 @@ export function buildP63BudgetGrid(fullPayloadTokens: number): P63BudgetGrid {
     finite,
     labels: [...labels, "AF"],
   };
+}
+
+export function assertP63StructuralFreeze(): void {
+  if (P6_3_MAX_TOKENS_PER_UNIT_CANDIDATES[0] !== P6_3_FROZEN_MAX_TOKENS_PER_UNIT) {
+    throw new Error("P6-3 frozen maxTokensPerUnit must equal the largest passing predeclared candidate");
+  }
+  const grid = buildP63BudgetGrid(P6_3_FROZEN_FULL_PAYLOAD_TOKENS);
+  const actual = grid.finite.map((entry) => entry.nominalTokens);
+  if (JSON.stringify(actual) !== JSON.stringify(P6_3_FROZEN_FINITE_BUDGET_TOKENS)) {
+    throw new Error(
+      `P6-3 frozen budget grid mismatch: actual=${actual.join(",")} ` +
+        `expected=${P6_3_FROZEN_FINITE_BUDGET_TOKENS.join(",")}`
+    );
+  }
 }
 
 export function p63BudgetOrderForRepeat(repeat: number): P63BudgetLabel[] {
