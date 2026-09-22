@@ -50,6 +50,8 @@ export interface ELStaticExposureLog {
   selectorKind: string;
   selectorId: string;
   rankingPolicyVersion: string;
+  selectorSurfaceEntities: string[];
+  selectorSemanticEntities: string[];
   budgetTokens: number;
   actualExposedTokens: number;
   fullRepositoryTokens: number;
@@ -108,6 +110,8 @@ export function buildStaticExposurePrefix(args: {
   selectorKind: string;
   selectorId: string;
   rankingPolicyVersion: string;
+  selectorSurfaceEntities: readonly string[];
+  selectorSemanticEntities: readonly string[];
 }): StaticExposurePrefixResult {
   if (!Number.isInteger(args.budgetTokens) || args.budgetTokens < 0) {
     throw new Error("B_expose must be a non-negative integer canonical token budget");
@@ -162,6 +166,8 @@ export function buildStaticExposurePrefix(args: {
       selectorKind: args.selectorKind,
       selectorId: args.selectorId,
       rankingPolicyVersion: args.rankingPolicyVersion,
+      selectorSurfaceEntities: [...args.selectorSurfaceEntities].sort(),
+      selectorSemanticEntities: [...args.selectorSemanticEntities].sort(),
       budgetTokens: args.budgetTokens,
       actualExposedTokens,
       fullRepositoryTokens: countStaticRepositoryPayloadTokens(args.fullRepositoryFiles),
