@@ -94,3 +94,21 @@ historical 8 accepted pairを11-taskで再集約した診断値は、M pair diff
 したがってtask-selectionをここでfreezeし、**これ以後、fresh variance pilotとrepeat freezeが完了するまでtask membershipを変更しない**。formal repeat sizingには、旧16 AF observationsを一切再利用しないfreshな11-task AF-vs-AF 8 pairを新規取得し、そのfresh dataだけから`requiredN_M` / `requiredN_R`を計算する。
 
 12-task historical designと11-task current designは最終報告で必ず併記する。historical 12-task designではM sample SD=`0.09383263553830025`、95% SD-UCB=`0.16863138961044855`、n=30 power=`0.6816437585696477`で、predeclared ceiling内requiredNは`null`（同一exact式をceiling外へ延長したdiagnostic最小nは37相当）。11-taskのhistorical再集約21はselection後diagnosticにすぎず、fresh pilot後のformal Nと混同しない。
+
+## F18: P6-2 AF baseline本取得完了 — high-but-nonsaturated hub baseline
+
+**日付**: 2026-09-22  
+**Phase**: Pre-Stage 1 P6-2  
+**Model**: GPT-5.6 Luna / reasoning=`high` / Artifact-Full  
+**Evidence**: `docs/findings/evidence/p6-2-af-baseline/result.json`  
+**Completion record**: `docs/findings/p6_2_af_baseline.md`
+
+fresh 11-task variance pilotとM-side independence auditを経てfreezeした`N=21`をそのまま用い、P6-2 AF baseline本取得を完了した。primary Mは11 task × 21 repeat = **231/231がscientifically valid**で、217 pass / 14 failure、`passRate=0.9393939394`。primary側のaudit exclusionは0で、14 failureはすべて`protocol`、`semantic/system/infrastructure/other`は0だった。
+
+eligible diagnostic 2 taskは42 repeat中41がscientifically validで36 pass、valid-repeat pass rateは`0.8780487805`。`T-invariant-stress-3` repeat 19でAPI credit exhaustionによるHTTP 429が発生したが、`actualModel=null`かつusage=0のprovider-side実行不能だったため`infrastructure-invalid`として明示adjudicateした。同じrunをresumeして完走し、最終resultのunresolved audit flagは0である。
+
+Rsemは`stage1-neutral-relation-v2`の12 balanced boolean probeを21 repeat実行し、**235/252 = 0.9325396825**。21/21 repeatがprotocol-validで、protocol reliability=`1.0`。4 repeatが12/12、17 repeatが11/12であり、high baselineではあるが全repeatが1.0へ張り付く完全飽和ではない。
+
+したがってAFは、後続EL / PR / ARを比較するhub baselineとして保存可能である。一方で、primary Mの失敗がすべてprotocol domainだった点は重要なbaseline特性である。以後のcondition差でMが低下した場合、**その低下を自動的にsemantic reconstruction lossとは解釈せず、semantic / protocol / system / infrastructureのdomain分解を必ず併記する**。
+
+P6-2のresultを見た後にtask membership、`Delta_M=1/11`、`Delta_R=1/12`、N=21を再調整しない。次phaseはP6-3 EL static dose-responseとする。
