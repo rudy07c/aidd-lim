@@ -134,9 +134,17 @@ const validRaw = {
   staticExposureMaxTokensPerUnit: 256,
 };
 assert.doesNotThrow(() => validateRawRunConfig(validRaw));
+const {
+  staticExposureMaxTokensPerUnit: _omittedChunkBudget,
+  ...missingChunkBudget
+} = validRaw;
+assert.throws(
+  () => validateRawRunConfig(missingChunkBudget),
+  /explicitly specify raw config field "staticExposureMaxTokensPerUnit"/
+);
 assert.throws(
   () => validateRawRunConfig({ ...validRaw, staticExposureMaxTokensPerUnit: undefined }),
-  /explicitly specify raw config field "staticExposureMaxTokensPerUnit"/
+  /staticExposureMaxTokensPerUnit to be a positive integer/
 );
 assert.throws(
   () => validateRawRunConfig({ ...validRaw, contextBudget: "full" }),
