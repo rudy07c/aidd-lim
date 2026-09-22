@@ -211,8 +211,10 @@ export interface RunConfig {
   runClass: RunClass;
   backend: BackendType;
   condition: ContextConditionName;
-  /** AF/MOI/legacy context budget or PR/AR B_work. */
+  /** AF/MOI/legacy context budget, EL B_expose, or PR/AR B_work. */
   contextBudget: number | "full";
+  /** EL-only frozen ArtifactUnit chunk granularity used before static prefix packing. */
+  staticExposureMaxTokensPerUnit?: number;
   generations: number;
   tasks: string[];
   model?: string;
