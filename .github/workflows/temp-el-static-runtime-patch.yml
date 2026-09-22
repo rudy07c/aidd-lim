@@ -126,12 +126,6 @@ jobs:
               '    "verify:context-conditions": "ts-node verify-context-conditions.ts",\n',
               '    "verify:context-conditions": "ts-node verify-context-conditions.ts",\n    "verify:el-static-exposure": "ts-node verify-el-static-exposure.ts",\n'
           )
-
-          replace_once(
-              '.github/workflows/harness-ci.yml',
-              '''      - name: Verify Stage 1 context condition metadata\n        working-directory: harness\n        run: npm run verify:context-conditions\n      - name: Verify P2 observable interaction runtime\n''',
-              '''      - name: Verify Stage 1 context condition metadata\n        working-directory: harness\n        run: npm run verify:context-conditions\n      - name: Verify P6-3 EL static exposure runtime\n        working-directory: harness\n        run: npm run verify:el-static-exposure\n      - name: Verify P2 observable interaction runtime\n'''
-          )
           PY
       - name: Validate integrated EL runtime
         working-directory: harness
