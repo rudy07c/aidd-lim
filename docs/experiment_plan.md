@@ -1,8 +1,16 @@
 # AIDDにおける有限コンテキストとsoftware artifact進化 ― 実験計画書
 
-**版**: v2.8
+**版**: v2.9
 **関連文書**: `docs/aidd_ilm_paper.md`（理論枠組み）、`deep-research-report.md`（先行研究レビュー）、`synthetic-world-v0/NOTES.md`（Synthetic World v0.3実装知見）、`docs/findings/stage0_findings.md`（Stage 0実行結果からの発見）
 **作成方針**: 単一のフル実験を最初から回すのではなく、交絡を一つずつ剥がしながら「安い問い」から「高い問い」へ段階的に登る。各Stageは次のStageへ進むための**判定ゲート**として機能する。
+
+**v2.9での変更点（P6-2 AF baseline完了・P6-3へ移行）**：
+- fresh 11-task variance pilotとM-side independence auditで正式freezeした`N=21`を用い、GPT-5.6 Luna / reasoning=`high` / Artifact-FullでP6-2本baselineを完了
+- primary Mは11 task × 21 repeat = 231/231 scientifically valid、217 pass、pass rate=`0.9393939394`。primary failure 14件はすべて`protocol`で、semantic/system/infrastructure/other failureは0
+- diagnostic Mは42 repeat中41 scientifically valid、36 pass。`T-invariant-stress-3` repeat 19のAPI credit exhaustion（HTTP 429、actualModel=null、usage=0）は`infrastructure-invalid`としてadjudicateし、同一runをresumeして完走。最終unresolved audit flagは0
+- Rsemは`stage1-neutral-relation-v2` 12 probe × 21 repeatで235/252=`0.9325396825`、21/21 protocol-valid、protocol reliability=`1.0`
+- 完了evidenceを`docs/findings/evidence/p6-2-af-baseline/result.json`（SHA-256 `b7b0e3f9598b034548b8466258a0aae54916fcdfa2ef0f53f9f85636272c7801`）へ固定し、恒久verifierをCIへ追加
+- P6-2観測後にtask membership、`Delta_M=1/11`、`Delta_R=1/12`、`N=21`を再調整しない。次の研究工程を**P6-3 EL static dose-response**へ更新
 
 **v2.8での変更点（P6-2 task-selection amendment / fresh variance repeat freeze）**：
 - historical 12-task AF-vs-AF variance pilotはimmutable evidenceとして保持し、n<=30ではM power不足（同じexact式をceiling外へ診断的に延長するとn=37相当）だった結果を保存
@@ -109,7 +117,7 @@
 **v1.7での変更点（Stage 0 Phase 4実行結果を受けた修正）**：
 - 新設1.9節：「要求の質の統制」。本研究がcontext bottleneckとして操作するのは過去に継承されるartifactの情報量であり、各世代の新規要求（visibleInstruction）の詳細度は独立変数として操作しないことを明記。Stage 0 Phase 4でdistributed invariantの見落としが観測された際、この交絡因子の存在が明確になったことを踏まえる（`docs/findings/stage0_findings.md` F1, F2参照）
 - Stage 3（対立仮説の排除）に、要求文の詳細度に関する頑健性チェックを追加変数として明記
-- 理論的位置づけは`aidd_ilm_paper_v4.md`5.3節・8.5節にも対応する形で追記済み
+- 理論的位置づけは`docs/aidd_ilm_paper.md`5.3節・8.6節にも対応する形で追記済み
 
 **v1.6での変更点（Synthetic World v0.3実装から得た修正）**：
 - 累積validatorの位置づけを「task順序による科学的現象の発見」から「単体検証では見つからない相互作用上の設計ミスを確認する品質保証」に修正。単体では両方安全なdeltaが組み合わせでのみ矛盾を生む例をSynthetic World v0.3で実際に構成・実証した（Stage 3節）
@@ -1258,6 +1266,8 @@ Stage 0 / 0.5の既存成果は破棄しない。以下をPre-Stage 1として�
 
 **P6-2 fresh 11-task variance repeat freeze（2026-09-21）**：旧16 observationsを再利用しないfresh 8 accepted pairを取得し、M sample SD=`0.07586572367238911` / 95% SD-UCB=`0.13634214080510762` / requiredN=`21`、Rsem sample SD=`0.05892556509887899` / 95% SD-UCB=`0.1058981224304308` / requiredN=`16`、`needsAudit=false`を得た。predeclared `max(8,n_M,n_R)` ruleにより共通scientific repeat countを**21**へfreezeする。fresh resultは `docs/findings/evidence/p6-2-variance-pilot-fresh-11-task/result.json` に保存し、AF baseline本取得へpoolしない。
 
+**P6-2 AF baseline completion（2026-09-22）**：freeze済み`N=21`で本取得を完了。primary Mは217/231=`0.9393939394`、231/231 scientifically valid、audit exclusion 0。14 failureはすべてprotocolでsemantic failureは0。Rsemは235/252=`0.9325396825`、21/21 protocol-valid、protocol reliability 1.0。diagnostic `T-invariant-stress-3` repeat 19でAPI credit exhaustionによる429が1件発生したが、model未実行・usage=0のため`infrastructure-invalid`としてadjudicateし、同一runをresumeして完走した。最終unresolved audit flagは0。evidenceは`docs/findings/evidence/p6-2-af-baseline/result.json`へ固定し、次phaseはP6-3 EL static dose-responseとする。
+
 Stage 1の結果だけを理由に、短期差が小さい条件を安易にStage 2から削除しない。主仮説はlongitudinal selection effectであり、短期performance equivalenceはtrajectory equivalenceを意味しない。
 
 ---
@@ -1481,7 +1491,7 @@ u_i
 | 2 | ~~命名方式A（難読化）とB（虚構語彙）のどちらを採用するか~~ | 1.3 | **解決済み（Stage 0.5）**：A-obfuscatedを採用。詳細は`docs/findings/stage0_5_findings.md` F1 |
 | 3 | Privileged Selector / Controllerのヒューリスティック仕様 | 2.9 | 未定 |
 | 4 | Semantic probeの自動生成テンプレートと採点方式 | 3.3 | 次アクション④で確定 |
-| 5 | equivalence testing用の \(\Delta_M, \Delta_R\) | 4.1(Stage1) | 未定 |
+| 5 | ~~equivalence testing用の \(\Delta_M, \Delta_R\)~~ | 4.1(Stage1) | **解決済み（P6-2）**：current designは`Delta_M=1/11`, `Delta_R=1/12`。fresh variance pilotから共通`N=21`をfreeze |
 | 6 | Delayed-dependency taskの遅延世代数 \(k\) の具体値 | 1.5 | 仮置き：13〜16世代 |
 | 7 | ~~Task bankにおけるLocal/Cross-cutting/Delayed/Invariant-stressingの構成比~~ | 1.5 | **v1.7で位置づけ変更**。「構成比」ではなく、1.5.1節の構成A（暗黙ルールなし、主指標）と構成B（構成A+invariant-stressing、診断用）という2系統のtask bankを並行運用する方針に変更 |
 | 8 | Stage 5でのtask sequence設計（Latin square vs covariate化）の最終選択 | 4.1(Stage5) | Stage 3の結果を見て決定 |
@@ -1504,17 +1514,20 @@ u_i
 
 ## 6. 次のアクション
 
-**v2.7時点の現在地（2026-09-19）**：Stage 0 / 0.5は完了済み。Pre-Stage 1は **P0〜P5.5まで完了**しており、5条件（MOI / AF / EL / PR / AR）の二軸設計、OpenAI backend / Batch経路、MOI observable interaction、balanced measurement、bounded working-set runtime、RepositoryAccessor、PR/AR retrieval runtime、GenerationLog、reread parity、error/evidence-exhaustion semantics、Luna live smokeまで実装・検証済みである。**次の実装対象はPre-Stage 1 P6：Recalibration**であり、旧3条件版のStage 1 Phase 0へ戻らない。
+**v2.9時点の現在地（2026-09-22）**：Stage 0 / 0.5、Pre-Stage 1 P0〜P5.5、P6-0、P6-1、P6-1b、**P6-2 AF baselineまで完了**。P6-2のformal hub baselineはprimary M=`217/231=0.9393939394`、Rsem=`235/252=0.9325396825`、scientific repeat=`N=21`。結果はimmutable evidenceとして保存済みで、次の実装対象は**P6-3 EL static dose-response**である。旧3条件版のStage 1 Phase 0へ戻らない。
 
 **次の実行順序**：
 
-1. **P6 Recalibration**：Luna capability-floor / AF baselineを再取得し、`T_primary / T_challenge`、`B_expose`、`B_work`、PR/AR共通`E_max`、MOI schema/size、equivalence margin、repeat数をmain comparison前にfreezeする
-2. **Stage 1A**：fixed-\(S_0\)でAF / EL / PR / ARを比較し、C1〜C3を診断する
-3. **Stage 1B**：同一predecessor fixtureからMOI / AF + sham-historyを比較し、C0 immediate history utilityを診断する
-4. **P6.5**：MOI対応Semantic Element Traceをsource-aware化する
-5. **P7**：longitudinal evaluatorを累積評価対応へ更新する
-6. **Stage 1C**：5条件を10〜15世代通すintegration runを行う
-7. Stage 1C完了後、Stage 2 common-environment evaluation / longitudinal pilotへ進む
+1. **P6-3 EL static dose-response**：複数`B_expose`でM / Rsemのdose-responseを取得し、ELがnon-degenerateなstatic exposure conditionとして機能する範囲を較正する
+2. **P6-4 PR working-set dose-response**：複数`B_work`でM / Rsem / E_used / eviction / retrievalを較正する
+3. **P6-5 AR smoke/non-floor**：self-retrieval条件が機能し、pathological floorだけにならないことを確認する
+4. **P6-6 / P6-7**：MOI serialization・Operational-Full preflightと、`B_expose` / `B_work` / `E_max` / MOI schema-sizeをfreezeする
+5. **Stage 1A**：fixed-\(S_0\)でAF / EL / PR / ARを比較し、C1〜C3を診断する
+6. **Stage 1B**：同一predecessor fixtureからMOI / AF + sham-historyを比較し、C0 immediate history utilityを診断する
+7. **P6.5**：MOI対応Semantic Element Traceをsource-aware化する
+8. **P7**：longitudinal evaluatorを累積評価対応へ更新する
+9. **Stage 1C**：5条件を10〜15世代通すintegration runを行う
+10. Stage 1C完了後、Stage 2 common-environment evaluation / longitudinal pilotへ進む
 
 以下の旧来の①〜⑥は研究装置を構築した履歴として保持するが、現在の実行順序の根拠には使わない。現在地の正本は `docs/stage1_plan.md` の21節と本節で同期する。
 

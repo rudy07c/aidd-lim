@@ -1,6 +1,6 @@
 # Stage 1（Inheritance / Context Decomposition）実装計画
 
-**対象**：`docs/experiment_plan.md`（v2.6）の Stage 1「Inheritance / Context Decomposition」  
+**対象**：`docs/experiment_plan.md`（v2.9）の Stage 1「Inheritance / Context Decomposition」  
 **理論親文書**：`docs/aidd_ilm_paper.md`  
 **前提**：Stage 0（Harness Feasibility）・Stage 0.5（Measurement Calibration）は、それぞれ当時のoperationalizationに対してゲート達成済み  
 **Stage 1の役割**：`有限context` に混在していた複数のmechanismを、**inheritance / transmission** と **observation / retrieval** の二軸へ分解し、5条件が意図したmechanismだけを操作できる実験装置を完成させる  
@@ -388,7 +388,7 @@ Stage 1事前準備で追加較正する。
 本実装前に以下を同じ定義へ揃える。
 
 1. `docs/aidd_ilm_paper.md`
-2. `docs/experiment_plan.md`（v2.6）
+2. `docs/experiment_plan.md`（v2.9）
 3. `docs/stage1_plan.md`
 4. `docs/findings/` のmethodology note
 5. code側 `ContextCondition` / `InheritanceMode`
@@ -1489,7 +1489,7 @@ resumeを実装する場合、これらfrozen provenanceの不一致を同一run
 
 #### 10.2.3 \(M\) baselineの対象task
 
-P6-1b時点の`capabilityClass`と`analysisRole`はhistorical classificationとして保持する。ただし2026-09-21のpost-pilot bank-wide再監査（§10.2.5b）により、P6-2以降のeffective bankでは`T-crosscut-5`をsemantic-floorへ再分類する。このamendment以外に、P6-2の結果を見た任意のtask再選別は行わない。
+P6-1b時点の`capabilityClass`と`analysisRole`はhistorical classificationとして保持する。2026-09-21のpost-pilot bank-wide再監査（§10.2.5b）では、`T-crosscut-5`をhistorical `semantic-floor`へ遡及再分類せず、P6-2+専用の`post-pilot-low-headroom`としてprimary Mから除外した。このamendment以外に、P6-2の結果を見た任意のtask再選別は行わない。
 
 primary baselineは、
 
@@ -1519,7 +1519,7 @@ primary baselineは、
 
 はAFで実行可能なdiagnosticとして**primary \(M\) baselineとは別集計**する。
 
-P6-1b historical floor 6 taskにpost-pilot再分類の`T-crosscut-5`を加えた7 task、
+P6-1b historical semantic-floor 6 taskと、別分類のpost-pilot-low-headroom `T-crosscut-5`からなる7 task、
 
 - `T-local-1`
 - `T-crosscut-2`
@@ -1703,6 +1703,18 @@ P6-2完了には少なくとも、
 ことを要求する。
 
 **2026-09-20のpre-live freezeはhistorical designとして保持し、2026-09-21の§10.2.5b amendmentがcurrent P6-2 task selection / margin / fresh-pilot手順をsupersedeする。**
+
+#### 10.2.8 P6-2 completion record（2026-09-22）
+
+freeze済み`N=21`を用い、GPT-5.6 Luna / reasoning=`high` / Artifact-FullでAF baseline本取得を完了した。source git SHAは`0a0fd1a262c2e4274f1b946562c9b4e79f6fb71b`、正式evidenceは`docs/findings/evidence/p6-2-af-baseline/result.json`、SHA-256は`b7b0e3f9598b034548b8466258a0aae54916fcdfa2ef0f53f9f85636272c7801`である。
+
+primary Mは11 task × 21 repeat = **231/231がscientifically valid**で、217 pass / 14 failure、`passRate=0.9393939394`。primary側のaudit exclusionは0で、14 failureはすべて`protocol`、`semantic/system/infrastructure/other`は0だった。したがって後続conditionでMが低下した場合も、その差を自動的にsemantic reconstruction lossとは解釈せず、failure domainを分解して報告する。
+
+eligible diagnostic 2 taskは42 repeat中41がscientifically validで36 pass。`T-invariant-stress-3` repeat 19でOpenAI API credit exhaustionによるHTTP 429が発生したが、`actualModel=null`かつusage=0のprovider-side実行不能だったため`infrastructure-invalid`としてadjudicateした。同一runをresumeして完走し、最終unresolved audit flagは0である。
+
+Rsemは`stage1-neutral-relation-v2`の12 balanced boolean probeを21 repeat実行し、235/252=`0.9325396825`。21/21 repeatがprotocol-validで、protocol reliability=`1.0`。4 repeatが12/12、17 repeatが11/12であり、高いAF baselineだが全repeatが1.0へ張り付く完全飽和ではない。最終stored estimated costは`$0.7923262`。
+
+以上によりP6-2 completion conditionは通過した。**P6-2観測後にtask membership、`Delta_M=1/11`、`Delta_R=1/12`、`N=21`を再調整しない。** 次phaseはP6-3 EL static dose-responseとする。
 
 ### 10.3 P6-3：EL static exposure
 
@@ -2670,8 +2682,8 @@ P5で構築したretrieval/runtimeを、実際のcondition dispatcher・OpenAI�
 38. **P6-0** Luna probe-bank revalidation（F5/F9、B=0/B=1K/Full、tests-only、adapter-only） ✅ 2026-09-20通過
 39. **P6-1** Primary task eligibility + Luna capability-floor pilot / semantic-vs-protocol reclassification ✅ 5-task pilot確定
 40. **P6-1b** task bank全体eligibility拡張 ✅ 2026-09-20完了（initial 45 / hold追加0 / final bank freeze）
-41. **P6-2** AF baseline ← 次
-42. **P6-3** EL static dose-response
+41. **P6-2** AF baseline ✅ 2026-09-22完了（N=21、primary M=217/231、Rsem=235/252、unresolved audit=0）
+42. **P6-3** EL static dose-response ← 次
 43. **P6-4** PR working-set dose-response
 44. **P6-5** AR smoke/non-floor
 45. **P6-6** MOI serialization + source-tagging / Operational-Full feasibility preflight
