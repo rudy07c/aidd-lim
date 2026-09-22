@@ -3,14 +3,13 @@ import * as fs from "fs";
 import * as path from "path";
 import type { GroundTruthDelta } from "../synthetic-world/schema";
 import { buildOpenAIUserMessage } from "./src/agent-backend/openai/shared";
-import {
-  assembleELTaskStaticExposure,
-  ELRuntimeConfig,
-} from "./src/context/el-static-exposure-runtime";
+import { validateRawRunConfig, validateResolvedRunConfig } from "./src/config/validate";
+import { assembleELTaskStaticExposure } from "./src/context/el-static-exposure-runtime";
 import {
   countStaticRepositoryPayloadTokens,
   serializeStaticRepositoryPayload,
 } from "./src/context/static-exposure";
+import type { RunConfig } from "./src/types";
 
 interface HeldOutTask {
   taskId: string;
@@ -127,6 +126,31 @@ assert.throws(
   /positive integer staticExposureMaxTokensPerUnit/
 );
 
+const validRaw = {
+  runClass: "smoke",
+  backend: "mock-noop",
+  condition: "EL",
+  contextBudget: 0,
+  staticExposureMaxTokensPerUnit: 256,
+};
+assert.doesNotThrow(() => validateRawRunConfig(validRaw));
+assert.throws(
+  () => validateRawRunConfig({ ...validRaw, staticExposureMaxTokensPerUnit: undefined }),
+  /explicitly specify raw config field "staticExposureMaxTokensPerUnit"/
+);
+assert.throws(
+  () => validateRawRunConfig({ ...validRaw, contextBudget: "full" }),
+  /non-negative integer contextBudget representing B_expose/
+);
+assert.doesNotThrow(() => validateResolvedRunConfig(makeConfig(0, 256)));
+assert.throws(
+  () => validateResolvedRunConfig({
+    ...makeConfig(0, 256),
+    staticExposureMaxTokensPerUnit: undefined,
+  }),
+  /staticExposureMaxTokensPerUnit to be a positive integer/
+);
+
 console.log(JSON.stringify({
   status: "ok",
   fullRepositoryTokens: fullTokens,
@@ -143,7 +167,7 @@ console.log(JSON.stringify({
 function makeConfig(
   contextBudget: number,
   staticExposureMaxTokensPerUnit: number
-): ELRuntimeConfig {
+): RunConfig {
   return {
     experimentId: "verify-el-static-exposure",
     lineageId: "lineage-0",
