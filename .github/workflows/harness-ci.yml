@@ -8,6 +8,7 @@ on:
       - 'synthetic-world/**'
       - 'docs/findings/evidence/p6-2-m-independence-audit.json'
       - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/findings/evidence/p6-3-el-structural-preflight/result.json'
       - 'docs/findings/p6_2_variance_m_independence_audit.md'
       - 'docs/findings/p6_2_variance_repeat_freeze.md'
       - 'docs/findings/p6_2_af_baseline.md'
@@ -19,6 +20,7 @@ on:
       - 'synthetic-world/**'
       - 'docs/findings/evidence/p6-2-m-independence-audit.json'
       - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/findings/evidence/p6-3-el-structural-preflight/result.json'
       - 'docs/findings/p6_2_variance_m_independence_audit.md'
       - 'docs/findings/p6_2_variance_repeat_freeze.md'
       - 'docs/findings/p6_2_af_baseline.md'
@@ -64,6 +66,9 @@ jobs:
       - name: Verify P6-3 EL static exposure runtime
         working-directory: harness
         run: npm run verify:el-static-exposure
+      - name: Verify frozen P6-3 EL structural preflight
+        working-directory: harness
+        run: npm run verify:p6-el-structural-freeze
       - name: Verify P2 observable interaction runtime
         working-directory: harness
         run: npm run verify:observable-interaction
