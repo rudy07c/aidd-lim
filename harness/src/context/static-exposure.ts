@@ -1,7 +1,10 @@
 import * as crypto from "crypto";
 import type { ArtifactFileCategory } from "../measurement/file-classification";
 import type { ArtifactUnit } from "../measurement/artifact-unit";
-import { countCanonicalTokens } from "../measurement/token-counter";
+import {
+  CANONICAL_TOKEN_COUNT_METHOD,
+  countCanonicalTokens,
+} from "../measurement/token-counter";
 
 export const STATIC_EXPOSURE_SCHEMA_VERSION = "p6-3-static-exposure-v1" as const;
 export const STATIC_REPOSITORY_SERIALIZER_VERSION =
@@ -40,8 +43,10 @@ export interface StaticExposureUnitProvenance {
 
 export interface ELStaticExposureLog {
   schemaVersion: typeof STATIC_EXPOSURE_SCHEMA_VERSION;
+  tokenCountMethod: typeof CANONICAL_TOKEN_COUNT_METHOD;
   staticRepositorySerializerVersion: typeof STATIC_REPOSITORY_SERIALIZER_VERSION;
   artifactUnitMappingVersion: typeof STATIC_EXPOSURE_UNIT_MAPPING_VERSION;
+  artifactChunkerVersion: string;
   selectorKind: string;
   selectorId: string;
   rankingPolicyVersion: string;
@@ -99,6 +104,7 @@ export function buildStaticExposurePrefix(args: {
   fullRepositoryFiles: Readonly<Record<string, string>>;
   budgetTokens: number;
   maxTokensPerUnit: number;
+  artifactChunkerVersion: string;
   selectorKind: string;
   selectorId: string;
   rankingPolicyVersion: string;
@@ -108,6 +114,9 @@ export function buildStaticExposurePrefix(args: {
   }
   if (!Number.isInteger(args.maxTokensPerUnit) || args.maxTokensPerUnit <= 0) {
     throw new Error("static exposure maxTokensPerUnit must be a positive integer");
+  }
+  if (!args.artifactChunkerVersion) {
+    throw new Error("static exposure artifactChunkerVersion must be non-empty");
   }
 
   const selected: StaticExposureOrderedUnit[] = [];
@@ -146,8 +155,10 @@ export function buildStaticExposurePrefix(args: {
     selectedUnitIds: selected.map((entry) => entry.unit.id),
     log: {
       schemaVersion: STATIC_EXPOSURE_SCHEMA_VERSION,
+      tokenCountMethod: CANONICAL_TOKEN_COUNT_METHOD,
       staticRepositorySerializerVersion: STATIC_REPOSITORY_SERIALIZER_VERSION,
       artifactUnitMappingVersion: STATIC_EXPOSURE_UNIT_MAPPING_VERSION,
+      artifactChunkerVersion: args.artifactChunkerVersion,
       selectorKind: args.selectorKind,
       selectorId: args.selectorId,
       rankingPolicyVersion: args.rankingPolicyVersion,
