@@ -1,0 +1,153 @@
+name: Temp EL static runtime patch
+
+on:
+  push:
+    branches: [feat/p6-3-el-static-runtime]
+    paths:
+      - '.github/workflows/temp-el-static-runtime-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p6-3-el-static-runtime
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Apply EL static runtime integration
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              s = p.read_text()
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, got {n}: {old[:100]!r}")
+              p.write_text(s.replace(old, new, 1))
+
+          replace_once(
+              'harness/src/types.ts',
+              'import type { RetrievedGenerationLog } from "./context/retrieved-generation-log";\n',
+              'import type { RetrievedGenerationLog } from "./context/retrieved-generation-log";\nimport type { ElStaticExposureLog } from "./context/el-static-exposure";\n'
+          )
+          replace_once(
+              'harness/src/types.ts',
+              '  /** AF/MOI/legacy context budget or PR/AR B_work. */\n  contextBudget: number | "full";\n',
+              '  /** AF/MOI/legacy context budget, EL B_expose, or PR/AR B_work. */\n  contextBudget: number | "full";\n  /** EL ArtifactUnit selector granularity; freeze before any EL live execution. */\n  staticExposureMaxTokensPerUnit?: number;\n'
+          )
+          replace_once(
+              'harness/src/types.ts',
+              '  actual_context_tokens: number;\n  context_contents: Record<string, string>;\n',
+              '  actual_context_tokens: number;\n  /** Present for task-aware EL static exposure; absent/null for other conditions and historical logs. */\n  static_exposure_log?: ElStaticExposureLog | null;\n  context_contents: Record<string, string>;\n'
+          )
+
+          replace_once(
+              'harness/src/config/validate.ts',
+              '    "maxToolRounds",\n    ...RETRIEVED_LIMIT_FIELDS,\n',
+              '    "maxToolRounds",\n    "staticExposureMaxTokensPerUnit",\n    ...RETRIEVED_LIMIT_FIELDS,\n'
+          )
+          replace_once(
+              'harness/src/config/validate.ts',
+              '''  const retrievedCondition = value.condition === "PR" || value.condition === "AR";\n  if (retrievedCondition) {\n    requireOwn(value, "contextBudget");\n    for (const key of RETRIEVED_LIMIT_FIELDS) requireOwn(value, key);\n    if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget <= 0) {\n      throw new Error(`${value.condition} requires a positive integer contextBudget representing B_work`);\n    }\n  }\n''',
+              '''  const retrievedCondition = value.condition === "PR" || value.condition === "AR";\n  if (retrievedCondition) {\n    requireOwn(value, "contextBudget");\n    for (const key of RETRIEVED_LIMIT_FIELDS) requireOwn(value, key);\n    if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget <= 0) {\n      throw new Error(`${value.condition} requires a positive integer contextBudget representing B_work`);\n    }\n  }\n\n  if (value.condition === "EL") {\n    requireOwn(value, "contextBudget");\n    requireOwn(value, "staticExposureMaxTokensPerUnit");\n    if (typeof value.contextBudget !== "number" || !Number.isInteger(value.contextBudget) || value.contextBudget < 0) {\n      throw new Error("EL requires a non-negative integer contextBudget representing B_expose");\n    }\n    if (typeof value.staticExposureMaxTokensPerUnit !== "number" ||\n        !Number.isInteger(value.staticExposureMaxTokensPerUnit) ||\n        value.staticExposureMaxTokensPerUnit <= 0) {\n      throw new Error("EL requires a positive integer staticExposureMaxTokensPerUnit");\n    }\n  }\n'''
+          )
+          replace_once(
+              'harness/src/config/validate.ts',
+              '''  if ((config.condition === "AF" || config.condition === "MOI") && config.contextBudget !== "full") {\n    throw new Error(`${config.condition} requires contextBudget="full"; numeric context budgets would misrepresent Operational-Full semantics`);\n  }\n\n  if (config.condition === "PR" || config.condition === "AR") {\n''',
+              '''  if ((config.condition === "AF" || config.condition === "MOI") && config.contextBudget !== "full") {\n    throw new Error(`${config.condition} requires contextBudget="full"; numeric context budgets would misrepresent Operational-Full semantics`);\n  }\n\n  if (config.condition === "EL") {\n    if (typeof config.contextBudget !== "number" || !Number.isInteger(config.contextBudget) || config.contextBudget < 0) {\n      throw new Error("EL requires a non-negative integer B_expose contextBudget");\n    }\n    if (config.staticExposureMaxTokensPerUnit === undefined ||\n        !Number.isInteger(config.staticExposureMaxTokensPerUnit) ||\n        config.staticExposureMaxTokensPerUnit <= 0) {\n      throw new Error("EL requires staticExposureMaxTokensPerUnit to be a positive integer");\n    }\n  }\n\n  if (config.condition === "PR" || config.condition === "AR") {\n'''
+          )
+
+          replace_once(
+              'harness/src/context/assembler.ts',
+              '''    case "EL":\n      throw stage1RuntimeNotImplemented("EL", "static exposure selector / B_expose runtime");\n''',
+              '''    case "EL":\n      throw new Error(\n        "Context condition EL requires the task-aware static exposure dispatcher; " +\n          "generic assembleContext() has no task/ground-truth inputs. Refusing legacy fallback."\n      );\n'''
+          )
+          replace_once(
+              'harness/src/context/assembler.ts',
+              '''function stage1RuntimeNotImplemented(condition: string, dependency: string): Error {\n  return new Error(\n    `Context condition ${condition} is defined but its execution semantics are not implemented yet (${dependency}). ` +\n    `Refusing to fall back to a legacy context mode.`\n  );\n}\n\n''',
+              ''
+          )
+
+          replace_once(
+              'harness/src/orchestrator.ts',
+              'import { runRetrievedCondition } from "./context/retrieved-condition-dispatcher";\n',
+              'import { runRetrievedCondition } from "./context/retrieved-condition-dispatcher";\nimport { buildElStaticExposureForTask } from "./context/el-static-exposure-dispatcher";\n'
+          )
+          replace_once(
+              'harness/src/orchestrator.ts',
+              '''  const repositoryBefore = { ...currentFiles };\n  const retrievedCondition = config.condition === "PR" || config.condition === "AR";\n  const contextFiles = retrievedCondition ? {} : assembleContext(currentFiles, config.condition);\n  const inheritedInteractionRecord = selectInheritedInteractionRecord(\n''',
+              '''  const repositoryBefore = { ...currentFiles };\n  const retrievedCondition = config.condition === "PR" || config.condition === "AR";\n  const staticExposure = config.condition === "EL"\n    ? buildElStaticExposureForTask({ config, task, repositoryFiles: currentFiles })\n    : null;\n  const contextFiles = retrievedCondition\n    ? {}\n    : staticExposure\n      ? staticExposure.contextFiles\n      : assembleContext(currentFiles, config.condition);\n  const inheritedInteractionRecord = selectInheritedInteractionRecord(\n'''
+          )
+          replace_once(
+              'harness/src/orchestrator.ts',
+              '    actualContextTokens = estimateTokenCount(contextFiles);\n',
+              '    actualContextTokens = staticExposure?.log.actualPayloadTokens ?? estimateTokenCount(contextFiles);\n'
+          )
+          replace_once(
+              'harness/src/orchestrator.ts',
+              '    actual_context_tokens: actualContextTokens,\n    context_contents: contextFiles,\n',
+              '    actual_context_tokens: actualContextTokens,\n    static_exposure_log: staticExposure?.log ?? null,\n    context_contents: contextFiles,\n'
+          )
+
+          replace_once(
+              'harness/src/logging.ts',
+              '    actual_context_tokens: log.actual_context_tokens,\n    observable_interaction: {\n',
+              '''    actual_context_tokens: log.actual_context_tokens,\n    static_exposure: log.static_exposure_log\n      ? {\n          schema_version: log.static_exposure_log.schemaVersion,\n          selector_policy_version: log.static_exposure_log.selectorPolicyVersion,\n          ranking_policy_version: log.static_exposure_log.rankingPolicyVersion,\n          serializer_version: log.static_exposure_log.staticRepositorySerializerVersion,\n          canonical_token_count_method: log.static_exposure_log.canonicalTokenCountMethod,\n          nominal_budget_tokens: log.static_exposure_log.nominalBudgetTokens,\n          actual_payload_tokens: log.static_exposure_log.actualPayloadTokens,\n          full_payload_tokens: log.static_exposure_log.fullPayloadTokens,\n          max_tokens_per_unit: log.static_exposure_log.maxTokensPerUnit,\n          ordered_plan_sha256: log.static_exposure_log.orderedPlanSha256,\n          exposure_sha256: log.static_exposure_log.exposureSha256,\n        }\n      : null,\n    observable_interaction: {\n'''
+          )
+          replace_once(
+              'harness/src/logging.ts',
+              '  writeJson(generationDir, "context_contents.json", log.context_contents);\n  writeJson(generationDir, "agent_prompt.json", { prompt: log.agent_prompt });\n',
+              '''  writeJson(generationDir, "context_contents.json", log.context_contents);\n  if (log.static_exposure_log) {\n    writeJson(generationDir, "static_exposure.json", log.static_exposure_log);\n  }\n  writeJson(generationDir, "agent_prompt.json", { prompt: log.agent_prompt });\n'''
+          )
+
+          replace_once(
+              'harness/verify-context-conditions.ts',
+              '''// EL is still intentionally unimplemented. PR/AR are dynamic retrieval conditions:\n// the static assembler must expose zero repository evidence so the common retrieved\n// episode runtime remains the only path to model-visible artifact evidence.\nassert.throws(\n  () => assembleContext(repository, "EL"),\n  /Context condition EL is defined but its execution semantics are not implemented yet/\n);\n''',
+              '''// EL is executable only through the task-aware static exposure dispatcher.\n// The generic assembler lacks task/ground-truth inputs and must fail closed instead of\n// silently falling back to the legacy simple-limited context. PR/AR remain dynamic.\nassert.throws(\n  () => assembleContext(repository, "EL"),\n  /requires the task-aware static exposure dispatcher/\n);\n'''
+          )
+          replace_once(
+              'harness/verify-context-conditions.ts',
+              '  staticExecutable: ["AF", "MOI"],\n  dynamicRetrievedExecutable: ["PR", "AR"],\n',
+              '  staticExecutable: ["AF", "MOI", "EL-via-task-aware-dispatcher"],\n  dynamicRetrievedExecutable: ["PR", "AR"],\n'
+          )
+
+          replace_once(
+              'harness/package.json',
+              '    "verify:context-conditions": "ts-node verify-context-conditions.ts",\n',
+              '    "verify:context-conditions": "ts-node verify-context-conditions.ts",\n    "verify:el-static-exposure": "ts-node verify-el-static-exposure.ts",\n'
+          )
+
+          replace_once(
+              '.github/workflows/harness-ci.yml',
+              '''      - name: Verify Stage 1 context condition metadata\n        working-directory: harness\n        run: npm run verify:context-conditions\n      - name: Verify P2 observable interaction runtime\n''',
+              '''      - name: Verify Stage 1 context condition metadata\n        working-directory: harness\n        run: npm run verify:context-conditions\n      - name: Verify P6-3 EL static exposure runtime\n        working-directory: harness\n        run: npm run verify:el-static-exposure\n      - name: Verify P2 observable interaction runtime\n'''
+          )
+          PY
+      - name: Validate integrated EL runtime
+        working-directory: harness
+        run: |
+          npm ci
+          npm run typecheck
+          npm run verify:context-conditions
+          npm run verify:el-static-exposure
+      - name: Check patch hygiene
+        run: git diff --check
+      - name: Commit runtime integration and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/temp-el-static-runtime-patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: integrate task-aware EL static exposure runtime'
+          git push origin HEAD:feat/p6-3-el-static-runtime
