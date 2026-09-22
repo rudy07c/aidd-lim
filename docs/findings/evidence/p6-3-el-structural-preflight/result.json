@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "p6-3-el-structural-preflight-v1",
+  "status": "structural-candidate-selected",
+  "executedAt": "2026-09-22",
+  "sourceCommit": "456a118fc7f05a55c132adc773b354cd3bba47f5",
+  "selectionRule": "largest-predeclared-maxTokensPerUnit-satisfying-all-primary-M-and-Rsem-structural-gates",
+  "canonicalTokenCountMethod": "js-tiktoken:o200k_base:v1",
+  "fullPayloadTokens": 4046,
+  "budgetGrid": {
+    "B0": 0,
+    "B1": 505,
+    "B2": 1011,
+    "B3": 2023,
+    "B4": 3034,
+    "AF": 4046,
+    "rounding": "floor"
+  },
+  "maxTokensPerUnitCandidates": [512, 384, 256, 192, 128, 96, 64],
+  "candidateResults": [
+    { "maxTokensPerUnit": 512, "ok": true },
+    { "maxTokensPerUnit": 384, "ok": true },
+    { "maxTokensPerUnit": 256, "ok": true },
+    { "maxTokensPerUnit": 192, "ok": true },
+    { "maxTokensPerUnit": 128, "ok": true },
+    { "maxTokensPerUnit": 96, "ok": true },
+    { "maxTokensPerUnit": 64, "ok": true }
+  ],
+  "selectedMaxTokensPerUnit": 512,
+  "primaryTaskIds": [
+    "T-local-2",
+    "T-crosscut-1",
+    "T-delayed-1",
+    "T-local-3",
+    "T-local-4",
+    "T-local-5",
+    "T-local-6",
+    "T-local-7",
+    "T-crosscut-3",
+    "T-crosscut-4",
+    "T-delayed-2"
+  ],
+  "rsem": {
+    "selectorVersion": "el-rsem-bank-union-ground-truth-dependency-system2-reread-v2-v1",
+    "rankingPolicyVersion": "ground-truth-dependency-system2-reread-v2",
+    "planInputSha256": "bd3a97e57f16929b5cb27a23d725b70c1e7e0251c096300601dce3ccab0c8b23",
+    "probeIds": [
+      "A-obfuscated-bool-r01",
+      "A-obfuscated-bool-r02",
+      "A-obfuscated-bool-r03",
+      "A-obfuscated-bool-r04",
+      "A-obfuscated-bool-r05",
+      "A-obfuscated-bool-r06",
+      "A-obfuscated-bool-r07",
+      "A-obfuscated-bool-r08",
+      "A-obfuscated-bool-r09",
+      "A-obfuscated-bool-r10",
+      "A-obfuscated-bool-r11",
+      "A-obfuscated-bool-r12"
+    ],
+    "unionEntities": ["E1", "E2", "E3", "E4", "E5"]
+  },
+  "selectedProfiles": {
+    "T-local-2": { "actualTokens": [0, 339, 842, 1678, 3010], "selectedUnitCounts": [0, 4, 5, 7, 11] },
+    "T-crosscut-1": { "actualTokens": [0, 339, 842, 1678, 2808], "selectedUnitCounts": [0, 4, 5, 7, 11] },
+    "T-delayed-1": { "actualTokens": [0, 339, 842, 1678, 2714], "selectedUnitCounts": [0, 4, 5, 7, 10] },
+    "T-local-3": { "actualTokens": [0, 339, 842, 1678, 2714], "selectedUnitCounts": [0, 4, 5, 7, 10] },
+    "T-local-4": { "actualTokens": [0, 339, 842, 1678, 3010], "selectedUnitCounts": [0, 4, 5, 7, 11] },
+    "T-local-5": { "actualTokens": [0, 339, 842, 1678, 2714], "selectedUnitCounts": [0, 4, 5, 7, 10] },
+    "T-local-6": { "actualTokens": [0, 339, 842, 1678, 2714], "selectedUnitCounts": [0, 4, 5, 7, 10] },
+    "T-local-7": { "actualTokens": [0, 339, 842, 1678, 3010], "selectedUnitCounts": [0, 4, 5, 7, 11] },
+    "T-crosscut-3": { "actualTokens": [0, 339, 842, 1678, 2714], "selectedUnitCounts": [0, 4, 5, 7, 10] },
+    "T-crosscut-4": { "actualTokens": [0, 339, 842, 1678, 2714], "selectedUnitCounts": [0, 4, 5, 7, 10] },
+    "T-delayed-2": { "actualTokens": [0, 339, 842, 1678, 2908], "selectedUnitCounts": [0, 4, 5, 7, 12] },
+    "Rsem-bank": { "actualTokens": [0, 339, 842, 1678, 2714], "selectedUnitCounts": [0, 4, 5, 7, 10] }
+  }
+}
