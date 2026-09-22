@@ -2,24 +2,34 @@
 
 ## Status
 
-**OPEN / MERGE BLOCKING.**
+**CLOSED / PASSED — M-side independence established.**
 
-The numerical repeat candidate `21` from the fresh 11-task AF-vs-AF variance pilot is not a valid formal freeze until M-side journal provenance is independently compared against the historical 12-task pilot.
+The fresh 11-task AF-vs-AF variance pilot is supported by a committed, record-level provenance audit showing that all 176 M records came from distinct fresh OpenAI responses rather than reuse of the historical variance-pilot journal. The numerical common-repeat candidate `21` is therefore provenance-eligible for the formal scientific repeat freeze.
+
+Machine-readable evidence:
+
+`docs/findings/evidence/p6-2-m-independence-audit.json`
+
+Permanent verifier:
+
+`npm run verify:p6-af-variance-m-independence`
 
 ## Trigger
 
-The fresh M sample SD is `0.07586572367238911`. The historical pilot, after diagnostic removal of `T-crosscut-5`, also yields `0.07586572367238911` (raw SD-UCB differs only at floating-point tail precision).
+The fresh M sample SD is `0.07586572367238911`. The historical pilot, after diagnostic removal of `T-crosscut-5`, also yields the same sample SD to floating-point precision.
 
 The pairwise M difference vectors are not identical:
 
 - historical 11-task diagnostic reaggregation: `[0,-1,0,+1,+1,-1,0,-1] / 11`
 - fresh 11-task pilot: `[-1,0,0,0,-1,-1,+1,+1] / 11`
 
-These vectors are permutations of the same multiset (`-1/11` x3, `0` x3, `+1/11` x2), which fully explains the exact equality of mean and sample SD. Therefore the SD equality is not itself evidence of stale-journal reuse, but it is sufficient to justify a stricter provenance check before merge.
+These vectors are permutations of the same multiset (`-1/11` x3, `0` x3, `+1/11` x2). Mean and sample SD are permutation-invariant, so the exact SD equality is mathematically explained by the discrete outcome multiset and is not evidence of stale-journal reuse.
 
-## Why committed result.json is insufficient
+Because the same SD could nevertheless have concealed an execution/provenance error, merge remained blocked until response-level independence was tested.
 
-M events in the committed variance `result.json` contain classified task results but do not persist the OpenAI `responseId` or raw model response. During the live run those fields are persisted separately for every M record under:
+## Why committed result.json alone was insufficient
+
+M events in the committed variance `result.json` contain classified task results but do not persist the OpenAI `responseId` or raw model response. During each live run those fields are persisted separately for every M record under:
 
 `pair-N/attempt-K/<arm>/<task>/model_provenance.json`
 
@@ -27,25 +37,21 @@ and
 
 `pair-N/attempt-K/<arm>/<task>/agent_response.txt`.
 
-`runs/_calibration/` is gitignored, so these journal artifacts are available only in the original local run directories unless explicitly converted into committed evidence.
+`runs/_calibration/` is gitignored, so the original local historical/fresh journal directories were used once to generate the committed machine-readable audit artifact.
 
-## Audit population
+## Audit population and matching rule
 
-Compare exactly the 176 M records in the current 11-task bank:
+Exactly 176 M records were compared:
 
 - 8 accepted pairs
-- 11 primary tasks
+- 11 current primary tasks
 - 2 arms per pair
 
-For each `(pairId, taskId, arm)` key, use the accepted attempt from each result independently. This matters because the historical pilot contains an infrastructure replacement attempt.
+For each `(pairId, taskId, arm)` key, the audit independently selected the accepted attempt from each result. This is important because the historical pilot contains an infrastructure-replacement attempt.
 
-## Required comparison fields
+For every corresponding record the audit preserves:
 
-For every corresponding record, preserve:
-
-- pair ID
-- task ID
-- arm
+- pair ID, task ID, and arm
 - fresh/historical accepted attempt number
 - fresh/historical arm execution order
 - fresh/historical OpenAI response ID
@@ -55,42 +61,47 @@ For every corresponding record, preserve:
 - journal timestamp and per-file mtimes
 - result-event SHA-256/equality as a secondary diagnostic
 
-The existing journal schema does not persist a provider/API execution timestamp for M calls. The audit therefore labels filesystem mtime explicitly as filesystem evidence; it must not be represented as an OpenAI API timestamp.
+## Result
 
-## Decision rule
+The committed audit verdict is:
 
-`independent-new-api-calls` requires all of the following:
+`independent-new-api-calls`
 
-1. all 176 fresh and historical journal artifact bundles exist;
-2. all 176 fresh and historical response IDs are present;
-3. all 176 fresh response IDs are unique;
-4. corresponding fresh/historical response ID equality count is 0;
-5. corresponding fresh/historical raw response equality count is 0;
-6. every fresh journal timestamp lies in the fresh run window (with the audit tool's small filesystem tolerance);
-7. the earliest fresh M journal timestamp is later than the latest historical M journal timestamp.
+Summary:
 
-Any missing provenance, reused response ID, reused corresponding raw response, or incompatible timestamp evidence yields `independence-not-established` and the formal freeze remains invalid.
+- expected records: **176**
+- compared records: **176**
+- missing fresh artifact records: **0**
+- missing historical artifact records: **0**
+- missing fresh response IDs: **0**
+- missing historical response IDs: **0**
+- unique fresh response IDs: **176**
+- unique historical response IDs: **176**
+- corresponding response-ID matches: **0**
+- corresponding raw-response matches: **0**
+- identical classified result events: **0**
+- fresh journal timestamps outside fresh run window: **0**
+- earliest fresh M journal timestamp: `2026-09-21T11:46:29.143Z`
+- latest fresh M journal timestamp: `2026-09-21T12:41:55.107Z`
+- latest historical M journal timestamp: `2026-09-21T08:00:35.524Z`
+- all fresh M journal timestamps later than the latest historical M journal timestamp: **true**
 
-## Tooling
+This rules out reuse of corresponding historical M responses under the recorded journal provenance: no response ID was reused, no corresponding raw model response was reused, all 176 fresh response IDs are unique, and the fresh journal artifacts belong to the later fresh-run time window.
 
-Generate the machine-readable evidence from the original local journals:
+## Timestamp evidence limitation
 
-```bash
-cd harness
-npm run p6:audit-af-variance-m-independence -- \
-  --historical ../runs/_calibration/p6-2-af-variance-pilot-luna__2026-09-21T06-11-21-275Z/result.json \
-  --fresh ../runs/_calibration/p6-2-af-variance-pilot-luna__2026-09-21T11-46-12-077Z/result.json \
-  --out ../docs/findings/evidence/p6-2-m-independence-audit.json
-```
+The M journal schema used by these runs did not persist a provider/API execution timestamp. Therefore `journalTimestamp` in the audit is derived from filesystem mtimes for `agent_response.txt`, `model_provenance.json`, and `repeat_meta.json` and is explicitly **not** represented as an OpenAI API timestamp.
 
-Then run:
+This limitation does not affect the strongest independence evidence: OpenAI response IDs are present for all 176 corresponding records, all 176 fresh IDs are unique, and the historical/fresh response-ID intersection for corresponding records is zero. Raw responses are also different for all 176 corresponding records.
 
-```bash
-npm run verify:p6-af-variance-m-independence
-```
+## Decision
 
-The generated JSON intentionally contains the raw fresh/historical model responses as well as hashes so the exact comparison is inspectable and reproducible. Once the evidence is committed, Harness CI reruns the permanent verifier.
+The fresh M variance sample is accepted as independently generated. No M-only rerun is required.
 
-## Current conclusion
+Accordingly:
 
-No conclusion about formal M independence is recorded yet because the original local journal files are not committed to the repository and are not accessible from the GitHub-side review environment. PR #2 must remain unmerged until the generated audit evidence is committed and the permanent verifier passes.
+1. the post-selection diagnostic historical 11-task reaggregation remains diagnostic-only and is not pooled into the fresh sample;
+2. the fresh 11-task sizing values remain the basis for repeat planning;
+3. `M requiredN = 21`, `Rsem requiredN = 16`, and common repeat `max(8,21,16) = 21` may be treated as the formal scientific repeat freeze;
+4. the historical 12-task result remains separately reported (`n<=30` insufficient; diagnostic extension approximately `n=37`);
+5. the permanent CI verifier must continue to pass against the committed audit evidence before PR #2 is merged.
