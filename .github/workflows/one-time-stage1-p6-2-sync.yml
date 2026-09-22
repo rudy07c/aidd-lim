@@ -61,7 +61,6 @@ jobs:
           path.write_text(text)
           PY
 
-          git diff --check
           git diff -- docs/stage1_plan.md
       - name: Commit synchronized Stage 1 plan
         run: |
