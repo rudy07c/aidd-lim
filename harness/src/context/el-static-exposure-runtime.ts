@@ -19,6 +19,8 @@ import {
 
 export const EL_TASK_SELECTOR_VERSION =
   "p6-3-el-task-selector-pr-ranking-v1" as const;
+export const EL_ARTIFACT_CHUNKER_VERSION =
+  "artifact-unit-chunkArtifactFile-v1" as const;
 
 export interface ELTaskDescriptor {
   taskId: string;
@@ -99,6 +101,7 @@ export function assembleELTaskStaticExposure(args: {
     fullRepositoryFiles: repositoryFiles,
     budgetTokens: config.contextBudget,
     maxTokensPerUnit,
+    artifactChunkerVersion: EL_ARTIFACT_CHUNKER_VERSION,
     selectorKind: "task-privileged-ranking",
     selectorId: `${EL_TASK_SELECTOR_VERSION}:${task.taskId}`,
     rankingPolicyVersion: PRIVILEGED_RETRIEVAL_POLICY_VERSION,
