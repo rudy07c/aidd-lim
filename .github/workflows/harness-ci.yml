@@ -6,12 +6,14 @@ on:
       - 'harness/**'
       - 'calibration/**'
       - 'synthetic-world/**'
+      - 'docs/findings/evidence/p6-2-m-independence-audit.json'
       - '.github/workflows/harness-ci.yml'
   pull_request:
     paths:
       - 'harness/**'
       - 'calibration/**'
       - 'synthetic-world/**'
+      - 'docs/findings/evidence/p6-2-m-independence-audit.json'
       - '.github/workflows/harness-ci.yml'
 
 permissions:
@@ -132,6 +134,9 @@ jobs:
       - name: Verify P6-2 historical variance reanalysis audit
         working-directory: harness
         run: npm run verify:p6-af-variance-reanalysis
+      - name: Verify P6-2 fresh M variance independence evidence
+        working-directory: harness
+        run: npm run verify:p6-af-variance-m-independence
       - name: Verify installed SDK version provenance
         working-directory: harness
         run: npm run verify:package-version
