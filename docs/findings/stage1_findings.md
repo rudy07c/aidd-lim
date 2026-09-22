@@ -95,7 +95,7 @@ historical 8 accepted pairを11-taskで再集約した診断値は、M pair diff
 
 12-task historical designと11-task current designは最終報告で必ず併記する。historical 12-task designではM sample SD=`0.09383263553830025`、95% SD-UCB=`0.16863138961044855`、n=30 power=`0.6816437585696477`で、predeclared ceiling内requiredNは`null`（同一exact式をceiling外へ延長したdiagnostic最小nは37相当）。11-taskのhistorical再集約21はselection後diagnosticにすぎず、fresh pilot後のformal Nと混同しない。
 
-## F18: P6-2 AF baseline本取得完了 — high-but-nonsaturated hub baseline
+## F18: P6-2 AF baseline本取得完了 — aggregate high-but-nonsaturated / M semantic channel observed ceiling / Rsem residual concentrated
 
 **日付**: 2026-09-22  
 **Phase**: Pre-Stage 1 P6-2  
@@ -103,12 +103,58 @@ historical 8 accepted pairを11-taskで再集約した診断値は、M pair diff
 **Evidence**: `docs/findings/evidence/p6-2-af-baseline/result.json`  
 **Completion record**: `docs/findings/p6_2_af_baseline.md`
 
-fresh 11-task variance pilotとM-side independence auditを経てfreezeした`N=21`をそのまま用い、P6-2 AF baseline本取得を完了した。primary Mは11 task × 21 repeat = **231/231がscientifically valid**で、217 pass / 14 failure、`passRate=0.9393939394`。primary側のaudit exclusionは0で、14 failureはすべて`protocol`、`semantic/system/infrastructure/other`は0だった。
+fresh 11-task variance pilotとM-side independence auditを経てfreezeした`N=21`をそのまま用い、P6-2 AF baseline本取得を完了した。primary Mは11 task × 21 repeat = **231/231がscientifically valid**で、end-to-endでは217 pass / 14 protocol failure、`passRate=0.9393939394`。ただし、この231件をそのまま「semantic correctnessが231件すべて観測された」と読んではならない。**231件中217件だけがsemantic-evaluableであり、その217件は217/217 passだった。残る14件はmutation/output protocol failureのため、semantic correctnessは未観測（semantic-censored）である。** primary側にsemantic failureとして観測されたrepeatは0だが、これは「0/231 semantic failure」ではなく「evaluable subsetで217/217 pass」と条件付きで記述する。
 
 eligible diagnostic 2 taskは42 repeat中41がscientifically validで36 pass、valid-repeat pass rateは`0.8780487805`。`T-invariant-stress-3` repeat 19でAPI credit exhaustionによるHTTP 429が発生したが、`actualModel=null`かつusage=0のprovider-side実行不能だったため`infrastructure-invalid`として明示adjudicateした。同じrunをresumeして完走し、最終resultのunresolved audit flagは0である。
 
-Rsemは`stage1-neutral-relation-v2`の12 balanced boolean probeを21 repeat実行し、**235/252 = 0.9325396825**。21/21 repeatがprotocol-validで、protocol reliability=`1.0`。4 repeatが12/12、17 repeatが11/12であり、high baselineではあるが全repeatが1.0へ張り付く完全飽和ではない。
+Rsemは`stage1-neutral-relation-v2`の12 balanced boolean probeを21 repeat実行し、**235/252 = 0.9325396825**。21/21 repeatがprotocol-validで、protocol reliability=`1.0`。aggregateでは1.0へ張り付いておらず後続比較用のheadroomを残す一方、probe-wiseには残差17誤答がすべて単一probe `A-obfuscated-bool-r11`へ集中している（詳細はF20）。したがって、**AFはaggregateではhigh-but-nonsaturatedだが、Mのsemantic channelは観測可能だったevaluable subsetの範囲ではceiling、Rsemの非飽和性は単一probe由来**という非対称なbaselineである。
 
-したがってAFは、後続EL / PR / ARを比較するhub baselineとして保存可能である。一方で、primary Mの失敗がすべてprotocol domainだった点は重要なbaseline特性である。以後のcondition差でMが低下した場合、**その低下を自動的にsemantic reconstruction lossとは解釈せず、semantic / protocol / system / infrastructureのdomain分解を必ず併記する**。
+このため、後続EL / PR / ARでMが低下した場合は、その低下を自動的にsemantic reconstruction lossとは解釈せず、semantic / protocol / system / infrastructureのdomain分解を必ず併記する。またRsemのaggregate差だけでなくprobe-wise差も保存し、単一probeの変化がaggregateを支配していないかを確認する。
 
 P6-2のresultを見た後にtask membership、`Delta_M=1/11`、`Delta_R=1/12`、N=21を再調整しない。次phaseはP6-3 EL static dose-responseとする。
+
+## F19: AF M residual failureはsemanticではなくmutation-output protocolに集中
+
+**日付**: 2026-09-22  
+**Phase**: P6-2 post-completion mechanism audit  
+**Evidence**: `docs/findings/evidence/p6-2-af-baseline/result.json`
+
+AF baselineのM stream全273 repeat（primary 231 + eligible diagnostic 42）には、`protocol` failureが**19件**あった。内訳は、**18件がstructured mutation output内のDuplicate modified file path、1件が`write-outside-repository-contract:workingNote`**である。primary Mのend-to-end pass rateが`217/231 = 0.9393939394`で1.0に達しなかった14件もすべてprotocol failureであり、semantic-evaluable primary repeatは217/217 passだった。
+
+19件のtask / failure reason内訳は次の通り。
+
+| task | protocol failure内訳 | count |
+|---|---|---:|
+| `T-crosscut-1` | Duplicate `src/protocol_adapter.ts` | 1 |
+| `T-crosscut-3` | Duplicate `src/osk/rules.ts` | 1 |
+| `T-crosscut-4` | Duplicate `src/fen/rules.ts` | 2 |
+| `T-delayed-2` | Duplicate `src/tal/rules.ts` | 3 |
+| `T-invariant-stress-3` | Duplicate `src/rush/rules.ts` ×3 / `src/rushZefFen.ts` ×1 / `src/zef/rules.ts` ×1 | 5 |
+| `T-local-2` | `write-outside-repository-contract:workingNote` | 1 |
+| `T-local-3` | Duplicate `src/fen/rules.ts` | 1 |
+| `T-local-4` | Duplicate `src/vok/rules.ts` | 3 |
+| `T-local-5` | Duplicate `src/zef/rules.ts` | 1 |
+| `T-local-7` | Duplicate `src/vok/rules.ts` | 1 |
+
+Duplicate modified file path 18件をpath別に再集計すると、`src/protocol_adapter.ts`=1、`src/fen/rules.ts`=3、`src/tal/rules.ts`=3、`src/vok/rules.ts`=4、`src/zef/rules.ts`=2、`src/osk/rules.ts`=1、`src/rush/rules.ts`=3、`src/rushZefFen.ts`=1で、合計18件となる。
+
+したがって、**少なくとも今回のAF baselineでprimary M=0.9394が1.0にならなかった主要因はsemantic task理解の観測失敗ではなく、mutation-output protocol、特にserialization / duplicate-path handlingである。** これは既存finding `docs/findings/output_serialization_bottleneck.md` の **Output Serialization Bottleneck** と直接整合する。P6-3以降でprotocol failure率だけを改善するparser/schema/prompt変更を行うとAF baselineとの比較可能性を壊すため、同findingの改善を取り込む場合はAFを含む全比較条件を同一versionで再baselineする必要がある。
+
+なお、このfindingは「semantic能力が完全である」とは主張しない。protocol failure 19件ではsemantic correctnessそのものが観測されておらず、primaryについて言えるのはsemantic-evaluableだった217件が217/217 passだった、という条件付きの事実までである。
+
+## F20: Rsem AF residual errorはr11へ集中し、probe-specific root causeは未同定
+
+**日付**: 2026-09-22  
+**Phase**: P6-2 post-completion probe-wise audit  
+**Evidence**: `docs/findings/evidence/p6-2-af-baseline/result.json`  
+**Probe bank**: `calibration/fixtures/probe-bank-stage1.json`
+
+`stage1-neutral-relation-v2`の12 probeをprobe-wiseに再集計すると、**`A-obfuscated-bool-r11`だけが4/21 correctで、残る11 probeはすべて21/21 correct**だった。aggregateの235/252=`0.9325396825`という非飽和性は、17誤答すべてがr11に集中した結果である。
+
+probe bank上でr11は`correctAnswer=false`、`candidateSource="reachable-counterexample"`として定義されている。しかし、同じ`reachable-counterexample`型のfalse probeである `r03`, `r05`, `r08`, `r09`, `r12` はすべて21/21 correctだった。したがって、**「反例発見型だから難しい」というprobe classだけではr11の低正答率を説明できない。**
+
+r11固有の難しさについては、少なくともentity chainの長さ、obfuscation naming、matched invariantの構造、必要なreachable-state推論の段数などを候補として、別途root-cause investigationを行う必要がある。現時点ではどの要因が支配的かを特定できていないため、r11を一般的な「counterexample difficulty」の代表として扱わない。
+
+また、**r11はcurrent primary Rsem bank 12 probeから除外しない。** P6-2 outcomeを観測した後に低正答probeだけを除外するとpost-hoc probe selectionになるためである。r11除外結果を確認する場合は、P6-2後の明示的なsensitivity analysisとしてのみ併記し、primary Rsem outcomeや既存`Delta_R=1/12`を置き換えない。
+
+P6-3以降はaggregate Rsemに加えてprobe-wise accuracyを必須diagnosticとして保存し、特にr11がbudget dose-responseを単独で支配するか、他probeにも誤答が拡散するかを区別して報告する。
