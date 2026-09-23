@@ -12,6 +12,7 @@
     "verify:el-rsem-static-exposure": "ts-node verify-el-rsem-static-exposure.ts",
     "verify:el-orchestrator": "ts-node verify-el-orchestrator.ts",
     "verify:p6-3-structural-freeze": "ts-node verify-p6-3-el-structural-freeze.ts",
+    "verify:p6-3-freeze-manifest": "ts-node verify-p6-3-el-structural-freeze-manifest.ts",
     "verify:observable-interaction": "ts-node verify-observable-interaction.ts",
     "verify:working-set": "ts-node verify-working-set-manager.ts",
     "verify:working-set-reread": "ts-node verify-working-set-reread.ts",
