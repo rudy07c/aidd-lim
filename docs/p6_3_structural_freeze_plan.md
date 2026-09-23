@@ -41,12 +41,14 @@ The six calibration arms are:
 
 ```text
 0
-B1 = deterministic_integer_round(T_EL / 8)
-B2 = deterministic_integer_round(T_EL / 4)
-B3 = deterministic_integer_round(T_EL / 2)
-B4 = deterministic_integer_round(3 * T_EL / 4)
+B1 = floor(T_EL / 8)
+B2 = floor(T_EL / 4)
+B3 = floor(T_EL / 2)
+B4 = floor(3 * T_EL / 4)
 AF
 ```
+
+`floor` means integer floor toward negative infinity; `T_EL` is positive, so this is equivalent to truncating the positive quotient. This explicitly records the rounding rule already used by the structural verifier and does not change the frozen numeric budgets.
 
 The verifier must record the exact numeric values of `T_EL`, `B1`, `B2`, `B3`, and `B4` in the immutable freeze manifest before live execution.
 
