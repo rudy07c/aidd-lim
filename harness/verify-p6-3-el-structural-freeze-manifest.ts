@@ -4,8 +4,13 @@ import * as path from "path";
 
 interface CandidateExposure {
   label: string;
+  nominal: number;
   actual: number;
   selectedUnitCount: number;
+  exposureSetHash: string;
+  staticPayloadHash: string;
+  categoryUnitCounts: Record<string, number>;
+  categoryStaticPayloadTokens: Record<string, number>;
 }
 
 interface CandidatePlan {
@@ -48,7 +53,7 @@ assert.strictEqual(
 assert.deepStrictEqual(candidate.failures, [], "candidate must contain no structural failures");
 
 const expectedManifest = {
-  schemaVersion: "p6-3-el-structural-freeze-manifest-v1",
+  schemaVersion: "p6-3-el-structural-freeze-manifest-v2",
   sourceCandidateSchemaVersion: candidate.schemaVersion,
   candidateFingerprintSha256: candidate.candidateFingerprintSha256,
   status: "frozen-pass",
@@ -59,12 +64,16 @@ const expectedManifest = {
     planId: plan.planId,
     kind: plan.kind,
     selectorPlanHash: plan.selectorPlanHash,
-    actualTokens: Object.fromEntries(
-      plan.exposures.map((exposure) => [exposure.label, exposure.actual])
-    ),
-    selectedUnitCounts: Object.fromEntries(
-      plan.exposures.map((exposure) => [exposure.label, exposure.selectedUnitCount])
-    ),
+    exposures: plan.exposures.map((exposure) => ({
+      label: exposure.label,
+      nominal: exposure.nominal,
+      actual: exposure.actual,
+      selectedUnitCount: exposure.selectedUnitCount,
+      exposureSetHash: exposure.exposureSetHash,
+      staticPayloadHash: exposure.staticPayloadHash,
+      categoryUnitCounts: exposure.categoryUnitCounts,
+      categoryStaticPayloadTokens: exposure.categoryStaticPayloadTokens,
+    })),
   })),
   failures: candidate.failures,
 };
