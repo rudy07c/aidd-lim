@@ -72,6 +72,11 @@ jobs:
         env:
           P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
         run: npm run verify:p6-3-structural-freeze
+      - name: Verify committed P6-3 EL structural freeze manifest
+        working-directory: harness
+        env:
+          P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
+        run: npm run verify:p6-3-freeze-manifest
       - name: Upload P6-3 EL structural freeze candidate
         uses: actions/upload-artifact@v4
         with:
