@@ -42,6 +42,9 @@ interface FreezeCandidate {
   failures: string[];
 }
 
+const PREDECLARED_BASE_GIT_SHA =
+  "13934616b6c45148629f693bd2fc3343250ed6aa" as const;
+
 const candidatePath = process.env.P6_3_FREEZE_CANDIDATE_OUTPUT
   ? path.resolve(process.cwd(), process.env.P6_3_FREEZE_CANDIDATE_OUTPUT)
   : path.resolve(__dirname, "../runs/_smoke/p6-3-el-structural-freeze-candidate.json");
@@ -62,7 +65,8 @@ assert.deepStrictEqual(candidate.failures, [], "candidate must contain no struct
 
 const normalized = normalizeExposures(candidate.plans);
 const expectedManifest = {
-  schemaVersion: "p6-3-el-structural-freeze-manifest-v2",
+  schemaVersion: "p6-3-el-structural-freeze-manifest-v3",
+  baseGitSha: PREDECLARED_BASE_GIT_SHA,
   sourceCandidateSchemaVersion: candidate.schemaVersion,
   candidateFingerprintSha256: candidate.candidateFingerprintSha256,
   status: "frozen-pass",
@@ -92,6 +96,7 @@ console.log(
     {
       status: "ok",
       manifest: path.relative(path.resolve(__dirname, ".."), manifestPath),
+      baseGitSha: PREDECLARED_BASE_GIT_SHA,
       candidateFingerprintSha256: candidate.candidateFingerprintSha256,
       T_EL: (candidate.freezeCandidate as { T_EL?: number }).T_EL ?? null,
       planCount: candidate.planCount,
