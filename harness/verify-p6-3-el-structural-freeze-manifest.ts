@@ -34,10 +34,7 @@ interface FreezeCandidate {
 const candidatePath = process.env.P6_3_FREEZE_CANDIDATE_OUTPUT
   ? path.resolve(process.cwd(), process.env.P6_3_FREEZE_CANDIDATE_OUTPUT)
   : path.resolve(__dirname, "../runs/_smoke/p6-3-el-structural-freeze-candidate.json");
-const manifestPath = path.resolve(
-  __dirname,
-  "frozen/p6-3-el-structural-freeze.json"
-);
+const manifestPath = path.resolve(__dirname, "frozen/p6-3-el-structural-freeze.json");
 
 assert(fs.existsSync(candidatePath), `missing structural freeze candidate: ${candidatePath}`);
 assert(fs.existsSync(manifestPath), `missing frozen structural manifest: ${manifestPath}`);
@@ -52,6 +49,7 @@ assert.strictEqual(
 );
 assert.deepStrictEqual(candidate.failures, [], "candidate must contain no structural failures");
 
+const normalized = normalizeExposures(candidate.plans);
 const expectedManifest = {
   schemaVersion: "p6-3-el-structural-freeze-manifest-v2",
   sourceCandidateSchemaVersion: candidate.schemaVersion,
@@ -60,21 +58,8 @@ const expectedManifest = {
   freezeCandidate: candidate.freezeCandidate,
   fingerprints: candidate.fingerprints,
   planCount: candidate.planCount,
-  planSummaries: candidate.plans.map((plan) => ({
-    planId: plan.planId,
-    kind: plan.kind,
-    selectorPlanHash: plan.selectorPlanHash,
-    exposures: plan.exposures.map((exposure) => ({
-      label: exposure.label,
-      nominal: exposure.nominal,
-      actual: exposure.actual,
-      selectedUnitCount: exposure.selectedUnitCount,
-      exposureSetHash: exposure.exposureSetHash,
-      staticPayloadHash: exposure.staticPayloadHash,
-      categoryUnitCounts: exposure.categoryUnitCounts,
-      categoryStaticPayloadTokens: exposure.categoryStaticPayloadTokens,
-    })),
-  })),
+  exposureProfiles: normalized.exposureProfiles,
+  planSummaries: normalized.planSummaries,
   failures: candidate.failures,
 };
 
@@ -92,8 +77,58 @@ console.log(
       candidateFingerprintSha256: candidate.candidateFingerprintSha256,
       T_EL: (candidate.freezeCandidate as { T_EL?: number }).T_EL ?? null,
       planCount: candidate.planCount,
+      exposureProfileCount: normalized.exposureProfiles.length,
     },
     null,
     2
   )
 );
+
+function normalizeExposures(plans: CandidatePlan[]): {
+  exposureProfiles: Array<CandidateExposure & { profileId: string }>;
+  planSummaries: Array<{
+    planId: string;
+    kind: "M" | "Rsem";
+    selectorPlanHash: string;
+    budgetProfiles: Record<string, string>;
+  }>;
+} {
+  const exposureProfiles: Array<CandidateExposure & { profileId: string }> = [];
+  const profileIdsByCanonicalExposure = new Map<string, string>();
+
+  const planSummaries = plans.map((plan) => {
+    const budgetProfiles: Record<string, string> = {};
+    for (const exposure of plan.exposures) {
+      const canonical = stableStringify(exposure);
+      let profileId = profileIdsByCanonicalExposure.get(canonical);
+      if (!profileId) {
+        profileId = `profile-${String(exposureProfiles.length + 1).padStart(2, "0")}`;
+        profileIdsByCanonicalExposure.set(canonical, profileId);
+        exposureProfiles.push({ profileId, ...exposure });
+      }
+      budgetProfiles[exposure.label] = profileId;
+    }
+    return {
+      planId: plan.planId,
+      kind: plan.kind,
+      selectorPlanHash: plan.selectorPlanHash,
+      budgetProfiles,
+    };
+  });
+
+  return { exposureProfiles, planSummaries };
+}
+
+function stableStringify(value: unknown): string {
+  return JSON.stringify(sortForStableJson(value));
+}
+
+function sortForStableJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortForStableJson);
+  if (typeof value !== "object" || value === null) return value;
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+    result[key] = sortForStableJson((value as Record<string, unknown>)[key]);
+  }
+  return result;
+}
