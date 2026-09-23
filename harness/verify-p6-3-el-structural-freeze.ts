@@ -50,13 +50,6 @@ interface ExposureSummary {
   staticPayloadHash: string;
   selectedFilePaths: string[];
   selectedUnitIds: string[];
-  selectedUnits: Array<{
-    unitId: string;
-    path: string;
-    startLine: number;
-    endLine: number;
-    contentHash: string;
-  }>;
 }
 
 interface PlanSummary {
@@ -82,7 +75,7 @@ const PRIMARY_M_TASK_IDS = [
 // Scientific structural candidate predeclared before this verifier was added.
 const STATIC_EXPOSURE_MAX_TOKENS_PER_UNIT = 256;
 const RSEM_NAMING_SCHEME_ID = "A-obfuscated";
-const CANDIDATE_SCHEMA_VERSION = "p6-3-el-structural-freeze-candidate-v1" as const;
+const CANDIDATE_SCHEMA_VERSION = "p6-3-el-structural-freeze-candidate-v2" as const;
 
 const repoRoot = path.resolve(__dirname, "..");
 const syntheticWorldDir = path.join(repoRoot, "synthetic-world");
@@ -278,13 +271,6 @@ function summarizeExposure(
     staticPayloadHash: result.log.staticPayloadHash,
     selectedFilePaths: [...result.log.selectedFilePaths],
     selectedUnitIds: [...result.selectedUnitIds],
-    selectedUnits: result.log.selectedUnits.map((unit) => ({
-      unitId: unit.unitId,
-      path: unit.path,
-      startLine: unit.startLine,
-      endLine: unit.endLine,
-      contentHash: unit.contentHash,
-    })),
   };
 }
 
