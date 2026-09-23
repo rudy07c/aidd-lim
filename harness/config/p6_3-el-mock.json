@@ -1,0 +1,11 @@
+{
+  "experimentId": "p6-3-el-mock-e2e",
+  "lineageId": "lineage-0",
+  "runClass": "smoke",
+  "backend": "mock-noop",
+  "condition": "EL",
+  "contextBudget": 1200,
+  "staticExposureMaxTokensPerUnit": 256,
+  "generations": 1,
+  "tasks": ["T-crosscut-1"]
+}

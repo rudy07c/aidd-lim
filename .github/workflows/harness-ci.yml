@@ -61,6 +61,21 @@ jobs:
       - name: Verify Stage 1 context condition metadata
         working-directory: harness
         run: npm run verify:context-conditions
+      - name: Verify P6-3 EL static exposure runtime
+        working-directory: harness
+        run: npm run verify:el-static-exposure
+      - name: Verify P6-3 EL Rsem bank-level selector
+        working-directory: harness
+        run: npm run verify:el-rsem-static-exposure
+      - name: Verify P6-3 EL orchestrator integration
+        working-directory: harness
+        run: npm run verify:el-orchestrator
+      - name: P6-3 EL end-to-end run.ts smoke
+        working-directory: harness
+        run: |
+          npm run run -- --config config/p6_3-el-mock.json --smoke
+          test -f ../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/el_static_exposure.json
+          node -e 'const e=require("../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/el_static_exposure.json"); const m=require("../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/meta.json"); if(!(e.selectedUnitCount>0)||m.condition!=="EL"||m.actual_context_tokens!==e.actualExposedTokens) process.exit(1)'
       - name: Verify P2 observable interaction runtime
         working-directory: harness
         run: npm run verify:observable-interaction
