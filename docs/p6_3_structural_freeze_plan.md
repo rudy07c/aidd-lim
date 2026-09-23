@@ -155,6 +155,6 @@ Passing this structural phase is necessary but not sufficient for live execution
 - Rsem probe-wise diagnostics
 - calibration-only provenance separation from Stage 1A
 - predeclared conjunctive M/Rsem budget-selection rule
-- current 864-call cost estimate
+- current 864-call cost estimate — **recorded** in `docs/p6_3_cost_estimate.md` as a conservative **$2.35 USD** normal-run estimate using the 2026-09-23 GPT-5.6 Luna pricing snapshot
 
 No live call is authorized by this document alone.
