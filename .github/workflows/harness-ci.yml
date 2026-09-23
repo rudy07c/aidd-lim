@@ -69,7 +69,15 @@ jobs:
         run: npm run verify:el-rsem-static-exposure
       - name: Verify P6-3 EL structural freeze gate
         working-directory: harness
+        env:
+          P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
         run: npm run verify:p6-3-structural-freeze
+      - name: Upload P6-3 EL structural freeze candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-el-structural-freeze-candidate
+          path: runs/_smoke/p6-3-el-structural-freeze-candidate.json
+          if-no-files-found: error
       - name: Verify P6-3 EL orchestrator integration
         working-directory: harness
         run: npm run verify:el-orchestrator
