@@ -13,6 +13,17 @@ interface CandidateExposure {
   categoryStaticPayloadTokens: Record<string, number>;
 }
 
+interface ManifestExposureProfile {
+  label: string;
+  nominal: number;
+  actual: number;
+  selectedUnitCount: number;
+  exposureSetHash: string;
+  staticPayloadHash: string;
+  categoryUnitCounts: Record<string, number>;
+  categoryStaticPayloadTokens: Record<string, number>;
+}
+
 interface CandidatePlan {
   planId: string;
   kind: "M" | "Rsem";
@@ -92,7 +103,7 @@ console.log(
 );
 
 function normalizeExposures(plans: CandidatePlan[]): {
-  exposureProfiles: Array<CandidateExposure & { profileId: string }>;
+  exposureProfiles: Array<ManifestExposureProfile & { profileId: string }>;
   planSummaries: Array<{
     planId: string;
     kind: "M" | "Rsem";
@@ -100,18 +111,19 @@ function normalizeExposures(plans: CandidatePlan[]): {
     budgetProfiles: Record<string, string>;
   }>;
 } {
-  const exposureProfiles: Array<CandidateExposure & { profileId: string }> = [];
+  const exposureProfiles: Array<ManifestExposureProfile & { profileId: string }> = [];
   const profileIdsByCanonicalExposure = new Map<string, string>();
 
   const planSummaries = plans.map((plan) => {
     const budgetProfiles: Record<string, string> = {};
     for (const exposure of plan.exposures) {
-      const canonical = stableStringify(exposure);
+      const profile = toManifestExposureProfile(exposure);
+      const canonical = stableStringify(profile);
       let profileId = profileIdsByCanonicalExposure.get(canonical);
       if (!profileId) {
         profileId = `profile-${String(exposureProfiles.length + 1).padStart(2, "0")}`;
         profileIdsByCanonicalExposure.set(canonical, profileId);
-        exposureProfiles.push({ profileId, ...exposure });
+        exposureProfiles.push({ profileId, ...profile });
       }
       budgetProfiles[exposure.label] = profileId;
     }
@@ -124,6 +136,19 @@ function normalizeExposures(plans: CandidatePlan[]): {
   });
 
   return { exposureProfiles, planSummaries };
+}
+
+function toManifestExposureProfile(exposure: CandidateExposure): ManifestExposureProfile {
+  return {
+    label: exposure.label,
+    nominal: exposure.nominal,
+    actual: exposure.actual,
+    selectedUnitCount: exposure.selectedUnitCount,
+    exposureSetHash: exposure.exposureSetHash,
+    staticPayloadHash: exposure.staticPayloadHash,
+    categoryUnitCounts: exposure.categoryUnitCounts,
+    categoryStaticPayloadTokens: exposure.categoryStaticPayloadTokens,
+  };
 }
 
 function stableStringify(value: unknown): string {
