@@ -63,6 +63,13 @@ const expectedManifest = {
   failures: candidate.failures,
 };
 
+const expectedManifestOutput = process.env.P6_3_EXPECTED_FREEZE_MANIFEST_OUTPUT;
+if (expectedManifestOutput) {
+  const absoluteOutputPath = path.resolve(process.cwd(), expectedManifestOutput);
+  fs.mkdirSync(path.dirname(absoluteOutputPath), { recursive: true });
+  fs.writeFileSync(absoluteOutputPath, `${JSON.stringify(expectedManifest, null, 2)}\n`, "utf8");
+}
+
 assert.deepStrictEqual(
   manifest,
   expectedManifest,
