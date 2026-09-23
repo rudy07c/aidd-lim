@@ -1,9 +1,29 @@
+import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import type { GroundTruthDelta } from "../synthetic-world/schema";
-import { assembleELTaskStaticExposure } from "./src/context/el-static-exposure-runtime";
-import { assembleELRSemBankStaticExposure } from "./src/context/el-rsem-static-exposure-runtime";
-import { countStaticRepositoryPayloadTokens } from "./src/context/static-exposure";
+import {
+  assembleELTaskStaticExposure,
+  EL_ARTIFACT_CHUNKER_VERSION,
+  EL_TASK_SELECTOR_VERSION,
+} from "./src/context/el-static-exposure-runtime";
+import {
+  assembleELRSemBankStaticExposure,
+  EL_RSEM_BANK_SELECTOR_VERSION,
+} from "./src/context/el-rsem-static-exposure-runtime";
+import { PRIVILEGED_RETRIEVAL_POLICY_VERSION } from "./src/context/privileged-retrieval-controller";
+import {
+  countStaticRepositoryPayloadTokens,
+  serializeStaticRepositoryPayload,
+  STATIC_EXPOSURE_SCHEMA_VERSION,
+  STATIC_EXPOSURE_UNIT_MAPPING_VERSION,
+  STATIC_REPOSITORY_SERIALIZER_VERSION,
+  type StaticExposurePrefixResult,
+} from "./src/context/static-exposure";
+import {
+  CANONICAL_TOKEN_COUNT_METHOD,
+  CANONICAL_TOKEN_ENCODING,
+} from "./src/measurement/token-counter";
 import type { RunConfig } from "./src/types";
 
 interface HeldOutTask {
@@ -24,11 +44,19 @@ interface ExposureSummary {
   label: string;
   nominal: number;
   actual: number;
-  selectedUnits: number;
+  selectedUnitCount: number;
   selectorPlanHash: string;
   exposureSetHash: string;
   staticPayloadHash: string;
+  selectedFilePaths: string[];
   selectedUnitIds: string[];
+  selectedUnits: Array<{
+    unitId: string;
+    path: string;
+    startLine: number;
+    endLine: number;
+    contentHash: string;
+  }>;
 }
 
 interface PlanSummary {
@@ -54,6 +82,7 @@ const PRIMARY_M_TASK_IDS = [
 // Scientific structural candidate predeclared before this verifier was added.
 const STATIC_EXPOSURE_MAX_TOKENS_PER_UNIT = 256;
 const RSEM_NAMING_SCHEME_ID = "A-obfuscated";
+const CANDIDATE_SCHEMA_VERSION = "p6-3-el-structural-freeze-candidate-v1" as const;
 
 const repoRoot = path.resolve(__dirname, "..");
 const syntheticWorldDir = path.join(repoRoot, "synthetic-world");
@@ -64,6 +93,9 @@ const tasks = JSON.parse(
 const probes = JSON.parse(
   fs.readFileSync(path.join(repoRoot, "calibration/fixtures/probe-bank-stage1.json"), "utf8")
 ) as ProbeFixture[];
+const packageLock = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, "harness/package-lock.json"), "utf8")
+) as { packages?: Record<string, { version?: string }> };
 
 const fullTokens = countStaticRepositoryPayloadTokens(repository);
 if (!Number.isInteger(fullTokens) || fullTokens <= 0) {
@@ -142,52 +174,117 @@ if (plans.length !== PRIMARY_M_TASK_IDS.length + 1) {
   );
 }
 
-const output = {
-  status: failures.length === 0 ? "pass" : "needs-design-audit",
-  freezeCandidate: {
-    staticExposureMaxTokensPerUnit: STATIC_EXPOSURE_MAX_TOKENS_PER_UNIT,
-    T_EL: fullTokens,
-    budgets: Object.fromEntries(budgetSpecs.map(({ label, tokens }) => [label, tokens])),
-    primaryMTaskIds: PRIMARY_M_TASK_IDS,
-    rsemBooleanProbeCount: booleanProbes.length,
+const jsTiktokenVersion = packageLock.packages?.["node_modules/js-tiktoken"]?.version;
+if (!jsTiktokenVersion) {
+  failures.push("could not resolve installed js-tiktoken version from harness/package-lock.json");
+}
+
+const scientificSourcePaths = [
+  "harness/src/context/static-exposure.ts",
+  "harness/src/context/el-static-exposure-runtime.ts",
+  "harness/src/context/el-rsem-static-exposure-runtime.ts",
+  "harness/src/context/privileged-retrieval-controller.ts",
+  "harness/src/measurement/artifact-unit.ts",
+  "harness/src/measurement/file-classification.ts",
+  "harness/src/measurement/token-counter.ts",
+  "synthetic-world/schema.ts",
+  "synthetic-world/semantic_locality.ts",
+] as const;
+const scientificInputPaths = [
+  "synthetic-world/ground_truth.json",
+  "synthetic-world/naming_schemes.json",
+  "synthetic-world/heldout_tasks.json",
+  "calibration/fixtures/probe-bank-stage1.json",
+  "harness/package-lock.json",
+] as const;
+
+const freezeCandidate = {
+  staticExposureMaxTokensPerUnit: STATIC_EXPOSURE_MAX_TOKENS_PER_UNIT,
+  T_EL: fullTokens,
+  budgets: Object.fromEntries(budgetSpecs.map(({ label, tokens }) => [label, tokens])),
+  primaryMTaskIds: PRIMARY_M_TASK_IDS,
+  rsem: {
+    namingSchemeId: RSEM_NAMING_SCHEME_ID,
+    booleanProbeCount: booleanProbes.length,
+    probeIds: booleanProbes.map((probe) => probe.probeId),
   },
+  tokenizer: {
+    encoding: CANONICAL_TOKEN_ENCODING,
+    countMethod: CANONICAL_TOKEN_COUNT_METHOD,
+    jsTiktokenVersion: jsTiktokenVersion ?? null,
+  },
+  versions: {
+    staticExposureSchema: STATIC_EXPOSURE_SCHEMA_VERSION,
+    staticRepositorySerializer: STATIC_REPOSITORY_SERIALIZER_VERSION,
+    artifactUnitMapping: STATIC_EXPOSURE_UNIT_MAPPING_VERSION,
+    artifactChunker: EL_ARTIFACT_CHUNKER_VERSION,
+    privilegedRankingPolicy: PRIVILEGED_RETRIEVAL_POLICY_VERSION,
+    taskSelector: EL_TASK_SELECTOR_VERSION,
+    rsemSelector: EL_RSEM_BANK_SELECTOR_VERSION,
+  },
+};
+
+const fingerprints = {
+  repositoryPayloadSha256: sha256(serializeStaticRepositoryPayload(repository)),
+  scientificSources: Object.fromEntries(
+    scientificSourcePaths.map((relativePath) => [relativePath, sha256File(relativePath)])
+  ),
+  scientificInputs: Object.fromEntries(
+    scientificInputPaths.map((relativePath) => [relativePath, sha256File(relativePath)])
+  ),
+};
+
+const freezeBody = {
+  schemaVersion: CANDIDATE_SCHEMA_VERSION,
+  status: failures.length === 0 ? "pass" : "needs-design-audit",
+  freezeCandidate,
+  fingerprints,
   planCount: plans.length,
   plans: plans.map((plan) => ({
     planId: plan.planId,
     kind: plan.kind,
     selectorPlanHash: plan.exposures[0]?.selectorPlanHash ?? null,
-    exposures: plan.exposures.map(({ selectedUnitIds: _ids, ...summary }) => summary),
+    exposures: plan.exposures,
   })),
   failures,
 };
 
-console.log(JSON.stringify(output, null, 2));
+const output = {
+  ...freezeBody,
+  candidateFingerprintSha256: sha256(stableStringify(freezeBody)),
+};
+const outputJson = `${JSON.stringify(output, null, 2)}\n`;
+
+console.log(outputJson.trimEnd());
+const candidateOutputPath = process.env.P6_3_FREEZE_CANDIDATE_OUTPUT;
+if (candidateOutputPath) {
+  const absoluteOutputPath = path.resolve(process.cwd(), candidateOutputPath);
+  fs.mkdirSync(path.dirname(absoluteOutputPath), { recursive: true });
+  fs.writeFileSync(absoluteOutputPath, outputJson, "utf8");
+}
 if (failures.length > 0) process.exitCode = 1;
 
 function summarizeExposure(
   label: string,
-  result: {
-    selectedUnitIds: string[];
-    contextFiles: Record<string, string>;
-    log: {
-      budgetTokens: number;
-      actualExposedTokens: number;
-      selectedUnitCount: number;
-      selectorPlanHash: string;
-      exposureSetHash: string;
-      staticPayloadHash: string;
-    };
-  }
+  result: StaticExposurePrefixResult
 ): ExposureSummary {
   return {
     label,
     nominal: result.log.budgetTokens,
     actual: result.log.actualExposedTokens,
-    selectedUnits: result.log.selectedUnitCount,
+    selectedUnitCount: result.log.selectedUnitCount,
     selectorPlanHash: result.log.selectorPlanHash,
     exposureSetHash: result.log.exposureSetHash,
     staticPayloadHash: result.log.staticPayloadHash,
+    selectedFilePaths: [...result.log.selectedFilePaths],
     selectedUnitIds: [...result.selectedUnitIds],
+    selectedUnits: result.log.selectedUnits.map((unit) => ({
+      unitId: unit.unitId,
+      path: unit.path,
+      startLine: unit.startLine,
+      endLine: unit.endLine,
+      contentHash: unit.contentHash,
+    })),
   };
 }
 
@@ -203,7 +300,7 @@ function validatePlan(
 
   const [b0, b1, b2, b3, b4, af] = exposures;
 
-  if (b0.actual !== 0 || b0.selectedUnits !== 0 || b0.selectedUnitIds.length !== 0) {
+  if (b0.actual !== 0 || b0.selectedUnitCount !== 0 || b0.selectedUnitIds.length !== 0) {
     target.push(`${planId}: B0 must expose exactly zero artifact tokens/units`);
   }
   if (af.actual !== fullTokens) {
@@ -267,6 +364,28 @@ function makeConfig(contextBudget: number, taskId: string): RunConfig {
 
 function arraysEqual<T>(left: readonly T[], right: readonly T[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function sha256(value: string | Buffer): string {
+  return crypto.createHash("sha256").update(value).digest("hex");
+}
+
+function sha256File(relativePath: string): string {
+  return sha256(fs.readFileSync(path.join(repoRoot, relativePath)));
+}
+
+function stableStringify(value: unknown): string {
+  return JSON.stringify(sortForStableJson(value));
+}
+
+function sortForStableJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortForStableJson);
+  if (typeof value !== "object" || value === null) return value;
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(value as Record<string, unknown>).sort()) {
+    result[key] = sortForStableJson((value as Record<string, unknown>)[key]);
+  }
+  return result;
 }
 
 function loadRepositoryFiles(repositoryDir: string): Record<string, string> {
