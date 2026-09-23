@@ -67,6 +67,9 @@ jobs:
       - name: Verify P6-3 EL Rsem bank-level selector
         working-directory: harness
         run: npm run verify:el-rsem-static-exposure
+      - name: Verify P6-3 EL structural freeze gate
+        working-directory: harness
+        run: npm run verify:p6-3-structural-freeze
       - name: Verify P6-3 EL orchestrator integration
         working-directory: harness
         run: npm run verify:el-orchestrator
