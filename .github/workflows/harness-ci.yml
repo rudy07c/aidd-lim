@@ -78,6 +78,9 @@ jobs:
           P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
           P6_3_EXPECTED_FREEZE_MANIFEST_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-expected-manifest.json
         run: npm run verify:p6-3-freeze-manifest
+      - name: Verify P6-3 execution protocol freeze
+        working-directory: harness
+        run: npm run verify:p6-3-execution-protocol
       - name: Upload P6-3 EL structural freeze candidate
         if: always()
         uses: actions/upload-artifact@v4
