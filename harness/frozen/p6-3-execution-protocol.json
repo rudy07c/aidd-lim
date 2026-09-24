@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "p6-3-execution-protocol-manifest-v1",
+  "protocolVersion": "p6-3-execution-protocol-v1",
+  "baseGitSha": "feca4774a46a52bc2a7339ee85551a9f2678581b",
+  "structuralFreezeCandidateFingerprintSha256": "d23f1755e22de88f1a703cb46cf707a66035864c4c5b02d045a9e2b00a0bd77e",
+  "status": "frozen-pre-live",
+  "kCal": 12,
+  "executionMode": "sync",
+  "freshStatelessPerArm": true,
+  "arms": {
+    "EL": {
+      "labels": ["B0", "B1", "B2", "B3", "B4"],
+      "condition": "EL",
+      "executionPath": "el-static-exposure"
+    },
+    "AF": {
+      "labels": ["AF"],
+      "condition": "AF",
+      "executionPath": "artifact-full",
+      "forbiddenExecutionPath": "el-static-exposure",
+      "forbiddenFunction": "assembleELTaskStaticExposure"
+    }
+  },
+  "schedule": [
+    {"repeat": 1, "direction": "forward", "rotationOffset": 0, "arms": ["B0", "B1", "B2", "B3", "B4", "AF"]},
+    {"repeat": 2, "direction": "forward", "rotationOffset": 1, "arms": ["B1", "B2", "B3", "B4", "AF", "B0"]},
+    {"repeat": 3, "direction": "forward", "rotationOffset": 2, "arms": ["B2", "B3", "B4", "AF", "B0", "B1"]},
+    {"repeat": 4, "direction": "forward", "rotationOffset": 3, "arms": ["B3", "B4", "AF", "B0", "B1", "B2"]},
+    {"repeat": 5, "direction": "forward", "rotationOffset": 4, "arms": ["B4", "AF", "B0", "B1", "B2", "B3"]},
+    {"repeat": 6, "direction": "forward", "rotationOffset": 5, "arms": ["AF", "B0", "B1", "B2", "B3", "B4"]},
+    {"repeat": 7, "direction": "reverse", "rotationOffset": 0, "arms": ["AF", "B4", "B3", "B2", "B1", "B0"]},
+    {"repeat": 8, "direction": "reverse", "rotationOffset": 1, "arms": ["B4", "B3", "B2", "B1", "B0", "AF"]},
+    {"repeat": 9, "direction": "reverse", "rotationOffset": 2, "arms": ["B3", "B2", "B1", "B0", "AF", "B4"]},
+    {"repeat": 10, "direction": "reverse", "rotationOffset": 3, "arms": ["B2", "B1", "B0", "AF", "B4", "B3"]},
+    {"repeat": 11, "direction": "reverse", "rotationOffset": 4, "arms": ["B1", "B0", "AF", "B4", "B3", "B2"]},
+    {"repeat": 12, "direction": "reverse", "rotationOffset": 5, "arms": ["B0", "AF", "B4", "B3", "B2", "B1"]}
+  ],
+  "temporalBlockRule": {
+    "M": "task-repeat-six-arm-block",
+    "Rsem": "repeat-six-arm-bank-block",
+    "replacementPlacement": "immediate-same-cell-before-next-arm"
+  },
+  "retryPolicy": {
+    "maxScientificAttemptsPerLogicalCell": 3,
+    "scientificOutcomeDomains": ["none", "semantic", "protocol", "system"],
+    "scientificOutcomeAction": "advance-next-arm-no-replacement",
+    "unadjudicatedInfrastructureAction": "stop-needs-audit",
+    "adjudicatedInfrastructureInvalidBeforeMaxAction": "retry-same-cell-immediately",
+    "thirdInfrastructureInvalidAction": "stop-needs-audit",
+    "replacementIncrementsKCal": false
+  }
+}

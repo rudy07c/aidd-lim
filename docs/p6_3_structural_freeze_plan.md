@@ -1,6 +1,6 @@
 # P6-3 EL structural freeze plan
 
-**Status**: pre-live structural predeclaration  
+**Status**: structural freeze complete (`frozen-pass`); live gates pending  
 **Base**: `main@13934616b6c45148629f693bd2fc3343250ed6aa` (PR #5 merged)  
 **Purpose**: freeze the structural EL dose design before any P6-3 live calibration call.
 
@@ -142,14 +142,17 @@ Therefore P6-3 live calibration uses **fresh stateless Sync calls**. Batch is no
 
 This P6-3-specific rule supersedes the older generic Batch recommendation for this phase only.
 
+The detailed arm typing, schedule, block, and retry placement rules are frozen separately in `docs/p6_3_execution_protocol_freeze.md` and `harness/frozen/p6-3-execution-protocol.json`.
+
 ## 9. Live gate after structural freeze
 
 Passing this structural phase is necessary but not sufficient for live execution. Before the first live API call, the calibration runner must additionally freeze and verify:
 
-- `K_cal=12`
-- the 12-repeat forward/reverse cyclic arm schedule
-- fresh stateless call semantics for every arm
-- infrastructure-invalid adjudication and one-for-one replacement, max 3 attempts/logical cell
+- `K_cal=12` — **frozen** in the P6-3 execution protocol
+- the 12-repeat forward/reverse cyclic arm schedule — **frozen** in the P6-3 execution protocol
+- fresh stateless call semantics for every arm — **frozen as an execution invariant**; runner integration remains pending
+- AF/EL arm type separation, with live AF forbidden from the EL static-exposure path — **frozen as an execution invariant**; runner integration remains pending
+- infrastructure-invalid adjudication and immediate same-cell one-for-one replacement, max 3 attempts/logical cell — **frozen as an execution invariant**; runner integration remains pending
 - P6-2 mutation prompt/schema/parser/validation fingerprint parity
 - M failure-domain diagnostics
 - Rsem probe-wise diagnostics
