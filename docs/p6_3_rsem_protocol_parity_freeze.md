@@ -36,11 +36,13 @@ The parity prompt builder reads only each probe's `probeId` and public `prompt`.
 
 The P6-2 prompt asks for exact `true` / `false` strings. The historical scorer additionally normalizes the existing aliases implemented in `probe-scorer.ts` (`yes/no`, `1/0`, `はい/いいえ`). This freeze preserves the actual P6-2 parser/scorer behavior rather than silently tightening or relaxing it only for P6-3.
 
-Invalid JSON and malformed/missing forced-choice answers remain protocol failures. Provider errors, refusals, and non-completed responses remain infrastructure-invalid. A scoring exception remains a system-domain infrastructure-invalid observation requiring audit. These semantics are frozen independently from the P6-3 scientific-cell replacement rule.
+Invalid JSON and malformed/missing forced-choice answers remain protocol failures. Provider errors, refusals, and the three non-completed response statuses (`response-incomplete`, `response-failed`, `response-not-completed`) remain infrastructure-domain outcomes. A scoring exception remains `failureDomain=system`, matching P6-2.
+
+A subtle P6-2 compatibility detail is preserved intentionally: `probe-scoring-error` carries `validity=infrastructure-invalid` while its authoritative failure domain is `system`. For P6-3 scientific replacement, **failureDomain controls retry eligibility**. Therefore `system` is retained as a scientific outcome and is not replaced merely because its legacy validity field says `infrastructure-invalid`; only `failureDomain=infrastructure`, after explicit `infrastructure-invalid` adjudication, may trigger the frozen same-cell replacement rule.
 
 ## Retry distinction
 
-OpenAI client `maxRetries=2` is provider/SDK retry behavior. P6-3 scientific replacement is separate: after explicit `infrastructure-invalid` adjudication, the same logical cell is retried immediately, up to 3 scientific attempts, according to `p6-3-execution-protocol-v1`.
+OpenAI client `maxRetries=2` is provider/SDK retry behavior. P6-3 scientific replacement is separate: after explicit `failureDomain=infrastructure` plus `infrastructure-invalid` adjudication, the same logical cell is retried immediately, up to 3 scientific attempts, according to `p6-3-execution-protocol-v1`.
 
 ## Verification
 
