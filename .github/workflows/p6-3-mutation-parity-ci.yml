@@ -31,6 +31,9 @@ jobs:
       - name: Typecheck harness
         working-directory: harness
         run: npm run typecheck
+      - name: Verify historical P6-2 critical-source fingerprint
+        working-directory: harness
+        run: npx ts-node verify-p6-3-p62-critical-source-fingerprint.ts
       - name: Verify P6-3 mutation protocol parity
         working-directory: harness
         env:
