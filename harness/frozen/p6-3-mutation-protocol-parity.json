@@ -1,1 +1,108 @@
-{}
+{
+  "schemaVersion": "p6-3-mutation-protocol-parity-manifest-v1",
+  "status": "frozen-pass",
+  "parityVersion": "p6-3-mutation-protocol-parity-v1",
+  "p62HistoricalEvidence": {
+    "path": "docs/findings/evidence/p6-2-af-baseline/result.json",
+    "sha256": "b7b0e3f9598b034548b8466258a0aae54916fcdfa2ef0f53f9f85636272c7801",
+    "sourceGitSha": "0a0fd1a262c2e4274f1b946562c9b4e79f6fb71b",
+    "codeFingerprintSha256": "2e81f255fc6149e5699335e67a582172e146acdda0a3deeac893c3600d46fe5b",
+    "criticalSourceFiles": [
+      "harness/p6-af-baseline-live.ts",
+      "harness/src/p6/af-baseline.ts",
+      "harness/src/p6/equivalence-power.ts",
+      "harness/src/p6/adjudication.ts",
+      "harness/src/p6/task-bank-live-runtime.ts",
+      "harness/src/p6/failure-classification.ts",
+      "harness/src/p6/task-bank-eligibility.ts",
+      "harness/src/agent-backend/openai.ts",
+      "harness/src/agent-backend/openai/shared.ts",
+      "harness/src/agent-backend/package-version.ts",
+      "harness/src/run-validity.ts",
+      "harness/src/scoring.ts",
+      "calibration/src/stage1-probes.ts",
+      "calibration/src/probe-scorer.ts"
+    ],
+    "observedProtocolAnchors": {
+      "duplicatePathOutputParseFailures": 18,
+      "mutationValidationFailures": 1,
+      "mutationValidationFailureReason": "write-outside-repository-contract:workingNote"
+    }
+  },
+  "mutationPrompt": {
+    "version": "stage1-worker-v3-moi",
+    "hash": "20414dd374223bfacc16338877af9905d19501ea635752e04f34edc657560a51",
+    "userMessageFixtureSha256": "803561aa2560370930f37e350db4e61fa9acf711f2a4821fc8dc09395c4ea55a"
+  },
+  "mutationSchema": {
+    "version": "repository-mutation-v2",
+    "hash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3"
+  },
+  "providerContract": {
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "high",
+    "maxOutputTokens": 7000,
+    "requestTimeoutMs": 180000,
+    "providerMaxRetries": 2,
+    "serviceTier": "default",
+    "promptCacheMode": "implicit",
+    "storeResponses": false,
+    "maxToolRounds": 0
+  },
+  "parser": {
+    "behaviorVersion": "p6-3-p62-compatible-mutation-parser-behavior-v1",
+    "cases": [
+      { "id": "valid", "outcome": "ok" },
+      { "id": "invalid-json", "outcome": "invalid-json" },
+      { "id": "schema-mismatch", "outcome": "schema-mismatch" },
+      { "id": "working-note-too-long", "outcome": "working-note-too-long" },
+      { "id": "duplicate-path", "outcome": "duplicate-path" },
+      { "id": "invalid-item", "outcome": "invalid-item" }
+    ],
+    "behaviorSha256": "14251a4e44760abdab9e6d6b94dbc87b2c28d2ed09fa524e69500f4ea5b70cb5"
+  },
+  "pathValidation": {
+    "behaviorVersion": "p6-3-p62-compatible-mutation-path-validation-v1",
+    "cases": [
+      { "id": "src-path", "outcome": "ok" },
+      { "id": "tests-path", "outcome": "ok" },
+      { "id": "windows-separator-normalization", "outcome": "ok" },
+      { "id": "absolute-path", "outcome": "write-escape:/tmp/a.ts" },
+      { "id": "parent-escape", "outcome": "write-escape:../a.ts" },
+      { "id": "bare-parent", "outcome": "write-escape:.." },
+      { "id": "outside-contract", "outcome": "write-outside-repository-contract:workingNote" },
+      { "id": "package-json", "outcome": "write-outside-repository-contract:package.json" }
+    ],
+    "behaviorSha256": "9e10b6d5a82faf4a0adf159cdf78339bfc801ef73ccbad2ed7b2ba0d57f93a26"
+  },
+  "failureClassification": {
+    "version": "p6-1-failure-domain-v3",
+    "behaviorVersion": "p6-3-p62-compatible-failure-classification-behavior-v1",
+    "cases": [
+      { "id": "pass", "outcome": "none" },
+      { "id": "semantic", "outcome": "semantic" },
+      { "id": "system", "outcome": "system" },
+      { "id": "output-parse-protocol", "outcome": "protocol" },
+      { "id": "mutation-validation-protocol", "outcome": "protocol" },
+      { "id": "provider-infrastructure", "outcome": "infrastructure" },
+      { "id": "harness-infrastructure", "outcome": "infrastructure" },
+      { "id": "other", "outcome": "other" }
+    ],
+    "behaviorSha256": "63f0e5b17d896b9e24a3df739947e1cd71ab29d0e5fef20e45d123fc61b46d25"
+  },
+  "scientificReplacement": {
+    "executionProtocolVersion": "p6-3-execution-protocol-v1",
+    "maxScientificAttemptsPerLogicalCell": 3,
+    "infrastructureInvalidOnly": true,
+    "immediateSameCellRetry": true,
+    "note": "provider SDK maxRetries=2 is distinct from P6-3 scientific-cell replacement maxAttempts=3"
+  },
+  "currentParitySurfaceSha256": {
+    "harness/src/agent-backend/openai/shared.ts": "854eb8f994a6a64123abeb9bdd0f359df0f324ed4a73e7239e51e8b183bd2ff4",
+    "harness/src/p6/failure-classification.ts": "cc0efa12afd51ccb4511edcfeb3f8ff42152bbcbd855bcd1358ed5184da4ddf5",
+    "harness/src/run-validity.ts": "63bad57d235c25905bc8abdfc499ec673ad990fdde676a22560357f31d4ce858",
+    "harness/p6-af-baseline-live.ts": "f5e33889afd1628231e2ae1d89f3153dd8f8fc3ec5d3245a207034a1babee7a1",
+    "harness/src/p6/p6-3-execution-protocol.ts": "7a0703de6a0804c4008cf177962960f5a7036e3076b15c8798487fb7de72ffe2",
+    "harness/src/p6/p6-3-mutation-protocol-parity.ts": "793f9302880b26078652ec73e5e27dabe76b8ad335ce724b74a9860b00f16b2d"
+  }
+}
