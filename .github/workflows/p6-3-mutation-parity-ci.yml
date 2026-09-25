@@ -1,0 +1,45 @@
+name: P6-3 Mutation Protocol Parity
+
+on:
+  push:
+    paths:
+      - 'harness/**'
+      - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - '.github/workflows/p6-3-mutation-parity-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/**'
+      - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - '.github/workflows/p6-3-mutation-parity-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 mutation protocol parity
+        working-directory: harness
+        env:
+          P6_3_EXPECTED_MUTATION_PARITY_MANIFEST_OUTPUT: ../runs/_smoke/p6-3-mutation-protocol-parity-expected.json
+        run: npm run verify:p6-3-mutation-protocol-parity
+      - name: Upload recomputed P6-3 mutation protocol parity manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-mutation-protocol-parity-expected
+          path: runs/_smoke/p6-3-mutation-protocol-parity-expected.json
+          if-no-files-found: error
