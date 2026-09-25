@@ -1,0 +1,60 @@
+name: P6-3 Rsem Protocol Parity
+
+on:
+  push:
+    paths:
+      - 'harness/**'
+      - 'calibration/src/stage1-probes.ts'
+      - 'calibration/src/probe-scorer.ts'
+      - 'synthetic-world/ground_truth.json'
+      - 'synthetic-world/naming_schemes.json'
+      - 'synthetic-world/repository/tests/rules.visible.test.ts'
+      - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/p6_3_rsem_protocol_parity_freeze.md'
+      - '.github/workflows/p6-3-rsem-parity-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/**'
+      - 'calibration/src/stage1-probes.ts'
+      - 'calibration/src/probe-scorer.ts'
+      - 'synthetic-world/ground_truth.json'
+      - 'synthetic-world/naming_schemes.json'
+      - 'synthetic-world/repository/tests/rules.visible.test.ts'
+      - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/p6_3_rsem_protocol_parity_freeze.md'
+      - '.github/workflows/p6-3-rsem-parity-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify historical P6-2 critical-source fingerprint
+        working-directory: harness
+        run: npx ts-node verify-p6-3-p62-critical-source-fingerprint.ts
+      - name: Verify P6-3 Rsem protocol parity
+        working-directory: harness
+        env:
+          P6_3_EXPECTED_RSEM_PARITY_MANIFEST_OUTPUT: ../runs/_smoke/p6-3-rsem-protocol-parity-expected.json
+        run: npm run verify:p6-3-rsem-protocol-parity
+      - name: Upload recomputed P6-3 Rsem parity manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-rsem-protocol-parity-expected
+          path: runs/_smoke/p6-3-rsem-protocol-parity-expected.json
+          if-no-files-found: error
