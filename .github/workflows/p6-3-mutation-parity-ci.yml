@@ -5,11 +5,13 @@ on:
     paths:
       - 'harness/**'
       - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/p6_3_mutation_protocol_parity_freeze.md'
       - '.github/workflows/p6-3-mutation-parity-ci.yml'
   pull_request:
     paths:
       - 'harness/**'
       - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/p6_3_mutation_protocol_parity_freeze.md'
       - '.github/workflows/p6-3-mutation-parity-ci.yml'
 
 permissions:
