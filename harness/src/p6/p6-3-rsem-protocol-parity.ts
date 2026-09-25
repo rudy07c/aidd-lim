@@ -158,6 +158,18 @@ export const P6_3_RSEM_FAILURE_SEMANTICS = Object.freeze([
     protocolValid: null,
   }),
   Object.freeze({
+    id: "response-incomplete",
+    validity: "infrastructure-invalid",
+    failureDomain: "infrastructure",
+    protocolValid: null,
+  }),
+  Object.freeze({
+    id: "response-failed",
+    validity: "infrastructure-invalid",
+    failureDomain: "infrastructure",
+    protocolValid: null,
+  }),
+  Object.freeze({
     id: "response-not-completed",
     validity: "infrastructure-invalid",
     failureDomain: "infrastructure",
