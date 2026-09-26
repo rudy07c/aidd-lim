@@ -3,6 +3,7 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import { assertTrackedWorktreeClean } from "./task-bank-live-runtime";
 
 export const P6_3_UNIFIED_PRELIVE_GATE_VERSION =
   "p6-3-unified-prelive-gate-v1" as const;
@@ -186,9 +187,9 @@ export function inspectP63FrozenManifests(
   return Object.freeze(Object.fromEntries(entries)) as P63UnifiedPreLiveReceipt["manifests"];
 }
 
-function resolveCheckoutGitSha(harnessRoot: string): string {
+function resolveCheckoutGitSha(repoRoot: string): string {
   const result = spawnSync("git", ["rev-parse", "HEAD"], {
-    cwd: harnessRoot,
+    cwd: repoRoot,
     encoding: "utf8",
     env: offlineVerifierEnvironment(),
   });
@@ -208,9 +209,13 @@ function resolveCheckoutGitSha(harnessRoot: string): string {
 /**
  * Single offline fail-closed entry point for P6-3 live-runner integration.
  * It re-executes every frozen scientific verifier, then re-reads all four
- * frozen manifests from the same checkout. It never authorizes paid/live work.
+ * frozen manifests from the same clean, stable checkout. It never authorizes
+ * paid/live work.
  */
 export function runP63UnifiedPreLiveGate(harnessRoot: string): P63PreLiveGatePassToken {
+  const repoRoot = path.resolve(harnessRoot, "..");
+  assertTrackedWorktreeClean(repoRoot);
+  const checkoutGitSha = resolveCheckoutGitSha(repoRoot);
   const scratchRoot = fs.mkdtempSync(path.join(os.tmpdir(), "p6-3-unified-prelive-"));
   try {
     const verifiers = P6_3_PRELIVE_VERIFIER_SCRIPTS.map((script) => {
@@ -218,10 +223,19 @@ export function runP63UnifiedPreLiveGate(harnessRoot: string): P63PreLiveGatePas
       return Object.freeze({ script, status: "pass" as const });
     });
 
+    assertTrackedWorktreeClean(repoRoot);
+    const checkoutGitShaAfterVerification = resolveCheckoutGitSha(repoRoot);
+    if (checkoutGitShaAfterVerification !== checkoutGitSha) {
+      throw new Error(
+        `P6-3 pre-live checkout changed during verification: ` +
+        `${checkoutGitSha} -> ${checkoutGitShaAfterVerification}`
+      );
+    }
+
     const receipt: P63UnifiedPreLiveReceipt = Object.freeze({
       schemaVersion: "p6-3-unified-prelive-receipt-v1",
       gateVersion: P6_3_UNIFIED_PRELIVE_GATE_VERSION,
-      checkoutGitSha: resolveCheckoutGitSha(harnessRoot),
+      checkoutGitSha,
       preflightPassed: true,
       liveAuthorized: false,
       verifiers: Object.freeze(verifiers),
