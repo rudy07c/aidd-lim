@@ -9,22 +9,28 @@ export const P6_3_UNIFIED_PRELIVE_GATE_VERSION =
 
 const PRELIVE_PASS_BRAND: unique symbol = Symbol("p6-3-prelive-pass");
 
+export type P63FrozenManifestStatus = "frozen-pass" | "frozen-pre-live";
+
 export const P6_3_PRELIVE_MANIFEST_SPECS = Object.freeze([
   Object.freeze({
     key: "structuralFreeze" as const,
     path: "frozen/p6-3-el-structural-freeze.json",
+    expectedStatus: "frozen-pass" as const,
   }),
   Object.freeze({
     key: "executionProtocol" as const,
     path: "frozen/p6-3-execution-protocol.json",
+    expectedStatus: "frozen-pre-live" as const,
   }),
   Object.freeze({
     key: "mutationParity" as const,
     path: "frozen/p6-3-mutation-protocol-parity.json",
+    expectedStatus: "frozen-pass" as const,
   }),
   Object.freeze({
     key: "rsemParity" as const,
     path: "frozen/p6-3-rsem-protocol-parity.json",
+    expectedStatus: "frozen-pass" as const,
   }),
 ] as const);
 
@@ -41,7 +47,7 @@ export const P6_3_PRELIVE_VERIFIER_SCRIPTS = Object.freeze([
 
 export interface P63FrozenManifestEvidence {
   readonly path: string;
-  readonly status: "frozen-pass";
+  readonly status: P63FrozenManifestStatus;
   readonly schemaVersion: string;
   readonly sha256: string;
 }
@@ -159,9 +165,10 @@ export function inspectP63FrozenManifests(
       throw new Error(`P6-3 frozen manifest must be an object: ${spec.path}`);
     }
     const record = parsed as Record<string, unknown>;
-    if (record.status !== "frozen-pass") {
+    if (record.status !== spec.expectedStatus) {
       throw new Error(
-        `P6-3 frozen manifest is not frozen-pass (${spec.path}): ${String(record.status)}`
+        `P6-3 frozen manifest has unexpected status (${spec.path}): ` +
+        `expected=${spec.expectedStatus}, actual=${String(record.status)}`
       );
     }
     if (typeof record.schemaVersion !== "string" || record.schemaVersion.length === 0) {
@@ -169,7 +176,7 @@ export function inspectP63FrozenManifests(
     }
     const evidence: P63FrozenManifestEvidence = Object.freeze({
       path: spec.path,
-      status: "frozen-pass",
+      status: spec.expectedStatus,
       schemaVersion: record.schemaVersion,
       sha256: sha256(raw),
     });
