@@ -1,0 +1,51 @@
+name: P6-3 Unified Pre-Live Gate
+
+on:
+  push:
+    paths:
+      - 'harness/**'
+      - 'calibration/**'
+      - 'synthetic-world/**'
+      - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/p6_3_unified_prelive_gate.md'
+      - '.github/workflows/p6-3-prelive-gate-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/**'
+      - 'calibration/**'
+      - 'synthetic-world/**'
+      - 'docs/findings/evidence/p6-2-af-baseline/result.json'
+      - 'docs/p6_3_unified_prelive_gate.md'
+      - '.github/workflows/p6-3-prelive-gate-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Run unified P6-3 pre-live gate
+        working-directory: harness
+        env:
+          P6_3_PRELIVE_RECEIPT_OUTPUT: ../runs/_smoke/p6-3-unified-prelive-receipt.json
+        run: npx ts-node verify-p6-3-unified-prelive-gate.ts
+      - name: Upload unified P6-3 pre-live receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-unified-prelive-receipt
+          path: runs/_smoke/p6-3-unified-prelive-receipt.json
+          if-no-files-found: error
