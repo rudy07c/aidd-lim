@@ -1,6 +1,6 @@
 # P6-3 EL structural freeze plan
 
-**Status**: structural freeze complete (`frozen-pass`); live gates pending  
+**Status**: structural freeze complete (`frozen-pass`); live runner merged and offline-verified; explicit paid/live authorization pending  
 **Base**: `main@13934616b6c45148629f693bd2fc3343250ed6aa` (PR #5 merged)  
 **Purpose**: freeze the structural EL dose design before any P6-3 live calibration call.
 
@@ -146,18 +146,21 @@ The detailed arm typing, schedule, block, and retry placement rules are frozen s
 
 ## 9. Live gate after structural freeze
 
-Passing this structural phase is necessary but not sufficient for live execution. Before the first live API call, the calibration runner must additionally freeze and verify:
+Passing the structural phase was necessary but not sufficient for live execution. The remaining pre-live surfaces have now been frozen and integrated as follows:
 
 - `K_cal=12` — **frozen** in the P6-3 execution protocol
 - the 12-repeat forward/reverse cyclic arm schedule — **frozen** in the P6-3 execution protocol
-- fresh stateless call semantics for every arm — **frozen as an execution invariant**; runner integration remains pending
-- AF/EL arm type separation, with live AF forbidden from the EL static-exposure path — **frozen as an execution invariant**; runner integration remains pending
-- infrastructure-invalid adjudication and immediate same-cell one-for-one replacement, max 3 attempts/logical cell — **frozen as an execution invariant**; runner integration remains pending
-- P6-2 mutation prompt/schema/parser/validation fingerprint parity
-- M failure-domain diagnostics
-- Rsem probe-wise diagnostics
-- calibration-only provenance separation from Stage 1A
-- predeclared conjunctive M/Rsem budget-selection rule
-- current 864-call cost estimate — **recorded** in `docs/p6_3_cost_estimate.md` as a conservative **$2.35 USD** normal-run estimate using the 2026-09-23 GPT-5.6 Luna pricing snapshot
+- fresh stateless call semantics for every arm — **integrated and offline-verified** in the merged P6-3 live calibration runner
+- AF/EL arm type separation, with live AF forbidden from the EL static-exposure path — **integrated and offline-verified**
+- infrastructure-invalid adjudication and immediate same-cell one-for-one replacement, max 3 attempts/logical cell — **integrated and offline-verified**, including interrupted-call recovery
+- P6-2 mutation prompt/schema/parser/validation fingerprint parity — **frozen and CI-verified**
+- M failure-domain diagnostics — **integrated**
+- Rsem probe-wise diagnostics — **integrated through the frozen P6-2 Rsem protocol**
+- calibration-only provenance separation from Stage 1A — **integrated** (`runClass="scientific-calibration"`, `confirmatoryStage1AEligible=false`)
+- predeclared conjunctive M/Rsem budget-selection rule — **frozen before live calibration**
+- current 864-call cost estimate — **$2.35 USD normal-run estimate**, revalidated against 2026-09-26 GPT-5.6 Luna pricing in `docs/p6_3_cost_estimate.md`
+- merged runner checkout and final CI evidence — **recorded in `docs/p6_3_final_prelive_audit.md`**
 
-No live call is authorized by this document alone.
+The live runner merged in PR #13 at `main@6a8f92636c8bd82af2b496e8c848f81d08bc20a2`. Its CLI remains fail-closed: provider execution additionally requires `--live`, `--authorize-paid-live=P6-3`, `P6_3_LIVE_EXECUTION_ALLOWED=1`, and `OPENAI_API_KEY`.
+
+The final remaining gate is explicit user authorization for the paid/live P6-3 calibration. No live call is authorized by this document alone.
