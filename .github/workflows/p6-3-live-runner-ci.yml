@@ -1,0 +1,59 @@
+name: P6-3 Live Calibration Runner Offline
+
+on:
+  push:
+    paths:
+      - 'harness/p6-3-live-calibration.ts'
+      - 'harness/verify-p6-3-live-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-live-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/p6/p6-3-unified-prelive-gate.ts'
+      - 'harness/src/p6/p6-3-execution-protocol.ts'
+      - 'harness/src/p6/p6-3-mutation-protocol-parity.ts'
+      - 'harness/src/p6/p6-3-rsem-protocol-parity.ts'
+      - 'harness/src/context/el-static-exposure-runtime.ts'
+      - 'harness/src/context/el-rsem-static-exposure-runtime.ts'
+      - 'harness/frozen/p6-3-*.json'
+      - 'harness/package.json'
+      - '.github/workflows/p6-3-live-runner-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/p6-3-live-calibration.ts'
+      - 'harness/verify-p6-3-live-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-live-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/p6/p6-3-unified-prelive-gate.ts'
+      - 'harness/src/p6/p6-3-execution-protocol.ts'
+      - 'harness/src/p6/p6-3-mutation-protocol-parity.ts'
+      - 'harness/src/p6/p6-3-rsem-protocol-parity.ts'
+      - 'harness/src/context/el-static-exposure-runtime.ts'
+      - 'harness/src/context/el-rsem-static-exposure-runtime.ts'
+      - 'harness/frozen/p6-3-*.json'
+      - 'harness/package.json'
+      - '.github/workflows/p6-3-live-runner-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 live calibration runner offline
+        working-directory: harness
+        env:
+          P6_3_LIVE_EXECUTION_ALLOWED: '0'
+        run: npm run verify:p6-3-live-runner
