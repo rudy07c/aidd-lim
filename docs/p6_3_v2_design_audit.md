@@ -76,14 +76,16 @@ IF
   rawFailureDomain == "infrastructure"
   AND executionStatus == "response-incomplete"
   AND incompleteReason == "max_output_tokens"
-  AND provider-reported outputTokens == frozen maxOutputTokens
+  AND provider-reported outputTokens == requestedMaxOutputTokensForAttempt
 THEN
   finalDisposition = "infrastructure-invalid"
   adjudicationMode = "automatic-rule"
   adjudicationRuleId = "AUTO-INFRA-001"
 ```
 
-The attempt artifact must retain the raw provider response/provenance required to recompute this decision. The automatic decision must be deterministic from persisted fields.
+`requestedMaxOutputTokensForAttempt` is the request limit persisted for that specific attempt. The classifier MUST compare against the attempt's own persisted request parameter, not against the current/global v2 limit. This is required both for deterministic provenance and for replaying v1 artifacts if v2 later freezes a different `maxOutputTokens` value.
+
+The attempt artifact must retain the raw provider response/provenance and the requested output-token ceiling required to recompute this decision. The automatic decision must be deterministic from persisted fields.
 
 Human confirmation is not required for a case that exactly matches the frozen rule.
 
@@ -94,6 +96,7 @@ The runner MUST still stop as `needs-audit` when the persisted evidence does not
 - unclassified/`other` failure domain;
 - missing or contradictory provider status/provenance;
 - missing token usage needed by an automatic rule;
+- missing requested output-token ceiling needed to replay `AUTO-INFRA-001`;
 - artifact/state inconsistency;
 - resume uncertainty that cannot be deterministically resolved;
 - any new provider failure shape not covered by a frozen rule.
@@ -116,8 +119,10 @@ Required property:
 
 ```text
 for every v1 human-adjudicated infrastructure-invalid attempt:
-  autoClassifier(v1Artifact) == humanFinalDisposition
+  autoClassifier(v1Artifact, v1AttemptRequestParams) == humanFinalDisposition
 ```
+
+The replay must use each v1 attempt's own persisted request ceiling (`7000` for the observed v1 mutation attempts), rather than substituting the future v2 global ceiling.
 
 The verifier must also reconstruct the terminal three-attempt sequence for the exhausted logical cell and reproduce the same v1 terminal fact:
 
@@ -145,6 +150,7 @@ If raw v1 artifacts are copied into a repository fixture pack, the pack must inc
 - source archive SHA-256;
 - per-artifact SHA-256;
 - original sequence/attempt identifiers;
+- persisted request parameters required by the classifier, including the attempt-specific output-token ceiling;
 - expected human disposition from the persisted v1 result state.
 
 If the raw artifact contains secrets or provider fields unsuitable for version control, a deterministic sanitization/extraction step may create fixtures, but that transformation itself must be scripted, versioned, and hash-linked back to the preserved source archive.
@@ -161,7 +167,7 @@ A single mismatch is a design failure, not a case for manual override.
 
 The v1 rule stopped the entire 864-cell run after one logical cell accumulated three infrastructure-invalid attempts. V2 changes collection continuity while preserving the invalidity of that cell.
 
-Candidate v2 rule, frozen by this audit:
+The v2 exhaustion rule is frozen as:
 
 ```text
 attempt < MAX and deterministic infrastructure-invalid
@@ -246,9 +252,9 @@ At minimum, the v2 verification suite must prove:
 2. forward/reverse arm schedule is unchanged;
 3. AF/EL execution path separation is unchanged;
 4. P6-2 mutation prompt/parser/scorer parity remains intact;
-5. `AUTO-INFRA-001` fires iff every frozen predicate is satisfied;
-6. near-miss cases do not auto-adjudicate (wrong domain/status/reason/token count, missing usage, etc.);
-7. every human-adjudicated v1 infrastructure-invalid fixture is reproduced exactly;
+5. `AUTO-INFRA-001` fires iff every frozen predicate is satisfied using the attempt-specific requested output-token ceiling;
+6. near-miss cases do not auto-adjudicate (wrong domain/status/reason/token count, missing usage, missing request ceiling, etc.);
+7. every human-adjudicated v1 infrastructure-invalid fixture is reproduced exactly using its original request parameters;
 8. the v1 exhausted cell is reconstructed correctly from its actual fixtures;
 9. attempts 1-2 auto-retry the same logical cell;
 10. attempt 3 auto-marks the cell `censored-exhausted` and advances to the next planned cell without a fourth attempt;
@@ -266,7 +272,7 @@ P6-3 v2 is **not live-ready** until all of the following are completed:
 
 - [ ] immutable v1 raw-run archive created outside the mutable run directory;
 - [ ] archive SHA-256 appended to `docs/findings/p6_3_v1_diagnostic.md`;
-- [ ] actual v1 adjudicated artifacts materialized into a regression-fixture workflow with source hashes;
+- [ ] actual v1 adjudicated artifacts materialized into a regression-fixture workflow with source hashes and original request parameters;
 - [ ] deterministic auto-classifier implemented;
 - [ ] v1 regression verifier passes 100%;
 - [ ] v2 exhaustion transition implemented and offline-verified;
