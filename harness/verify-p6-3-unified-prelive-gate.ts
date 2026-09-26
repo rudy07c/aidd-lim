@@ -84,6 +84,13 @@ function main(): void {
     "an unbranded receipt must not be accepted as a pass token"
   );
 
+  const outputPath = process.env.P6_3_PRELIVE_RECEIPT_OUTPUT;
+  if (outputPath) {
+    const resolved = path.resolve(harnessRoot, outputPath);
+    fs.mkdirSync(path.dirname(resolved), { recursive: true });
+    fs.writeFileSync(resolved, JSON.stringify(receipt, null, 2) + "\n", "utf8");
+  }
+
   console.log(JSON.stringify(receipt, null, 2));
 }
 
