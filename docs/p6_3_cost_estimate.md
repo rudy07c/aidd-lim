@@ -1,6 +1,7 @@
 # P6-3 EL live calibration cost estimate
 
 **Date:** 2026-09-23  
+**Revalidated:** 2026-09-26 against current official GPT-5.6 Luna pricing; rates and planning estimate unchanged  
 **Base:** `main@d704d212c9385b2189f152665cb0e1e3cc91f376`  
 **Scope:** normal P6-3 calibration workload only; no live API call is authorized by this document.
 
@@ -20,7 +21,7 @@ Infrastructure-invalid replacements are outside the 864-call normal workload and
 
 ## 2. Current OpenAI pricing snapshot
 
-Source checked on 2026-09-23:
+Sources checked on 2026-09-23 and revalidated on 2026-09-26:
 
 - <https://developers.openai.com/api/docs/pricing>
 - <https://developers.openai.com/api/docs/models/gpt-5.6-luna>
@@ -89,4 +90,4 @@ For operational budgeting, **$3.00 USD** is a reasonable normal-run reserve befo
 
 ## 7. Gate status
 
-This document satisfies the `current 864-call cost estimate` item in the P6-3 pre-live checklist only. It does **not** authorize live execution. The remaining runner/schedule/fingerprint/adjudication/diagnostic/provenance/selection gates must still pass before the first live call.
+This document satisfies the `current 864-call cost estimate` item in the P6-3 pre-live checklist only. The merged runner and final pre-live audit are tracked separately. This document does **not** authorize live execution.
