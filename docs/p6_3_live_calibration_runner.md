@@ -72,11 +72,10 @@ Normal scientific domains (`none`, `semantic`, `protocol`, `system`) advance to 
 
 An `infrastructure` outcome stops before the next arm and creates an explicit audit flag. It is never automatically replaced. Only after explicit adjudication as `infrastructure-invalid` may the same logical cell run again, immediately, with `attempt+1`. A logical cell is limited to three scientific attempts.
 
-An unclassified `other` outcome also stops for audit. It can be explicitly resolved as:
+An unclassified `other` outcome also stops for audit. P6-2 adjudication semantics remain measurement-specific:
 
-- `scientific-failure` → semantic scientific outcome and advance;
-- `protocol-failure` → protocol scientific outcome and advance;
-- `infrastructure-invalid` → same-cell replacement under the three-attempt limit.
+- M may be resolved as `scientific-failure` → semantic scientific outcome and advance, or `infrastructure-invalid` → same-cell replacement; M does not use `protocol-failure` as a manual final disposition;
+- Rsem may additionally be resolved as `protocol-failure` → protocol scientific outcome and advance.
 
 ## Crash-safe in-flight handling
 
@@ -135,7 +134,8 @@ The unified pre-live receipt itself always retains `liveAuthorized=false`; passi
 - `system` remains a scientific domain and advances;
 - interrupted calls are journaled rather than blindly repeated;
 - interrupted calls can be explicitly resolved and resume at `attempt+1`;
-- all three explicit resolution paths for unclassified outcomes;
+- unclassified M scientific/infrastructure resolution and the prohibition on M protocol disposition;
+- unclassified Rsem protocol resolution;
 - replacement-attempt accounting.
 
 Dedicated CI also executes the real CLI in dry mode with `P6_3_LIVE_EXECUTION_ALLOWED=0`, covering the repository/freeze/task/probe wiring without any paid API call.
