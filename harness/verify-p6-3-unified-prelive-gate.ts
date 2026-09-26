@@ -1,7 +1,9 @@
 import assert from "assert";
+import * as childProcess from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import { assertTrackedWorktreeClean } from "./src/p6/task-bank-live-runtime";
 import {
   P6_3_PRELIVE_MANIFEST_SPECS,
   P6_3_PRELIVE_VERIFIER_SCRIPTS,
@@ -18,6 +20,41 @@ function copyManifestSet(harnessRoot: string, targetRoot: string): void {
       path.join(harnessRoot, spec.path),
       path.join(targetRoot, spec.path)
     );
+  }
+}
+
+function runGit(repoRoot: string, args: string[]): void {
+  childProcess.execFileSync("git", args, {
+    cwd: repoRoot,
+    encoding: "utf8",
+    stdio: "pipe",
+  });
+}
+
+function verifyTrackedWorktreeGuard(): void {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), "p6-3-prelive-clean-git-"));
+  try {
+    runGit(repoRoot, ["init"]);
+    runGit(repoRoot, ["config", "user.email", "prelive@example.invalid"]);
+    runGit(repoRoot, ["config", "user.name", "P6-3 Prelive Verifier"]);
+    const trackedPath = path.join(repoRoot, "tracked.txt");
+    fs.writeFileSync(trackedPath, "clean\n", "utf8");
+    runGit(repoRoot, ["add", "tracked.txt"]);
+    runGit(repoRoot, ["commit", "-m", "baseline"]);
+
+    assert.doesNotThrow(
+      () => assertTrackedWorktreeClean(repoRoot),
+      "clean tracked checkout must pass"
+    );
+
+    fs.writeFileSync(trackedPath, "dirty\n", "utf8");
+    assert.throws(
+      () => assertTrackedWorktreeClean(repoRoot),
+      /Scientific live run requires a clean tracked worktree/,
+      "dirty tracked checkout must fail closed"
+    );
+  } finally {
+    fs.rmSync(repoRoot, { recursive: true, force: true });
   }
 }
 
@@ -77,6 +114,8 @@ function main(): void {
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
   }
+
+  verifyTrackedWorktreeGuard();
 
   assert.throws(
     () => assertP63PreLiveGatePassToken({ receipt } as any),
