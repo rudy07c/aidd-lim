@@ -1,6 +1,7 @@
 import { spawnSync } from "child_process";
 import * as crypto from "crypto";
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 
 export const P6_3_UNIFIED_PRELIVE_GATE_VERSION =
@@ -70,7 +71,7 @@ function sha256(value: string | Buffer): string {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
-function offlineVerifierEnvironment(): NodeJS.ProcessEnv {
+function offlineVerifierEnvironment(scratchRoot?: string): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...process.env };
   for (const key of [
     "OPENAI_API_KEY",
@@ -85,10 +86,28 @@ function offlineVerifierEnvironment(): NodeJS.ProcessEnv {
     delete env[key];
   }
   env.P6_3_LIVE_EXECUTION_ALLOWED = "0";
+  if (scratchRoot) {
+    env.P6_3_FREEZE_CANDIDATE_OUTPUT = path.join(
+      scratchRoot,
+      "p6-3-el-structural-freeze-candidate.json"
+    );
+    env.P6_3_EXPECTED_FREEZE_MANIFEST_OUTPUT = path.join(
+      scratchRoot,
+      "p6-3-el-structural-freeze-expected-manifest.json"
+    );
+    env.P6_3_EXPECTED_MUTATION_PARITY_MANIFEST_OUTPUT = path.join(
+      scratchRoot,
+      "p6-3-mutation-protocol-parity-expected.json"
+    );
+    env.P6_3_EXPECTED_RSEM_PARITY_MANIFEST_OUTPUT = path.join(
+      scratchRoot,
+      "p6-3-rsem-protocol-parity-expected.json"
+    );
+  }
   return env;
 }
 
-function runVerifier(harnessRoot: string, script: string): void {
+function runVerifier(harnessRoot: string, scratchRoot: string, script: string): void {
   const scriptPath = path.join(harnessRoot, script);
   if (!fs.existsSync(scriptPath)) {
     throw new Error(`P6-3 pre-live verifier missing: ${script}`);
@@ -100,7 +119,7 @@ function runVerifier(harnessRoot: string, script: string): void {
     {
       cwd: harnessRoot,
       encoding: "utf8",
-      env: offlineVerifierEnvironment(),
+      env: offlineVerifierEnvironment(scratchRoot),
       maxBuffer: 16 * 1024 * 1024,
     }
   );
@@ -185,25 +204,30 @@ function resolveCheckoutGitSha(harnessRoot: string): string {
  * frozen manifests from the same checkout. It never authorizes paid/live work.
  */
 export function runP63UnifiedPreLiveGate(harnessRoot: string): P63PreLiveGatePassToken {
-  const verifiers = P6_3_PRELIVE_VERIFIER_SCRIPTS.map((script) => {
-    runVerifier(harnessRoot, script);
-    return Object.freeze({ script, status: "pass" as const });
-  });
+  const scratchRoot = fs.mkdtempSync(path.join(os.tmpdir(), "p6-3-unified-prelive-"));
+  try {
+    const verifiers = P6_3_PRELIVE_VERIFIER_SCRIPTS.map((script) => {
+      runVerifier(harnessRoot, scratchRoot, script);
+      return Object.freeze({ script, status: "pass" as const });
+    });
 
-  const receipt: P63UnifiedPreLiveReceipt = Object.freeze({
-    schemaVersion: "p6-3-unified-prelive-receipt-v1",
-    gateVersion: P6_3_UNIFIED_PRELIVE_GATE_VERSION,
-    checkoutGitSha: resolveCheckoutGitSha(harnessRoot),
-    preflightPassed: true,
-    liveAuthorized: false,
-    verifiers: Object.freeze(verifiers),
-    manifests: inspectP63FrozenManifests(harnessRoot),
-  });
+    const receipt: P63UnifiedPreLiveReceipt = Object.freeze({
+      schemaVersion: "p6-3-unified-prelive-receipt-v1",
+      gateVersion: P6_3_UNIFIED_PRELIVE_GATE_VERSION,
+      checkoutGitSha: resolveCheckoutGitSha(harnessRoot),
+      preflightPassed: true,
+      liveAuthorized: false,
+      verifiers: Object.freeze(verifiers),
+      manifests: inspectP63FrozenManifests(harnessRoot),
+    });
 
-  return Object.freeze({
-    receipt,
-    [PRELIVE_PASS_BRAND]: true as const,
-  });
+    return Object.freeze({
+      receipt,
+      [PRELIVE_PASS_BRAND]: true as const,
+    });
+  } finally {
+    fs.rmSync(scratchRoot, { recursive: true, force: true });
+  }
 }
 
 /**
