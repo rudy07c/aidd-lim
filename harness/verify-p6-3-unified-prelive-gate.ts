@@ -45,7 +45,7 @@ function main(): void {
   for (const spec of P6_3_PRELIVE_MANIFEST_SPECS) {
     const evidence = receipt.manifests[spec.key];
     assert.equal(evidence.path, spec.path);
-    assert.equal(evidence.status, "frozen-pass");
+    assert.equal(evidence.status, spec.expectedStatus);
     assert(evidence.schemaVersion.length > 0);
     assert.match(evidence.sha256, /^[0-9a-f]{64}$/);
   }
@@ -63,7 +63,7 @@ function main(): void {
     fs.writeFileSync(tamperedPath, JSON.stringify(tampered, null, 2) + "\n", "utf8");
     assert.throws(
       () => inspectP63FrozenManifests(tempRoot),
-      /is not frozen-pass/,
+      /unexpected status/,
       "tampered frozen status must fail closed"
     );
 
