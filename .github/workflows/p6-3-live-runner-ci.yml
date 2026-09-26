@@ -57,3 +57,8 @@ jobs:
         env:
           P6_3_LIVE_EXECUTION_ALLOWED: '0'
         run: npm run verify:p6-3-live-runner
+      - name: Exercise P6-3 calibration CLI dry path
+        working-directory: harness
+        env:
+          P6_3_LIVE_EXECUTION_ALLOWED: '0'
+        run: npm run p6:el-calibration
