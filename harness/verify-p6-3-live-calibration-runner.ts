@@ -61,6 +61,24 @@ function memoryPersistence(): P63CalibrationPersistence & { stateWrites: number;
   return value;
 }
 
+async function driveToOtherAudit(
+  token: ReturnType<typeof runP63UnifiedPreLiveGate>,
+  plan: readonly P63CalibrationCell[]
+) {
+  const state = createP63CalibrationState(token, plan);
+  await executeP63Calibration(
+    state,
+    token,
+    plan,
+    { execute: async () => outcome("other") },
+    memoryPersistence()
+  );
+  assert.equal(state.status, "needs-audit");
+  assert.equal(state.auditFlag?.kind, "unclassified-failure-domain");
+  assert.equal(state.cursorCellIndex, 0);
+  return state;
+}
+
 async function main(): Promise<void> {
   const harnessRoot = path.resolve(__dirname);
   const manifest = JSON.parse(
@@ -138,6 +156,7 @@ async function main(): Promise<void> {
   assert.equal(state.attempts.length, 1);
   assert.equal(state.attempts[0].infrastructureAdjudication, "pending");
   assert.deepEqual(seen, [{ sequence: 0, attempt: 1 }]);
+  assert.equal(summarizeP63ExecutionState(state).replacementAttempts, 0);
 
   // 2) Explicit infrastructure-invalid adjudication reopens the same cell and
   // increments scientific attempt, then the remaining 864-cell plan completes.
@@ -217,7 +236,6 @@ async function main(): Promise<void> {
   // 4) A system-domain outcome is scientific under the frozen protocol and
   // advances; the next infrastructure cell then proves ordering was preserved.
   const systemState = createP63CalibrationState(token, plan);
-  const systemPersistence = memoryPersistence();
   const systemSeen: number[] = [];
   await executeP63Calibration(
     systemState,
@@ -230,13 +248,15 @@ async function main(): Promise<void> {
         return outcome("infrastructure");
       },
     },
-    systemPersistence
+    memoryPersistence()
   );
   assert.deepEqual(systemSeen, [0, 1]);
   assert.equal(systemState.cursorCellIndex, 1);
   assert.equal(systemState.status, "needs-audit");
 
-  // 5) A persisted in-flight marker is never blindly retried on resume.
+  // 5) A persisted in-flight marker is never blindly retried. Recovery moves
+  // it to an explicit interrupted-attempt journal, then clears the inFlight
+  // marker so a subsequent explicit adjudication can resume the same cell.
   const interrupted = createP63CalibrationState(token, plan);
   interrupted.inFlight = {
     sequence: 0,
@@ -259,6 +279,78 @@ async function main(): Promise<void> {
   assert.equal(interruptedCalls, 0);
   assert.equal(interrupted.status, "needs-audit");
   assert.equal(interrupted.auditFlag?.kind, "uncertain-in-flight-attempt");
+  assert.equal(interrupted.inFlight, null);
+  assert.equal(interrupted.interruptedAttempts.length, 1);
+  assert.equal(interrupted.interruptedAttempts[0].adjudication, null);
+  assert.equal(summarizeP63ExecutionState(interrupted).replacementAttempts, 0);
+
+  applyP63Adjudication(interrupted, plan, {
+    sequence: 0,
+    attempt: 1,
+    reviewer: "offline-verifier",
+    reason: "process interruption made provider outcome unobservable",
+    finalDisposition: "infrastructure-invalid",
+    adjudicatedAt: "2026-09-26T00:00:10.000Z",
+  });
+  assert.equal(interrupted.status, "running");
+  assert.equal(interrupted.nextAttempt, 2);
+  assert.equal(interrupted.cursorCellIndex, 0);
+  assert.equal(interrupted.interruptedAttempts[0].adjudication?.finalDisposition, "infrastructure-invalid");
+
+  let resumedAttempt = 0;
+  await executeP63Calibration(
+    interrupted,
+    token,
+    plan,
+    {
+      execute: async (cell, attempt) => {
+        resumedAttempt += 1;
+        assert.equal(cell.sequence, 0);
+        assert.equal(attempt, 2);
+        return outcome("infrastructure");
+      },
+    },
+    memoryPersistence()
+  );
+  assert.equal(resumedAttempt, 1);
+  assert.equal(interrupted.status, "needs-audit");
+
+  // 6) Unclassified outcomes have an explicit audited resolution path. All
+  // three dispositions are tested: semantic scientific failure, protocol
+  // failure, and infrastructure-invalid same-cell replacement.
+  const otherScientific = await driveToOtherAudit(token, plan);
+  applyP63Adjudication(otherScientific, plan, {
+    sequence: 0,
+    attempt: 1,
+    reviewer: "offline-verifier",
+    reason: "fixture classified as scientific failure",
+    finalDisposition: "scientific-failure",
+  });
+  assert.equal(otherScientific.cursorCellIndex, 1);
+  assert.equal(otherScientific.attempts[0].effectiveFailureDomain, "semantic");
+
+  const otherProtocol = await driveToOtherAudit(token, plan);
+  applyP63Adjudication(otherProtocol, plan, {
+    sequence: 0,
+    attempt: 1,
+    reviewer: "offline-verifier",
+    reason: "fixture classified as protocol failure",
+    finalDisposition: "protocol-failure",
+  });
+  assert.equal(otherProtocol.cursorCellIndex, 1);
+  assert.equal(otherProtocol.attempts[0].effectiveFailureDomain, "protocol");
+
+  const otherInfrastructure = await driveToOtherAudit(token, plan);
+  applyP63Adjudication(otherInfrastructure, plan, {
+    sequence: 0,
+    attempt: 1,
+    reviewer: "offline-verifier",
+    reason: "fixture classified as infrastructure invalid",
+    finalDisposition: "infrastructure-invalid",
+  });
+  assert.equal(otherInfrastructure.cursorCellIndex, 0);
+  assert.equal(otherInfrastructure.nextAttempt, 2);
+  assert.equal(otherInfrastructure.attempts[0].effectiveFailureDomain, "infrastructure");
 
   console.log(JSON.stringify({
     status: "pass",
@@ -268,7 +360,8 @@ async function main(): Promise<void> {
     infrastructureReplacementVerified: true,
     maxAttemptStopVerified: true,
     systemDomainAdvanceVerified: true,
-    uncertainInFlightFailClosedVerified: true,
+    uncertainInFlightRecoveryVerified: true,
+    unclassifiedAdjudicationVerified: true,
     providerCalls: 0,
   }, null, 2));
 }
