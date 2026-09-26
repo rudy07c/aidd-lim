@@ -112,18 +112,18 @@ export interface P63InFlightAttempt {
 }
 
 /**
- * A provider call may have happened even when the process died before an
- * attempt record was committed. Such a cell is never silently re-run. The
- * explicit resolution is recorded separately because there is no trustworthy
- * model output/exposure artifact to pretend was observed.
+ * A provider call may have happened even when the process died before a normal
+ * attempt artifact/result was committed. Keep that consumed attempt in its own
+ * journal and require explicit infrastructure-invalid adjudication before any
+ * same-cell replacement.
  */
-export interface P63InterruptedAttemptResolution {
+export interface P63InterruptedAttemptRecord {
   readonly sequence: number;
   readonly attempt: number;
   readonly startedAt: string;
-  readonly adjudication: P63AdjudicationRecord & {
+  adjudication: (P63AdjudicationRecord & {
     readonly finalDisposition: "infrastructure-invalid";
-  };
+  }) | null;
 }
 
 export interface P63CalibrationAuditFlag {
@@ -153,7 +153,7 @@ export interface P63CalibrationState {
   nextAttempt: number;
   inFlight: P63InFlightAttempt | null;
   attempts: P63AttemptRecord[];
-  interruptedAttempts: P63InterruptedAttemptResolution[];
+  interruptedAttempts: P63InterruptedAttemptRecord[];
   auditFlag: P63CalibrationAuditFlag | null;
   estimatedCostUsd: number;
   readonly startedAt: string;
@@ -330,12 +330,25 @@ export function assertP63ResumeCompatible(
 }
 
 export function recoverInterruptedP63State(state: P63CalibrationState): void {
-  if (!state.inFlight) return;
+  const inFlight = state.inFlight;
+  if (!inFlight) return;
+  const alreadyJournaled = state.interruptedAttempts.some(
+    (entry) => entry.sequence === inFlight.sequence && entry.attempt === inFlight.attempt
+  );
+  if (!alreadyJournaled) {
+    state.interruptedAttempts.push({
+      sequence: inFlight.sequence,
+      attempt: inFlight.attempt,
+      startedAt: inFlight.startedAt,
+      adjudication: null,
+    });
+  }
+  state.inFlight = null;
   state.status = "needs-audit";
   state.auditFlag = {
     kind: "uncertain-in-flight-attempt",
-    sequence: state.inFlight.sequence,
-    attempt: state.inFlight.attempt,
+    sequence: inFlight.sequence,
+    attempt: inFlight.attempt,
     reason:
       "A scientific attempt was marked in-flight without a committed result; do not blindly repeat a potentially billable/provider-visible call. Resolve it explicitly as infrastructure-invalid before retrying.",
     createdAt: new Date().toISOString(),
@@ -472,7 +485,7 @@ export function applyP63Adjudication(
   }
 
   if (state.auditFlag.kind === "uncertain-in-flight-attempt") {
-    resolveUncertainInFlight(state, request, reviewer, reason);
+    resolveUncertainInterruptedAttempt(state, request, reviewer, reason);
     return;
   }
 
@@ -553,22 +566,26 @@ export function summarizeP63ExecutionState(state: P63CalibrationState): {
   };
 }
 
-function resolveUncertainInFlight(
+function resolveUncertainInterruptedAttempt(
   state: P63CalibrationState,
   request: P63AdjudicationRequest,
   reviewer: string,
   reason: string
 ): void {
-  const inFlight = state.inFlight;
-  if (!inFlight) {
-    throw new Error("P6-3 uncertain-in-flight adjudication requires a persisted inFlight marker");
-  }
-  if (inFlight.sequence !== request.sequence || inFlight.attempt !== request.attempt) {
-    throw new Error("P6-3 uncertain-in-flight adjudication does not match the persisted marker");
+  const target = [...state.interruptedAttempts]
+    .reverse()
+    .find(
+      (entry) =>
+        entry.sequence === request.sequence &&
+        entry.attempt === request.attempt &&
+        entry.adjudication === null
+    );
+  if (!target) {
+    throw new Error("P6-3 uncertain interrupted attempt record not found or already adjudicated");
   }
   if (request.finalDisposition !== "infrastructure-invalid") {
     throw new Error(
-      "P6-3 uncertain in-flight outcome has no trustworthy scientific output; it may only be resolved as infrastructure-invalid"
+      "P6-3 uncertain interrupted outcome has no trustworthy scientific output; it may only be resolved as infrastructure-invalid"
     );
   }
   const adjudication = {
@@ -577,17 +594,11 @@ function resolveUncertainInFlight(
     finalDisposition: "infrastructure-invalid" as const,
     adjudicatedAt: request.adjudicatedAt ?? new Date().toISOString(),
   };
-  state.interruptedAttempts.push({
-    sequence: inFlight.sequence,
-    attempt: inFlight.attempt,
-    startedAt: inFlight.startedAt,
-    adjudication,
-  });
-  state.inFlight = null;
+  target.adjudication = adjudication;
   applyInfrastructureInvalidTransition(
     state,
-    inFlight.attempt,
-    inFlight.sequence,
+    target.attempt,
+    target.sequence,
     adjudication.adjudicatedAt
   );
 }
