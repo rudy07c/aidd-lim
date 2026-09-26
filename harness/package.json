@@ -16,6 +16,7 @@
     "verify:p6-3-freeze-manifest": "ts-node verify-p6-3-el-structural-freeze-manifest.ts",
     "verify:p6-3-execution-protocol": "ts-node verify-p6-3-execution-protocol.ts",
     "verify:p6-3-mutation-protocol-parity": "ts-node verify-p6-3-mutation-protocol-parity.ts",
+    "verify:p6-3-rsem-protocol-parity": "ts-node verify-p6-3-rsem-protocol-parity.ts",
     "verify:observable-interaction": "ts-node verify-observable-interaction.ts",
     "verify:working-set": "ts-node verify-working-set-manager.ts",
     "verify:working-set-reread": "ts-node verify-working-set-reread.ts",

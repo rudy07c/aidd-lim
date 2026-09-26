@@ -1,0 +1,214 @@
+{
+  "schemaVersion": "p6-3-rsem-protocol-parity-manifest-v1",
+  "status": "frozen-pass",
+  "parityVersion": "p6-3-rsem-protocol-parity-v1",
+  "p62HistoricalEvidence": {
+    "path": "docs/findings/evidence/p6-2-af-baseline/result.json",
+    "sha256": "b7b0e3f9598b034548b8466258a0aae54916fcdfa2ef0f53f9f85636272c7801",
+    "sourceGitSha": "0a0fd1a262c2e4274f1b946562c9b4e79f6fb71b",
+    "codeFingerprintSha256": "2e81f255fc6149e5699335e67a582172e146acdda0a3deeac893c3600d46fe5b",
+    "runnerSha256": "f5e33889afd1628231e2ae1d89f3153dd8f8fc3ec5d3245a207034a1babee7a1"
+  },
+  "probeBank": {
+    "designVersion": "stage1-neutral-relation-v2",
+    "booleanProbeCount": 12,
+    "booleanProbeIds": [
+      "A-obfuscated-bool-r01",
+      "A-obfuscated-bool-r02",
+      "A-obfuscated-bool-r03",
+      "A-obfuscated-bool-r04",
+      "A-obfuscated-bool-r05",
+      "A-obfuscated-bool-r06",
+      "A-obfuscated-bool-r07",
+      "A-obfuscated-bool-r08",
+      "A-obfuscated-bool-r09",
+      "A-obfuscated-bool-r10",
+      "A-obfuscated-bool-r11",
+      "A-obfuscated-bool-r12"
+    ],
+    "booleanProbeBankSha256": "b073a252611bb0d12d2273a75366a464f7edc2f3faf5ae5e73668b33e62c6f32",
+    "groundTruthSha256": "28840940107efbcfd5f76e17ba664fd884a6174e607c339ef6841ee7abd35feb",
+    "namingSchemesSha256": "045a3c953f031f41813615ff30b7eacb6f8112e03f33af5c60265a962fba8fa5",
+    "constantAnswerBaseline": 0.5
+  },
+  "prompt": {
+    "version": "p6-2-af-probe-prompt-v1",
+    "templateHash": "312f981ea8568b01f3fb8731bde65e7c316f489df6f72b396c010b058a3a4e31",
+    "outputInstructions": "Answer semantic probes about the supplied TypeScript repository. Use only supplied repository evidence. If evidence is absent, make the best forced-choice answer rather than claiming hidden knowledge.",
+    "contextFixtureSha256": "36edcc9b2e0bfef9b87fadfa8b081426aebc6fb669bf2c8c70cba0d5cd95d7d6",
+    "answerAndProvenancePoisoningInvariant": true
+  },
+  "schema": {
+    "version": "p6-2-af-boolean-answers-v1",
+    "hash": "728e0fcb0b89c1488ac18c1a8f21d280566af5a81a77a083c8e273761e299561",
+    "answerType": "string",
+    "additionalProperties": false,
+    "answerAndProvenancePoisoningInvariant": true
+  },
+  "providerContract": {
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "high",
+    "maxOutputTokens": 8000,
+    "requestTimeoutMs": 180000,
+    "providerMaxRetries": 2,
+    "serviceTier": "default",
+    "promptCacheMode": "implicit",
+    "storeResponses": false,
+    "executionMode": "sync"
+  },
+  "parser": {
+    "behaviorVersion": "p6-3-p62-compatible-rsem-parser-v1",
+    "cases": [
+      {
+        "id": "exact-true-false",
+        "outcome": "ok",
+        "protocolValid": true,
+        "booleanCorrect": 12,
+        "booleanTotal": 12,
+        "failureReasonPrefix": null
+      },
+      {
+        "id": "yes-no-alias",
+        "outcome": "ok",
+        "protocolValid": true,
+        "booleanCorrect": 12,
+        "booleanTotal": 12,
+        "failureReasonPrefix": null
+      },
+      {
+        "id": "numeric-alias",
+        "outcome": "ok",
+        "protocolValid": true,
+        "booleanCorrect": 12,
+        "booleanTotal": 12,
+        "failureReasonPrefix": null
+      },
+      {
+        "id": "japanese-alias",
+        "outcome": "ok",
+        "protocolValid": true,
+        "booleanCorrect": 12,
+        "booleanTotal": 12,
+        "failureReasonPrefix": null
+      },
+      {
+        "id": "json-boolean-coercion",
+        "outcome": "ok",
+        "protocolValid": true,
+        "booleanCorrect": 12,
+        "booleanTotal": 12,
+        "failureReasonPrefix": null
+      },
+      {
+        "id": "invalid-json",
+        "outcome": "output-parse-failure",
+        "protocolValid": false,
+        "booleanCorrect": null,
+        "booleanTotal": 12,
+        "failureReasonPrefix": "Invalid structured JSON"
+      },
+      {
+        "id": "missing-answer",
+        "outcome": "answer-protocol-failure",
+        "protocolValid": false,
+        "booleanCorrect": null,
+        "booleanTotal": 12,
+        "failureReasonPrefix": "Malformed forced-choice answer(s)"
+      },
+      {
+        "id": "malformed-forced-choice",
+        "outcome": "answer-protocol-failure",
+        "protocolValid": false,
+        "booleanCorrect": null,
+        "booleanTotal": 12,
+        "failureReasonPrefix": "Malformed forced-choice answer(s)"
+      }
+    ],
+    "behaviorSha256": "51bf08ed7247a3dac504e850227392269e16b0a388dc78a029326f2dde357a73"
+  },
+  "failureSemantics": {
+    "version": "p6-3-p62-compatible-rsem-failure-semantics-v1",
+    "cases": [
+      {
+        "id": "provider-error",
+        "validity": "infrastructure-invalid",
+        "failureDomain": "infrastructure",
+        "protocolValid": null
+      },
+      {
+        "id": "response-refusal",
+        "validity": "infrastructure-invalid",
+        "failureDomain": "infrastructure",
+        "protocolValid": null
+      },
+      {
+        "id": "response-incomplete",
+        "validity": "infrastructure-invalid",
+        "failureDomain": "infrastructure",
+        "protocolValid": null
+      },
+      {
+        "id": "response-failed",
+        "validity": "infrastructure-invalid",
+        "failureDomain": "infrastructure",
+        "protocolValid": null
+      },
+      {
+        "id": "response-not-completed",
+        "validity": "infrastructure-invalid",
+        "failureDomain": "infrastructure",
+        "protocolValid": null
+      },
+      {
+        "id": "output-parse-failure",
+        "validity": "valid",
+        "failureDomain": "protocol",
+        "protocolValid": false
+      },
+      {
+        "id": "probe-scoring-error",
+        "validity": "infrastructure-invalid",
+        "failureDomain": "system",
+        "protocolValid": null
+      },
+      {
+        "id": "answer-protocol-failure",
+        "validity": "valid",
+        "failureDomain": "protocol",
+        "protocolValid": false
+      },
+      {
+        "id": "ok",
+        "validity": "valid",
+        "failureDomain": "none",
+        "protocolValid": true
+      }
+    ],
+    "behaviorSha256": "c0f82f7ebfd0958515373ad6618c874c1530c36c9807509df68c27a6ff3489aa"
+  },
+  "historicalOutcomeAnchor": {
+    "repeatCount": 21,
+    "protocolValidRepeats": 21,
+    "protocolFailureRepeats": 0,
+    "protocolReliability": 1,
+    "booleanCorrect": 235,
+    "booleanTotal": 252,
+    "note": "historical outcome only; never used to alter P6-3 prompt/schema/parser semantics"
+  },
+  "scientificReplacement": {
+    "executionProtocolVersion": "p6-3-execution-protocol-v1",
+    "calibrationRepeatCount": 12,
+    "maxScientificAttemptsPerLogicalCell": 3,
+    "infrastructureInvalidOnly": true,
+    "immediateSameCellRetry": true
+  },
+  "currentParitySurfaceSha256": {
+    "harness/p6-af-baseline-live.ts": "f5e33889afd1628231e2ae1d89f3153dd8f8fc3ec5d3245a207034a1babee7a1",
+    "harness/src/agent-backend/openai/shared.ts": "854eb8f994a6a64123abeb9bdd0f359df0f324ed4a73e7239e51e8b183bd2ff4",
+    "harness/src/context/el-rsem-static-exposure-runtime.ts": "239b4e2d7b885836e9fc6295a482326c28d38df9135fa59ff2bda48cbc8c314c",
+    "harness/src/p6/p6-3-execution-protocol.ts": "7a0703de6a0804c4008cf177962960f5a7036e3076b15c8798487fb7de72ffe2",
+    "harness/src/p6/p6-3-rsem-protocol-parity.ts": "10615bee27662a6c14e4e2fad68cfef3fbfeb726b6f1882aecbb2b1d18b83633",
+    "calibration/src/stage1-probes.ts": "2309a1c93b9ce1b7a494e0ea2597131f6fd1b70cdf95e304b52933518b406468",
+    "calibration/src/probe-scorer.ts": "f45ab5b73c97c28bcfcdf8dcc69fba1667c2526edb01dc999b3e669bdb28384f"
+  }
+}
