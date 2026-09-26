@@ -21,7 +21,15 @@ This run is diagnostic / exploratory evidence only. It must not be used as a com
 - interrupted attempts: `0`
 - runner estimated cost at stop: `USD 0.23608009`
 
-The raw run directory is transient operational evidence and should be archived outside the mutable `runs/` working location before v2 live execution. The archive SHA-256 should be recorded alongside the archive; this document intentionally does not invent a checksum before that archive exists.
+## Preserved v1 archive
+
+The raw run directory was archived before v2 live execution work began.
+
+- archive filename: `p6-3-v1-diagnostic-2026-09-26.tar.gz`
+- archive SHA-256: `09c58838f2396ceeabe54f8843b922dee2849d57994843d9a714afcd08debb94`
+- source directory: `runs/_calibration/p6-3-el-calibration-luna__2026-09-26T09-49-02-071Z`
+
+The archive itself is intentionally not committed into the repository as a normal source artifact. Its checksum is the immutable identity recorded here for later regression-fixture extraction and provenance checks.
 
 ## Protocol-defined stop
 
@@ -75,18 +83,3 @@ Before any P6-3 v2 live call, the automatic infrastructure classifier must be te
 At minimum the verifier must demonstrate that every v1 attempt that received a human `infrastructure-invalid` adjudication is classified identically by the deterministic v2 rule, and that the exhausted-cell transition is reproduced for sequence 32 after the third such attempt.
 
 Any mismatch is a pre-live gate failure. v2 live execution must not begin until the mismatch is explained and the design is re-frozen.
-
-## Evidence preservation action
-
-Before v2 live execution, create an immutable archive of the v1 run directory and record its SHA-256. Recommended local procedure:
-
-```bash
-cd /Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm
-V1_RUN="runs/_calibration/p6-3-el-calibration-luna__2026-09-26T09-49-02-071Z"
-ARCHIVE="p6-3-v1-diagnostic-2026-09-26.tar.gz"
-tar -czf "$ARCHIVE" "$V1_RUN"
-shasum -a 256 "$ARCHIVE" > "$ARCHIVE.sha256"
-cat "$ARCHIVE.sha256"
-```
-
-The archive checksum should then be appended to this finding or to a small immutable evidence manifest before v2 live execution.
