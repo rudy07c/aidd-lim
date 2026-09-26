@@ -5,8 +5,12 @@ on:
     paths:
       - 'harness/p6-3-live-calibration.ts'
       - 'harness/verify-p6-3-live-calibration-runner.ts'
+      - 'harness/verify-p6-3-v2-auto-infra-unit.ts'
+      - 'harness/verify-p6-3-v2-auto-infra-regression.ts'
+      - 'harness/extract-p6-3-v1-auto-infra-fixture.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/p6/p6-3-v2-auto-infra.ts'
       - 'harness/src/p6/p6-3-unified-prelive-gate.ts'
       - 'harness/src/p6/p6-3-execution-protocol.ts'
       - 'harness/src/p6/p6-3-mutation-protocol-parity.ts'
@@ -20,8 +24,12 @@ on:
     paths:
       - 'harness/p6-3-live-calibration.ts'
       - 'harness/verify-p6-3-live-calibration-runner.ts'
+      - 'harness/verify-p6-3-v2-auto-infra-unit.ts'
+      - 'harness/verify-p6-3-v2-auto-infra-regression.ts'
+      - 'harness/extract-p6-3-v1-auto-infra-fixture.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/p6/p6-3-v2-auto-infra.ts'
       - 'harness/src/p6/p6-3-unified-prelive-gate.ts'
       - 'harness/src/p6/p6-3-execution-protocol.ts'
       - 'harness/src/p6/p6-3-mutation-protocol-parity.ts'
@@ -57,6 +65,9 @@ jobs:
         env:
           P6_3_LIVE_EXECUTION_ALLOWED: '0'
         run: npm run verify:p6-3-live-runner
+      - name: Verify P6-3 v2 AUTO-INFRA classifier boundaries
+        working-directory: harness
+        run: npm run verify:p6-3-v2-auto-infra-unit
       - name: Exercise P6-3 calibration CLI dry path
         working-directory: harness
         env:
