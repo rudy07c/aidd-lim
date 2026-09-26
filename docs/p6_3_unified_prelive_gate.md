@@ -17,7 +17,9 @@ The unified pre-live gate makes these independent freezes a single fail-closed p
 
 `runP63UnifiedPreLiveGate(harnessRoot)` in `harness/src/p6/p6-3-unified-prelive-gate.ts` is the single offline entry point.
 
-It re-runs all of the following against the current checkout:
+Before any verifier runs, the gate reuses the scientific-live `assertTrackedWorktreeClean` invariant and rejects any tracked local modification. It records HEAD only after that check. After all verifiers finish, it checks tracked cleanliness again and requires HEAD to be unchanged before creating a receipt. Therefore `checkoutGitSha` identifies the tracked code that was actually verified rather than merely the commit that happened to be checked out before local edits.
+
+It re-runs all of the following against that clean checkout:
 
 - `verify-p6-3-el-structural-freeze.ts`
 - `verify-p6-3-structural-invariant-hardening.ts`
@@ -43,10 +45,11 @@ Every manifest must exist, parse as JSON, contain a non-empty `schemaVersion`, a
 
 The gate returns a branded `P63PreLiveGatePassToken`; a plain object containing the same receipt is not accepted by `assertP63PreLiveGatePassToken`.
 
-The verifier also tests two explicit negative cases:
+The verifier tests explicit negative cases:
 
 - changing a required manifest away from its declared frozen status must fail;
-- removing a required frozen manifest must fail.
+- removing a required frozen manifest must fail;
+- modifying a tracked file in an otherwise committed Git checkout must fail the same clean-worktree guard used by scientific live runs.
 
 Future live-runner integration must require the branded pass token before it can enter any provider/API execution path. This PR establishes the token and gate; wiring that token into the live runner is the next implementation step.
 
