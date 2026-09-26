@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-26  
 **Audited runner base:** `main@6a8f92636c8bd82af2b496e8c848f81d08bc20a2` (PR #13 merged)  
-**Status:** offline pre-live audit; paid/live execution remains unauthorized
+**Status:** offline pre-live audit complete; paid/live execution remains unauthorized
 
 ## 1. Purpose
 
@@ -28,7 +28,7 @@ Post-merge push CI evidence on the merged runner checkout:
 - P6-3 Unified Pre-Live Gate #38 — **success** (`36223672927`)
 - P6-3 Mutation Protocol Parity #66 — **success** (`36223672952`)
 - P6-3 Rsem Protocol Parity #52 — **success** (`36223672914`)
-- Harness CI #531 — must be **success** before this audit PR is merged and before paid/live authorization is considered.
+- Harness CI #531 — **success** (`36223672944`), including all 55 verification/smoke steps.
 
 ## 3. Frozen workload and execution semantics
 
@@ -100,6 +100,6 @@ The unified pre-live gate itself always returns `liveAuthorized=false` and there
 
 ## 7. Final gate disposition
 
-Once Harness CI #531 on `main@6a8f92636c8bd82af2b496e8c848f81d08bc20a2` is confirmed successful and this documentation-only audit is merged, the remaining gate is **explicit user authorization to start the paid/live P6-3 calibration**.
+The merged runner checkout and all post-merge CI evidence are green. Once this documentation-only audit PR is merged, the remaining gate is **explicit user authorization to start the paid/live P6-3 calibration**.
 
 No paid/live API call is authorized by this audit document.
