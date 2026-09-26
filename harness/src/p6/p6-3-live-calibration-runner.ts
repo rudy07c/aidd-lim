@@ -6,7 +6,6 @@ import {
   decideP63AttemptTransition,
   type P63CalibrationArm,
   type P63AttemptFailureDomain,
-  type P63ScientificFailureDomain,
 } from "./p6-3-execution-protocol";
 import {
   assertP63PreLiveGatePassToken,
@@ -112,6 +111,21 @@ export interface P63InFlightAttempt {
   readonly startedAt: string;
 }
 
+/**
+ * A provider call may have happened even when the process died before an
+ * attempt record was committed. Such a cell is never silently re-run. The
+ * explicit resolution is recorded separately because there is no trustworthy
+ * model output/exposure artifact to pretend was observed.
+ */
+export interface P63InterruptedAttemptResolution {
+  readonly sequence: number;
+  readonly attempt: number;
+  readonly startedAt: string;
+  readonly adjudication: P63AdjudicationRecord & {
+    readonly finalDisposition: "infrastructure-invalid";
+  };
+}
+
 export interface P63CalibrationAuditFlag {
   readonly kind:
     | "infrastructure-adjudication-required"
@@ -139,6 +153,7 @@ export interface P63CalibrationState {
   nextAttempt: number;
   inFlight: P63InFlightAttempt | null;
   attempts: P63AttemptRecord[];
+  interruptedAttempts: P63InterruptedAttemptResolution[];
   auditFlag: P63CalibrationAuditFlag | null;
   estimatedCostUsd: number;
   readonly startedAt: string;
@@ -264,6 +279,7 @@ export function createP63CalibrationState(
     nextAttempt: 1,
     inFlight: null,
     attempts: [],
+    interruptedAttempts: [],
     auditFlag: null,
     estimatedCostUsd: 0,
     startedAt: now,
@@ -308,6 +324,9 @@ export function assertP63ResumeCompatible(
   ) {
     throw new Error("Resume refused: invalid P6-3 nextAttempt");
   }
+  if (!Array.isArray(state.attempts) || !Array.isArray(state.interruptedAttempts)) {
+    throw new Error("Resume refused: P6-3 attempt journals are malformed");
+  }
 }
 
 export function recoverInterruptedP63State(state: P63CalibrationState): void {
@@ -318,7 +337,7 @@ export function recoverInterruptedP63State(state: P63CalibrationState): void {
     sequence: state.inFlight.sequence,
     attempt: state.inFlight.attempt,
     reason:
-      "A scientific attempt was marked in-flight without a committed result; do not blindly repeat a potentially billable/provider-visible call.",
+      "A scientific attempt was marked in-flight without a committed result; do not blindly repeat a potentially billable/provider-visible call. Resolve it explicitly as infrastructure-invalid before retrying.",
     createdAt: new Date().toISOString(),
   };
   touch(state);
@@ -444,13 +463,6 @@ export function applyP63Adjudication(
   }
   const reviewer = requireText(request.reviewer, "reviewer");
   const reason = requireText(request.reason, "reason");
-  const target = [...state.attempts]
-    .reverse()
-    .find((entry) => entry.sequence === request.sequence && entry.attempt === request.attempt);
-  if (!target) throw new Error("P6-3 adjudication target attempt not found");
-  if (target.rawFailureDomain !== "infrastructure" || target.infrastructureAdjudication !== "pending") {
-    throw new Error("P6-3 adjudication target is not a pending infrastructure-domain attempt");
-  }
   if (state.cursorCellIndex !== request.sequence) {
     throw new Error("P6-3 adjudication target must be the current logical cell");
   }
@@ -458,71 +470,157 @@ export function applyP63Adjudication(
   if (!cell || cell.sequence !== request.sequence) {
     throw new Error("P6-3 adjudication plan/cursor mismatch");
   }
-  if (request.finalDisposition === "protocol-failure" && cell.measurement === "M") {
-    throw new Error("P6-3 M infrastructure adjudication does not use protocol-failure disposition");
+
+  if (state.auditFlag.kind === "uncertain-in-flight-attempt") {
+    resolveUncertainInFlight(state, request, reviewer, reason);
+    return;
   }
 
-  target.adjudication = {
+  const target = [...state.attempts]
+    .reverse()
+    .find((entry) => entry.sequence === request.sequence && entry.attempt === request.attempt);
+  if (!target) throw new Error("P6-3 adjudication target attempt not found");
+  const adjudication: P63AdjudicationRecord = {
     reviewer,
     reason,
     finalDisposition: request.finalDisposition,
     adjudicatedAt: request.adjudicatedAt ?? new Date().toISOString(),
   };
+  target.adjudication = adjudication;
 
-  if (request.finalDisposition === "infrastructure-invalid") {
-    target.infrastructureAdjudication = "infrastructure-invalid";
-    target.effectiveFailureDomain = "infrastructure";
-    const transition = decideP63AttemptTransition({
-      attempt: target.attempt,
-      failureDomain: "infrastructure",
-      infrastructureAdjudication: "infrastructure-invalid",
-    });
-    if (transition === "retry-same-cell") {
-      state.status = "running";
-      state.auditFlag = null;
-      state.nextAttempt = target.attempt + 1;
-      state.inFlight = null;
-      touch(state);
+  if (target.rawFailureDomain === "infrastructure") {
+    if (target.infrastructureAdjudication !== "pending") {
+      throw new Error("P6-3 infrastructure adjudication target is not pending");
+    }
+    if (request.finalDisposition === "infrastructure-invalid") {
+      target.infrastructureAdjudication = "infrastructure-invalid";
+      target.effectiveFailureDomain = "infrastructure";
+      applyInfrastructureInvalidTransition(state, target.attempt, target.sequence, adjudication.adjudicatedAt);
       return;
     }
-    state.status = "needs-audit";
-    state.auditFlag = {
-      kind: "max-infrastructure-attempts-exhausted",
-      sequence: target.sequence,
-      attempt: target.attempt,
-      reason: `P6-3 logical cell exhausted ${P6_3_MAX_SCIENTIFIC_ATTEMPTS_PER_LOGICAL_CELL} infrastructure-invalid scientific attempts.`,
-      createdAt: target.adjudication.adjudicatedAt,
-    };
-    touch(state);
+    target.infrastructureAdjudication = "not-applicable";
+    target.effectiveFailureDomain =
+      request.finalDisposition === "protocol-failure" ? "protocol" : "semantic";
+    state.status = "running";
+    state.auditFlag = null;
+    advanceCell(state, plan.length);
     return;
   }
 
-  target.infrastructureAdjudication = "not-applicable";
-  target.effectiveFailureDomain =
-    request.finalDisposition === "protocol-failure" ? "protocol" : "semantic";
-  state.status = "running";
-  state.auditFlag = null;
-  advanceCell(state, plan.length);
+  if (target.rawFailureDomain === "other") {
+    if (request.finalDisposition === "infrastructure-invalid") {
+      target.effectiveFailureDomain = "infrastructure";
+      target.infrastructureAdjudication = "infrastructure-invalid";
+      applyInfrastructureInvalidTransition(state, target.attempt, target.sequence, adjudication.adjudicatedAt);
+      return;
+    }
+    target.infrastructureAdjudication = "not-applicable";
+    target.effectiveFailureDomain =
+      request.finalDisposition === "protocol-failure" ? "protocol" : "semantic";
+    state.status = "running";
+    state.auditFlag = null;
+    advanceCell(state, plan.length);
+    return;
+  }
+
+  throw new Error(
+    `P6-3 adjudication target raw failure domain is not audit-resolvable: ${target.rawFailureDomain}`
+  );
 }
 
 export function summarizeP63ExecutionState(state: P63CalibrationState): {
   logicalCellsCompleted: number;
   scientificAttempts: number;
   replacementAttempts: number;
+  interruptedAttempts: number;
   estimatedCostUsd: number;
   status: P63CalibrationState["status"];
   nextSequence: number | null;
 } {
+  const interruptedAttempts = state.interruptedAttempts ?? [];
   return {
     logicalCellsCompleted: state.cursorCellIndex,
-    scientificAttempts: state.attempts.length,
-    replacementAttempts: Math.max(0, state.attempts.length - state.cursorCellIndex),
+    scientificAttempts: state.attempts.length + interruptedAttempts.length,
+    replacementAttempts:
+      state.attempts.filter((entry) => entry.attempt > 1).length +
+      interruptedAttempts.filter((entry) => entry.attempt > 1).length,
+    interruptedAttempts: interruptedAttempts.length,
     estimatedCostUsd: state.estimatedCostUsd,
     status: state.status,
     nextSequence: state.cursorCellIndex < state.totalLogicalCells
       ? state.cursorCellIndex
       : null,
   };
+}
+
+function resolveUncertainInFlight(
+  state: P63CalibrationState,
+  request: P63AdjudicationRequest,
+  reviewer: string,
+  reason: string
+): void {
+  const inFlight = state.inFlight;
+  if (!inFlight) {
+    throw new Error("P6-3 uncertain-in-flight adjudication requires a persisted inFlight marker");
+  }
+  if (inFlight.sequence !== request.sequence || inFlight.attempt !== request.attempt) {
+    throw new Error("P6-3 uncertain-in-flight adjudication does not match the persisted marker");
+  }
+  if (request.finalDisposition !== "infrastructure-invalid") {
+    throw new Error(
+      "P6-3 uncertain in-flight outcome has no trustworthy scientific output; it may only be resolved as infrastructure-invalid"
+    );
+  }
+  const adjudication = {
+    reviewer,
+    reason,
+    finalDisposition: "infrastructure-invalid" as const,
+    adjudicatedAt: request.adjudicatedAt ?? new Date().toISOString(),
+  };
+  state.interruptedAttempts.push({
+    sequence: inFlight.sequence,
+    attempt: inFlight.attempt,
+    startedAt: inFlight.startedAt,
+    adjudication,
+  });
+  state.inFlight = null;
+  applyInfrastructureInvalidTransition(
+    state,
+    inFlight.attempt,
+    inFlight.sequence,
+    adjudication.adjudicatedAt
+  );
+}
+
+function applyInfrastructureInvalidTransition(
+  state: P63CalibrationState,
+  attempt: number,
+  sequence: number,
+  adjudicatedAt: string
+): void {
+  const transition = decideP63AttemptTransition({
+    attempt,
+    failureDomain: "infrastructure",
+    infrastructureAdjudication: "infrastructure-invalid",
+  });
+  if (transition === "retry-same-cell") {
+    state.status = "running";
+    state.auditFlag = null;
+    state.nextAttempt = attempt + 1;
+    state.inFlight = null;
+    touch(state);
+    return;
+  }
+  state.status = "needs-audit";
+  state.auditFlag = {
+    kind: "max-infrastructure-attempts-exhausted",
+    sequence,
+    attempt,
+    reason: `P6-3 logical cell exhausted ${P6_3_MAX_SCIENTIFIC_ATTEMPTS_PER_LOGICAL_CELL} infrastructure-invalid scientific attempts.`,
+    createdAt: adjudicatedAt,
+  };
+  state.inFlight = null;
+  touch(state);
 }
 
 function budgetForArm(arm: P63CalibrationArm, budgets: P63FrozenBudgets): number | "full" {
@@ -582,9 +680,7 @@ function advanceCell(state: P63CalibrationState, planLength: number): void {
   state.auditFlag = null;
   state.status = state.cursorCellIndex >= planLength ? "completed" : "running";
   touch(state);
-  if (state.status === "completed") {
-    state.completedAt = state.updatedAt;
-  }
+  if (state.status === "completed") state.completedAt = state.updatedAt;
 }
 
 function completeState(state: P63CalibrationState): void {
