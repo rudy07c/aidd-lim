@@ -28,14 +28,16 @@ It re-runs all of the following against the current checkout:
 - `verify-p6-3-rsem-protocol-parity.ts`
 - `verify-p6-3-rsem-leak-proofing.ts`
 
+The structural verifier and structural-manifest verifier share only a gate-owned temporary candidate artifact. All generated verifier artifacts live in an OS temporary directory and are deleted before the gate returns.
+
 Only after all eight return exit status 0 does the gate re-read the four committed frozen manifests:
 
-- `harness/frozen/p6-3-el-structural-freeze.json`
-- `harness/frozen/p6-3-execution-protocol.json`
-- `harness/frozen/p6-3-mutation-protocol-parity.json`
-- `harness/frozen/p6-3-rsem-protocol-parity.json`
+- `harness/frozen/p6-3-el-structural-freeze.json` — expected `status="frozen-pass"`
+- `harness/frozen/p6-3-execution-protocol.json` — expected `status="frozen-pre-live"`
+- `harness/frozen/p6-3-mutation-protocol-parity.json` — expected `status="frozen-pass"`
+- `harness/frozen/p6-3-rsem-protocol-parity.json` — expected `status="frozen-pass"`
 
-Every manifest must exist, parse as JSON, contain a non-empty `schemaVersion`, and have `status="frozen-pass"`. The receipt records the SHA-256 of the exact bytes of each manifest together with the checkout git SHA.
+Every manifest must exist, parse as JSON, contain a non-empty `schemaVersion`, and match its already-frozen status exactly. The unified gate does not normalize or rewrite those statuses. The receipt records the SHA-256 of the exact bytes of each manifest together with the checkout git SHA.
 
 ## Fail-closed behavior
 
@@ -43,7 +45,7 @@ The gate returns a branded `P63PreLiveGatePassToken`; a plain object containing 
 
 The verifier also tests two explicit negative cases:
 
-- changing any frozen manifest status away from `frozen-pass` must fail;
+- changing a required manifest away from its declared frozen status must fail;
 - removing a required frozen manifest must fail.
 
 Future live-runner integration must require the branded pass token before it can enter any provider/API execution path. This PR establishes the token and gate; wiring that token into the live runner is the next implementation step.
