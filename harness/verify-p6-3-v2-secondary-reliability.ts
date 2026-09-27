@@ -1,4 +1,6 @@
 import * as assert from "assert";
+import * as fs from "fs";
+import * as path from "path";
 import { buildP63CalibrationPlan } from "./src/p6/p6-3-live-calibration-runner";
 import {
   createP63V2CalibrationState,
@@ -8,6 +10,7 @@ import {
 import {
   P6_3_V2_SECONDARY_RELIABILITY_ARTIFACT_SCHEMA,
   P6_3_V2_SECONDARY_RELIABILITY_QUANTILE_RULE,
+  classifyP63V2MaxOutputCensoring,
   summarizeP63V2SecondaryReliability,
   withP63V2SecondaryReliability,
   type P63V2ReliabilityCellOutcome,
@@ -30,6 +33,51 @@ const plan = fullPlan.slice(0, 3);
 assert.deepEqual(plan.map((cell) => cell.arm.label), ["B0", "B1", "B2"]);
 
 async function main(): Promise<void> {
+  verifyCensoringClassifierBoundaries();
+  const summary = await verifyTerminalCollectionSummary();
+  await verifyUnclassifiableIncompleteState();
+  await verifyInterruptedAttemptVisibility();
+  await verifyWrapperFailsOnTelemetryEvidenceMismatch();
+  verifyArtifactIdentityBinding(summary);
+  verifyV1ExploratoryRegression();
+
+  console.log(JSON.stringify({
+    ok: true,
+    committedAttempts: summary.committedAttemptCount,
+    classifiableAttempts: summary.maxOutputCensoringClassifiableAttemptCount,
+    unclassifiableAttempts: summary.maxOutputCensoringUnclassifiableAttemptCount,
+    maxOutputCensoredAttempts: summary.maxOutputCensoredAttemptCount,
+    exhaustedCells: summary.exhaustedCellLocations.length,
+    quantileRule: summary.quantileRule,
+    triStateCensoring: true,
+    interruptedAttemptsVisible: true,
+  }));
+}
+
+function verifyCensoringClassifierBoundaries(): void {
+  assert.equal(classifyP63V2MaxOutputCensoring({
+    executionStatus: "response-incomplete",
+    incompleteReason: "max_output_tokens",
+  }), true);
+  assert.equal(classifyP63V2MaxOutputCensoring({
+    executionStatus: "response-incomplete",
+    incompleteReason: "content_filter",
+  }), false);
+  assert.equal(classifyP63V2MaxOutputCensoring({
+    executionStatus: "response-incomplete",
+    incompleteReason: null,
+  }), null);
+  assert.equal(classifyP63V2MaxOutputCensoring({
+    executionStatus: "ok",
+    incompleteReason: null,
+  }), false);
+  assert.equal(classifyP63V2MaxOutputCensoring({
+    executionStatus: "ok",
+    incompleteReason: "max_output_tokens",
+  }), null);
+}
+
+async function verifyTerminalCollectionSummary() {
   const state = createP63V2CalibrationState({
     checkoutGitSha: "offline-v2-secondary-reliability-sha",
     frozenManifestHashes: { executionParameters: "offline-test" },
@@ -74,10 +122,7 @@ async function main(): Promise<void> {
   const summary = summarizeP63V2SecondaryReliability({
     state,
     plan,
-    loadAttemptArtifact: (artifactPath) => {
-      if (!persistence.artifacts.has(artifactPath)) throw new Error(`missing ${artifactPath}`);
-      return persistence.artifacts.get(artifactPath);
-    },
+    loadAttemptArtifact: (artifactPath) => requiredArtifact(persistence, artifactPath),
   });
 
   assert.equal(summary.collectionStatus, "needs-design-audit");
@@ -86,19 +131,24 @@ async function main(): Promise<void> {
   assert.deepEqual(summary.secondarySummaryIds, [...P6_3_V2_SECONDARY_SUMMARY_IDS]);
   assert.equal(summary.committedAttemptCount, 6);
   assert.equal(summary.interruptedAttemptCount, 0);
+  assert.equal(summary.providerVisibleAttemptCount, 6);
   assert.equal(summary.maxOutputCensoredAttemptCount, 4);
+  assert.equal(summary.maxOutputCensoringClassifiableAttemptCount, 6);
+  assert.equal(summary.maxOutputCensoringUnclassifiableAttemptCount, 0);
   assert.deepEqual(
     summary.logicalCells.map((cell) => ({
       sequence: cell.sequence,
+      committed: cell.committedAttemptCount,
+      interrupted: cell.interruptedAttemptCount,
       attempts: cell.attemptCount,
       anyCensoring: cell.anyMaxOutputCensoring,
       attemptsToValid: cell.attemptsToValidScientificObservation,
       exhausted: cell.censoredExhausted,
     })),
     [
-      { sequence: 0, attempts: 2, anyCensoring: true, attemptsToValid: 2, exhausted: false },
-      { sequence: 1, attempts: 3, anyCensoring: true, attemptsToValid: null, exhausted: true },
-      { sequence: 2, attempts: 1, anyCensoring: false, attemptsToValid: 1, exhausted: false },
+      { sequence: 0, committed: 2, interrupted: 0, attempts: 2, anyCensoring: true, attemptsToValid: 2, exhausted: false },
+      { sequence: 1, committed: 3, interrupted: 0, attempts: 3, anyCensoring: true, attemptsToValid: null, exhausted: true },
+      { sequence: 2, committed: 1, interrupted: 0, attempts: 1, anyCensoring: false, attemptsToValid: 1, exhausted: false },
     ]
   );
 
@@ -107,12 +157,31 @@ async function main(): Promise<void> {
   const b2 = summary.byArm.find((item) => item.armLabel === "B2");
   assert.ok(b0 && b1 && b2);
   assert.deepEqual(
-    pick(b0, ["attempts", "maxOutputCensoredAttempts", "attemptCensoringRate", "attemptedLogicalCells", "logicalCellsWithAnyCensoring", "logicalCellCensoringRate"]),
+    pick(b0, [
+      "committedAttempts",
+      "interruptedAttempts",
+      "providerVisibleAttempts",
+      "censoringClassifiableAttempts",
+      "censoringUnclassifiableAttempts",
+      "maxOutputCensoredAttempts",
+      "attemptCensoringRate",
+      "attemptedLogicalCells",
+      "censoringClassifiableLogicalCells",
+      "censoringUnclassifiableLogicalCells",
+      "logicalCellsWithAnyCensoring",
+      "logicalCellCensoringRate",
+    ]),
     {
-      attempts: 2,
+      committedAttempts: 2,
+      interruptedAttempts: 0,
+      providerVisibleAttempts: 2,
+      censoringClassifiableAttempts: 2,
+      censoringUnclassifiableAttempts: 0,
       maxOutputCensoredAttempts: 1,
       attemptCensoringRate: 0.5,
       attemptedLogicalCells: 1,
+      censoringClassifiableLogicalCells: 1,
+      censoringUnclassifiableLogicalCells: 0,
       logicalCellsWithAnyCensoring: 1,
       logicalCellCensoringRate: 1,
     }
@@ -123,7 +192,7 @@ async function main(): Promise<void> {
   assert.equal(b0.outputTokens.q25, 111);
   assert.equal(b0.outputTokens.q50, 111);
   assert.equal(b0.outputTokens.q75, 14000);
-  assert.equal(b1.attempts, 3);
+  assert.equal(b1.committedAttempts, 3);
   assert.equal(b1.maxOutputCensoredAttempts, 3);
   assert.equal(b1.attemptCensoringRate, 1);
   assert.equal(b1.attemptsToValidScientificObservation.observed, 0);
@@ -146,6 +215,129 @@ async function main(): Promise<void> {
   assert.equal(seq0Attempt1?.outputTokens, 14000);
   assert.equal(seq0Attempt1?.reasoningOutputTokens, 13000);
 
+  (summary as any).__testPersistence = persistence;
+  (summary as any).__testState = state;
+  return summary;
+}
+
+async function verifyUnclassifiableIncompleteState(): Promise<void> {
+  const oneCellPlan = plan.slice(0, 1);
+  const state = createP63V2CalibrationState({
+    checkoutGitSha: "offline-unclassifiable",
+    frozenManifestHashes: { executionParameters: "offline-test" },
+    plan: oneCellPlan,
+    executionPolicy: { maxScientificAttemptsPerLogicalCell: 3 },
+  });
+  const persistence = memoryPersistence();
+  const executor = withP63V2SecondaryReliability({
+    execute: async (cell, attempt): Promise<P63V2ReliabilityCellOutcome> => ({
+      failureDomain: "infrastructure",
+      executionStatus: "response-incomplete",
+      passed: false,
+      semanticScore: 0,
+      protocolValid: null,
+      estimatedCostUsd: 0,
+      failureReason: "response incomplete without provider reason",
+      exposure: exposure(cell),
+      diagnosticSummary: {},
+      artifactPayload: { scientific: "unknown-incomplete", sequence: cell.sequence, attempt },
+      autoInfrastructureEvidence: {
+        executionStatus: "response-incomplete",
+        incompleteReason: null,
+        outputTokens: 14000,
+        configuredMaxOutputTokens: 14000,
+        responseStatus: "incomplete",
+        providerErrorCode: null,
+        errorCategory: "response",
+      },
+      reliabilityTelemetry: {
+        tokenUsage: { input: 100, output: 14000, reasoningOutput: 13000, total: 14100 },
+        configuredMaxOutputTokens: 14000,
+        incompleteReason: null,
+      },
+    }),
+  });
+  await executeP63V2Calibration(
+    state,
+    {
+      checkoutGitSha: "offline-unclassifiable",
+      frozenManifestHashes: { executionParameters: "offline-test" },
+      executionPolicy: { maxScientificAttemptsPerLogicalCell: 3 },
+    },
+    oneCellPlan,
+    executor,
+    persistence
+  );
+  assert.equal(state.status, "needs-audit");
+  const summary = summarizeP63V2SecondaryReliability({
+    state,
+    plan: oneCellPlan,
+    loadAttemptArtifact: (artifactPath) => requiredArtifact(persistence, artifactPath),
+  });
+  assert.equal(summary.committedAttemptCount, 1);
+  assert.equal(summary.maxOutputCensoringClassifiableAttemptCount, 0);
+  assert.equal(summary.maxOutputCensoringUnclassifiableAttemptCount, 1);
+  assert.equal(summary.attempts[0]?.maxOutputCensored, null);
+  assert.equal(summary.logicalCells[0]?.anyMaxOutputCensoring, null);
+  const b0 = summary.byArm.find((item) => item.armLabel === "B0")!;
+  assert.equal(b0.attemptCensoringRate, null);
+  assert.equal(b0.censoringClassifiableAttempts, 0);
+  assert.equal(b0.censoringUnclassifiableAttempts, 1);
+  assert.equal(b0.logicalCellCensoringRate, null);
+  assert.equal(b0.censoringUnclassifiableLogicalCells, 1);
+}
+
+async function verifyInterruptedAttemptVisibility(): Promise<void> {
+  const oneCellPlan = plan.slice(0, 1);
+  const state = createP63V2CalibrationState({
+    checkoutGitSha: "offline-interrupted",
+    frozenManifestHashes: { executionParameters: "offline-test" },
+    plan: oneCellPlan,
+    executionPolicy: { maxScientificAttemptsPerLogicalCell: 3 },
+  });
+  state.inFlight = {
+    sequence: 0,
+    attempt: 1,
+    startedAt: "2026-09-27T00:00:00.000Z",
+  };
+  let called = false;
+  const persistence = memoryPersistence();
+  await executeP63V2Calibration(
+    state,
+    {
+      checkoutGitSha: "offline-interrupted",
+      frozenManifestHashes: { executionParameters: "offline-test" },
+      executionPolicy: { maxScientificAttemptsPerLogicalCell: 3 },
+    },
+    oneCellPlan,
+    { execute: async () => { called = true; throw new Error("must not execute"); } },
+    persistence
+  );
+  assert.equal(called, false);
+  assert.equal(state.status, "needs-audit");
+  assert.equal(state.interruptedAttempts.length, 1);
+  const summary = summarizeP63V2SecondaryReliability({
+    state,
+    plan: oneCellPlan,
+    loadAttemptArtifact: () => { throw new Error("no committed artifact expected"); },
+  });
+  assert.equal(summary.committedAttemptCount, 0);
+  assert.equal(summary.interruptedAttemptCount, 1);
+  assert.equal(summary.providerVisibleAttemptCount, 1);
+  assert.equal(summary.maxOutputCensoringClassifiableAttemptCount, 0);
+  assert.equal(summary.maxOutputCensoringUnclassifiableAttemptCount, 1);
+  assert.equal(summary.interruptedAttemptLocations[0]?.sequence, 0);
+  assert.equal(summary.logicalCells[0]?.attemptCount, 1);
+  assert.equal(summary.logicalCells[0]?.interruptedAttemptCount, 1);
+  assert.equal(summary.logicalCells[0]?.anyMaxOutputCensoring, null);
+  const b0 = summary.byArm.find((item) => item.armLabel === "B0")!;
+  assert.equal(b0.providerVisibleAttempts, 1);
+  assert.equal(b0.censoringUnclassifiableAttempts, 1);
+  assert.equal(b0.outputTokens.observed, 0);
+  assert.equal(b0.outputTokens.missing, 1);
+}
+
+async function verifyWrapperFailsOnTelemetryEvidenceMismatch(): Promise<void> {
   await assert.rejects(
     () => withP63V2SecondaryReliability({
       execute: async (cell, attempt) => ({
@@ -159,7 +351,11 @@ async function main(): Promise<void> {
     }).execute(plan[0], 1),
     /disagrees with automatic-infrastructure raw evidence/
   );
+}
 
+function verifyArtifactIdentityBinding(summary: any): void {
+  const persistence = summary.__testPersistence as ReturnType<typeof memoryPersistence>;
+  const state = summary.__testState as ReturnType<typeof createP63V2CalibrationState>;
   const firstPath = state.attempts[0]?.artifactPath;
   assert.ok(firstPath);
   const original = persistence.artifacts.get(firstPath!);
@@ -175,20 +371,24 @@ async function main(): Promise<void> {
     () => summarizeP63V2SecondaryReliability({
       state,
       plan,
-      loadAttemptArtifact: (artifactPath) => persistence.artifacts.get(artifactPath),
+      loadAttemptArtifact: (artifactPath) => requiredArtifact(persistence, artifactPath),
     }),
     /artifact identity mismatch/
   );
   persistence.artifacts.set(firstPath!, original);
+}
 
-  console.log(JSON.stringify({
-    ok: true,
-    committedAttempts: summary.committedAttemptCount,
-    maxOutputCensoredAttempts: summary.maxOutputCensoredAttemptCount,
-    exhaustedCells: summary.exhaustedCellLocations.length,
-    quantileRule: summary.quantileRule,
-    allAttemptArtifactsBound: persistence.artifacts.size,
-  }));
+function verifyV1ExploratoryRegression(): void {
+  const fixturePath = path.resolve(__dirname, "frozen/p6-3-v1-auto-infra-regression.json");
+  const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf8")) as {
+    summary: { attemptCount: number; humanInfrastructureInvalidCount: number };
+    cases: Array<{ rawEvidence: { executionStatus: string; incompleteReason: string | null } }>;
+  };
+  assert.equal(fixture.summary.attemptCount, 43);
+  assert.equal(fixture.cases.length, 43);
+  const classified = fixture.cases.map((item) => classifyP63V2MaxOutputCensoring(item.rawEvidence));
+  assert.equal(classified.filter((value) => value === true).length, 11);
+  assert.equal(classified.filter((value) => value === true).length, fixture.summary.humanInfrastructureInvalidCount);
 }
 
 function censoredOutcome(
@@ -287,6 +487,11 @@ function memoryPersistence(): P63V2CalibrationPersistence & {
       return artifactPath;
     },
   };
+}
+
+function requiredArtifact(persistence: ReturnType<typeof memoryPersistence>, artifactPath: string): unknown {
+  if (!persistence.artifacts.has(artifactPath)) throw new Error(`missing ${artifactPath}`);
+  return persistence.artifacts.get(artifactPath);
 }
 
 function pick<T extends object>(value: T, keys: readonly (keyof T)[]): Record<string, unknown> {
