@@ -22,16 +22,18 @@ function main(): void {
   assert.equal(report.rsemProvider.maxOutputTokens, 8000);
   assert.equal(report.maxScientificAttemptsPerLogicalCell, 3);
   assert.equal(report.executionManifestLiveExecutionAuthorized, false);
-  assert.equal(report.finalPreLiveGateFrozen, false);
+  assert.equal(report.finalPreLiveGateFrozen, true);
+  assert.equal(report.paidLiveAuthorizationRequired, true);
   assert.equal(report.liveExecutionAllowed, false);
   assert.match(report.structuralFreezeSha256, /^[0-9a-f]{64}$/);
   assert.match(report.executionParametersManifestSha256, /^[0-9a-f]{64}$/);
   assert.match(report.v1AutoInfraFixtureSha256, /^[0-9a-f]{64}$/);
+  assert.match(report.finalPreLiveSpecSha256, /^[0-9a-f]{64}$/);
 
   assert.doesNotThrow(() => assertP63V2CliInvocationAllowed(false));
   assert.throws(
     () => assertP63V2CliInvocationAllowed(true),
-    /live execution blocked: final pre-live gate is not frozen/
+    /final pre-live gate is frozen, but explicit paid\/live authorization is not wired/
   );
 
   const cliPath = path.resolve(__dirname, "p6-3-v2-calibration.ts");
@@ -62,7 +64,8 @@ function main(): void {
   });
   assert.equal(dry.status, 0, `dry CLI failed: ${dry.stderr}`);
   assert.match(dry.stdout, /P6-3 V2 PRELIVE/);
-  assert.match(dry.stdout, /Live execution remains blocked/);
+  assert.match(dry.stdout, /Final pre-live gate is frozen/);
+  assert.match(dry.stdout, /paid\/live execution remains blocked/);
 
   const live = spawnSync(
     process.execPath,
@@ -73,10 +76,10 @@ function main(): void {
       encoding: "utf8",
     }
   );
-  assert.notEqual(live.status, 0, "--live must fail closed before final v2 pre-live gate");
+  assert.notEqual(live.status, 0, "--live must remain fail-closed without explicit paid/live wiring");
   assert.match(
     `${live.stdout}\n${live.stderr}`,
-    /live execution blocked: final pre-live gate is not frozen; no provider calls were made/
+    /final pre-live gate is frozen, but explicit paid\/live authorization is not wired; no provider calls were made/
   );
 
   console.log(JSON.stringify({
@@ -85,6 +88,7 @@ function main(): void {
     mutationMaxOutputTokens: report.mutationProvider.maxOutputTokens,
     rsemMaxOutputTokens: report.rsemProvider.maxOutputTokens,
     finalPreLiveGateFrozen: report.finalPreLiveGateFrozen,
+    paidLiveAuthorizationRequired: report.paidLiveAuthorizationRequired,
     liveExecutionAllowed: report.liveExecutionAllowed,
     liveInvocationFailsClosed: true,
   }));

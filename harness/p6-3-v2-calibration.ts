@@ -24,13 +24,13 @@ function main(): void {
   const preflight = buildP63V2CliPreflight();
   console.log(`P6-3 V2 PRELIVE ${JSON.stringify(preflight)}`);
 
-  // IMPORTANT: this gate executes before any provider/executor module is
-  // imported. The current CLI is intentionally dry-only until the final v2
-  // pre-live manifest/gate is frozen in a later change.
+  // IMPORTANT: the final v2 evidence gate is frozen, but explicit paid/live
+  // authorization is still intentionally not wired. This assertion executes
+  // before any provider/executor module is imported.
   assertP63V2CliInvocationAllowed(args.live);
 
   console.log(
-    "P6-3 v2 dry preflight passed. Live execution remains blocked pending the final v2 pre-live gate."
+    "P6-3 v2 dry preflight passed. Final pre-live gate is frozen; paid/live execution remains blocked."
   );
 }
 

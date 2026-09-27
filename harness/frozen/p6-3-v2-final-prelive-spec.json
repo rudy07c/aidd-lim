@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "p6-3-v2-final-prelive-spec-v1",
+  "status": "final-prelive-spec-frozen",
+  "scope": "P6-3 v2 calibration pre-live evidence binding only; this spec does not authorize provider execution",
+  "calibrationOnly": true,
+  "confirmatoryStage1AEligible": false,
+  "totalLogicalCells": 864,
+  "mutationMaxOutputTokens": 14000,
+  "rsemMaxOutputTokens": 8000,
+  "maxScientificAttemptsPerLogicalCell": 3,
+  "exactCheckoutShaBoundAtReceiptGeneration": true,
+  "paidLiveAuthorizationRequired": true,
+  "liveExecutionAuthorized": false,
+  "frozenEvidenceFiles": [
+    "harness/frozen/p6-3-el-structural-freeze.json",
+    "harness/frozen/p6-3-execution-protocol.json",
+    "harness/frozen/p6-3-mutation-protocol-parity.json",
+    "harness/frozen/p6-3-rsem-protocol-parity.json",
+    "harness/frozen/p6-3-v1-auto-infra-regression.json",
+    "harness/frozen/p6-3-v2-execution-parameters.json"
+  ],
+  "sourceFiles": [
+    "harness/src/p6/p6-3-v2-auto-infra.ts",
+    "harness/src/p6/p6-3-v2-execution-parameters.ts",
+    "harness/src/p6/p6-3-v2-live-calibration-runner.ts",
+    "harness/src/p6/p6-3-v2-secondary-reliability.ts",
+    "harness/src/p6/p6-3-v2-live-executors.ts",
+    "harness/src/p6/p6-3-v2-frozen-input-resolver.ts",
+    "harness/src/p6/p6-3-v2-end-to-end.ts",
+    "harness/src/p6/p6-3-v2-cli-preflight.ts",
+    "harness/src/p6/p6-3-v2-final-prelive-gate.ts",
+    "harness/p6-3-v2-calibration.ts"
+  ],
+  "verifierScripts": [
+    "verify-p6-3-el-structural-freeze.ts",
+    "verify-p6-3-structural-invariant-hardening.ts",
+    "verify-p6-3-el-structural-freeze-manifest.ts",
+    "verify-p6-3-execution-protocol.ts",
+    "verify-p6-3-mutation-protocol-parity.ts",
+    "verify-p6-3-rsem-protocol-parity.ts",
+    "verify-p6-3-rsem-leak-proofing.ts",
+    "verify-p6-3-v2-execution-parameters.ts",
+    "verify-p6-3-v2-auto-infra-regression.ts",
+    "verify-p6-3-v2-live-calibration-runner.ts",
+    "verify-p6-3-v2-secondary-reliability.ts",
+    "verify-p6-3-v2-live-executors.ts",
+    "verify-p6-3-v2-frozen-input-resolver.ts",
+    "verify-p6-3-v2-end-to-end.ts",
+    "verify-p6-3-v2-cli-dry-gate.ts"
+  ],
+  "operationalEvidenceFiles": [
+    "docs/p6_3_cost_estimate.md",
+    "docs/p6_3_v2_design_audit.md",
+    "docs/p6_3_v2_end_to_end_wiring.md"
+  ]
+}
