@@ -14,7 +14,7 @@ import {
 } from "./p6-3-v2-execution-parameters";
 
 export const P6_3_V2_CLI_PREFLIGHT_VERSION =
-  "p6-3-v2-cli-preflight-v2" as const;
+  "p6-3-v2-cli-preflight-v3" as const;
 
 export const P6_3_V2_FROZEN_BUDGETS: P63FrozenBudgets = Object.freeze({
   B0: 0,
@@ -52,7 +52,14 @@ export interface P63V2CliPreflightReport {
   readonly executionManifestLiveExecutionAuthorized: false;
   readonly finalPreLiveGateFrozen: true;
   readonly paidLiveAuthorizationRequired: true;
+  readonly liveExecutionWired: true;
   readonly liveExecutionAllowed: false;
+}
+
+export interface P63V2CliInvocationAuthorization {
+  readonly live: boolean;
+  readonly paidAuthorization: boolean;
+  readonly environment?: NodeJS.ProcessEnv;
 }
 
 export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
@@ -109,7 +116,7 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
 
   assertEqual(
     finalSpec.schemaVersion,
-    "p6-3-v2-final-prelive-spec-v1",
+    "p6-3-v2-final-prelive-spec-v2",
     "final pre-live spec schema"
   );
   assertEqual(finalSpec.status, "final-prelive-spec-frozen", "final pre-live spec status");
@@ -122,6 +129,7 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
     true,
     "final pre-live paid authorization boundary"
   );
+  assertEqual(finalSpec.liveExecutionWired, true, "final pre-live live-wiring state");
 
   const plan = buildP63CalibrationPlan(P6_3_V2_FROZEN_BUDGETS);
   assertEqual(plan.length, P6_3_EXPECTED_NORMAL_CALL_COUNT, "v2 calibration plan size");
@@ -154,20 +162,31 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
     executionManifestLiveExecutionAuthorized: false,
     finalPreLiveGateFrozen: true,
     paidLiveAuthorizationRequired: true,
+    liveExecutionWired: true,
     liveExecutionAllowed: false,
   });
 }
 
 /**
- * The final v2 pre-live evidence gate is now frozen, but paid/provider execution
- * remains intentionally unwired. This function still runs before any future
- * provider/executor import is allowed.
+ * This guard is deliberately provider-free and must execute before the live
+ * entrypoint is dynamically imported. A live invocation needs two independent
+ * operator signals; neither the frozen spec nor the final receipt self-authorizes.
  */
-export function assertP63V2CliInvocationAllowed(live: boolean): void {
-  if (!live) return;
-  throw new Error(
-    "P6-3 v2 live execution blocked: final pre-live gate is frozen, but explicit paid/live authorization is not wired; no provider calls were made."
-  );
+export function assertP63V2CliInvocationAllowed(
+  args: P63V2CliInvocationAuthorization
+): void {
+  if (!args.live) return;
+  if (!args.paidAuthorization) {
+    throw new Error(
+      "P6-3 v2 live execution blocked: explicit --authorize-paid-live=P6-3-v2 is required; no provider calls were made."
+    );
+  }
+  const environment = args.environment ?? process.env;
+  if (environment.P6_3_LIVE_EXECUTION_ALLOWED !== "1") {
+    throw new Error(
+      "P6-3 v2 live execution blocked: P6_3_LIVE_EXECUTION_ALLOWED=1 is required in addition to the paid-live flag; no provider calls were made."
+    );
+  }
 }
 
 function frozenPath(name: string): string {
