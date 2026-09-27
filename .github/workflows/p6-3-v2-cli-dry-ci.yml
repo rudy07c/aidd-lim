@@ -1,0 +1,67 @@
+name: P6-3 v2 CLI Dry Gate
+
+on:
+  push:
+    paths:
+      - 'harness/p6-3-v2-calibration.ts'
+      - 'harness/verify-p6-3-v2-cli-dry-gate.ts'
+      - 'harness/src/p6/p6-3-v2-cli-preflight.ts'
+      - 'harness/src/p6/p6-3-v2-execution-parameters.ts'
+      - 'harness/src/p6/p6-3-live-calibration-runner.ts'
+      - 'harness/frozen/p6-3-el-structural-freeze.json'
+      - 'harness/frozen/p6-3-v2-execution-parameters.json'
+      - 'harness/frozen/p6-3-v1-auto-infra-regression.json'
+      - 'harness/package.json'
+      - '.github/workflows/p6-3-v2-cli-dry-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/p6-3-v2-calibration.ts'
+      - 'harness/verify-p6-3-v2-cli-dry-gate.ts'
+      - 'harness/src/p6/p6-3-v2-cli-preflight.ts'
+      - 'harness/src/p6/p6-3-v2-execution-parameters.ts'
+      - 'harness/src/p6/p6-3-live-calibration-runner.ts'
+      - 'harness/frozen/p6-3-el-structural-freeze.json'
+      - 'harness/frozen/p6-3-v2-execution-parameters.json'
+      - 'harness/frozen/p6-3-v1-auto-infra-regression.json'
+      - 'harness/package.json'
+      - '.github/workflows/p6-3-v2-cli-dry-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 v2 CLI dry/live-blocked gate
+        working-directory: harness
+        env:
+          OPENAI_API_KEY: offline-ci-must-never-use-this
+          P6_3_LIVE_EXECUTION_ALLOWED: '1'
+        run: npm run verify:p6-3-v2-cli-dry-gate
+      - name: Exercise P6-3 v2 dry CLI
+        working-directory: harness
+        run: npm run p6:el-calibration-v2
+      - name: Prove P6-3 v2 --live remains fail-closed
+        working-directory: harness
+        env:
+          OPENAI_API_KEY: offline-ci-must-never-use-this
+          P6_3_LIVE_EXECUTION_ALLOWED: '1'
+        run: |
+          if npm run p6:el-calibration-v2 -- --live; then
+            echo 'ERROR: v2 --live unexpectedly succeeded before final pre-live gate' >&2
+            exit 1
+          fi
