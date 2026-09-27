@@ -28,6 +28,9 @@ import {
   P6_3_V2_MAX_SCIENTIFIC_ATTEMPTS_PER_LOGICAL_CELL,
 } from "./p6-3-v2-execution-parameters";
 
+const BASE_RECEIPT_FILE = "p6-3-v2-final-prelive-receipt.json";
+const PAID_LIVE_RECEIPT_FILE = "p6-3-v2-paid-live-wiring-receipt.json";
+
 export interface P63V2LiveEntrypointArgs {
   readonly paidLiveToken: P63V2PaidLiveGatePassToken;
   readonly resumePath: string | null;
@@ -78,6 +81,23 @@ export async function runP63V2LiveEntrypoint(
   const frozenManifestHashes = receiptEvidenceHashes(args.paidLiveToken);
   const statePath = resolveStatePath(repoRoot, args.resumePath);
   const runDir = path.dirname(statePath);
+  const stateAlreadyExists = fs.existsSync(statePath);
+  fs.mkdirSync(runDir, { recursive: true });
+
+  // Before any provider-capable executor is constructed, bind the complete
+  // safety evidence used for this run into its own run directory. A resume is
+  // accepted only if both receipts already exist and match exactly.
+  persistOrVerifySafetyReceipt(
+    path.join(runDir, BASE_RECEIPT_FILE),
+    baseReceipt,
+    stateAlreadyExists
+  );
+  persistOrVerifySafetyReceipt(
+    path.join(runDir, PAID_LIVE_RECEIPT_FILE),
+    receipt,
+    stateAlreadyExists
+  );
+
   const persistence = createP63V2FilePersistence({ statePath });
   const loaded = loadOrCreateP63V2State({
     statePath,
@@ -163,6 +183,28 @@ function existingFinalReportPath(runDir: string): string | null {
   return fs.existsSync(candidate) ? candidate : null;
 }
 
+function persistOrVerifySafetyReceipt(
+  targetPath: string,
+  expected: unknown,
+  resume: boolean
+): void {
+  if (!resume) {
+    if (fs.existsSync(targetPath)) {
+      throw new Error(`P6-3 v2 new run safety receipt already exists: ${targetPath}`);
+    }
+    fs.writeFileSync(targetPath, `${JSON.stringify(expected, null, 2)}\n`, "utf8");
+    return;
+  }
+
+  if (!fs.existsSync(targetPath) || !fs.statSync(targetPath).isFile()) {
+    throw new Error(`P6-3 v2 resume safety receipt missing: ${targetPath}`);
+  }
+  const actual = JSON.parse(fs.readFileSync(targetPath, "utf8")) as unknown;
+  if (stableJson(actual) !== stableJson(expected)) {
+    throw new Error(`P6-3 v2 resume safety receipt mismatch: ${targetPath}`);
+  }
+}
+
 function receiptEvidenceHashes(
   token: P63V2PaidLiveGatePassToken
 ): Readonly<Record<string, string>> {
@@ -182,4 +224,20 @@ function receiptEvidenceHashes(
   return Object.freeze(
     Object.fromEntries(evidence.map((item) => [item.path, item.sha256]))
   );
+}
+
+function stableJson(value: unknown): string {
+  return JSON.stringify(sortJson(value));
+}
+
+function sortJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortJson);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, item]) => [key, sortJson(item)])
+    );
+  }
+  return value;
 }
