@@ -1,0 +1,84 @@
+name: P6-3 v2 End-to-End Offline
+
+on:
+  push:
+    paths:
+      - 'harness/src/p6/p6-3-v2-end-to-end.ts'
+      - 'harness/src/p6/p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/verify-p6-3-v2-end-to-end.ts'
+      - 'harness/verify-p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
+      - 'harness/src/p6/p6-3-v2-live-executors.ts'
+      - 'harness/src/p6/p6-3-v2-execution-parameters.ts'
+      - 'harness/src/p6/p6-3-v2-auto-infra.ts'
+      - 'harness/p6-3-v2-calibration.ts'
+      - 'harness/src/p6/p6-3-v2-cli-preflight.ts'
+      - 'harness/package.json'
+      - '.github/workflows/p6-3-v2-end-to-end-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/p6/p6-3-v2-end-to-end.ts'
+      - 'harness/src/p6/p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/verify-p6-3-v2-end-to-end.ts'
+      - 'harness/verify-p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
+      - 'harness/src/p6/p6-3-v2-live-executors.ts'
+      - 'harness/src/p6/p6-3-v2-execution-parameters.ts'
+      - 'harness/src/p6/p6-3-v2-auto-infra.ts'
+      - 'harness/p6-3-v2-calibration.ts'
+      - 'harness/src/p6/p6-3-v2-cli-preflight.ts'
+      - 'harness/package.json'
+      - '.github/workflows/p6-3-v2-end-to-end-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify v2 execution parameters
+        working-directory: harness
+        run: npm run verify:p6-3-v2-execution-parameters
+      - name: Verify actual-v1 AUTO-INFRA regression
+        working-directory: harness
+        run: npm run verify:p6-3-v2-auto-infra-regression
+      - name: Verify v2 unattended runner
+        working-directory: harness
+        run: npm run verify:p6-3-v2-live-runner
+      - name: Verify v2 secondary reliability
+        working-directory: harness
+        run: npm run verify:p6-3-v2-secondary-reliability
+      - name: Verify v2 provider adapters
+        working-directory: harness
+        run: npm run verify:p6-3-v2-live-executors
+      - name: Verify frozen v2 runtime input resolver
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v2-frozen-input-resolver.ts
+      - name: Verify v2 end-to-end wiring
+        working-directory: harness
+        env:
+          OPENAI_API_KEY: offline-ci-must-never-use-this
+          P6_3_LIVE_EXECUTION_ALLOWED: '1'
+        run: npm run verify:p6-3-v2-end-to-end
+      - name: Re-prove CLI live path remains blocked
+        working-directory: harness
+        env:
+          OPENAI_API_KEY: offline-ci-must-never-use-this
+          P6_3_LIVE_EXECUTION_ALLOWED: '1'
+        run: npm run verify:p6-3-v2-cli-dry-gate
