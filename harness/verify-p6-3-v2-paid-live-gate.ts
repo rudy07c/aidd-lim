@@ -2,6 +2,9 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import {
+  authorizeP63V2PaidLiveInvocation,
+} from "./src/p6/p6-3-v2-cli-preflight";
+import {
   assertP63V2PaidLiveGatePassToken,
   P6_3_V2_PAID_LIVE_OPERATIONAL_EVIDENCE_FILES,
   P6_3_V2_PAID_LIVE_SOURCE_FILES,
@@ -16,7 +19,12 @@ function main(): void {
   process.env.P6_3_LIVE_EXECUTION_ALLOWED = "1";
 
   try {
-    const token = runP63V2PaidLiveGate(__dirname);
+    const runtimeAuthorization = authorizeP63V2PaidLiveInvocation({
+      live: true,
+      paidAuthorization: true,
+      environment: { P6_3_LIVE_EXECUTION_ALLOWED: "1" },
+    });
+    const token = runP63V2PaidLiveGate(__dirname, runtimeAuthorization);
     assertP63V2PaidLiveGatePassToken(token);
     const receipt = token.receipt;
 
@@ -36,6 +44,7 @@ function main(): void {
     assert.equal(receipt.baseFinalPreLiveReceipt.verifiers.length, 15);
     assert.equal(receipt.verifiers.length, P6_3_V2_PAID_LIVE_VERIFIER_SCRIPTS.length);
     assert.ok(receipt.verifiers.every((item) => item.status === "pass"));
+    assert.equal(token.runtimeAuthorization, runtimeAuthorization);
 
     const verifyEvidence = (
       evidence: readonly { path: string; sha256: string }[],
@@ -92,6 +101,7 @@ function main(): void {
       checkoutGitSha: receipt.checkoutGitSha,
       baseVerifierCount: receipt.baseFinalPreLiveReceipt.verifiers.length,
       wiringVerifierCount: receipt.verifiers.length,
+      brandedRuntimeAuthorizationBound: true,
       liveExecutionWired: receipt.liveExecutionWired,
       liveAuthorized: receipt.liveAuthorized,
       providerCallsMade: receipt.providerCallsMade,
