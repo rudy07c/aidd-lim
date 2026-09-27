@@ -12,6 +12,7 @@ on:
       - 'docs/p6_3_v2_design_audit.md'
       - 'docs/p6_3_v2_end_to_end_wiring.md'
       - 'docs/p6_3_v2_final_prelive_gate.md'
+      - 'docs/p6_3_v2_paid_live_wiring.md'
       - '.github/workflows/p6-3-prelive-gate-ci.yml'
   pull_request:
     paths:
@@ -24,6 +25,7 @@ on:
       - 'docs/p6_3_v2_design_audit.md'
       - 'docs/p6_3_v2_end_to_end_wiring.md'
       - 'docs/p6_3_v2_final_prelive_gate.md'
+      - 'docs/p6_3_v2_paid_live_wiring.md'
       - '.github/workflows/p6-3-prelive-gate-ci.yml'
 
 permissions:
@@ -51,13 +53,14 @@ jobs:
         env:
           P6_3_PRELIVE_RECEIPT_OUTPUT: ../runs/_smoke/p6-3-unified-prelive-receipt.json
         run: npx ts-node verify-p6-3-unified-prelive-gate.ts
-      - name: Run final P6-3 v2 pre-live gate
+      - name: Run layered P6-3 v2 paid/live gate
         working-directory: harness
         env:
           OPENAI_API_KEY: offline-ci-must-never-use-this
           P6_3_LIVE_EXECUTION_ALLOWED: '1'
           P6_3_V2_FINAL_PRELIVE_RECEIPT_OUTPUT: ../runs/_smoke/p6-3-v2-final-prelive-receipt.json
-        run: npx ts-node verify-p6-3-v2-final-prelive-gate.ts
+          P6_3_V2_PAID_LIVE_RECEIPT_OUTPUT: ../runs/_smoke/p6-3-v2-paid-live-wiring-receipt.json
+        run: npx ts-node verify-p6-3-v2-paid-live-gate.ts
       - name: Upload legacy unified P6-3 pre-live receipt
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,4 +74,11 @@ jobs:
         with:
           name: p6-3-v2-final-prelive-receipt
           path: runs/_smoke/p6-3-v2-final-prelive-receipt.json
+          if-no-files-found: error
+      - name: Upload P6-3 v2 paid/live wiring receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-v2-paid-live-wiring-receipt
+          path: runs/_smoke/p6-3-v2-paid-live-wiring-receipt.json
           if-no-files-found: error
