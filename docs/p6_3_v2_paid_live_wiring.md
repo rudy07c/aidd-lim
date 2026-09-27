@@ -14,7 +14,8 @@ The safety model is deliberately layered:
 2. a new paid/live wiring gate verifies the CLI-to-provider wiring itself on the same checkout;
 3. the CLI requires two explicit runtime operator signals before either gate can lead toward provider-capable code;
 4. those signals produce an in-memory branded runtime-authorization token, which is required by the paid/live gate and remains embedded in its non-serializable pass token;
-5. provider-capable modules are dynamically imported only after the runtime authorization and layered exact-checkout gate succeed.
+5. provider-capable modules are dynamically imported only after the runtime authorization and layered exact-checkout gate succeed;
+6. the exact base and paid/live receipts are persisted into the run directory before the provider executor is constructed.
 
 The committed specifications and serialized receipts continue to record `liveAuthorized=false` and `providerCallsMade=false`; they never self-authorize execution.
 
@@ -65,6 +66,7 @@ The order is:
 → `API key presence check`
 → `base final offline gate + paid/live wiring gate`
 → **dynamic import of live entrypoint**
+→ `persist/verify exact safety receipts`
 → `frozen input resolver`
 → `v2 provider executor`
 → `secondary reliability wrapper`
@@ -76,14 +78,21 @@ No provider-capable module is loaded by the CLI before the authorization boundar
 
 ## State and resume behavior
 
-New runs persist an initial state before scientific provider execution begins. The state identity binds:
+Before a new run constructs the provider executor, its run directory receives:
+
+- `p6-3-v2-final-prelive-receipt.json`;
+- `p6-3-v2-paid-live-wiring-receipt.json`.
+
+The initial state is then persisted before scientific provider execution begins. The state identity binds:
 
 - the exact checkout SHA;
 - hashes from the base final-prelive receipt;
 - hashes from the paid/live wiring receipt;
 - the frozen plan and execution policy.
 
-A `--resume` path must already exist. If the persisted state contains an uncertain in-flight provider-visible attempt, the runtime moves it to `needs-audit` and does not blindly issue a replacement call.
+A `--resume` path must already exist. Resume additionally requires both safety receipt files to already exist in the same run directory and to match the newly regenerated exact-checkout receipts. Missing or mismatched receipts fail closed before a provider executor is constructed.
+
+If the persisted state contains an uncertain in-flight provider-visible attempt, the runtime moves it to `needs-audit` and does not blindly issue a replacement call.
 
 Optional `--adjudications <path>` accepts the existing v2 manual-adjudication format. The frozen rule still permits an uncertain in-flight attempt to be resolved only as infrastructure-invalid before continuation.
 
