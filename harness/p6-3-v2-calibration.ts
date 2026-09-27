@@ -1,6 +1,6 @@
 import * as path from "path";
 import {
-  assertP63V2CliInvocationAllowed,
+  authorizeP63V2PaidLiveInvocation,
   buildP63V2CliPreflight,
 } from "./src/p6/p6-3-v2-cli-preflight";
 import { runP63V2PaidLiveGate } from "./src/p6/p6-3-v2-paid-live-gate";
@@ -55,9 +55,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  // IMPORTANT: this provider-free guard runs before the paid/live gate and
-  // before the provider-capable live entrypoint is dynamically imported.
-  assertP63V2CliInvocationAllowed({
+  // IMPORTANT: create an in-memory branded runtime authorization token before
+  // either the paid/live gate or provider-capable entrypoint can be reached.
+  const runtimeAuthorization = authorizeP63V2PaidLiveInvocation({
     live: true,
     paidAuthorization: args.paidAuthorization,
     environment: process.env,
@@ -70,8 +70,10 @@ async function main(): Promise<void> {
   }
 
   // Re-run the original final offline gate and the additional live-wiring gate
-  // on the exact checkout that would perform provider calls.
-  const paidLiveToken = runP63V2PaidLiveGate(__dirname);
+  // on the exact checkout that would perform provider calls. The gate token
+  // carries the branded runtime authorization, but its persisted receipt never
+  // self-authorizes and remains liveAuthorized=false/providerCallsMade=false.
+  const paidLiveToken = runP63V2PaidLiveGate(__dirname, runtimeAuthorization);
   console.log("P6-3 V2 PAID-LIVE GATE", JSON.stringify({
     checkoutGitSha: paidLiveToken.receipt.checkoutGitSha,
     baseVerifierCount:
