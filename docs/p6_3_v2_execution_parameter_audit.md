@@ -39,9 +39,9 @@ P6-3 v2 changes one mutation-provider parameter:
 maxOutputTokens: 7000 -> 14000
 ```
 
-The new value is selected by the predeclared mechanical rule `deterministic-2x-v1-cap`, not by fitting a threshold to an arm, task, score, or successful v1 completion length.
+The need to revisit the cap is informed by the v1 hard stop. The numerical amendment itself is fixed **after v1 and before any v2 live data** by the mechanical rule `deterministic-2x-v1-cap`; it is not fitted to an arm, task, score, or successful v1 completion length. This rule was not preregistered before v1 and is therefore described as a v2 design amendment, not as a v1-preregistered decision.
 
-The purpose is to provide additional completion headroom after v1 demonstrated repeated exact-cap censoring. This amendment does not assert that 14000 eliminates censoring. If max-output censoring remains, it is recorded as a preregistered secondary reliability endpoint; repeated deterministic infrastructure failures may become `censored-exhausted`, and any exhausted logical cell blocks `B_expose` selection.
+The purpose is to provide additional completion headroom after v1 demonstrated repeated exact-cap censoring. This amendment does not assert that 14000 eliminates censoring. If max-output censoring remains, it is recorded as a preregistered v2 secondary reliability endpoint; repeated deterministic infrastructure failures may become `censored-exhausted`, and any exhausted logical cell blocks `B_expose` selection.
 
 The historical v1 mutation-parity contract remains unchanged at 7000. v2 uses a new versioned execution contract rather than rewriting v1 provenance.
 
