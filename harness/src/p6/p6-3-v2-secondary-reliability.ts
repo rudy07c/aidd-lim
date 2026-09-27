@@ -142,14 +142,7 @@ export interface P63V2SecondaryReliabilitySummary {
   readonly maxOutputCensoringClassifiableAttemptCount: number;
   readonly maxOutputCensoringUnclassifiableAttemptCount: number;
   readonly attempts: readonly P63V2SecondaryAttemptRow[];
-  readonly interruptedAttemptLocations: readonly {
-    sequence: number;
-    measurement: "M" | "Rsem";
-    taskId: string | null;
-    repeat: number;
-    armLabel: ArmLabel;
-    attempt: number;
-  }[];
+  readonly interruptedAttemptLocations: readonly InterruptedLocation[];
   readonly logicalCells: readonly P63V2SecondaryLogicalCellRow[];
   readonly byArm: readonly P63V2ArmReliabilitySummary[];
   readonly mTaskByArm: readonly P63V2MTaskArmReliabilitySummary[];
@@ -161,6 +154,15 @@ export interface P63V2SecondaryReliabilitySummary {
     armLabel: ArmLabel;
     attempts: number;
   }[];
+}
+
+interface InterruptedLocation {
+  readonly sequence: number;
+  readonly measurement: "M" | "Rsem";
+  readonly taskId: string | null;
+  readonly repeat: number;
+  readonly armLabel: ArmLabel;
+  readonly attempt: number;
 }
 
 export function withP63V2SecondaryReliability(
@@ -191,6 +193,7 @@ export function withP63V2SecondaryReliability(
   };
 }
 
+/** Secondary provider-observed endpoint; deliberately broader than AUTO-INFRA-001. */
 export function classifyP63V2MaxOutputCensoring(args: {
   executionStatus: string;
   incompleteReason: string | null;
@@ -218,15 +221,14 @@ export function summarizeP63V2SecondaryReliability(args: {
     throw new Error("P6-3 v2 reliability summary refused: duplicate plan sequence");
   }
 
-  const seenAttemptKeys = new Set<string>();
-  const attemptRows: P63V2SecondaryAttemptRow[] = state.attempts.map((record) => {
+  const seen = new Set<string>();
+  const attemptRows = state.attempts.map((record): P63V2SecondaryAttemptRow => {
     const key = `${record.sequence}:${record.attempt}`;
-    if (seenAttemptKeys.has(key)) {
-      throw new Error(`P6-3 v2 reliability summary refused: duplicate attempt ${key}`);
+    if (seen.has(key)) throw new Error(`P6-3 v2 reliability summary refused: duplicate attempt ${key}`);
+    seen.add(key);
+    if (!planBySequence.has(record.sequence)) {
+      throw new Error(`P6-3 v2 reliability summary refused: unknown sequence ${record.sequence}`);
     }
-    seenAttemptKeys.add(key);
-    const cell = planBySequence.get(record.sequence);
-    if (!cell) throw new Error(`P6-3 v2 reliability summary refused: unknown sequence ${record.sequence}`);
     if (!record.artifactPath) {
       throw new Error(`P6-3 v2 reliability summary refused: attempt ${key} has no committed artifact`);
     }
@@ -260,7 +262,7 @@ export function summarizeP63V2SecondaryReliability(args: {
     };
   }).sort((a, b) => a.sequence - b.sequence || a.attempt - b.attempt);
 
-  const interruptedAttemptLocations = state.interruptedAttempts
+  const interruptedAttemptLocations: InterruptedLocation[] = state.interruptedAttempts
     .map((item) => {
       const cell = planBySequence.get(item.sequence);
       if (!cell) throw new Error(`P6-3 v2 reliability summary refused: interrupted unknown sequence ${item.sequence}`);
@@ -279,22 +281,20 @@ export function summarizeP63V2SecondaryReliability(args: {
   for (const item of interruptedAttemptLocations) {
     interruptedBySequence.set(item.sequence, (interruptedBySequence.get(item.sequence) ?? 0) + 1);
   }
-
   const exhaustedBySequence = new Map(state.exhaustedCells.map((item) => [item.sequence, item]));
   if (exhaustedBySequence.size !== state.exhaustedCells.length) {
     throw new Error("P6-3 v2 reliability summary refused: duplicate exhausted-cell sequence");
   }
+
   const terminal = state.status === "completed" || state.status === "needs-design-audit";
-  const logicalCells: P63V2SecondaryLogicalCellRow[] = plan.map((cell) => {
+  const logicalCells = plan.map((cell): P63V2SecondaryLogicalCellRow => {
     const committed = attemptRows.filter((row) => row.sequence === cell.sequence);
     const interrupted = interruptedBySequence.get(cell.sequence) ?? 0;
     const scientific = committed.find((row) => isScientificObservation(row.effectiveFailureDomain));
     const exhausted = exhaustedBySequence.has(cell.sequence);
     const attemptCount = committed.length + interrupted;
-    const classifications: P63V2MaxOutputCensoring[] = [
-      ...committed.map((row) => row.maxOutputCensored),
-      ...Array.from({ length: interrupted }, () => null as const),
-    ];
+    const classifications: P63V2MaxOutputCensoring[] = committed.map((row) => row.maxOutputCensored);
+    for (let i = 0; i < interrupted; i += 1) classifications.push(null);
     if (terminal && attemptCount === 0) {
       throw new Error(`P6-3 v2 reliability summary refused: terminal collection has unattempted cell ${cell.sequence}`);
     }
@@ -325,13 +325,8 @@ export function summarizeP63V2SecondaryReliability(args: {
 
   const mTaskKeys = [...new Set(plan
     .filter((cell) => cell.measurement === "M" && cell.taskId !== null)
-    .map((cell) => `${cell.taskId}\u0000${cell.arm.label}`))]
-    .sort((a, b) => {
-      const [taskA, armA] = a.split("\u0000") as [string, ArmLabel];
-      const [taskB, armB] = b.split("\u0000") as [string, ArmLabel];
-      return taskA.localeCompare(taskB) || ARM_ORDER.indexOf(armA) - ARM_ORDER.indexOf(armB);
-    });
-  const mTaskByArm = mTaskKeys.map((key) => {
+    .map((cell) => `${cell.taskId}\u0000${cell.arm.label}`))].sort();
+  const mTaskByArm = mTaskKeys.map((key): P63V2MTaskArmReliabilitySummary => {
     const [taskId, armLabel] = key.split("\u0000") as [string, ArmLabel];
     const attempts = attemptRows.filter(
       (row) => row.measurement === "M" && row.taskId === taskId && row.armLabel === armLabel
@@ -342,32 +337,11 @@ export function summarizeP63V2SecondaryReliability(args: {
     const cells = logicalCells.filter(
       (row) => row.measurement === "M" && row.taskId === taskId && row.armLabel === armLabel && row.attemptCount > 0
     );
-    const classifiableAttempts = attempts.filter((row) => row.maxOutputCensored !== null).length;
-    const unclassifiableAttempts = attempts.filter((row) => row.maxOutputCensored === null).length + interrupted;
-    const censoredAttempts = attempts.filter((row) => row.maxOutputCensored === true).length;
-    const classifiableCells = cells.filter((row) => row.anyMaxOutputCensoring !== null).length;
-    const unclassifiableCells = cells.filter((row) => row.anyMaxOutputCensoring === null).length;
-    const censoredCells = cells.filter((row) => row.anyMaxOutputCensoring === true).length;
-    return {
-      taskId,
-      armLabel,
-      committedAttempts: attempts.length,
-      interruptedAttempts: interrupted,
-      providerVisibleAttempts: attempts.length + interrupted,
-      censoringClassifiableAttempts: classifiableAttempts,
-      censoringUnclassifiableAttempts: unclassifiableAttempts,
-      maxOutputCensoredAttempts: censoredAttempts,
-      attemptCensoringRate: rate(censoredAttempts, classifiableAttempts),
-      attemptedLogicalCells: cells.length,
-      censoringClassifiableLogicalCells: classifiableCells,
-      censoringUnclassifiableLogicalCells: unclassifiableCells,
-      logicalCellsWithAnyCensoring: censoredCells,
-      logicalCellCensoringRate: rate(censoredCells, classifiableCells),
-    } satisfies P63V2MTaskArmReliabilitySummary;
+    return summarizeTaskArm(taskId, armLabel, attempts, interrupted, cells);
   });
 
   const classifiableAttempts = attemptRows.filter((row) => row.maxOutputCensored !== null).length;
-  const unclassifiableCommitted = attemptRows.filter((row) => row.maxOutputCensored === null).length;
+  const unclassifiableCommitted = attemptRows.length - classifiableAttempts;
   return {
     schemaVersion: P6_3_V2_SECONDARY_RELIABILITY_SUMMARY_SCHEMA,
     quantileRule: P6_3_V2_SECONDARY_RELIABILITY_QUANTILE_RULE,
@@ -404,55 +378,69 @@ function summarizeArm(
   interrupted: number,
   cells: readonly P63V2SecondaryLogicalCellRow[]
 ): P63V2ArmReliabilitySummary {
-  const classifiableAttempts = attempts.filter((row) => row.maxOutputCensored !== null).length;
-  const unclassifiableAttempts = attempts.filter((row) => row.maxOutputCensored === null).length + interrupted;
-  const censoredAttempts = attempts.filter((row) => row.maxOutputCensored === true).length;
-  const classifiableCells = cells.filter((row) => row.anyMaxOutputCensoring !== null).length;
-  const unclassifiableCells = cells.filter((row) => row.anyMaxOutputCensoring === null).length;
-  const censoredCells = cells.filter((row) => row.anyMaxOutputCensoring === true).length;
-  const outputValues = attempts.flatMap((row) => row.outputTokens === null ? [] : [row.outputTokens]);
-  const reasoningValues = attempts.flatMap((row) => row.reasoningOutputTokens === null ? [] : [row.reasoningOutputTokens]);
+  const base = summarizeCounts(attempts, interrupted, cells);
   return {
     armLabel,
-    committedAttempts: attempts.length,
-    interruptedAttempts: interrupted,
-    providerVisibleAttempts: attempts.length + interrupted,
-    censoringClassifiableAttempts: classifiableAttempts,
-    censoringUnclassifiableAttempts: unclassifiableAttempts,
-    maxOutputCensoredAttempts: censoredAttempts,
-    attemptCensoringRate: rate(censoredAttempts, classifiableAttempts),
-    attemptedLogicalCells: cells.length,
-    censoringClassifiableLogicalCells: classifiableCells,
-    censoringUnclassifiableLogicalCells: unclassifiableCells,
-    logicalCellsWithAnyCensoring: censoredCells,
-    logicalCellCensoringRate: rate(censoredCells, classifiableCells),
+    ...base,
     attemptCountDistribution: distribution(cells.map((row) => row.attemptCount), 0),
     attemptsToValidScientificObservation: distribution(
       cells.flatMap((row) => row.attemptsToValidScientificObservation === null ? [] : [row.attemptsToValidScientificObservation]),
       cells.filter((row) => row.attemptsToValidScientificObservation === null).length
     ),
     outputTokens: distribution(
-      outputValues,
+      attempts.flatMap((row) => row.outputTokens === null ? [] : [row.outputTokens]),
       attempts.filter((row) => row.outputTokens === null).length + interrupted
     ),
     reasoningOutputTokens: distribution(
-      reasoningValues,
+      attempts.flatMap((row) => row.reasoningOutputTokens === null ? [] : [row.reasoningOutputTokens]),
       attempts.filter((row) => row.reasoningOutputTokens === null).length + interrupted
     ),
+  };
+}
+
+function summarizeTaskArm(
+  taskId: string,
+  armLabel: ArmLabel,
+  attempts: readonly P63V2SecondaryAttemptRow[],
+  interrupted: number,
+  cells: readonly P63V2SecondaryLogicalCellRow[]
+): P63V2MTaskArmReliabilitySummary {
+  return { taskId, armLabel, ...summarizeCounts(attempts, interrupted, cells) };
+}
+
+function summarizeCounts(
+  attempts: readonly P63V2SecondaryAttemptRow[],
+  interrupted: number,
+  cells: readonly P63V2SecondaryLogicalCellRow[]
+) {
+  const classifiableAttempts = attempts.filter((row) => row.maxOutputCensored !== null).length;
+  const censoredAttempts = attempts.filter((row) => row.maxOutputCensored === true).length;
+  const classifiableCells = cells.filter((row) => row.anyMaxOutputCensoring !== null).length;
+  const censoredCells = cells.filter((row) => row.anyMaxOutputCensoring === true).length;
+  return {
+    committedAttempts: attempts.length,
+    interruptedAttempts: interrupted,
+    providerVisibleAttempts: attempts.length + interrupted,
+    censoringClassifiableAttempts: classifiableAttempts,
+    censoringUnclassifiableAttempts: attempts.length - classifiableAttempts + interrupted,
+    maxOutputCensoredAttempts: censoredAttempts,
+    attemptCensoringRate: rate(censoredAttempts, classifiableAttempts),
+    attemptedLogicalCells: cells.length,
+    censoringClassifiableLogicalCells: classifiableCells,
+    censoringUnclassifiableLogicalCells: cells.length - classifiableCells,
+    logicalCellsWithAnyCensoring: censoredCells,
+    logicalCellCensoringRate: rate(censoredCells, classifiableCells),
   };
 }
 
 function aggregateCellCensoring(values: readonly P63V2MaxOutputCensoring[]): P63V2MaxOutputCensoring {
   if (values.some((value) => value === true)) return true;
   if (values.some((value) => value === null)) return null;
-  if (values.length === 0) return null;
-  return false;
+  return values.length ? false : null;
 }
 
 function parseAttemptArtifact(value: unknown): P63V2ReliabilityAttemptArtifact {
-  if (!value || typeof value !== "object") {
-    throw new Error("P6-3 v2 reliability artifact must be an object");
-  }
+  if (!value || typeof value !== "object") throw new Error("P6-3 v2 reliability artifact must be an object");
   const artifact = value as Partial<P63V2ReliabilityAttemptArtifact>;
   if (artifact.schemaVersion !== P6_3_V2_SECONDARY_RELIABILITY_ARTIFACT_SCHEMA) {
     throw new Error("P6-3 v2 reliability artifact schema mismatch");
@@ -487,11 +475,12 @@ function assertArtifactTelemetryConsistentWithRecordedEvidence(
 ): void {
   const evidence = record.autoInfrastructureEvidence;
   if (!evidence) return;
+  const telemetry = artifact.telemetry;
   if (
     evidence.executionStatus !== record.executionStatus ||
-    evidence.outputTokens !== artifact.telemetry.tokenUsage.output ||
-    evidence.configuredMaxOutputTokens !== artifact.telemetry.configuredMaxOutputTokens ||
-    evidence.incompleteReason !== artifact.telemetry.incompleteReason
+    evidence.outputTokens !== telemetry.tokenUsage.output ||
+    evidence.configuredMaxOutputTokens !== telemetry.configuredMaxOutputTokens ||
+    evidence.incompleteReason !== telemetry.incompleteReason
   ) {
     throw new Error(`P6-3 v2 reliability artifact telemetry disagrees with recorded raw evidence for ${record.sequence}:${record.attempt}`);
   }
@@ -557,7 +546,7 @@ function distribution(values: readonly number[], missing: number): P63V2Distribu
     observed: sorted.length,
     missing,
     rawSorted: sorted,
-    min: sorted.length ? sorted[0] : null,
+    min: sorted[0] ?? null,
     q25: nearestRank(sorted, 0.25),
     q50: nearestRank(sorted, 0.5),
     q75: nearestRank(sorted, 0.75),
@@ -566,7 +555,7 @@ function distribution(values: readonly number[], missing: number): P63V2Distribu
 }
 
 function nearestRank(sorted: readonly number[], probability: number): number | null {
-  if (sorted.length === 0) return null;
+  if (!sorted.length) return null;
   const rank = Math.max(1, Math.ceil(probability * sorted.length));
   return sorted[rank - 1] ?? null;
 }
