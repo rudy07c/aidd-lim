@@ -13,9 +13,10 @@ The safety model is deliberately layered:
 1. the original final offline pre-live gate remains unchanged and is rerun on the exact checkout;
 2. a new paid/live wiring gate verifies the CLI-to-provider wiring itself on the same checkout;
 3. the CLI requires two explicit runtime operator signals before either gate can lead toward provider-capable code;
-4. provider-capable modules are dynamically imported only after both runtime authorization signals and the layered exact-checkout gate succeed.
+4. those signals produce an in-memory branded runtime-authorization token, which is required by the paid/live gate and remains embedded in its non-serializable pass token;
+5. provider-capable modules are dynamically imported only after the runtime authorization and layered exact-checkout gate succeed.
 
-The committed specifications and receipts continue to record `liveAuthorized=false` and `providerCallsMade=false`; they never self-authorize execution.
+The committed specifications and serialized receipts continue to record `liveAuthorized=false` and `providerCallsMade=false`; they never self-authorize execution.
 
 ## Runtime authorization boundary
 
@@ -26,13 +27,17 @@ A live invocation requires both:
 
 `--live` without the explicit CLI authorization flag fails before the paid/live gate and before provider-capable modules are imported. Supplying the CLI authorization flag without the environment authorization also fails at the same boundary.
 
+When both signals are present, `authorizeP63V2PaidLiveInvocation()` creates an in-memory branded token. `runP63V2PaidLiveGate()` refuses to run without that token, and the resulting paid/live gate pass token carries it forward. The provider-capable live entrypoint accepts only a valid paid/live gate pass token, so calling the gate/entrypoint directly cannot bypass the same runtime authorization check merely by skipping the CLI.
+
+The runtime authorization token is intentionally not serialized into the receipt and cannot turn a committed artifact into standing authorization.
+
 The API key check also occurs before the provider entrypoint is imported.
 
 These runtime controls supplement, rather than replace, the project rule that paid/live execution requires explicit user authorization in the current interaction.
 
 ## Exact-checkout gate sequence
 
-Once the two runtime authorization signals and API-key presence check pass, the CLI calls `runP63V2PaidLiveGate()`.
+Once the two runtime authorization signals and API-key presence check pass, the CLI calls `runP63V2PaidLiveGate()` with the branded runtime authorization token.
 
 That gate first reruns `runP63V2FinalPreLiveGate()` on the exact clean checkout. The base gate still verifies the frozen 864-cell design, execution parameters, AUTO-INFRA behavior, retry/exhaustion policy, secondary reliability implementation, provider adapters offline, frozen exposure resolver, end-to-end persistence/resume behavior, and CLI fail-closed behavior.
 
@@ -56,7 +61,7 @@ The paid/live receipt binds the same exact checkout SHA as the nested base final
 The order is:
 
 `parse/preflight`
-→ `explicit paid-live flag + env guard`
+→ `explicit paid-live flag + env → branded runtime authorization`
 → `API key presence check`
 → `base final offline gate + paid/live wiring gate`
 → **dynamic import of live entrypoint**
@@ -67,7 +72,7 @@ The order is:
 → `state / attempt persistence`
 → `final reliability report`
 
-No provider-capable module is loaded by the CLI before the authorization guard and exact-checkout gates pass.
+No provider-capable module is loaded by the CLI before the authorization boundary and exact-checkout gates pass.
 
 ## State and resume behavior
 
