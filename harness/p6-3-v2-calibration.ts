@@ -3,7 +3,7 @@ import {
   assertP63V2CliInvocationAllowed,
   buildP63V2CliPreflight,
 } from "./src/p6/p6-3-v2-cli-preflight";
-import { runP63V2FinalPreLiveGate } from "./src/p6/p6-3-v2-final-prelive-gate";
+import { runP63V2PaidLiveGate } from "./src/p6/p6-3-v2-paid-live-gate";
 
 interface CliArgs {
   live: boolean;
@@ -55,8 +55,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  // IMPORTANT: this provider-free guard runs before the live entrypoint is
-  // dynamically imported. The frozen spec and receipt never self-authorize.
+  // IMPORTANT: this provider-free guard runs before the paid/live gate and
+  // before the provider-capable live entrypoint is dynamically imported.
   assertP63V2CliInvocationAllowed({
     live: true,
     paidAuthorization: args.paidAuthorization,
@@ -69,24 +69,26 @@ async function main(): Promise<void> {
     );
   }
 
-  // Re-run the complete final evidence gate on the exact checkout that would
-  // perform provider calls. This remains provider-free and binds this SHA.
-  const preLiveToken = runP63V2FinalPreLiveGate(__dirname);
-  console.log("P6-3 V2 FINAL GATE", JSON.stringify({
-    checkoutGitSha: preLiveToken.receipt.checkoutGitSha,
-    verifierCount: preLiveToken.receipt.verifiers.length,
-    finalPreLiveGateFrozen: preLiveToken.receipt.finalPreLiveGateFrozen,
-    liveAuthorized: preLiveToken.receipt.liveAuthorized,
-    providerCallsMade: preLiveToken.receipt.providerCallsMade,
+  // Re-run the original final offline gate and the additional live-wiring gate
+  // on the exact checkout that would perform provider calls.
+  const paidLiveToken = runP63V2PaidLiveGate(__dirname);
+  console.log("P6-3 V2 PAID-LIVE GATE", JSON.stringify({
+    checkoutGitSha: paidLiveToken.receipt.checkoutGitSha,
+    baseVerifierCount:
+      paidLiveToken.receipt.baseFinalPreLiveReceipt.verifiers.length,
+    wiringVerifierCount: paidLiveToken.receipt.verifiers.length,
+    liveExecutionWired: paidLiveToken.receipt.liveExecutionWired,
+    liveAuthorized: paidLiveToken.receipt.liveAuthorized,
+    providerCallsMade: paidLiveToken.receipt.providerCallsMade,
   }));
 
-  // Provider-capable modules are loaded only after both explicit operator
-  // signals and exact-checkout final gating have succeeded.
+  // Provider-capable modules are loaded only after explicit operator signals
+  // and both exact-checkout safety gates have succeeded.
   const { runP63V2LiveEntrypoint } = await import(
     "./src/p6/p6-3-v2-live-entrypoint"
   );
   const result = await runP63V2LiveEntrypoint({
-    preLiveToken,
+    paidLiveToken,
     resumePath: args.resumePath,
     adjudicationsPath: args.adjudicationsPath,
   });
