@@ -68,6 +68,9 @@ jobs:
       - name: Verify P6-3 v2 AUTO-INFRA classifier boundaries
         working-directory: harness
         run: npm run verify:p6-3-v2-auto-infra-unit
+      - name: Verify P6-3 v2 AUTO-INFRA against actual v1 artifacts
+        working-directory: harness
+        run: npm run verify:p6-3-v2-auto-infra-regression
       - name: Exercise P6-3 calibration CLI dry path
         working-directory: harness
         env:
