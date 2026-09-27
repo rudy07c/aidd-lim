@@ -353,6 +353,12 @@ export function applyP63V2ManualAdjudication(
   if (state.status !== "needs-audit" || !state.auditFlag) {
     throw new Error("P6-3 v2 manual adjudication requires an active needs-audit state");
   }
+  if (
+    state.auditFlag.sequence !== request.sequence ||
+    state.auditFlag.attempt !== request.attempt
+  ) {
+    throw new Error("P6-3 v2 adjudication target must match the active audit sequence/attempt");
+  }
   if (state.cursorCellIndex !== request.sequence) {
     throw new Error("P6-3 v2 adjudication target must be the current logical cell");
   }
