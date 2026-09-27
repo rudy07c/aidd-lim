@@ -35,9 +35,17 @@ function main(): void {
     "createP63V2ProviderExecutor",
     "runP63V2EndToEnd",
     "recoverInterruptedP63V2State",
+    "persistOrVerifySafetyReceipt",
+    "p6-3-v2-final-prelive-receipt.json",
+    "p6-3-v2-paid-live-wiring-receipt.json",
   ]) {
     assert.ok(entrypointSource.includes(required), `live entrypoint missing required wiring: ${required}`);
   }
+  const receiptPersistIndex = entrypointSource.indexOf("persistOrVerifySafetyReceipt(");
+  const providerExecutorIndex = entrypointSource.indexOf("createP63V2ProviderExecutor({");
+  assert.ok(receiptPersistIndex >= 0 && receiptPersistIndex < providerExecutorIndex,
+    "safety receipts must be persisted/verified before provider executor construction");
+
   for (const required of [
     "runP63V2FinalPreLiveGate",
     "assertP63V2PaidLiveRuntimeAuthorizationToken",
@@ -108,6 +116,7 @@ function main(): void {
     authorizationPrecedesPaidLiveGate: true,
     paidLiveGatePrecedesProviderImport: true,
     baseFinalGateIsLayeredUnderPaidLiveGate: true,
+    runSafetyReceiptsBoundBeforeProviderExecutor: true,
     missingFlagFailsClosed: true,
     missingEnvironmentAuthorizationFailsClosed: true,
     providerCallsMade: false,
