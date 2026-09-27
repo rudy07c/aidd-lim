@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "p6-3-v2-execution-parameters-manifest-v1",
+  "status": "execution-parameter-freeze",
+  "scope": "P6-3 calibration execution and reliability only; structural EL budget variables are unchanged",
+  "predecessor": {
+    "v1CheckoutGitSha": "b60b3560a163dfcedf07ffd1dbacc29ed4cf3b7f",
+    "v1ArchiveSha256": "09c58838f2396ceeabe54f8843b922dee2849d57994843d9a714afcd08debb94",
+    "v1MutationMaxOutputTokens": 7000,
+    "v1RSemMaxOutputTokens": 8000,
+    "v1MaxScientificAttemptsPerLogicalCell": 3
+  },
+  "structuralVariables": {
+    "immutable": true,
+    "T_EL": 4046,
+    "staticExposureMaxTokensPerUnit": 256,
+    "budgets": {
+      "B0": 0,
+      "B1": 505,
+      "B2": 1011,
+      "B3": 2023,
+      "B4": 3034,
+      "AF": 4046
+    }
+  },
+  "mutationProvider": {
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "high",
+    "maxOutputTokens": 14000,
+    "requestTimeoutMs": 180000,
+    "providerMaxRetries": 2,
+    "serviceTier": "default",
+    "promptCacheMode": "implicit",
+    "storeResponses": false,
+    "maxToolRounds": 0,
+    "amendment": {
+      "field": "maxOutputTokens",
+      "from": 7000,
+      "to": 14000,
+      "selectionRule": "deterministic-2x-v1-cap",
+      "rationaleClass": "execution-reliability-not-budget-retuning"
+    }
+  },
+  "rsemProvider": {
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "high",
+    "maxOutputTokens": 8000,
+    "requestTimeoutMs": 180000,
+    "providerMaxRetries": 2,
+    "serviceTier": "default",
+    "promptCacheMode": "implicit",
+    "storeResponses": false,
+    "executionMode": "sync",
+    "amendedFromV1": false
+  },
+  "executionPolicy": {
+    "maxScientificAttemptsPerLogicalCell": 3,
+    "exhaustedCellCollectionDisposition": "censored-exhausted-and-continue",
+    "anyExhaustedCellBlocksBExposeSelection": true
+  },
+  "automaticInfrastructureRuleIds": [
+    "AUTO-INFRA-001"
+  ],
+  "secondaryEndpointIds": [
+    "attempt-max-output-censoring-indicator",
+    "logical-cell-any-censoring-indicator",
+    "attempts-to-valid-scientific-observation",
+    "censored-exhausted-indicator",
+    "provider-output-tokens",
+    "provider-reasoning-output-tokens",
+    "raw-execution-status",
+    "raw-incomplete-reason",
+    "attempt-identity-arm-task-repeat-measurement"
+  ],
+  "secondarySummaryIds": [
+    "arm-censoring-count-and-rate",
+    "m-task-by-arm-censoring-count-and-rate",
+    "arm-attempt-count-distribution",
+    "arm-token-usage-raw-range-and-quantiles",
+    "exhausted-cell-locations"
+  ],
+  "notChanged": [
+    "EL budget grid",
+    "static exposure unit size",
+    "model",
+    "reasoning effort",
+    "request timeout",
+    "provider retry count",
+    "service tier",
+    "prompt-cache mode",
+    "response storage setting",
+    "mutation tool-round count",
+    "Rsem provider envelope",
+    "scientific attempt ceiling",
+    "P6-2-compatible parser/scorer/path/failure semantics"
+  ],
+  "liveExecutionAuthorized": false
+}
