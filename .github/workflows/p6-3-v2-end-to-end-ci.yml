@@ -4,7 +4,9 @@ on:
   push:
     paths:
       - 'harness/src/p6/p6-3-v2-end-to-end.ts'
+      - 'harness/src/p6/p6-3-v2-frozen-input-resolver.ts'
       - 'harness/verify-p6-3-v2-end-to-end.ts'
+      - 'harness/verify-p6-3-v2-frozen-input-resolver.ts'
       - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
       - 'harness/src/p6/p6-3-v2-live-executors.ts'
@@ -17,7 +19,9 @@ on:
   pull_request:
     paths:
       - 'harness/src/p6/p6-3-v2-end-to-end.ts'
+      - 'harness/src/p6/p6-3-v2-frozen-input-resolver.ts'
       - 'harness/verify-p6-3-v2-end-to-end.ts'
+      - 'harness/verify-p6-3-v2-frozen-input-resolver.ts'
       - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
       - 'harness/src/p6/p6-3-v2-live-executors.ts'
@@ -63,6 +67,9 @@ jobs:
       - name: Verify v2 provider adapters
         working-directory: harness
         run: npm run verify:p6-3-v2-live-executors
+      - name: Verify frozen v2 runtime input resolver
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v2-frozen-input-resolver.ts
       - name: Verify v2 end-to-end wiring
         working-directory: harness
         env:
