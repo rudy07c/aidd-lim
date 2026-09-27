@@ -1,0 +1,1319 @@
+{
+  "schemaVersion": "p6-3-v1-auto-infra-regression-fixture-v1",
+  "source": {
+    "archiveBasename": "p6-3-v1-diagnostic-2026-09-26.tar.gz",
+    "archiveSha256": "09c58838f2396ceeabe54f8843b922dee2849d57994843d9a714afcd08debb94",
+    "runMemberPrefix": "runs/_calibration/p6-3-el-calibration-luna__2026-09-26T09-49-02-071Z",
+    "resultSha256": "732c338528b596300bd75a05ee8197723f20c4ef5893f431be92b89604d9b42c",
+    "checkoutGitSha": "b60b3560a163dfcedf07ffd1dbacc29ed4cf3b7f",
+    "frozenManifestHashes": {
+      "structuralFreeze": "2f26b34f112b4b1ffcf9fd979cdafff20c146bc4236f4a26d5fa72f3ec5f5196",
+      "executionProtocol": "ea72d6461a3ba1589a221864e8f9b9dc57174bbbf1bba9e87a77c26474c43408",
+      "mutationParity": "fb5c87779390204ad2555ee9390ef5ebe27884a01a983ba16833e00541e4a840",
+      "rsemParity": "134e742db585ca3d196016567a61bb8d8cd3a6e0ca66918befd85be5f9aa1e96"
+    }
+  },
+  "summary": {
+    "attemptCount": 43,
+    "replacementAttemptCount": 10,
+    "humanInfrastructureInvalidCount": 11,
+    "completedLogicalCellsAtStop": 32,
+    "exhaustion": {
+      "kind": "max-infrastructure-attempts-exhausted",
+      "sequence": 32,
+      "attempt": 3
+    }
+  },
+  "cases": [
+    {
+      "identity": {
+        "sequence": 0,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B0",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0000-m-T-local-2-B0/attempt-1.json",
+      "sourceArtifactSha256": "df217b55f6564d4e614033afbff4fdb2d45245ce3b32ff8a789481feb81f8d5a",
+      "recorded": {
+        "rawFailureDomain": "protocol",
+        "effectiveFailureDomain": "protocol",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "output-parse-failure",
+        "incompleteReason": null,
+        "outputTokens": 5069,
+        "reasoningOutputTokens": 4331,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": "output-parse",
+        "errorMessage": "Invalid structured JSON: Unexpected non-whitespace character after JSON at position 170"
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 1,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B1",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0001-m-T-local-2-B1/attempt-1.json",
+      "sourceArtifactSha256": "235770e6ab8d4061210784254be18b818105ade046613e66fde25586d248e054",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 6526,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 1,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B1",
+        "attempt": 2
+      },
+      "sourceArtifactPath": "attempts/cell-0001-m-T-local-2-B1/attempt-2.json",
+      "sourceArtifactSha256": "1ed1e1c277f37c4508068658cde99581ba8e7ac8c887d44c78c9ec837e368f3d",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 7000,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 1,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B1",
+        "attempt": 3
+      },
+      "sourceArtifactPath": "attempts/cell-0001-m-T-local-2-B1/attempt-3.json",
+      "sourceArtifactSha256": "a03240efde3d3afa56bd2156635e6177cc282d38633200831f07c8f097b8bb96",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 6517,
+        "reasoningOutputTokens": 5091,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 2,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B2",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0002-m-T-local-2-B2/attempt-1.json",
+      "sourceArtifactSha256": "9992b9c2829b840df27da9d632ccfc175e056106eae261d84877b7b28dbdcb37",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 7000,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 2,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B2",
+        "attempt": 2
+      },
+      "sourceArtifactPath": "attempts/cell-0002-m-T-local-2-B2/attempt-2.json",
+      "sourceArtifactSha256": "9dc857bcad4546ad984abdba14d6535fc5855f32e11b7c92fd297fc5d13f03fb",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 5158,
+        "reasoningOutputTokens": 4216,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 3,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B3",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0003-m-T-local-2-B3/attempt-1.json",
+      "sourceArtifactSha256": "59123aa84db003743881ff033f62a97bf1f87fa0502d983620385305083b4036",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 2572,
+        "reasoningOutputTokens": 1455,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 4,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "B4",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0004-m-T-local-2-B4/attempt-1.json",
+      "sourceArtifactSha256": "28783b9c31f42baac02dfd9e5789af5c2cb91be59da3ecba8866eaffc764f2a9",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1734,
+        "reasoningOutputTokens": 241,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 5,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 1,
+        "armLabel": "AF",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0005-m-T-local-2-AF/attempt-1.json",
+      "sourceArtifactSha256": "4a387f80e3476663fea90002f0b5590a7442594566d03f45225538a658be61bc",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1727,
+        "reasoningOutputTokens": 237,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 6,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 2,
+        "armLabel": "B1",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0006-m-T-local-2-B1/attempt-1.json",
+      "sourceArtifactSha256": "8b09c9226562da3b83ed924019ed2a7245b327db4ddaa6e951300ebf4f7a1738",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 6244,
+        "reasoningOutputTokens": 5081,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 7,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 2,
+        "armLabel": "B2",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0007-m-T-local-2-B2/attempt-1.json",
+      "sourceArtifactSha256": "d5e2c50c98593d15cd9d68c4e856b007724a59be2a9e6eb94e00b2f121c21bcc",
+      "recorded": {
+        "rawFailureDomain": "protocol",
+        "effectiveFailureDomain": "protocol",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 113,
+        "reasoningOutputTokens": 14,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 8,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 2,
+        "armLabel": "B3",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0008-m-T-local-2-B3/attempt-1.json",
+      "sourceArtifactSha256": "8ef2b653aabe2e6652e3ed801b3c0d8789e7c9a4a7748339b80116cb5b2f0a6a",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1819,
+        "reasoningOutputTokens": 708,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 9,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 2,
+        "armLabel": "B4",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0009-m-T-local-2-B4/attempt-1.json",
+      "sourceArtifactSha256": "86b64ea6b5d4e7b86990f915e3c69d8116fd0885fe8b373c712bf27af09c7e79",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1651,
+        "reasoningOutputTokens": 176,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 10,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 2,
+        "armLabel": "AF",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0010-m-T-local-2-AF/attempt-1.json",
+      "sourceArtifactSha256": "ce8a7ef17222e9c9f4cb20d0a420252e4c83d82e3472f9aa8ec7654f56cfd2ff",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1651,
+        "reasoningOutputTokens": 167,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 11,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 2,
+        "armLabel": "B0",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0011-m-T-local-2-B0/attempt-1.json",
+      "sourceArtifactSha256": "690d17e12020e2779f34571d7e261b40146c606077c8ceddefe4d472a8591f25",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 5197,
+        "reasoningOutputTokens": 4671,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 12,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "B2",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0012-m-T-local-2-B2/attempt-1.json",
+      "sourceArtifactSha256": "d3a1f00da61d86c2d25727fd37b312e6c3b3ce96209bcfb79c5b62b9be2ea2b1",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1043,
+        "reasoningOutputTokens": 13,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 13,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "B3",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0013-m-T-local-2-B3/attempt-1.json",
+      "sourceArtifactSha256": "db4c391d5e57166fc279817a400540865a64f5c0ab8f1dd02b6bb4efb6e56e84",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 2535,
+        "reasoningOutputTokens": 1222,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 14,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "B4",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0014-m-T-local-2-B4/attempt-1.json",
+      "sourceArtifactSha256": "61b9344231bab7814eaa3b13e8d6bfe78d26bb90c72d6b2fa4cd1eadad34ef8c",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 3515,
+        "reasoningOutputTokens": 185,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 15,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "AF",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0015-m-T-local-2-AF/attempt-1.json",
+      "sourceArtifactSha256": "a44995b146ce482db986872b5f564f9e3c92b7c8b0bb49342ee2f2eb74962341",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1747,
+        "reasoningOutputTokens": 284,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 16,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "B0",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0016-m-T-local-2-B0/attempt-1.json",
+      "sourceArtifactSha256": "49d0b8ac2b941886bd9e7fb6624346630b789a7aa1f842b8b1f8248ce7da9a86",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 5274,
+        "reasoningOutputTokens": 4690,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 17,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "B1",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0017-m-T-local-2-B1/attempt-1.json",
+      "sourceArtifactSha256": "b531d3c18bc9cbe50d3f14a97bb73eea3b12935c55d3dc512fcce222f83dd5c2",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 6264,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 17,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "B1",
+        "attempt": 2
+      },
+      "sourceArtifactPath": "attempts/cell-0017-m-T-local-2-B1/attempt-2.json",
+      "sourceArtifactSha256": "71a556be401282fc88b6eade294d9104d1de91c9a4c7a37d7eae39d4b99c61c8",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 7000,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 17,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 3,
+        "armLabel": "B1",
+        "attempt": 3
+      },
+      "sourceArtifactPath": "attempts/cell-0017-m-T-local-2-B1/attempt-3.json",
+      "sourceArtifactSha256": "dc7427a0780e3c8617ebe9e786a6da5029014a0141b6a01af911d8b691388c21",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 6499,
+        "reasoningOutputTokens": 5271,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 18,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B3",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0018-m-T-local-2-B3/attempt-1.json",
+      "sourceArtifactSha256": "065a4b11f2b2c904e4e6495eb3bc4b10a790c0f0e9a84652e35d6433788982ed",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 2165,
+        "reasoningOutputTokens": 1034,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 19,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B4",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0019-m-T-local-2-B4/attempt-1.json",
+      "sourceArtifactSha256": "1150ea83df35c386e193c303c0307952541766a54a40e879ec68c2e6b3ffda24",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1651,
+        "reasoningOutputTokens": 196,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 20,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "AF",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0020-m-T-local-2-AF/attempt-1.json",
+      "sourceArtifactSha256": "8e9e8e5f875ece79873b48c713b9a8675d1909e0854b7a61b5104fb1c4bf3abd",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1681,
+        "reasoningOutputTokens": 223,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 21,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B0",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0021-m-T-local-2-B0/attempt-1.json",
+      "sourceArtifactSha256": "0fa3755eae91a5c3d1a641fc4e74a209e3ec6cb1a8ed1558e6f90db99124da35",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 7000,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 21,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B0",
+        "attempt": 2
+      },
+      "sourceArtifactPath": "attempts/cell-0021-m-T-local-2-B0/attempt-2.json",
+      "sourceArtifactSha256": "c88a0ee8e8a3b07168963e0e3e084e21b4175642a27885665dc549b10e02c0f4",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 6051,
+        "reasoningOutputTokens": 5672,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 22,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B1",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0022-m-T-local-2-B1/attempt-1.json",
+      "sourceArtifactSha256": "c556a14f6ed5a5a224e93e2ba77b86671e0f0e9f21e23686e609b442c5611694",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 5587,
+        "reasoningOutputTokens": 4349,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 23,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B2",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0023-m-T-local-2-B2/attempt-1.json",
+      "sourceArtifactSha256": "cb61d3b0c4b132cfb2d5819e1ec78a520cdcf77304b0cbfb3d1c0ebb01dcbf52",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 5933,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 23,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B2",
+        "attempt": 2
+      },
+      "sourceArtifactPath": "attempts/cell-0023-m-T-local-2-B2/attempt-2.json",
+      "sourceArtifactSha256": "67356083771e4dddb6d445be23faa437268dfa9bfdb256077408790a86fe6869",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 6123,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 23,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 4,
+        "armLabel": "B2",
+        "attempt": 3
+      },
+      "sourceArtifactPath": "attempts/cell-0023-m-T-local-2-B2/attempt-3.json",
+      "sourceArtifactSha256": "463ce8111034d7d728f80b3f5506d5ec8baedef1c79886a764994f714f3edb47",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 6092,
+        "reasoningOutputTokens": 4963,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 24,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 5,
+        "armLabel": "B4",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0024-m-T-local-2-B4/attempt-1.json",
+      "sourceArtifactSha256": "005af9d3e637eb59ec722f7efd88c161df95493e35af8ff0010315ba048b4c08",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 3425,
+        "reasoningOutputTokens": 228,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 25,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 5,
+        "armLabel": "AF",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0025-m-T-local-2-AF/attempt-1.json",
+      "sourceArtifactSha256": "2e0384107eaa82c668386784000bd61662195654055fc54c9cfe90cdb61700f9",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 1709,
+        "reasoningOutputTokens": 219,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 26,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 5,
+        "armLabel": "B0",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0026-m-T-local-2-B0/attempt-1.json",
+      "sourceArtifactSha256": "0066fd155ce1db1dd66e25ebe696b1f0f4a8d69826a9771dc9c0f9ad8e8387a9",
+      "recorded": {
+        "rawFailureDomain": "protocol",
+        "effectiveFailureDomain": "protocol",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 5876,
+        "reasoningOutputTokens": 5696,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 27,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 5,
+        "armLabel": "B1",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0027-m-T-local-2-B1/attempt-1.json",
+      "sourceArtifactSha256": "41a18cae76cdea46f3871862395e7fd02e3e4065c963c1a43ac138a2fadf7aac",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 6537,
+        "reasoningOutputTokens": 5878,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 28,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 5,
+        "armLabel": "B2",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0028-m-T-local-2-B2/attempt-1.json",
+      "sourceArtifactSha256": "373042b655ec252e7b83aaa8590726d402ea5868a04d0eee9f6211a6ccefb73c",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 900,
+        "reasoningOutputTokens": 14,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 29,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 5,
+        "armLabel": "B3",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0029-m-T-local-2-B3/attempt-1.json",
+      "sourceArtifactSha256": "8364e1464a847e3280b5e894f9c8860b19e3b511084095336f16e0630a470219",
+      "recorded": {
+        "rawFailureDomain": "none",
+        "effectiveFailureDomain": "none",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 2180,
+        "reasoningOutputTokens": 1011,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 30,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 6,
+        "armLabel": "AF",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0030-m-T-local-2-AF/attempt-1.json",
+      "sourceArtifactSha256": "f2920e3035ad46449a868c4964ad6ce5e96372dd798ea65f476300addf3b817c",
+      "recorded": {
+        "rawFailureDomain": "protocol",
+        "effectiveFailureDomain": "protocol",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "output-parse-failure",
+        "incompleteReason": null,
+        "outputTokens": 3052,
+        "reasoningOutputTokens": 190,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": "output-parse",
+        "errorMessage": "Duplicate modified file path: src/vok/rules.ts"
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 31,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 6,
+        "armLabel": "B0",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0031-m-T-local-2-B0/attempt-1.json",
+      "sourceArtifactSha256": "c248465658326fa0e83b7c83eb4caf420ab57a6af5d1414c6e8b520e4fbf0154",
+      "recorded": {
+        "rawFailureDomain": "semantic",
+        "effectiveFailureDomain": "semantic",
+        "humanFinalDisposition": null,
+        "reviewer": null
+      },
+      "rawEvidence": {
+        "executionStatus": "ok",
+        "incompleteReason": null,
+        "outputTokens": 3994,
+        "reasoningOutputTokens": 3598,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "completed",
+        "providerErrorCode": null,
+        "errorCategory": null,
+        "errorMessage": null
+      },
+      "expectedAutoDisposition": "not-infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 32,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 6,
+        "armLabel": "B1",
+        "attempt": 1
+      },
+      "sourceArtifactPath": "attempts/cell-0032-m-T-local-2-B1/attempt-1.json",
+      "sourceArtifactSha256": "853fd1fc2b4af5cb586f9ec4d27a4dd6f65efa9ce734b99beabee8e1bb100062",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 6945,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 32,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 6,
+        "armLabel": "B1",
+        "attempt": 2
+      },
+      "sourceArtifactPath": "attempts/cell-0032-m-T-local-2-B1/attempt-2.json",
+      "sourceArtifactSha256": "eb08175eb8969e66827f40b277a5d8a4e774f03c3f67a2d1ebde30e65a2b1e78",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 7000,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    },
+    {
+      "identity": {
+        "sequence": 32,
+        "measurement": "M",
+        "taskId": "T-local-2",
+        "repeat": 6,
+        "armLabel": "B1",
+        "attempt": 3
+      },
+      "sourceArtifactPath": "attempts/cell-0032-m-T-local-2-B1/attempt-3.json",
+      "sourceArtifactSha256": "eaafece3cb9287b006f83f9bc89432f8704779931f44c99c7d7237bfe2276989",
+      "recorded": {
+        "rawFailureDomain": "infrastructure",
+        "effectiveFailureDomain": "infrastructure",
+        "humanFinalDisposition": "infrastructure-invalid",
+        "reviewer": "human-review"
+      },
+      "rawEvidence": {
+        "executionStatus": "response-incomplete",
+        "incompleteReason": "max_output_tokens",
+        "outputTokens": 7000,
+        "reasoningOutputTokens": 6358,
+        "configuredMaxOutputTokens": 7000,
+        "responseStatus": "incomplete",
+        "providerErrorCode": null,
+        "errorCategory": "response",
+        "errorMessage": "Response status=incomplete reason=max_output_tokens"
+      },
+      "expectedAutoDisposition": "infrastructure-invalid"
+    }
+  ]
+}
