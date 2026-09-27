@@ -28,7 +28,8 @@ permissions:
   contents: read
 
 jobs:
-  typecheck:
+  base:
+    name: Base / typecheck / calibration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,52 +62,38 @@ jobs:
       - name: Verify Stage 1 context condition metadata
         working-directory: harness
         run: npm run verify:context-conditions
-      - name: Verify P6-3 EL static exposure runtime
+      - name: Verify P3 measurement repair
+        working-directory: calibration
+        run: npm run verify:p3
+      - name: Smoke Stage 1 calibration probe bank
+        working-directory: calibration
+        run: npx ts-node src/calibration-runner.ts --backend=mock-noop --budgets=0 --tasks=T-local-1 --probe-bank=stage1
+      - name: Verify run validity semantics
         working-directory: harness
-        run: npm run verify:el-static-exposure
-      - name: Verify P6-3 EL Rsem bank-level selector
+        run: npm run verify:run-validity
+      - name: Verify installed SDK version provenance
         working-directory: harness
-        run: npm run verify:el-rsem-static-exposure
-      - name: Verify P6-3 EL structural freeze gate
+        run: npm run verify:package-version
+      - name: Verify OpenAI backend offline
         working-directory: harness
-        env:
-          P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
-        run: npm run verify:p6-3-structural-freeze
-      - name: Verify P6-3 structural invariant hardening
+        run: npm run verify:openai
+      - name: Verify OpenAI Batch runner offline
         working-directory: harness
-        run: npm run verify:p6-3-structural-invariants
-      - name: Verify committed P6-3 EL structural freeze manifest
-        working-directory: harness
-        env:
-          P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
-          P6_3_EXPECTED_FREEZE_MANIFEST_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-expected-manifest.json
-        run: npm run verify:p6-3-freeze-manifest
-      - name: Verify P6-3 execution protocol freeze
-        working-directory: harness
-        run: npm run verify:p6-3-execution-protocol
-      - name: Upload P6-3 EL structural freeze candidate
-        if: always()
-        uses: actions/upload-artifact@v4
+        run: npm run verify:openai-batch
+
+  retrieval:
+    name: P2-P5.5 retrieval/runtime
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          name: p6-3-el-structural-freeze-candidate
-          path: runs/_smoke/p6-3-el-structural-freeze-candidate.json
-          if-no-files-found: error
-      - name: Upload recomputed P6-3 EL structural freeze manifest
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: p6-3-el-structural-freeze-expected-manifest
-          path: runs/_smoke/p6-3-el-structural-freeze-expected-manifest.json
-          if-no-files-found: error
-      - name: Verify P6-3 EL orchestrator integration
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
         working-directory: harness
-        run: npm run verify:el-orchestrator
-      - name: P6-3 EL end-to-end run.ts smoke
-        working-directory: harness
-        run: |
-          npm run run -- --config config/p6_3-el-mock.json --smoke
-          test -f ../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/el_static_exposure.json
-          node -e 'const e=require("../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/el_static_exposure.json"); const m=require("../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/meta.json"); if(!(e.selectedUnitCount>0)||m.condition!=="EL"||m.actual_context_tokens!==e.actualExposedTokens) process.exit(1)'
+        run: npm ci
       - name: Verify P2 observable interaction runtime
         working-directory: harness
         run: npm run verify:observable-interaction
@@ -161,15 +148,25 @@ jobs:
           npm run run -- --config config/p5_5-ar-mock.json --smoke
           test -f ../runs/_smoke/p5-5-ar-mock-e2e/lineage-0/generation_000/retrieved_episode.json
           node -e 'const x=require("../runs/_smoke/p5-5-ar-mock-e2e/lineage-0/generation_000/retrieved_episode.json"); if(x.condition!=="AR"||x.completion.status!=="completed") process.exit(1)'
-      - name: Verify P3 measurement repair
-        working-directory: calibration
-        run: npm run verify:p3
-      - name: Smoke Stage 1 calibration probe bank
-        working-directory: calibration
-        run: npx ts-node src/calibration-runner.ts --backend=mock-noop --budgets=0 --tasks=T-local-1 --probe-bank=stage1
-      - name: Verify run validity semantics
+
+  p6-2:
+    name: P6 / P6-2 regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            harness/package-lock.json
+            calibration/package-lock.json
+      - name: Install harness dependencies
         working-directory: harness
-        run: npm run verify:run-validity
+        run: npm ci
+      - name: Install calibration dependencies
+        working-directory: calibration
+        run: npm ci
       - name: Verify P6 semantic/protocol failure classification
         working-directory: harness
         run: npm run verify:p6-failure-classification
@@ -194,24 +191,108 @@ jobs:
       - name: Verify P6-2 fresh M variance independence evidence
         working-directory: harness
         run: npm run verify:p6-af-variance-m-independence
-      - name: Verify installed SDK version provenance
-        working-directory: harness
-        run: npm run verify:package-version
       - name: Verify invariant heldout dependency coverage
         working-directory: harness
         run: npm run verify:heldout-invariant-coverage
-      - name: Verify OpenAI backend offline
+
+  p6-3:
+    name: P6-3 structural/runtime regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            harness/package-lock.json
+            calibration/package-lock.json
+      - name: Install harness dependencies
         working-directory: harness
-        run: npm run verify:openai
-      - name: Verify OpenAI Batch runner offline
+        run: npm ci
+      - name: Install calibration dependencies
+        working-directory: calibration
+        run: npm ci
+      - name: Verify P6-3 EL static exposure runtime
         working-directory: harness
-        run: npm run verify:openai-batch
+        run: npm run verify:el-static-exposure
+      - name: Verify P6-3 EL Rsem bank-level selector
+        working-directory: harness
+        run: npm run verify:el-rsem-static-exposure
+      - name: Verify P6-3 EL structural freeze gate
+        working-directory: harness
+        env:
+          P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
+        run: npm run verify:p6-3-structural-freeze
+      - name: Verify P6-3 structural invariant hardening
+        working-directory: harness
+        run: npm run verify:p6-3-structural-invariants
+      - name: Verify committed P6-3 EL structural freeze manifest
+        working-directory: harness
+        env:
+          P6_3_FREEZE_CANDIDATE_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-candidate.json
+          P6_3_EXPECTED_FREEZE_MANIFEST_OUTPUT: ../runs/_smoke/p6-3-el-structural-freeze-expected-manifest.json
+        run: npm run verify:p6-3-freeze-manifest
+      - name: Verify P6-3 execution protocol freeze
+        working-directory: harness
+        run: npm run verify:p6-3-execution-protocol
+      - name: Upload P6-3 EL structural freeze candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-el-structural-freeze-candidate
+          path: runs/_smoke/p6-3-el-structural-freeze-candidate.json
+          if-no-files-found: error
+      - name: Upload recomputed P6-3 EL structural freeze manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-el-structural-freeze-expected-manifest
+          path: runs/_smoke/p6-3-el-structural-freeze-expected-manifest.json
+          if-no-files-found: error
+      - name: Verify P6-3 EL orchestrator integration
+        working-directory: harness
+        run: npm run verify:el-orchestrator
+      - name: P6-3 EL end-to-end run.ts smoke
+        working-directory: harness
+        run: |
+          npm run run -- --config config/p6_3-el-mock.json --smoke
+          test -f ../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/el_static_exposure.json
+          node -e 'const e=require("../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/el_static_exposure.json"); const m=require("../runs/_smoke/p6-3-el-mock-e2e/lineage-0/generation_000/meta.json"); if(!(e.selectedUnitCount>0)||m.condition!=="EL"||m.actual_context_tokens!==e.actualExposedTokens) process.exit(1)'
+
+  stage0-noop:
+    name: Stage 0 legacy smoke / mock-noop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
       - name: Smoke Stage 0 mock-noop legacy full config
         working-directory: harness
         run: npm run run -- --config config/stage0-mock.json --smoke
       - name: Smoke Stage 0 mock-noop legacy simple-limited config
         working-directory: harness
         run: npm run run -- --config config/stage0-mock-limited.json --smoke
+
+  stage0-oracle:
+    name: Stage 0 legacy smoke / mock-oracle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
       - name: Smoke Stage 0 mock-oracle legacy full config
         working-directory: harness
         run: npm run run -- --config config/stage0-oracle.json --smoke
