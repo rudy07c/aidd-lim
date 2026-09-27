@@ -6,15 +6,24 @@
 
 This change connects the already-frozen P6-3 v2 components without changing their scientific semantics:
 
-1. P6-3 v2 unattended calibration runner;
-2. M/Rsem v2 provider adapters;
-3. AUTO-INFRA-001 adjudication;
-4. secondary reliability attempt wrapping;
-5. file-backed state / attempt persistence;
-6. resume handling;
-7. terminal secondary reliability analysis and final report persistence.
+1. frozen EL/AF runtime input construction from the real synthetic repository;
+2. P6-3 v2 unattended calibration runner;
+3. M/Rsem v2 provider adapters;
+4. AUTO-INFRA-001 adjudication;
+5. secondary reliability attempt wrapping;
+6. file-backed state / attempt persistence;
+7. resume handling;
+8. terminal secondary reliability analysis and final report persistence.
 
 The change does not select `B_expose`, does not authorize Stage 1A, and does not enable paid/provider execution from the CLI.
+
+## Frozen runtime input binding
+
+`p6-3-v2-frozen-input-resolver.ts` reads the already-frozen P6-3 structural manifest and the actual synthetic-world repository, task bank, and Rsem probe material. It does not introduce a new selector or serializer.
+
+For EL cells it calls the existing frozen task/Rsem static-exposure runtimes with the frozen `B_expose` and `maxTokensPerUnit=256`. For AF cells it passes the complete repository and verifies exact `T_EL=4046` plus the frozen static-payload SHA-256 before returning context.
+
+The offline verifier reconstructs all 72 unique measurement/task/arm exposure cases represented by the 864-cell plan (11 M tasks × 6 arms plus one Rsem bank × 6 arms) and checks their arm/budget identity. It also routes real frozen B1 M/Rsem inputs through the v2 adapter surface with injected fake provider implementations.
 
 ## Integration invariant
 
@@ -58,9 +67,10 @@ The report checks that exhausted-cell counts and attempt counts agree across run
 
 ## Offline verification
 
-The dedicated verifier covers:
+The dedicated verifiers cover:
 
-- routing M/Rsem logical cells through the v2 provider adapter surface using injected fake provider implementations;
+- reconstruction of all 72 unique frozen EL/AF exposure cases from the real repository/task/probe inputs;
+- routing real frozen M/Rsem inputs through the v2 provider adapter surface using injected fake provider implementations;
 - clean 864-cell completion with 864 committed reliability artifacts;
 - terminal resume with zero additional executor calls;
 - one censored attempt followed by success;
