@@ -8,6 +8,7 @@ on:
       - 'harness/verify-p6-3-v2-auto-infra-unit.ts'
       - 'harness/verify-p6-3-v2-auto-infra-regression.ts'
       - 'harness/verify-p6-3-v2-live-calibration-runner.ts'
+      - 'harness/verify-p6-3-v2-manual-adjudication-target.ts'
       - 'harness/extract-p6-3-v1-auto-infra-fixture.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-live-executors.ts'
@@ -29,6 +30,7 @@ on:
       - 'harness/verify-p6-3-v2-auto-infra-unit.ts'
       - 'harness/verify-p6-3-v2-auto-infra-regression.ts'
       - 'harness/verify-p6-3-v2-live-calibration-runner.ts'
+      - 'harness/verify-p6-3-v2-manual-adjudication-target.ts'
       - 'harness/extract-p6-3-v1-auto-infra-fixture.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-live-executors.ts'
@@ -78,6 +80,9 @@ jobs:
       - name: Verify P6-3 v2 unattended runner semantics
         working-directory: harness
         run: npm run verify:p6-3-v2-live-runner
+      - name: Verify P6-3 v2 manual adjudication target binding
+        working-directory: harness
+        run: npm run verify:p6-3-v2-manual-target
       - name: Exercise P6-3 calibration CLI dry path
         working-directory: harness
         env:
