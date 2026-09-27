@@ -1,7 +1,7 @@
 {
-  "schemaVersion": "p6-3-v2-final-prelive-spec-v1",
+  "schemaVersion": "p6-3-v2-final-prelive-spec-v2",
   "status": "final-prelive-spec-frozen",
-  "scope": "P6-3 v2 calibration pre-live evidence binding only; this spec does not authorize provider execution",
+  "scope": "P6-3 v2 calibration pre-live evidence binding for the guarded paid/live wiring; this spec does not authorize provider execution",
   "calibrationOnly": true,
   "confirmatoryStage1AEligible": false,
   "totalLogicalCells": 864,
@@ -10,6 +10,7 @@
   "maxScientificAttemptsPerLogicalCell": 3,
   "exactCheckoutShaBoundAtReceiptGeneration": true,
   "paidLiveAuthorizationRequired": true,
+  "liveExecutionWired": true,
   "liveExecutionAuthorized": false,
   "frozenEvidenceFiles": [
     "harness/frozen/p6-3-el-structural-freeze.json",
@@ -29,6 +30,7 @@
     "harness/src/p6/p6-3-v2-end-to-end.ts",
     "harness/src/p6/p6-3-v2-cli-preflight.ts",
     "harness/src/p6/p6-3-v2-final-prelive-gate.ts",
+    "harness/src/p6/p6-3-v2-live-entrypoint.ts",
     "harness/p6-3-v2-calibration.ts"
   ],
   "verifierScripts": [
@@ -46,11 +48,13 @@
     "verify-p6-3-v2-live-executors.ts",
     "verify-p6-3-v2-frozen-input-resolver.ts",
     "verify-p6-3-v2-end-to-end.ts",
-    "verify-p6-3-v2-cli-dry-gate.ts"
+    "verify-p6-3-v2-cli-dry-gate.ts",
+    "verify-p6-3-v2-live-wiring.ts"
   ],
   "operationalEvidenceFiles": [
     "docs/p6_3_cost_estimate.md",
     "docs/p6_3_v2_design_audit.md",
-    "docs/p6_3_v2_end_to_end_wiring.md"
+    "docs/p6_3_v2_end_to_end_wiring.md",
+    "docs/p6_3_v2_paid_live_wiring.md"
   ]
 }
