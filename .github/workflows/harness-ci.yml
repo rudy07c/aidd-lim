@@ -90,9 +90,14 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: harness/package-lock.json
+          cache-dependency-path: |
+            harness/package-lock.json
+            synthetic-world/package-lock.json
       - name: Install harness dependencies
         working-directory: harness
+        run: npm ci
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
         run: npm ci
       - name: Verify P2 observable interaction runtime
         working-directory: harness
@@ -211,11 +216,15 @@ jobs:
           cache-dependency-path: |
             harness/package-lock.json
             calibration/package-lock.json
+            synthetic-world/package-lock.json
       - name: Install harness dependencies
         working-directory: harness
         run: npm ci
       - name: Install calibration dependencies
         working-directory: calibration
+        run: npm ci
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
         run: npm ci
       - name: Verify P6-3 EL static exposure runtime
         working-directory: harness
@@ -273,9 +282,14 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: harness/package-lock.json
+          cache-dependency-path: |
+            harness/package-lock.json
+            synthetic-world/package-lock.json
       - name: Install harness dependencies
         working-directory: harness
+        run: npm ci
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
         run: npm ci
       - name: Smoke Stage 0 mock-noop legacy full config
         working-directory: harness
@@ -293,9 +307,14 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: harness/package-lock.json
+          cache-dependency-path: |
+            harness/package-lock.json
+            synthetic-world/package-lock.json
       - name: Install harness dependencies
         working-directory: harness
+        run: npm ci
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
         run: npm ci
       - name: Smoke Stage 0 mock-oracle legacy full config
         working-directory: harness
