@@ -2,7 +2,6 @@ import * as fs from "fs";
 import * as path from "path";
 import {
   buildP63CalibrationPlan,
-  type P63CalibrationCell,
 } from "./p6-3-live-calibration-runner";
 import {
   applyP63V2ManualAdjudication,
@@ -19,9 +18,9 @@ import {
 } from "./p6-3-v2-end-to-end";
 import { loadP63V2FrozenRuntimeInputs } from "./p6-3-v2-frozen-input-resolver";
 import {
-  assertP63V2FinalPreLiveGatePassToken,
-  type P63V2FinalPreLiveGatePassToken,
-} from "./p6-3-v2-final-prelive-gate";
+  assertP63V2PaidLiveGatePassToken,
+  type P63V2PaidLiveGatePassToken,
+} from "./p6-3-v2-paid-live-gate";
 import {
   P6_3_V2_FROZEN_BUDGETS,
 } from "./p6-3-v2-cli-preflight";
@@ -30,7 +29,7 @@ import {
 } from "./p6-3-v2-execution-parameters";
 
 export interface P63V2LiveEntrypointArgs {
-  readonly preLiveToken: P63V2FinalPreLiveGatePassToken;
+  readonly paidLiveToken: P63V2PaidLiveGatePassToken;
   readonly resumePath: string | null;
   readonly adjudicationsPath: string | null;
 }
@@ -44,16 +43,25 @@ export interface P63V2LiveEntrypointResult {
 
 /**
  * Provider-capable P6-3 v2 entrypoint. The CLI dynamically imports this module
- * only after explicit paid/live authorization and a fresh final pre-live gate
- * have both succeeded on the exact checkout.
+ * only after explicit paid/live authorization and the layered exact-checkout
+ * paid/live gate have both succeeded.
  */
 export async function runP63V2LiveEntrypoint(
   args: P63V2LiveEntrypointArgs
 ): Promise<P63V2LiveEntrypointResult> {
-  assertP63V2FinalPreLiveGatePassToken(args.preLiveToken);
-  const receipt = args.preLiveToken.receipt;
-  if (receipt.liveAuthorized !== false || receipt.providerCallsMade !== false) {
-    throw new Error("P6-3 v2 live entrypoint requires a non-self-authorizing final pre-live receipt");
+  assertP63V2PaidLiveGatePassToken(args.paidLiveToken);
+  const receipt = args.paidLiveToken.receipt;
+  const baseReceipt = receipt.baseFinalPreLiveReceipt;
+  if (
+    receipt.liveAuthorized !== false ||
+    receipt.providerCallsMade !== false ||
+    baseReceipt.liveAuthorized !== false ||
+    baseReceipt.providerCallsMade !== false
+  ) {
+    throw new Error("P6-3 v2 live entrypoint requires non-self-authorizing safety receipts");
+  }
+  if (receipt.checkoutGitSha !== baseReceipt.checkoutGitSha) {
+    throw new Error("P6-3 v2 live entrypoint safety receipt checkout mismatch");
   }
 
   const repoRoot = path.resolve(__dirname, "../../..");
@@ -67,7 +75,7 @@ export async function runP63V2LiveEntrypoint(
     maxScientificAttemptsPerLogicalCell:
       P6_3_V2_MAX_SCIENTIFIC_ATTEMPTS_PER_LOGICAL_CELL,
   });
-  const frozenManifestHashes = receiptEvidenceHashes(receipt);
+  const frozenManifestHashes = receiptEvidenceHashes(args.paidLiveToken);
   const statePath = resolveStatePath(repoRoot, args.resumePath);
   const runDir = path.dirname(statePath);
   const persistence = createP63V2FilePersistence({ statePath });
@@ -156,11 +164,17 @@ function existingFinalReportPath(runDir: string): string | null {
 }
 
 function receiptEvidenceHashes(
-  receipt: P63V2FinalPreLiveGatePassToken["receipt"]
+  token: P63V2PaidLiveGatePassToken
 ): Readonly<Record<string, string>> {
+  const receipt = token.receipt;
+  const base = receipt.baseFinalPreLiveReceipt;
   const evidence = [
-    receipt.finalSpec,
-    ...receipt.frozenEvidence,
+    base.finalSpec,
+    ...base.frozenEvidence,
+    ...base.sourceEvidence,
+    ...base.verifierEvidence,
+    ...base.operationalEvidence,
+    receipt.wiringSpec,
     ...receipt.sourceEvidence,
     ...receipt.verifierEvidence,
     ...receipt.operationalEvidence,
