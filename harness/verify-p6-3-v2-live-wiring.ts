@@ -2,7 +2,11 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import { spawnSync } from "child_process";
-import { assertP63V2CliInvocationAllowed } from "./src/p6/p6-3-v2-cli-preflight";
+import {
+  assertP63V2CliInvocationAllowed,
+  assertP63V2PaidLiveRuntimeAuthorizationToken,
+  authorizeP63V2PaidLiveInvocation,
+} from "./src/p6/p6-3-v2-cli-preflight";
 
 function main(): void {
   const cliPath = path.resolve(__dirname, "p6-3-v2-calibration.ts");
@@ -18,11 +22,11 @@ function main(): void {
   assert.equal(paidGateSource.includes('from "./p6-3-v2-live-executors"'), false);
   assert.equal(paidGateSource.includes("OpenAIBackend"), false);
 
-  const guardIndex = cliSource.indexOf("assertP63V2CliInvocationAllowed({");
-  const paidGateIndex = cliSource.indexOf("runP63V2PaidLiveGate(__dirname)");
+  const guardIndex = cliSource.indexOf("authorizeP63V2PaidLiveInvocation({");
+  const paidGateIndex = cliSource.indexOf("runP63V2PaidLiveGate(__dirname, runtimeAuthorization)");
   const dynamicImportIndex = cliSource.indexOf('await import(\n    "./src/p6/p6-3-v2-live-entrypoint"');
-  assert.ok(guardIndex >= 0, "CLI must invoke the paid/live guard");
-  assert.ok(paidGateIndex > guardIndex, "layered exact-checkout paid/live gate must run after authorization guard");
+  assert.ok(guardIndex >= 0, "CLI must create branded runtime paid/live authorization");
+  assert.ok(paidGateIndex > guardIndex, "layered exact-checkout paid/live gate must run after authorization");
   assert.ok(dynamicImportIndex > paidGateIndex, "provider-capable entrypoint must load only after paid/live gate");
 
   for (const required of [
@@ -34,9 +38,15 @@ function main(): void {
   ]) {
     assert.ok(entrypointSource.includes(required), `live entrypoint missing required wiring: ${required}`);
   }
-  assert.ok(paidGateSource.includes("runP63V2FinalPreLiveGate"));
-  assert.ok(paidGateSource.includes("liveAuthorized: false"));
-  assert.ok(paidGateSource.includes("providerCallsMade: false"));
+  for (const required of [
+    "runP63V2FinalPreLiveGate",
+    "assertP63V2PaidLiveRuntimeAuthorizationToken",
+    "runtimeAuthorization",
+    "liveAuthorized: false",
+    "providerCallsMade: false",
+  ]) {
+    assert.ok(paidGateSource.includes(required), `paid/live gate missing safety binding: ${required}`);
+  }
 
   assert.throws(
     () => assertP63V2CliInvocationAllowed({ live: true, paidAuthorization: false, environment: { P6_3_LIVE_EXECUTION_ALLOWED: "1" } }),
@@ -46,11 +56,20 @@ function main(): void {
     () => assertP63V2CliInvocationAllowed({ live: true, paidAuthorization: true, environment: { P6_3_LIVE_EXECUTION_ALLOWED: "0" } }),
     /P6_3_LIVE_EXECUTION_ALLOWED=1 is required/
   );
-  assert.doesNotThrow(() => assertP63V2CliInvocationAllowed({
+  const runtimeAuthorization = authorizeP63V2PaidLiveInvocation({
     live: true,
     paidAuthorization: true,
     environment: { P6_3_LIVE_EXECUTION_ALLOWED: "1" },
-  }));
+  });
+  assert.doesNotThrow(() => assertP63V2PaidLiveRuntimeAuthorizationToken(runtimeAuthorization));
+  assert.throws(
+    () => assertP63V2PaidLiveRuntimeAuthorizationToken({
+      live: true,
+      explicitPaidAuthorization: true,
+      environmentAuthorization: true,
+    } as any),
+    /valid runtime paid\/live authorization token/
+  );
 
   const tsNodeRegister = require.resolve("ts-node/register");
   const baseEnv = {
@@ -85,7 +104,8 @@ function main(): void {
   console.log(JSON.stringify({
     ok: true,
     providerImportIsDynamic: true,
-    authorizationGuardPrecedesPaidLiveGate: true,
+    brandedRuntimeAuthorizationRequired: true,
+    authorizationPrecedesPaidLiveGate: true,
     paidLiveGatePrecedesProviderImport: true,
     baseFinalGateIsLayeredUnderPaidLiveGate: true,
     missingFlagFailsClosed: true,
