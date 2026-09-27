@@ -49,6 +49,7 @@ export interface P63V2CliPreflightReport {
   readonly executionParametersManifestSha256: string;
   readonly v1AutoInfraFixtureSha256: string;
   readonly finalPreLiveSpecSha256: string;
+  readonly paidLiveWiringSpecSha256: string;
   readonly executionManifestLiveExecutionAuthorized: false;
   readonly finalPreLiveGateFrozen: true;
   readonly paidLiveAuthorizationRequired: true;
@@ -67,14 +68,17 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
   const executionPath = frozenPath("p6-3-v2-execution-parameters.json");
   const regressionPath = frozenPath("p6-3-v1-auto-infra-regression.json");
   const finalSpecPath = frozenPath("p6-3-v2-final-prelive-spec.json");
+  const paidLiveSpecPath = frozenPath("p6-3-v2-paid-live-wiring-spec.json");
 
   const structuralRaw = fs.readFileSync(structuralPath, "utf8");
   const executionRaw = fs.readFileSync(executionPath, "utf8");
   const regressionRaw = fs.readFileSync(regressionPath, "utf8");
   const finalSpecRaw = fs.readFileSync(finalSpecPath, "utf8");
+  const paidLiveSpecRaw = fs.readFileSync(paidLiveSpecPath, "utf8");
   const structural = JSON.parse(structuralRaw) as any;
   const execution = JSON.parse(executionRaw) as any;
   const finalSpec = JSON.parse(finalSpecRaw) as any;
+  const paidLiveSpec = JSON.parse(paidLiveSpecRaw) as any;
 
   assertEqual(structural.freezeCandidate?.T_EL, 4046, "structural T_EL");
   assertEqual(
@@ -116,20 +120,34 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
 
   assertEqual(
     finalSpec.schemaVersion,
-    "p6-3-v2-final-prelive-spec-v2",
-    "final pre-live spec schema"
+    "p6-3-v2-final-prelive-spec-v1",
+    "base final pre-live spec schema"
   );
-  assertEqual(finalSpec.status, "final-prelive-spec-frozen", "final pre-live spec status");
-  assertEqual(finalSpec.totalLogicalCells, 864, "final pre-live spec plan size");
-  assertEqual(finalSpec.mutationMaxOutputTokens, 14000, "final pre-live mutation cap");
-  assertEqual(finalSpec.rsemMaxOutputTokens, 8000, "final pre-live Rsem cap");
-  assertEqual(finalSpec.liveExecutionAuthorized, false, "final pre-live spec live authorization");
+  assertEqual(finalSpec.status, "final-prelive-spec-frozen", "base final pre-live spec status");
+  assertEqual(finalSpec.totalLogicalCells, 864, "base final pre-live spec plan size");
+  assertEqual(finalSpec.mutationMaxOutputTokens, 14000, "base final pre-live mutation cap");
+  assertEqual(finalSpec.rsemMaxOutputTokens, 8000, "base final pre-live Rsem cap");
+  assertEqual(finalSpec.liveExecutionAuthorized, false, "base final pre-live live authorization");
   assertEqual(
     finalSpec.paidLiveAuthorizationRequired,
     true,
-    "final pre-live paid authorization boundary"
+    "base final pre-live paid authorization boundary"
   );
-  assertEqual(finalSpec.liveExecutionWired, true, "final pre-live live-wiring state");
+
+  assertEqual(
+    paidLiveSpec.schemaVersion,
+    "p6-3-v2-paid-live-wiring-spec-v1",
+    "paid/live wiring spec schema"
+  );
+  assertEqual(paidLiveSpec.status, "paid-live-wiring-frozen", "paid/live wiring spec status");
+  assertEqual(paidLiveSpec.totalLogicalCells, 864, "paid/live wiring plan size");
+  assertEqual(paidLiveSpec.liveExecutionWired, true, "paid/live wiring state");
+  assertEqual(paidLiveSpec.liveExecutionAuthorized, false, "paid/live wiring authorization state");
+  assertEqual(
+    paidLiveSpec.paidLiveAuthorizationRequired,
+    true,
+    "paid/live wiring authorization boundary"
+  );
 
   const plan = buildP63CalibrationPlan(P6_3_V2_FROZEN_BUDGETS);
   assertEqual(plan.length, P6_3_EXPECTED_NORMAL_CALL_COUNT, "v2 calibration plan size");
@@ -159,6 +177,7 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
     executionParametersManifestSha256: sha256(executionRaw),
     v1AutoInfraFixtureSha256: sha256(regressionRaw),
     finalPreLiveSpecSha256: sha256(finalSpecRaw),
+    paidLiveWiringSpecSha256: sha256(paidLiveSpecRaw),
     executionManifestLiveExecutionAuthorized: false,
     finalPreLiveGateFrozen: true,
     paidLiveAuthorizationRequired: true,
@@ -168,9 +187,9 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
 }
 
 /**
- * This guard is deliberately provider-free and must execute before the live
- * entrypoint is dynamically imported. A live invocation needs two independent
- * operator signals; neither the frozen spec nor the final receipt self-authorizes.
+ * Provider-free runtime authorization guard. A live invocation requires two
+ * independent operator signals; neither committed spec nor gate receipt can
+ * self-authorize paid/provider execution.
  */
 export function assertP63V2CliInvocationAllowed(
   args: P63V2CliInvocationAuthorization
