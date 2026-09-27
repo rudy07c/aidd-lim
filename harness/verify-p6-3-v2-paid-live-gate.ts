@@ -60,21 +60,26 @@ function main(): void {
       P6_3_V2_PAID_LIVE_OPERATIONAL_EVIDENCE_FILES
     );
 
-    const gateSource = fs.readFileSync(
-      path.resolve(__dirname, "src/p6/p6-3-v2-paid-live-gate.ts"),
-      "utf8"
-    );
-    for (const forbidden of [
-      'from "./p6-3-v2-live-executors"',
-      'from "../agent-backend/openai',
-      'from "openai"',
-      "OpenAIBackend",
-    ]) {
-      assert.equal(
-        gateSource.includes(forbidden),
-        false,
-        `paid/live safety gate must not import provider code: ${forbidden}`
-      );
+    const gateSources = [
+      "src/p6/p6-3-v2-final-prelive-gate.ts",
+      "src/p6/p6-3-v2-paid-live-gate.ts",
+    ].map((relative) => ({
+      relative,
+      source: fs.readFileSync(path.resolve(__dirname, relative), "utf8"),
+    }));
+    for (const { relative, source } of gateSources) {
+      for (const forbidden of [
+        'from "./p6-3-v2-live-executors"',
+        'from "../agent-backend/openai',
+        'from "openai"',
+        "OpenAIBackend",
+      ]) {
+        assert.equal(
+          source.includes(forbidden),
+          false,
+          `${relative} must not import provider code: ${forbidden}`
+        );
+      }
     }
 
     const baseOutput = process.env.P6_3_V2_FINAL_PRELIVE_RECEIPT_OUTPUT;
