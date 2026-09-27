@@ -137,11 +137,6 @@ export interface P63V2SecondaryReliabilitySummary {
   }[];
 }
 
-/**
- * Wrap a v2 executor so every committed scientific attempt artifact carries
- * the preregistered reliability telemetry beside, not instead of, the original
- * scientific payload. The base runner still owns retry/adjudication semantics.
- */
 export function withP63V2SecondaryReliability(
   executor: {
     execute(cell: P63CalibrationCell, attempt: number): Promise<P63V2ReliabilityCellOutcome>;
@@ -202,9 +197,9 @@ export function summarizeP63V2SecondaryReliability(args: {
     const maxOutputCensored =
       record.executionStatus === "response-incomplete" &&
       telemetry.incompleteReason === "max_output_tokens" &&
-      telemetry.outputTokens !== null &&
+      telemetry.tokenUsage.output !== null &&
       telemetry.configuredMaxOutputTokens !== null &&
-      telemetry.outputTokens === telemetry.configuredMaxOutputTokens;
+      telemetry.tokenUsage.output === telemetry.configuredMaxOutputTokens;
     if (maxOutputCensored && record.effectiveFailureDomain !== "infrastructure") {
       throw new Error(`P6-3 v2 reliability summary refused: exact-cap censoring is not infrastructure for ${key}`);
     }
@@ -218,10 +213,10 @@ export function summarizeP63V2SecondaryReliability(args: {
       executionStatus: record.executionStatus,
       effectiveFailureDomain: record.effectiveFailureDomain,
       maxOutputCensored,
-      outputTokens: telemetry.outputTokens,
-      reasoningOutputTokens: telemetry.reasoningOutput,
-      inputTokens: telemetry.input,
-      totalTokens: telemetry.total,
+      outputTokens: telemetry.tokenUsage.output,
+      reasoningOutputTokens: telemetry.tokenUsage.reasoningOutput,
+      inputTokens: telemetry.tokenUsage.input,
+      totalTokens: telemetry.tokenUsage.total,
       configuredMaxOutputTokens: telemetry.configuredMaxOutputTokens,
       incompleteReason: telemetry.incompleteReason,
     };
