@@ -87,6 +87,7 @@ async function main(): Promise<void> {
   assert.equal(summary.committedAttemptCount, 6);
   assert.equal(summary.interruptedAttemptCount, 0);
   assert.equal(summary.maxOutputCensoredAttemptCount, 4);
+  assert.equal(summary.censoringUnclassifiableAttemptCount, 0);
   assert.deepEqual(
     summary.logicalCells.map((cell) => ({
       sequence: cell.sequence,
@@ -107,12 +108,27 @@ async function main(): Promise<void> {
   const b2 = summary.byArm.find((item) => item.armLabel === "B2");
   assert.ok(b0 && b1 && b2);
   assert.deepEqual(
-    pick(b0, ["attempts", "maxOutputCensoredAttempts", "attemptCensoringRate", "attemptedLogicalCells", "logicalCellsWithAnyCensoring", "logicalCellCensoringRate"]),
+    pick(b0, [
+      "attempts",
+      "censoringClassifiableAttempts",
+      "censoringUnclassifiableAttempts",
+      "maxOutputCensoredAttempts",
+      "attemptCensoringRate",
+      "attemptedLogicalCells",
+      "censoringClassifiableLogicalCells",
+      "censoringUnclassifiableLogicalCells",
+      "logicalCellsWithAnyCensoring",
+      "logicalCellCensoringRate",
+    ]),
     {
       attempts: 2,
+      censoringClassifiableAttempts: 2,
+      censoringUnclassifiableAttempts: 0,
       maxOutputCensoredAttempts: 1,
       attemptCensoringRate: 0.5,
       attemptedLogicalCells: 1,
+      censoringClassifiableLogicalCells: 1,
+      censoringUnclassifiableLogicalCells: 0,
       logicalCellsWithAnyCensoring: 1,
       logicalCellCensoringRate: 1,
     }
@@ -124,6 +140,7 @@ async function main(): Promise<void> {
   assert.equal(b0.outputTokens.q50, 111);
   assert.equal(b0.outputTokens.q75, 14000);
   assert.equal(b1.attempts, 3);
+  assert.equal(b1.censoringClassifiableAttempts, 3);
   assert.equal(b1.maxOutputCensoredAttempts, 3);
   assert.equal(b1.attemptCensoringRate, 1);
   assert.equal(b1.attemptsToValidScientificObservation.observed, 0);
@@ -145,6 +162,35 @@ async function main(): Promise<void> {
   assert.equal(seq0Attempt1?.configuredMaxOutputTokens, 14000);
   assert.equal(seq0Attempt1?.outputTokens, 14000);
   assert.equal(seq0Attempt1?.reasoningOutputTokens, 13000);
+
+  // Missing provider reason is not silently treated as a negative censoring observation.
+  const ambiguousState: any = JSON.parse(JSON.stringify(state));
+  ambiguousState.status = "needs-audit";
+  const ambiguousRecord = ambiguousState.attempts.find(
+    (row: any) => row.sequence === 2 && row.attempt === 1
+  );
+  assert.ok(ambiguousRecord);
+  ambiguousRecord.executionStatus = "response-incomplete";
+  ambiguousRecord.rawFailureDomain = "infrastructure";
+  ambiguousRecord.effectiveFailureDomain = "infrastructure";
+  const ambiguousSummary = summarizeP63V2SecondaryReliability({
+    state: ambiguousState,
+    plan,
+    loadAttemptArtifact: (artifactPath) => persistence.artifacts.get(artifactPath),
+  });
+  const ambiguousB2 = ambiguousSummary.byArm.find((item) => item.armLabel === "B2");
+  assert.ok(ambiguousB2);
+  assert.equal(ambiguousSummary.censoringUnclassifiableAttemptCount, 1);
+  assert.equal(ambiguousB2.censoringClassifiableAttempts, 0);
+  assert.equal(ambiguousB2.censoringUnclassifiableAttempts, 1);
+  assert.equal(ambiguousB2.attemptCensoringRate, null);
+  assert.equal(ambiguousB2.censoringClassifiableLogicalCells, 0);
+  assert.equal(ambiguousB2.censoringUnclassifiableLogicalCells, 1);
+  assert.equal(ambiguousB2.logicalCellCensoringRate, null);
+  assert.equal(
+    ambiguousSummary.logicalCells.find((cell) => cell.sequence === 2)?.anyMaxOutputCensoring,
+    null
+  );
 
   await assert.rejects(
     () => withP63V2SecondaryReliability({
@@ -181,10 +227,20 @@ async function main(): Promise<void> {
   );
   persistence.artifacts.set(firstPath!, original);
 
+  const missingFieldOutcome = successOutcome(plan[2], 1, 10, null) as any;
+  delete missingFieldOutcome.reliabilityTelemetry.tokenUsage.reasoningOutput;
+  await assert.rejects(
+    () => withP63V2SecondaryReliability({
+      execute: async () => missingFieldOutcome,
+    }).execute(plan[2], 1),
+    /missing required token field reasoningOutput/
+  );
+
   console.log(JSON.stringify({
     ok: true,
     committedAttempts: summary.committedAttemptCount,
     maxOutputCensoredAttempts: summary.maxOutputCensoredAttemptCount,
+    unclassifiableCensoringRegression: 1,
     exhaustedCells: summary.exhaustedCellLocations.length,
     quantileRule: summary.quantileRule,
     allAttemptArtifactsBound: persistence.artifacts.size,
