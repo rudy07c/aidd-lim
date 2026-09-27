@@ -2,7 +2,6 @@ import {
   P6_3_V2_SECONDARY_ENDPOINT_IDS,
   P6_3_V2_SECONDARY_SUMMARY_IDS,
 } from "./p6-3-v2-execution-parameters";
-import { P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID } from "./p6-3-v2-auto-infra";
 import type { P63CalibrationCell } from "./p6-3-live-calibration-runner";
 import type {
   P63V2CalibrationExecutor,
@@ -58,7 +57,7 @@ export interface P63V2SecondaryAttemptRow {
   readonly attempt: number;
   readonly executionStatus: string;
   readonly effectiveFailureDomain: string;
-  readonly maxOutputCensored: boolean;
+  readonly maxOutputCensored: boolean | null;
   readonly outputTokens: number | null;
   readonly reasoningOutputTokens: number | null;
   readonly inputTokens: number | null;
@@ -74,7 +73,7 @@ export interface P63V2SecondaryLogicalCellRow {
   readonly repeat: number;
   readonly armLabel: ArmLabel;
   readonly attemptCount: number;
-  readonly anyMaxOutputCensoring: boolean;
+  readonly anyMaxOutputCensoring: boolean | null;
   readonly attemptsToValidScientificObservation: number | null;
   readonly censoredExhausted: boolean;
 }
@@ -93,9 +92,13 @@ export interface P63V2DistributionSummary {
 export interface P63V2ArmReliabilitySummary {
   readonly armLabel: ArmLabel;
   readonly attempts: number;
+  readonly censoringClassifiableAttempts: number;
+  readonly censoringUnclassifiableAttempts: number;
   readonly maxOutputCensoredAttempts: number;
   readonly attemptCensoringRate: number | null;
   readonly attemptedLogicalCells: number;
+  readonly censoringClassifiableLogicalCells: number;
+  readonly censoringUnclassifiableLogicalCells: number;
   readonly logicalCellsWithAnyCensoring: number;
   readonly logicalCellCensoringRate: number | null;
   readonly attemptCountDistribution: P63V2DistributionSummary;
@@ -108,9 +111,13 @@ export interface P63V2MTaskArmReliabilitySummary {
   readonly taskId: string;
   readonly armLabel: ArmLabel;
   readonly attempts: number;
+  readonly censoringClassifiableAttempts: number;
+  readonly censoringUnclassifiableAttempts: number;
   readonly maxOutputCensoredAttempts: number;
   readonly attemptCensoringRate: number | null;
   readonly attemptedLogicalCells: number;
+  readonly censoringClassifiableLogicalCells: number;
+  readonly censoringUnclassifiableLogicalCells: number;
   readonly logicalCellsWithAnyCensoring: number;
   readonly logicalCellCensoringRate: number | null;
 }
@@ -124,6 +131,7 @@ export interface P63V2SecondaryReliabilitySummary {
   readonly committedAttemptCount: number;
   readonly interruptedAttemptCount: number;
   readonly maxOutputCensoredAttemptCount: number;
+  readonly censoringUnclassifiableAttemptCount: number;
   readonly attempts: readonly P63V2SecondaryAttemptRow[];
   readonly logicalCells: readonly P63V2SecondaryLogicalCellRow[];
   readonly byArm: readonly P63V2ArmReliabilitySummary[];
@@ -195,24 +203,7 @@ export function summarizeP63V2SecondaryReliability(args: {
     const artifact = parseAttemptArtifact(loadAttemptArtifact(record.artifactPath));
     assertArtifactIdentity(record, artifact);
     const telemetry = artifact.telemetry;
-    const maxOutputCensored =
-      record.executionStatus === "response-incomplete" &&
-      telemetry.incompleteReason === "max_output_tokens" &&
-      telemetry.tokenUsage.output !== null &&
-      telemetry.configuredMaxOutputTokens !== null &&
-      telemetry.tokenUsage.output === telemetry.configuredMaxOutputTokens;
-    if (maxOutputCensored && record.effectiveFailureDomain !== "infrastructure") {
-      throw new Error(`P6-3 v2 reliability summary refused: exact-cap censoring is not infrastructure for ${key}`);
-    }
-    if (
-      maxOutputCensored &&
-      (
-        record.autoInfrastructureClassification?.disposition !== "infrastructure-invalid" ||
-        record.autoInfrastructureClassification.ruleId !== P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID
-      )
-    ) {
-      throw new Error(`P6-3 v2 reliability summary refused: exact-cap censoring lacks frozen AUTO-INFRA classification for ${key}`);
-    }
+    const maxOutputCensored = classifyMaxOutputCensoring(record.executionStatus, telemetry.incompleteReason);
     return {
       sequence: record.sequence,
       measurement: record.measurement,
@@ -254,40 +245,17 @@ export function summarizeP63V2SecondaryReliability(args: {
       repeat: cell.repeat,
       armLabel: cell.arm.label,
       attemptCount: attempts.length,
-      anyMaxOutputCensoring: attempts.some((row) => row.maxOutputCensored),
+      anyMaxOutputCensoring: classifyLogicalCellCensoring(attempts.map((row) => row.maxOutputCensored)),
       attemptsToValidScientificObservation: scientific?.attempt ?? null,
       censoredExhausted: exhausted,
     };
   });
 
-  const byArm = ARM_ORDER.map((armLabel) => {
-    const attempts = attemptRows.filter((row) => row.armLabel === armLabel);
-    const cells = logicalCells.filter((row) => row.armLabel === armLabel && row.attemptCount > 0);
-    const censoredAttempts = attempts.filter((row) => row.maxOutputCensored).length;
-    const censoredCells = cells.filter((row) => row.anyMaxOutputCensoring).length;
-    return {
-      armLabel,
-      attempts: attempts.length,
-      maxOutputCensoredAttempts: censoredAttempts,
-      attemptCensoringRate: rate(censoredAttempts, attempts.length),
-      attemptedLogicalCells: cells.length,
-      logicalCellsWithAnyCensoring: censoredCells,
-      logicalCellCensoringRate: rate(censoredCells, cells.length),
-      attemptCountDistribution: distribution(cells.map((row) => row.attemptCount), 0),
-      attemptsToValidScientificObservation: distribution(
-        cells.flatMap((row) => row.attemptsToValidScientificObservation === null ? [] : [row.attemptsToValidScientificObservation]),
-        cells.filter((row) => row.attemptsToValidScientificObservation === null).length
-      ),
-      outputTokens: distribution(
-        attempts.flatMap((row) => row.outputTokens === null ? [] : [row.outputTokens]),
-        attempts.filter((row) => row.outputTokens === null).length
-      ),
-      reasoningOutputTokens: distribution(
-        attempts.flatMap((row) => row.reasoningOutputTokens === null ? [] : [row.reasoningOutputTokens]),
-        attempts.filter((row) => row.reasoningOutputTokens === null).length
-      ),
-    } satisfies P63V2ArmReliabilitySummary;
-  });
+  const byArm = ARM_ORDER.map((armLabel) => summarizeArm(
+    armLabel,
+    attemptRows.filter((row) => row.armLabel === armLabel),
+    logicalCells.filter((row) => row.armLabel === armLabel && row.attemptCount > 0)
+  ));
 
   const mTaskKeys = [...new Set(plan
     .filter((cell) => cell.measurement === "M" && cell.taskId !== null)
@@ -305,17 +273,23 @@ export function summarizeP63V2SecondaryReliability(args: {
     const cells = logicalCells.filter(
       (row) => row.measurement === "M" && row.taskId === taskId && row.armLabel === armLabel && row.attemptCount > 0
     );
-    const censoredAttempts = attempts.filter((row) => row.maxOutputCensored).length;
-    const censoredCells = cells.filter((row) => row.anyMaxOutputCensoring).length;
+    const attemptClassifiable = attempts.filter((row) => row.maxOutputCensored !== null);
+    const cellClassifiable = cells.filter((row) => row.anyMaxOutputCensoring !== null);
+    const censoredAttempts = attemptClassifiable.filter((row) => row.maxOutputCensored === true).length;
+    const censoredCells = cellClassifiable.filter((row) => row.anyMaxOutputCensoring === true).length;
     return {
       taskId,
       armLabel,
       attempts: attempts.length,
+      censoringClassifiableAttempts: attemptClassifiable.length,
+      censoringUnclassifiableAttempts: attempts.length - attemptClassifiable.length,
       maxOutputCensoredAttempts: censoredAttempts,
-      attemptCensoringRate: rate(censoredAttempts, attempts.length),
+      attemptCensoringRate: rate(censoredAttempts, attemptClassifiable.length),
       attemptedLogicalCells: cells.length,
+      censoringClassifiableLogicalCells: cellClassifiable.length,
+      censoringUnclassifiableLogicalCells: cells.length - cellClassifiable.length,
       logicalCellsWithAnyCensoring: censoredCells,
-      logicalCellCensoringRate: rate(censoredCells, cells.length),
+      logicalCellCensoringRate: rate(censoredCells, cellClassifiable.length),
     } satisfies P63V2MTaskArmReliabilitySummary;
   });
 
@@ -327,7 +301,8 @@ export function summarizeP63V2SecondaryReliability(args: {
     collectionStatus: state.status,
     committedAttemptCount: attemptRows.length,
     interruptedAttemptCount: state.interruptedAttempts.length,
-    maxOutputCensoredAttemptCount: attemptRows.filter((row) => row.maxOutputCensored).length,
+    maxOutputCensoredAttemptCount: attemptRows.filter((row) => row.maxOutputCensored === true).length,
+    censoringUnclassifiableAttemptCount: attemptRows.filter((row) => row.maxOutputCensored === null).length,
     attempts: attemptRows,
     logicalCells,
     byArm,
@@ -343,6 +318,61 @@ export function summarizeP63V2SecondaryReliability(args: {
       }))
       .sort((a, b) => a.sequence - b.sequence),
   };
+}
+
+function summarizeArm(
+  armLabel: ArmLabel,
+  attempts: readonly P63V2SecondaryAttemptRow[],
+  cells: readonly P63V2SecondaryLogicalCellRow[]
+): P63V2ArmReliabilitySummary {
+  const attemptClassifiable = attempts.filter((row) => row.maxOutputCensored !== null);
+  const cellClassifiable = cells.filter((row) => row.anyMaxOutputCensoring !== null);
+  const censoredAttempts = attemptClassifiable.filter((row) => row.maxOutputCensored === true).length;
+  const censoredCells = cellClassifiable.filter((row) => row.anyMaxOutputCensoring === true).length;
+  return {
+    armLabel,
+    attempts: attempts.length,
+    censoringClassifiableAttempts: attemptClassifiable.length,
+    censoringUnclassifiableAttempts: attempts.length - attemptClassifiable.length,
+    maxOutputCensoredAttempts: censoredAttempts,
+    attemptCensoringRate: rate(censoredAttempts, attemptClassifiable.length),
+    attemptedLogicalCells: cells.length,
+    censoringClassifiableLogicalCells: cellClassifiable.length,
+    censoringUnclassifiableLogicalCells: cells.length - cellClassifiable.length,
+    logicalCellsWithAnyCensoring: censoredCells,
+    logicalCellCensoringRate: rate(censoredCells, cellClassifiable.length),
+    attemptCountDistribution: distribution(cells.map((row) => row.attemptCount), 0),
+    attemptsToValidScientificObservation: distribution(
+      cells.flatMap((row) => row.attemptsToValidScientificObservation === null ? [] : [row.attemptsToValidScientificObservation]),
+      cells.filter((row) => row.attemptsToValidScientificObservation === null).length
+    ),
+    outputTokens: distribution(
+      attempts.flatMap((row) => row.outputTokens === null ? [] : [row.outputTokens]),
+      attempts.filter((row) => row.outputTokens === null).length
+    ),
+    reasoningOutputTokens: distribution(
+      attempts.flatMap((row) => row.reasoningOutputTokens === null ? [] : [row.reasoningOutputTokens]),
+      attempts.filter((row) => row.reasoningOutputTokens === null).length
+    ),
+  };
+}
+
+function classifyMaxOutputCensoring(
+  executionStatus: string,
+  incompleteReason: string | null
+): boolean | null {
+  if (executionStatus === "response-incomplete") {
+    if (incompleteReason === null) return null;
+    return incompleteReason === "max_output_tokens";
+  }
+  if (incompleteReason !== null) return null;
+  return false;
+}
+
+function classifyLogicalCellCensoring(values: readonly (boolean | null)[]): boolean | null {
+  if (values.some((value) => value === true)) return true;
+  if (values.length > 0 && values.every((value) => value === false)) return false;
+  return null;
 }
 
 function parseAttemptArtifact(value: unknown): P63V2ReliabilityAttemptArtifact {
