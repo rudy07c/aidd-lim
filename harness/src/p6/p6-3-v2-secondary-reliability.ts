@@ -2,6 +2,7 @@ import {
   P6_3_V2_SECONDARY_ENDPOINT_IDS,
   P6_3_V2_SECONDARY_SUMMARY_IDS,
 } from "./p6-3-v2-execution-parameters";
+import { P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID } from "./p6-3-v2-auto-infra";
 import type { P63CalibrationCell } from "./p6-3-live-calibration-runner";
 import type {
   P63V2CalibrationExecutor,
@@ -203,6 +204,15 @@ export function summarizeP63V2SecondaryReliability(args: {
     if (maxOutputCensored && record.effectiveFailureDomain !== "infrastructure") {
       throw new Error(`P6-3 v2 reliability summary refused: exact-cap censoring is not infrastructure for ${key}`);
     }
+    if (
+      maxOutputCensored &&
+      (
+        record.autoInfrastructureClassification?.disposition !== "infrastructure-invalid" ||
+        record.autoInfrastructureClassification.ruleId !== P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID
+      )
+    ) {
+      throw new Error(`P6-3 v2 reliability summary refused: exact-cap censoring lacks frozen AUTO-INFRA classification for ${key}`);
+    }
     return {
       sequence: record.sequence,
       measurement: record.measurement,
@@ -223,16 +233,18 @@ export function summarizeP63V2SecondaryReliability(args: {
   }).sort((a, b) => a.sequence - b.sequence || a.attempt - b.attempt);
 
   const exhaustedBySequence = new Map(state.exhaustedCells.map((item) => [item.sequence, item]));
+  if (exhaustedBySequence.size !== state.exhaustedCells.length) {
+    throw new Error("P6-3 v2 reliability summary refused: duplicate exhausted-cell sequence");
+  }
+  const terminal = state.status === "completed" || state.status === "needs-design-audit";
   const logicalCells: P63V2SecondaryLogicalCellRow[] = plan.map((cell) => {
     const attempts = attemptRows.filter((row) => row.sequence === cell.sequence);
     const scientific = attempts.find((row) => isScientificObservation(row.effectiveFailureDomain));
     const exhausted = exhaustedBySequence.has(cell.sequence);
-    if (
-      (state.status === "completed" || state.status === "needs-design-audit") &&
-      attempts.length > 0 &&
-      !scientific &&
-      !exhausted
-    ) {
+    if (terminal && attempts.length === 0) {
+      throw new Error(`P6-3 v2 reliability summary refused: terminal collection has unattempted cell ${cell.sequence}`);
+    }
+    if (terminal && !scientific && !exhausted) {
       throw new Error(`P6-3 v2 reliability summary refused: terminal cell ${cell.sequence} has neither observation nor exhaustion`);
     }
     return {
@@ -390,7 +402,11 @@ function assertTelemetry(value: P63V2ReliabilityTelemetry): void {
   if (!value || typeof value !== "object" || !value.tokenUsage) {
     throw new Error("P6-3 v2 reliability telemetry is required for every committed attempt");
   }
-  for (const [name, tokenValue] of Object.entries(value.tokenUsage)) {
+  for (const name of ["input", "output", "reasoningOutput", "total"] as const) {
+    if (!(name in value.tokenUsage)) {
+      throw new Error(`P6-3 v2 reliability telemetry is missing required token field ${name}`);
+    }
+    const tokenValue = value.tokenUsage[name];
     if (tokenValue !== null && (!Number.isInteger(tokenValue) || tokenValue < 0)) {
       throw new Error(`P6-3 v2 reliability telemetry ${name} must be a non-negative integer or null`);
     }
