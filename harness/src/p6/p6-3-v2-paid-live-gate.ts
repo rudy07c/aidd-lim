@@ -9,6 +9,10 @@ import {
   type P63V2FinalPreLiveGatePassToken,
   type P63V2FinalPreLiveReceipt,
 } from "./p6-3-v2-final-prelive-gate";
+import {
+  assertP63V2PaidLiveRuntimeAuthorizationToken,
+  type P63V2PaidLiveRuntimeAuthorizationToken,
+} from "./p6-3-v2-cli-preflight";
 
 export const P6_3_V2_PAID_LIVE_GATE_VERSION =
   "p6-3-v2-paid-live-gate-v1" as const;
@@ -71,6 +75,7 @@ export interface P63V2PaidLiveReceipt {
 export type P63V2PaidLiveGatePassToken = Readonly<{
   receipt: P63V2PaidLiveReceipt;
   baseToken: P63V2FinalPreLiveGatePassToken;
+  runtimeAuthorization: P63V2PaidLiveRuntimeAuthorizationToken;
   [PAID_LIVE_PASS_BRAND]: true;
 }>;
 
@@ -92,8 +97,10 @@ interface PaidLiveSpec {
 }
 
 export function runP63V2PaidLiveGate(
-  harnessRoot: string
+  harnessRoot: string,
+  runtimeAuthorization: P63V2PaidLiveRuntimeAuthorizationToken
 ): P63V2PaidLiveGatePassToken {
+  assertP63V2PaidLiveRuntimeAuthorizationToken(runtimeAuthorization);
   const repoRoot = path.resolve(harnessRoot, "..");
   assertTrackedWorktreeClean(repoRoot);
 
@@ -152,6 +159,7 @@ export function runP63V2PaidLiveGate(
   return Object.freeze({
     receipt,
     baseToken,
+    runtimeAuthorization,
     [PAID_LIVE_PASS_BRAND]: true as const,
   });
 }
@@ -162,6 +170,7 @@ export function assertP63V2PaidLiveGatePassToken(
   if (!token || token[PAID_LIVE_PASS_BRAND] !== true) {
     throw new Error("P6-3 v2 requires a valid paid/live wiring gate pass token");
   }
+  assertP63V2PaidLiveRuntimeAuthorizationToken(token.runtimeAuthorization);
   assertP63V2FinalPreLiveGatePassToken(token.baseToken);
   if (
     token.receipt.checkoutGitSha !== token.baseToken.receipt.checkoutGitSha ||
