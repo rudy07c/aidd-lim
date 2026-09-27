@@ -23,6 +23,7 @@ import type {
 } from "./p6-3-live-calibration-runner";
 import {
   P6_3_V2_MUTATION_PROVIDER_CONTRACT,
+  P6_3_V2_RSEM_PROVIDER_CONTRACT,
 } from "./p6-3-v2-execution-parameters";
 import type {
   P63V2CellInputResolver,
@@ -224,6 +225,9 @@ function buildELRunConfig(
   if (contextBudget === "full") {
     throw new Error("P6-3 v2 EL run config cannot use full context budget");
   }
+  const provider = measurement === "M"
+    ? P6_3_V2_MUTATION_PROVIDER_CONTRACT
+    : P6_3_V2_RSEM_PROVIDER_CONTRACT;
   return {
     experimentId: "p6-3-el-calibration-v2",
     lineageId: `p6-3-v2-${measurement.toLowerCase()}-${taskId ?? "bank-12"}`,
@@ -234,15 +238,15 @@ function buildELRunConfig(
     staticExposureMaxTokensPerUnit: maxTokensPerUnit,
     generations: 1,
     tasks: taskId ? [taskId] : ["Rsem-bank-12"],
-    model: P6_3_V2_MUTATION_PROVIDER_CONTRACT.model,
-    reasoningEffort: P6_3_V2_MUTATION_PROVIDER_CONTRACT.reasoningEffort,
-    maxOutputTokens: P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxOutputTokens,
-    requestTimeoutMs: P6_3_V2_MUTATION_PROVIDER_CONTRACT.requestTimeoutMs,
-    maxRetries: P6_3_V2_MUTATION_PROVIDER_CONTRACT.providerMaxRetries,
-    storeResponses: P6_3_V2_MUTATION_PROVIDER_CONTRACT.storeResponses,
-    maxToolRounds: P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxToolRounds,
-    serviceTier: P6_3_V2_MUTATION_PROVIDER_CONTRACT.serviceTier,
-    promptCacheMode: P6_3_V2_MUTATION_PROVIDER_CONTRACT.promptCacheMode,
+    model: provider.model,
+    reasoningEffort: provider.reasoningEffort,
+    maxOutputTokens: provider.maxOutputTokens,
+    requestTimeoutMs: provider.requestTimeoutMs,
+    maxRetries: provider.providerMaxRetries,
+    storeResponses: provider.storeResponses,
+    maxToolRounds: measurement === "M" ? P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxToolRounds : 0,
+    serviceTier: provider.serviceTier,
+    promptCacheMode: provider.promptCacheMode,
     stage: "P6-3-v2-calibration-only",
     syntheticWorldDir,
     runsDir: path.resolve(syntheticWorldDir, "../runs"),
