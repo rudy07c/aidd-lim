@@ -16,6 +16,10 @@ import {
 export const P6_3_V2_CLI_PREFLIGHT_VERSION =
   "p6-3-v2-cli-preflight-v3" as const;
 
+const PAID_LIVE_RUNTIME_AUTH_BRAND: unique symbol = Symbol(
+  "p6-3-v2-paid-live-runtime-authorization"
+);
+
 export const P6_3_V2_FROZEN_BUDGETS: P63FrozenBudgets = Object.freeze({
   B0: 0,
   B1: 505,
@@ -62,6 +66,13 @@ export interface P63V2CliInvocationAuthorization {
   readonly paidAuthorization: boolean;
   readonly environment?: NodeJS.ProcessEnv;
 }
+
+export type P63V2PaidLiveRuntimeAuthorizationToken = Readonly<{
+  readonly live: true;
+  readonly explicitPaidAuthorization: true;
+  readonly environmentAuthorization: true;
+  [PAID_LIVE_RUNTIME_AUTH_BRAND]: true;
+}>;
 
 export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
   const structuralPath = frozenPath("p6-3-el-structural-freeze.json");
@@ -195,6 +206,39 @@ export function assertP63V2CliInvocationAllowed(
   args: P63V2CliInvocationAuthorization
 ): void {
   if (!args.live) return;
+  validatePaidLiveSignals(args);
+}
+
+export function authorizeP63V2PaidLiveInvocation(
+  args: P63V2CliInvocationAuthorization
+): P63V2PaidLiveRuntimeAuthorizationToken {
+  if (!args.live) {
+    throw new Error("P6-3 v2 paid/live runtime authorization requires live=true");
+  }
+  validatePaidLiveSignals(args);
+  return Object.freeze({
+    live: true,
+    explicitPaidAuthorization: true,
+    environmentAuthorization: true,
+    [PAID_LIVE_RUNTIME_AUTH_BRAND]: true as const,
+  });
+}
+
+export function assertP63V2PaidLiveRuntimeAuthorizationToken(
+  token: P63V2PaidLiveRuntimeAuthorizationToken
+): asserts token is P63V2PaidLiveRuntimeAuthorizationToken {
+  if (
+    !token ||
+    token[PAID_LIVE_RUNTIME_AUTH_BRAND] !== true ||
+    token.live !== true ||
+    token.explicitPaidAuthorization !== true ||
+    token.environmentAuthorization !== true
+  ) {
+    throw new Error("P6-3 v2 requires a valid runtime paid/live authorization token");
+  }
+}
+
+function validatePaidLiveSignals(args: P63V2CliInvocationAuthorization): void {
   if (!args.paidAuthorization) {
     throw new Error(
       "P6-3 v2 live execution blocked: explicit --authorize-paid-live=P6-3-v2 is required; no provider calls were made."
