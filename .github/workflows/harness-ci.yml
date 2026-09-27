@@ -161,11 +161,15 @@ jobs:
           cache-dependency-path: |
             harness/package-lock.json
             calibration/package-lock.json
+            synthetic-world/package-lock.json
       - name: Install harness dependencies
         working-directory: harness
         run: npm ci
       - name: Install calibration dependencies
         working-directory: calibration
+        run: npm ci
+      - name: Install synthetic-world dependencies
+        working-directory: synthetic-world
         run: npm ci
       - name: Verify P6 semantic/protocol failure classification
         working-directory: harness
