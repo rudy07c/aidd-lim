@@ -11,6 +11,7 @@ on:
       - 'harness/verify-p6-3-v2-manual-adjudication-target.ts'
       - 'harness/verify-p6-3-v2-execution-parameters.ts'
       - 'harness/verify-p6-3-v2-secondary-reliability.ts'
+      - 'harness/verify-p6-3-v2-live-executors.ts'
       - 'harness/extract-p6-3-v1-auto-infra-fixture.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-live-executors.ts'
@@ -18,6 +19,7 @@ on:
       - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-v2-execution-parameters.ts'
       - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
+      - 'harness/src/p6/p6-3-v2-live-executors.ts'
       - 'harness/src/p6/p6-3-unified-prelive-gate.ts'
       - 'harness/src/p6/p6-3-execution-protocol.ts'
       - 'harness/src/p6/p6-3-mutation-protocol-parity.ts'
@@ -37,6 +39,7 @@ on:
       - 'harness/verify-p6-3-v2-manual-adjudication-target.ts'
       - 'harness/verify-p6-3-v2-execution-parameters.ts'
       - 'harness/verify-p6-3-v2-secondary-reliability.ts'
+      - 'harness/verify-p6-3-v2-live-executors.ts'
       - 'harness/extract-p6-3-v1-auto-infra-fixture.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-live-executors.ts'
@@ -44,6 +47,7 @@ on:
       - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-v2-execution-parameters.ts'
       - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
+      - 'harness/src/p6/p6-3-v2-live-executors.ts'
       - 'harness/src/p6/p6-3-unified-prelive-gate.ts'
       - 'harness/src/p6/p6-3-execution-protocol.ts'
       - 'harness/src/p6/p6-3-mutation-protocol-parity.ts'
@@ -97,6 +101,11 @@ jobs:
       - name: Verify P6-3 v2 secondary reliability persistence and summaries
         working-directory: harness
         run: npm run verify:p6-3-v2-secondary-reliability
+      - name: Verify P6-3 v2 live executor adapters offline
+        working-directory: harness
+        env:
+          P6_3_LIVE_EXECUTION_ALLOWED: '0'
+        run: npm run verify:p6-3-v2-live-executors
       - name: Exercise P6-3 calibration CLI dry path
         working-directory: harness
         env:
