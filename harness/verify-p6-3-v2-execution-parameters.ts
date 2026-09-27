@@ -4,7 +4,10 @@ import * as path from "path";
 import { P6_3_MAX_SCIENTIFIC_ATTEMPTS_PER_LOGICAL_CELL } from "./src/p6/p6-3-execution-protocol";
 import { P6_3_MUTATION_PROVIDER_CONTRACT } from "./src/p6/p6-3-mutation-protocol-parity";
 import { P6_3_RSEM_PROVIDER_CONTRACT } from "./src/p6/p6-3-rsem-protocol-parity";
-import { P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID } from "./src/p6/p6-3-v2-auto-infra";
+import {
+  classifyP63V2AutoInfrastructure,
+  P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID,
+} from "./src/p6/p6-3-v2-auto-infra";
 import {
   P6_3_V2_AUTOMATIC_INFRASTRUCTURE_RULE_IDS,
   P6_3_V2_EXECUTION_PARAMETERS_VERSION,
@@ -105,6 +108,17 @@ assert.deepEqual(manifest.executionPolicy, {
 // Only the actual-v1-regressed AUTO-INFRA rule is authorized unattended.
 assert.deepEqual([...P6_3_V2_AUTOMATIC_INFRASTRUCTURE_RULE_IDS], [P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID]);
 assert.deepEqual(manifest.automaticInfrastructureRuleIds, [P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID]);
+const v2CapClassification = classifyP63V2AutoInfrastructure({
+  executionStatus: "response-incomplete",
+  incompleteReason: "max_output_tokens",
+  outputTokens: P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxOutputTokens,
+  configuredMaxOutputTokens: P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxOutputTokens,
+  responseStatus: "incomplete",
+  providerErrorCode: null,
+  errorCategory: "response",
+});
+assert.equal(v2CapClassification.disposition, "infrastructure-invalid");
+assert.equal(v2CapClassification.ruleId, P6_3_V2_AUTO_INFRA_MAX_OUTPUT_RULE_ID);
 
 // Secondary reliability endpoints/summaries are frozen before v2 live data.
 assert.deepEqual(manifest.secondaryEndpointIds, [...P6_3_V2_SECONDARY_ENDPOINT_IDS]);
@@ -122,6 +136,7 @@ console.log(JSON.stringify({
   structuralBudgetsUnchanged: true,
   v1MutationMaxOutputTokens: P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens,
   v2MutationMaxOutputTokens: P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxOutputTokens,
+  v2CapAutoInfraRuleVerified: v2CapClassification.ruleId,
   rsemMaxOutputTokens: P6_3_V2_RSEM_PROVIDER_CONTRACT.maxOutputTokens,
   maxScientificAttemptsPerLogicalCell: P6_3_V2_MAX_SCIENTIFIC_ATTEMPTS_PER_LOGICAL_CELL,
   automaticInfrastructureRuleIds: P6_3_V2_AUTOMATIC_INFRASTRUCTURE_RULE_IDS,
