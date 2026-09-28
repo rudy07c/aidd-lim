@@ -78,19 +78,21 @@ reason = NO_CONJUNCTIVE_INTERIOR_BUDGET
 
 M がどちらも `0 / 132` で、B0 から改善していない。
 
-したがって有限コンテキスト条件としては情報量が少なすぎる。
+したがって、事前に定めた M の選定guard上は内部budget候補にならない。
 
 ### B3
 
 Rsem は `113 / 144 = 0.7847` で、B0 と AF の間に十分なmarginを持つ。Rsem 単独なら明確なinterior pointである。
 
-しかし M は `125 / 132 = 0.9470` で、AF の `124 / 132 = 0.9394` と同等以上の点推定になった。
+M の点推定は `125 / 132 = 0.9470`、AF は `124 / 132 = 0.9394` で、差はわずか1 outcomeである。したがって、この1件差を根拠に「B3の方がAFより性能が高い」と解釈してはいけない。
 
-そのため、Mについては「AFから十分離れた有限コンテキスト条件」という選定基準を満たさない。
+P6-3 のselection ruleが要求しているのは「B3がAFより優れているか」ではなく、**AFから `Delta_M` 以上離れた明確な内部点であるか**である。B3はその条件を満たさなかった。
+
+したがって、今回の結果から安全に言えるのは、**B3のMはAF近傍であり、今回のcalibrationではAFから十分離れた有限コンテキスト条件として扱えなかった**ということまでである。B3とAFの形式的な統計的同等性や優劣を、このP6-3 analysis自体は主張していない。
 
 ### B4
 
-MもRsemもAF近傍、あるいはAFを点推定で上回っており、interior conditionではない。
+MもRsemもAF近傍、あるいは点推定でAFを上回っており、事前のinterior conditionを満たさない。
 
 ## 5. この結果は何を意味するか
 
@@ -102,27 +104,50 @@ P6-3 は Stage 1A のconfirmatory experimentではなく、**本実験で使うE
 
 > 現在のbudget gridでは、MとRsemの両方にとって非退化な中間条件を作れなかった。
 
-特に M のdose-responseは特徴的だった。
+aggregate M のdose-responseだけを見ると、次のようになる。
 
 ```text
 B0    B1    B2      B3      B4      AF
 0  -> 0  -> 0  ->  0.947 -> 0.932 -> 0.939
 ```
 
-1011 tokens までは完全にfloorで、2023 tokensでは既にほぼAF相当だった。
+1011 tokens まではaggregate Mがfloorで、2023 tokensではAF近傍まで上昇した。
 
 したがって、少なくとも今回のgridでは、artifact変更能力 M は「context量が増えるほど少しずつ改善する」という滑らかなdose-responseを示さず、**B2とB3の間で急峻に立ち上がるように見える**。
 
-ただし、これは現時点では記述的観察にとどまる。
+ただし、B2=1011 と B3=2023 の間を直接測定していないため、このaggregate結果だけなら、本当に閾値的な変化なのか、未観測区間で滑らかに上昇しているのかはまだ区別できない。
 
-B2=1011 と B3=2023 の間を測定していないため、本当に閾値的な変化なのか、未観測区間で滑らかに上昇しているのかは区別できない。
+## 6. aggregate M の内訳を見ると、単純な「コード品質の漸進改善」では説明しにくい
 
-## 6. M と Rsem が同じように動いていない
+aggregate M は visible / hidden / task-specific / protocol のすべてを含む最終合否である。その内訳を診断的に分解すると、次のパターンが観察された。
+
+| Arm | visible合格 | hidden合格 | task-specific合格 |
+|---|---:|---:|---:|
+| B0 | 78 / 132 | 2 / 132 | 0 / 132 |
+| B1 | **131 / 132** | 1 / 131 | 0 / 131 |
+| B2 | 77 / 125 | 2 / 125 | 0 / 125 |
+| B3 | 125 / 131 | **127 / 131** | 130 / 131 |
+
+この分解から重要なのは、**B1の時点ですでにvisible testはほぼ飽和しているのに、hidden / task-specific correctnessはほぼゼロのまま**だったことである。
+
+したがって、少なくとも観察された範囲では、
+
+> contextが増えるにつれてコード全体の品質が少しずつ改善し、その延長上でhidden testも徐々に通るようになった
+
+という単純なstoryとは整合しにくい。
+
+むしろ、表面的に妥当なコードを書く能力は比較的小さいbudgetでも成立する一方、**隠れたinvariantや本題の仕様を満たすために必要な情報は別の境界で初めて利用可能になる**、という構造の方が今回の観察には整合的である。
+
+特にB2→B3では、aggregate Mだけでなくhidden / task-specific側がほぼ0から高率へ切り替わっている。このため、「gridが粗いため滑らかな曲線が階段状に見えているだけ」という仮説は依然として可能ではあるものの、**token量だけの連続的なdose-responseではなく、selectorがあるrank境界で特定の情報unitを含むかどうかが主要因である可能性**も優先して検討する必要がある。
+
+ただし、ここから「特定の1 unitが原因だった」と確定することはまだできない。B2とB3では複数unitが同時に追加されている可能性があり、context量・unit構成・rank境界が共変しているためである。
+
+## 7. M と Rsem が同じように動いていない
 
 今回、B3は
 
 - Rsemでは適切なinterior point
-- Mでは既にAF相当
+- MではAF近傍
 
 だった。
 
@@ -132,7 +157,7 @@ B2=1011 と B3=2023 の間を測定していないため、本当に閾値的な
 
 どちらか一方だけで `B_expose` を決めていた場合、今回とは異なる結論になっていた。
 
-## 7. 研究全体との関係
+## 8. 研究全体との関係
 
 今回の結果から、以下を主張してはいけない。
 
@@ -140,30 +165,45 @@ B2=1011 と B3=2023 の間を測定していないため、本当に閾値的な
 - full context が finite context より優れている
 - context bottleneck が artifact evolution を改善する
 - ILM的な世代伝達効果が確認された
+- B3がAFより優れている、または統計的に同等である
+- B2→B3の変化が特定の1つの情報unitによって因果的に生じた
 
-これらはまだ Stage 1A 以降で検証する対象である。
+これらは今回のcalibration resultの射程外である。
 
-P6-3 v2 が示したのは、その前段階として、**ELという有限コンテキスト条件自体を妥当に構成するためには、現在のgridを再設計する必要がある**ということ。
+P6-3 v2 が示したのは、その前段階として、**ELという有限コンテキスト条件自体を妥当に構成するためには、現在のgridとselector exposureの境界を再監査する必要がある**ということ。
 
-## 8. 次に考えるべきこと
+## 9. 次のdesign auditで最初に見るべきもの
 
-P6-3 は `B_expose` を選べなかったため、現時点では `needs-design-audit` とする。
+次の作業は、いきなりB2=1011〜B3=2023の間を細かいtoken幅で再実験することではない。
 
-次の自然な検討対象は、B2=1011 と B3=2023 の間である。
+まず、凍結済みselectorのrankingとsynthetic repository fixtureを突き合わせ、**B2とB3で実際に何の情報が追加されたのか**を診断する方が情報量が多い。
 
-ただし、今回の結果を見た後で都合のよいbudgetを選ぶのではなく、次のcalibrationでは先に
+優先順序は次の通り。
 
-1. 新しいcandidate grid
-2. 反復数
-3. M/Rsemの選定ルール
-4. stop / audit条件
-5. 次回結果と今回結果の扱い
+1. frozen selector のunit rankingを再構成する
+2. B1 / B2 / B3それぞれのexact exposure setを列挙する
+3. 特に `B3 \ B2` の追加unitを、rank・file・token span・内容カテゴリで可視化する
+4. hidden / task-specific correctnessの立ち上がりと、追加unitに含まれるrepository上のinvariant手掛かりとの対応を**diagnostic-only**に調べる
+5. その結果を踏まえて、新しいcandidate gridまたはrank境界の設計原則を事前に固定する
+6. 反復数、M/Rsem選定rule、stop/audit条件、旧データとの扱いを再度predeclareしてから次のcalibrationを行う
 
-を固定してから再実行する必要がある。
+ここでは重要な境界がある。
 
-## 9. 短い要約
+**「どのunitがB2→B3で追加され、hidden correctnessの急変と対応しているか」を診断すること**は有益である。一方、今回のhidden outcomeを見た後で、既知のhidden invariantを含む特定unitが入るbudgetをそのまま `B_expose` に選ぶことはpost-hoc tuningになる。
 
-> P6-3 v2 は、EL条件で使う適切な有限コンテキスト量 `B_expose` を決めるためのcalibrationだった。864-cell live run自体は正常完了したが、B1/B2ではMが完全にfloor、B3ではMが既にAF相当まで上昇していたため、MとRsemの両方で非退化な中間点となるbudgetを選べなかった。したがって `B_expose` は未選定で、P6-3は `needs-design-audit` となる。今回の結果は finite context 仮説の否定ではなく、現在のbudget gridではartifact変更能力の立ち上がりを十分に解像できておらず、特にB2〜B3間を再校正する必要があることを示す。
+したがって、content-level auditは次回設計の理解に使うが、次回の選定基準自体は再実験前に固定する必要がある。
+
+## 10. 現時点での最も妥当な読み方
+
+今回の結果を最も単純化すると、次のように読める。
+
+> 小さいEL budgetでも、表面的にもっともらしいコードを書くこと自体は可能だった。しかし、本来守るべき隠れた仕様・invariantを満たす能力は同じようには改善せず、B2からB3の間で急激に立ち上がった。したがって、有限コンテキストの効果を単なるtoken総量だけで捉えるのではなく、selectorによって「どの情報unitがいつ利用可能になるか」というcontext構成の問題としても調べる必要がある。
+
+これは、有限コンテキスト研究において「量」だけでなく**伝達される情報の構造**を見る必要があることを示唆する。ただし、この解釈は次のdesign auditで検証すべき仮説であり、今回だけで因果的に確定した結論ではない。
+
+## 11. 短い要約
+
+> P6-3 v2 は、EL条件で使う適切な有限コンテキスト量 `B_expose` を決めるためのcalibrationだった。864-cell live run自体は正常完了したが、B1/B2ではaggregate Mがfloor、B3ではMがAF近傍まで上昇していたため、MとRsemの両方で非退化な中間点となるbudgetを選べなかった。したがって `B_expose` は未選定で、P6-3は `needs-design-audit` となる。さらにsuite-levelに分解すると、B1ではvisible correctnessがほぼ飽和しているのにhidden/task-specific correctnessはほぼゼロで、B3で初めて急激に立ち上がっていた。このため次のauditではtoken量を細かく刻む前に、B2→B3でselectorが追加する情報unitを特定し、context量ではなくcontext構成の境界が急変を生んでいる可能性を調べるべきである。
 
 ## Provenance
 
