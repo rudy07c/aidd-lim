@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "p6-3-v2-paid-live-wiring-spec-v1",
+  "status": "paid-live-wiring-frozen",
+  "scope": "Guarded P6-3 v2 paid/live wiring layered on top of the final offline pre-live gate; this spec does not authorize provider execution",
+  "calibrationOnly": true,
+  "confirmatoryStage1AEligible": false,
+  "totalLogicalCells": 864,
+  "paidLiveAuthorizationRequired": true,
+  "liveExecutionWired": true,
+  "liveExecutionAuthorized": false,
+  "authorizationFlag": "--authorize-paid-live=P6-3-v2",
+  "authorizationEnvironment": "P6_3_LIVE_EXECUTION_ALLOWED=1",
+  "baseFinalPreLiveSpec": "harness/frozen/p6-3-v2-final-prelive-spec.json",
+  "sourceFiles": [
+    "harness/p6-3-v2-calibration.ts",
+    "harness/src/p6/p6-3-v2-cli-preflight.ts",
+    "harness/src/p6/p6-3-v2-final-prelive-gate.ts",
+    "harness/src/p6/p6-3-v2-paid-live-gate.ts",
+    "harness/src/p6/p6-3-v2-live-entrypoint.ts",
+    "harness/src/p6/p6-3-v2-end-to-end.ts",
+    "harness/src/p6/p6-3-v2-frozen-input-resolver.ts",
+    "harness/src/p6/p6-3-v2-live-executors.ts",
+    "harness/src/p6/p6-3-v2-live-calibration-runner.ts",
+    "harness/src/p6/p6-3-v2-secondary-reliability.ts",
+    "harness/src/p6/p6-3-v2-execution-parameters.ts"
+  ],
+  "verifierScripts": [
+    "verify-p6-3-v2-live-wiring.ts"
+  ],
+  "operationalEvidenceFiles": [
+    "docs/p6_3_v2_paid_live_wiring.md"
+  ]
+}

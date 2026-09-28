@@ -5,8 +5,12 @@ on:
     paths:
       - 'harness/src/p6/p6-3-v2-end-to-end.ts'
       - 'harness/src/p6/p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/src/p6/p6-3-v2-live-entrypoint.ts'
+      - 'harness/src/p6/p6-3-v2-paid-live-gate.ts'
+      - 'harness/frozen/p6-3-v2-paid-live-wiring-spec.json'
       - 'harness/verify-p6-3-v2-end-to-end.ts'
       - 'harness/verify-p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/verify-p6-3-v2-live-wiring.ts'
       - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
       - 'harness/src/p6/p6-3-v2-live-executors.ts'
@@ -14,14 +18,19 @@ on:
       - 'harness/src/p6/p6-3-v2-auto-infra.ts'
       - 'harness/p6-3-v2-calibration.ts'
       - 'harness/src/p6/p6-3-v2-cli-preflight.ts'
+      - 'docs/p6_3_v2_paid_live_wiring.md'
       - 'harness/package.json'
       - '.github/workflows/p6-3-v2-end-to-end-ci.yml'
   pull_request:
     paths:
       - 'harness/src/p6/p6-3-v2-end-to-end.ts'
       - 'harness/src/p6/p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/src/p6/p6-3-v2-live-entrypoint.ts'
+      - 'harness/src/p6/p6-3-v2-paid-live-gate.ts'
+      - 'harness/frozen/p6-3-v2-paid-live-wiring-spec.json'
       - 'harness/verify-p6-3-v2-end-to-end.ts'
       - 'harness/verify-p6-3-v2-frozen-input-resolver.ts'
+      - 'harness/verify-p6-3-v2-live-wiring.ts'
       - 'harness/src/p6/p6-3-v2-live-calibration-runner.ts'
       - 'harness/src/p6/p6-3-v2-secondary-reliability.ts'
       - 'harness/src/p6/p6-3-v2-live-executors.ts'
@@ -29,6 +38,7 @@ on:
       - 'harness/src/p6/p6-3-v2-auto-infra.ts'
       - 'harness/p6-3-v2-calibration.ts'
       - 'harness/src/p6/p6-3-v2-cli-preflight.ts'
+      - 'docs/p6_3_v2_paid_live_wiring.md'
       - 'harness/package.json'
       - '.github/workflows/p6-3-v2-end-to-end-ci.yml'
 
@@ -76,9 +86,15 @@ jobs:
           OPENAI_API_KEY: offline-ci-must-never-use-this
           P6_3_LIVE_EXECUTION_ALLOWED: '1'
         run: npm run verify:p6-3-v2-end-to-end
-      - name: Re-prove CLI live path remains blocked
+      - name: Verify CLI unauthorized live path remains blocked
         working-directory: harness
         env:
           OPENAI_API_KEY: offline-ci-must-never-use-this
           P6_3_LIVE_EXECUTION_ALLOWED: '1'
         run: npm run verify:p6-3-v2-cli-dry-gate
+      - name: Verify guarded paid/live wiring without provider calls
+        working-directory: harness
+        env:
+          OPENAI_API_KEY: offline-ci-must-never-use-this
+          P6_3_LIVE_EXECUTION_ALLOWED: '1'
+        run: npx ts-node verify-p6-3-v2-live-wiring.ts

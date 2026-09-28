@@ -24,32 +24,48 @@ function main(): void {
   assert.equal(report.executionManifestLiveExecutionAuthorized, false);
   assert.equal(report.finalPreLiveGateFrozen, true);
   assert.equal(report.paidLiveAuthorizationRequired, true);
+  assert.equal(report.liveExecutionWired, true);
   assert.equal(report.liveExecutionAllowed, false);
   assert.match(report.structuralFreezeSha256, /^[0-9a-f]{64}$/);
   assert.match(report.executionParametersManifestSha256, /^[0-9a-f]{64}$/);
   assert.match(report.v1AutoInfraFixtureSha256, /^[0-9a-f]{64}$/);
   assert.match(report.finalPreLiveSpecSha256, /^[0-9a-f]{64}$/);
 
-  assert.doesNotThrow(() => assertP63V2CliInvocationAllowed(false));
+  assert.doesNotThrow(() => assertP63V2CliInvocationAllowed({
+    live: false,
+    paidAuthorization: false,
+    environment: {},
+  }));
   assert.throws(
-    () => assertP63V2CliInvocationAllowed(true),
-    /final pre-live gate is frozen, but explicit paid\/live authorization is not wired/
+    () => assertP63V2CliInvocationAllowed({
+      live: true,
+      paidAuthorization: false,
+      environment: { P6_3_LIVE_EXECUTION_ALLOWED: "1" },
+    }),
+    /explicit --authorize-paid-live=P6-3-v2 is required/
+  );
+  assert.throws(
+    () => assertP63V2CliInvocationAllowed({
+      live: true,
+      paidAuthorization: true,
+      environment: { P6_3_LIVE_EXECUTION_ALLOWED: "0" },
+    }),
+    /P6_3_LIVE_EXECUTION_ALLOWED=1 is required/
   );
 
   const cliPath = path.resolve(__dirname, "p6-3-v2-calibration.ts");
   const cliSource = fs.readFileSync(cliPath, "utf8");
   for (const forbidden of [
-    "p6-3-v2-live-executors",
+    'from "./src/p6/p6-3-v2-live-executors"',
     "OpenAIBackend",
-    "OPENAI_API_KEY",
-    "executeP63V2Calibration",
   ]) {
     assert.equal(
       cliSource.includes(forbidden),
       false,
-      `dry-only CLI must not import/use provider execution surface: ${forbidden}`
+      `CLI must not statically import provider execution surface: ${forbidden}`
     );
   }
+  assert.ok(cliSource.includes('await import(\n    "./src/p6/p6-3-v2-live-entrypoint"'));
 
   const tsNodeRegister = require.resolve("ts-node/register");
   const env = {
@@ -64,8 +80,8 @@ function main(): void {
   });
   assert.equal(dry.status, 0, `dry CLI failed: ${dry.stderr}`);
   assert.match(dry.stdout, /P6-3 V2 PRELIVE/);
-  assert.match(dry.stdout, /Final pre-live gate is frozen/);
-  assert.match(dry.stdout, /paid\/live execution remains blocked/);
+  assert.match(dry.stdout, /Live wiring is present/);
+  assert.match(dry.stdout, /paid\/provider execution was not requested/);
 
   const live = spawnSync(
     process.execPath,
@@ -76,10 +92,10 @@ function main(): void {
       encoding: "utf8",
     }
   );
-  assert.notEqual(live.status, 0, "--live must remain fail-closed without explicit paid/live wiring");
+  assert.notEqual(live.status, 0, "--live must fail closed without explicit paid/live authorization flag");
   assert.match(
     `${live.stdout}\n${live.stderr}`,
-    /final pre-live gate is frozen, but explicit paid\/live authorization is not wired; no provider calls were made/
+    /explicit --authorize-paid-live=P6-3-v2 is required; no provider calls were made/
   );
 
   console.log(JSON.stringify({
@@ -89,8 +105,9 @@ function main(): void {
     rsemMaxOutputTokens: report.rsemProvider.maxOutputTokens,
     finalPreLiveGateFrozen: report.finalPreLiveGateFrozen,
     paidLiveAuthorizationRequired: report.paidLiveAuthorizationRequired,
-    liveExecutionAllowed: report.liveExecutionAllowed,
-    liveInvocationFailsClosed: true,
+    liveExecutionWired: report.liveExecutionWired,
+    liveExecutionAllowedWithoutRuntimeAuthorization: report.liveExecutionAllowed,
+    unauthorizedLiveInvocationFailsClosed: true,
   }));
 }
 

@@ -1,0 +1,126 @@
+import * as assert from "assert";
+import * as fs from "fs";
+import * as path from "path";
+import { spawnSync } from "child_process";
+import {
+  assertP63V2CliInvocationAllowed,
+  assertP63V2PaidLiveRuntimeAuthorizationToken,
+  authorizeP63V2PaidLiveInvocation,
+} from "./src/p6/p6-3-v2-cli-preflight";
+
+function main(): void {
+  const cliPath = path.resolve(__dirname, "p6-3-v2-calibration.ts");
+  const entrypointPath = path.resolve(__dirname, "src/p6/p6-3-v2-live-entrypoint.ts");
+  const paidGatePath = path.resolve(__dirname, "src/p6/p6-3-v2-paid-live-gate.ts");
+  const cliSource = fs.readFileSync(cliPath, "utf8");
+  const entrypointSource = fs.readFileSync(entrypointPath, "utf8");
+  const paidGateSource = fs.readFileSync(paidGatePath, "utf8");
+
+  assert.equal(/^import .*p6-3-v2-live-entrypoint/m.test(cliSource), false);
+  assert.equal(cliSource.includes('from "./src/p6/p6-3-v2-live-executors"'), false);
+  assert.equal(cliSource.includes("OpenAIBackend"), false);
+  assert.equal(paidGateSource.includes('from "./p6-3-v2-live-executors"'), false);
+  assert.equal(paidGateSource.includes("OpenAIBackend"), false);
+
+  const guardIndex = cliSource.indexOf("authorizeP63V2PaidLiveInvocation({");
+  const paidGateIndex = cliSource.indexOf("runP63V2PaidLiveGate(__dirname, runtimeAuthorization)");
+  const dynamicImportIndex = cliSource.indexOf('await import(\n    "./src/p6/p6-3-v2-live-entrypoint"');
+  assert.ok(guardIndex >= 0, "CLI must create branded runtime paid/live authorization");
+  assert.ok(paidGateIndex > guardIndex, "layered exact-checkout paid/live gate must run after authorization");
+  assert.ok(dynamicImportIndex > paidGateIndex, "provider-capable entrypoint must load only after paid/live gate");
+
+  for (const required of [
+    "assertP63V2PaidLiveGatePassToken",
+    "loadP63V2FrozenRuntimeInputs",
+    "createP63V2ProviderExecutor",
+    "runP63V2EndToEnd",
+    "recoverInterruptedP63V2State",
+    "persistOrVerifySafetyReceipt",
+    "p6-3-v2-final-prelive-receipt.json",
+    "p6-3-v2-paid-live-wiring-receipt.json",
+  ]) {
+    assert.ok(entrypointSource.includes(required), `live entrypoint missing required wiring: ${required}`);
+  }
+  const receiptPersistIndex = entrypointSource.indexOf("persistOrVerifySafetyReceipt(");
+  const providerExecutorIndex = entrypointSource.indexOf("createP63V2ProviderExecutor({");
+  assert.ok(receiptPersistIndex >= 0 && receiptPersistIndex < providerExecutorIndex,
+    "safety receipts must be persisted/verified before provider executor construction");
+
+  for (const required of [
+    "runP63V2FinalPreLiveGate",
+    "assertP63V2PaidLiveRuntimeAuthorizationToken",
+    "runtimeAuthorization",
+    "liveAuthorized: false",
+    "providerCallsMade: false",
+  ]) {
+    assert.ok(paidGateSource.includes(required), `paid/live gate missing safety binding: ${required}`);
+  }
+
+  assert.throws(
+    () => assertP63V2CliInvocationAllowed({ live: true, paidAuthorization: false, environment: { P6_3_LIVE_EXECUTION_ALLOWED: "1" } }),
+    /explicit --authorize-paid-live=P6-3-v2 is required/
+  );
+  assert.throws(
+    () => assertP63V2CliInvocationAllowed({ live: true, paidAuthorization: true, environment: { P6_3_LIVE_EXECUTION_ALLOWED: "0" } }),
+    /P6_3_LIVE_EXECUTION_ALLOWED=1 is required/
+  );
+  const runtimeAuthorization = authorizeP63V2PaidLiveInvocation({
+    live: true,
+    paidAuthorization: true,
+    environment: { P6_3_LIVE_EXECUTION_ALLOWED: "1" },
+  });
+  assert.doesNotThrow(() => assertP63V2PaidLiveRuntimeAuthorizationToken(runtimeAuthorization));
+  assert.throws(
+    () => assertP63V2PaidLiveRuntimeAuthorizationToken({
+      live: true,
+      explicitPaidAuthorization: true,
+      environmentAuthorization: true,
+    } as any),
+    /valid runtime paid\/live authorization token/
+  );
+
+  const tsNodeRegister = require.resolve("ts-node/register");
+  const baseEnv = {
+    ...process.env,
+    OPENAI_API_KEY: "offline-live-wiring-verifier-must-never-use-this",
+  };
+
+  const missingFlag = spawnSync(
+    process.execPath,
+    ["-r", tsNodeRegister, cliPath, "--live"],
+    {
+      cwd: __dirname,
+      env: { ...baseEnv, P6_3_LIVE_EXECUTION_ALLOWED: "1" },
+      encoding: "utf8",
+    }
+  );
+  assert.notEqual(missingFlag.status, 0);
+  assert.match(`${missingFlag.stdout}\n${missingFlag.stderr}`, /explicit --authorize-paid-live=P6-3-v2 is required/);
+
+  const missingEnv = spawnSync(
+    process.execPath,
+    ["-r", tsNodeRegister, cliPath, "--live", "--authorize-paid-live=P6-3-v2"],
+    {
+      cwd: __dirname,
+      env: { ...baseEnv, P6_3_LIVE_EXECUTION_ALLOWED: "0" },
+      encoding: "utf8",
+    }
+  );
+  assert.notEqual(missingEnv.status, 0);
+  assert.match(`${missingEnv.stdout}\n${missingEnv.stderr}`, /P6_3_LIVE_EXECUTION_ALLOWED=1 is required/);
+
+  console.log(JSON.stringify({
+    ok: true,
+    providerImportIsDynamic: true,
+    brandedRuntimeAuthorizationRequired: true,
+    authorizationPrecedesPaidLiveGate: true,
+    paidLiveGatePrecedesProviderImport: true,
+    baseFinalGateIsLayeredUnderPaidLiveGate: true,
+    runSafetyReceiptsBoundBeforeProviderExecutor: true,
+    missingFlagFailsClosed: true,
+    missingEnvironmentAuthorizationFailsClosed: true,
+    providerCallsMade: false,
+  }));
+}
+
+main();

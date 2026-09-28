@@ -14,7 +14,11 @@ import {
 } from "./p6-3-v2-execution-parameters";
 
 export const P6_3_V2_CLI_PREFLIGHT_VERSION =
-  "p6-3-v2-cli-preflight-v2" as const;
+  "p6-3-v2-cli-preflight-v3" as const;
+
+const PAID_LIVE_RUNTIME_AUTH_BRAND: unique symbol = Symbol(
+  "p6-3-v2-paid-live-runtime-authorization"
+);
 
 export const P6_3_V2_FROZEN_BUDGETS: P63FrozenBudgets = Object.freeze({
   B0: 0,
@@ -49,25 +53,43 @@ export interface P63V2CliPreflightReport {
   readonly executionParametersManifestSha256: string;
   readonly v1AutoInfraFixtureSha256: string;
   readonly finalPreLiveSpecSha256: string;
+  readonly paidLiveWiringSpecSha256: string;
   readonly executionManifestLiveExecutionAuthorized: false;
   readonly finalPreLiveGateFrozen: true;
   readonly paidLiveAuthorizationRequired: true;
+  readonly liveExecutionWired: true;
   readonly liveExecutionAllowed: false;
 }
+
+export interface P63V2CliInvocationAuthorization {
+  readonly live: boolean;
+  readonly paidAuthorization: boolean;
+  readonly environment?: NodeJS.ProcessEnv;
+}
+
+export type P63V2PaidLiveRuntimeAuthorizationToken = Readonly<{
+  readonly live: true;
+  readonly explicitPaidAuthorization: true;
+  readonly environmentAuthorization: true;
+  [PAID_LIVE_RUNTIME_AUTH_BRAND]: true;
+}>;
 
 export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
   const structuralPath = frozenPath("p6-3-el-structural-freeze.json");
   const executionPath = frozenPath("p6-3-v2-execution-parameters.json");
   const regressionPath = frozenPath("p6-3-v1-auto-infra-regression.json");
   const finalSpecPath = frozenPath("p6-3-v2-final-prelive-spec.json");
+  const paidLiveSpecPath = frozenPath("p6-3-v2-paid-live-wiring-spec.json");
 
   const structuralRaw = fs.readFileSync(structuralPath, "utf8");
   const executionRaw = fs.readFileSync(executionPath, "utf8");
   const regressionRaw = fs.readFileSync(regressionPath, "utf8");
   const finalSpecRaw = fs.readFileSync(finalSpecPath, "utf8");
+  const paidLiveSpecRaw = fs.readFileSync(paidLiveSpecPath, "utf8");
   const structural = JSON.parse(structuralRaw) as any;
   const execution = JSON.parse(executionRaw) as any;
   const finalSpec = JSON.parse(finalSpecRaw) as any;
+  const paidLiveSpec = JSON.parse(paidLiveSpecRaw) as any;
 
   assertEqual(structural.freezeCandidate?.T_EL, 4046, "structural T_EL");
   assertEqual(
@@ -110,17 +132,32 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
   assertEqual(
     finalSpec.schemaVersion,
     "p6-3-v2-final-prelive-spec-v1",
-    "final pre-live spec schema"
+    "base final pre-live spec schema"
   );
-  assertEqual(finalSpec.status, "final-prelive-spec-frozen", "final pre-live spec status");
-  assertEqual(finalSpec.totalLogicalCells, 864, "final pre-live spec plan size");
-  assertEqual(finalSpec.mutationMaxOutputTokens, 14000, "final pre-live mutation cap");
-  assertEqual(finalSpec.rsemMaxOutputTokens, 8000, "final pre-live Rsem cap");
-  assertEqual(finalSpec.liveExecutionAuthorized, false, "final pre-live spec live authorization");
+  assertEqual(finalSpec.status, "final-prelive-spec-frozen", "base final pre-live spec status");
+  assertEqual(finalSpec.totalLogicalCells, 864, "base final pre-live spec plan size");
+  assertEqual(finalSpec.mutationMaxOutputTokens, 14000, "base final pre-live mutation cap");
+  assertEqual(finalSpec.rsemMaxOutputTokens, 8000, "base final pre-live Rsem cap");
+  assertEqual(finalSpec.liveExecutionAuthorized, false, "base final pre-live live authorization");
   assertEqual(
     finalSpec.paidLiveAuthorizationRequired,
     true,
-    "final pre-live paid authorization boundary"
+    "base final pre-live paid authorization boundary"
+  );
+
+  assertEqual(
+    paidLiveSpec.schemaVersion,
+    "p6-3-v2-paid-live-wiring-spec-v1",
+    "paid/live wiring spec schema"
+  );
+  assertEqual(paidLiveSpec.status, "paid-live-wiring-frozen", "paid/live wiring spec status");
+  assertEqual(paidLiveSpec.totalLogicalCells, 864, "paid/live wiring plan size");
+  assertEqual(paidLiveSpec.liveExecutionWired, true, "paid/live wiring state");
+  assertEqual(paidLiveSpec.liveExecutionAuthorized, false, "paid/live wiring authorization state");
+  assertEqual(
+    paidLiveSpec.paidLiveAuthorizationRequired,
+    true,
+    "paid/live wiring authorization boundary"
   );
 
   const plan = buildP63CalibrationPlan(P6_3_V2_FROZEN_BUDGETS);
@@ -151,23 +188,68 @@ export function buildP63V2CliPreflight(): P63V2CliPreflightReport {
     executionParametersManifestSha256: sha256(executionRaw),
     v1AutoInfraFixtureSha256: sha256(regressionRaw),
     finalPreLiveSpecSha256: sha256(finalSpecRaw),
+    paidLiveWiringSpecSha256: sha256(paidLiveSpecRaw),
     executionManifestLiveExecutionAuthorized: false,
     finalPreLiveGateFrozen: true,
     paidLiveAuthorizationRequired: true,
+    liveExecutionWired: true,
     liveExecutionAllowed: false,
   });
 }
 
 /**
- * The final v2 pre-live evidence gate is now frozen, but paid/provider execution
- * remains intentionally unwired. This function still runs before any future
- * provider/executor import is allowed.
+ * Provider-free runtime authorization guard. A live invocation requires two
+ * independent operator signals; neither committed spec nor gate receipt can
+ * self-authorize paid/provider execution.
  */
-export function assertP63V2CliInvocationAllowed(live: boolean): void {
-  if (!live) return;
-  throw new Error(
-    "P6-3 v2 live execution blocked: final pre-live gate is frozen, but explicit paid/live authorization is not wired; no provider calls were made."
-  );
+export function assertP63V2CliInvocationAllowed(
+  args: P63V2CliInvocationAuthorization
+): void {
+  if (!args.live) return;
+  validatePaidLiveSignals(args);
+}
+
+export function authorizeP63V2PaidLiveInvocation(
+  args: P63V2CliInvocationAuthorization
+): P63V2PaidLiveRuntimeAuthorizationToken {
+  if (!args.live) {
+    throw new Error("P6-3 v2 paid/live runtime authorization requires live=true");
+  }
+  validatePaidLiveSignals(args);
+  return Object.freeze({
+    live: true,
+    explicitPaidAuthorization: true,
+    environmentAuthorization: true,
+    [PAID_LIVE_RUNTIME_AUTH_BRAND]: true as const,
+  });
+}
+
+export function assertP63V2PaidLiveRuntimeAuthorizationToken(
+  token: P63V2PaidLiveRuntimeAuthorizationToken
+): asserts token is P63V2PaidLiveRuntimeAuthorizationToken {
+  if (
+    !token ||
+    token[PAID_LIVE_RUNTIME_AUTH_BRAND] !== true ||
+    token.live !== true ||
+    token.explicitPaidAuthorization !== true ||
+    token.environmentAuthorization !== true
+  ) {
+    throw new Error("P6-3 v2 requires a valid runtime paid/live authorization token");
+  }
+}
+
+function validatePaidLiveSignals(args: P63V2CliInvocationAuthorization): void {
+  if (!args.paidAuthorization) {
+    throw new Error(
+      "P6-3 v2 live execution blocked: explicit --authorize-paid-live=P6-3-v2 is required; no provider calls were made."
+    );
+  }
+  const environment = args.environment ?? process.env;
+  if (environment.P6_3_LIVE_EXECUTION_ALLOWED !== "1") {
+    throw new Error(
+      "P6-3 v2 live execution blocked: P6_3_LIVE_EXECUTION_ALLOWED=1 is required in addition to the paid-live flag; no provider calls were made."
+    );
+  }
 }
 
 function frozenPath(name: string): string {
