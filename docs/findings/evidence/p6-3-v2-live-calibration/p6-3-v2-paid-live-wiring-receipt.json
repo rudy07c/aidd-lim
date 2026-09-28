@@ -1,0 +1,306 @@
+{
+  "schemaVersion": "p6-3-v2-paid-live-wiring-receipt-v1",
+  "gateVersion": "p6-3-v2-paid-live-gate-v1",
+  "checkoutGitSha": "62110faebc0fa748effa90cb0f44f7c05f479c10",
+  "calibrationOnly": true,
+  "confirmatoryStage1AEligible": false,
+  "totalLogicalCells": 864,
+  "paidLiveAuthorizationRequired": true,
+  "liveExecutionWired": true,
+  "liveAuthorized": false,
+  "providerCallsMade": false,
+  "baseFinalPreLiveReceipt": {
+    "schemaVersion": "p6-3-v2-final-prelive-receipt-v1",
+    "gateVersion": "p6-3-v2-final-prelive-gate-v1",
+    "checkoutGitSha": "62110faebc0fa748effa90cb0f44f7c05f479c10",
+    "calibrationOnly": true,
+    "confirmatoryStage1AEligible": false,
+    "totalLogicalCells": 864,
+    "mutationMaxOutputTokens": 14000,
+    "rsemMaxOutputTokens": 8000,
+    "maxScientificAttemptsPerLogicalCell": 3,
+    "preflightPassed": true,
+    "finalPreLiveGateFrozen": true,
+    "paidLiveAuthorizationRequired": true,
+    "liveAuthorized": false,
+    "providerCallsMade": false,
+    "verifiers": [
+      {
+        "script": "verify-p6-3-el-structural-freeze.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-structural-invariant-hardening.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-el-structural-freeze-manifest.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-execution-protocol.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-mutation-protocol-parity.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-rsem-protocol-parity.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-rsem-leak-proofing.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-execution-parameters.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-auto-infra-regression.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-live-calibration-runner.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-secondary-reliability.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-live-executors.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-frozen-input-resolver.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-end-to-end.ts",
+        "status": "pass"
+      },
+      {
+        "script": "verify-p6-3-v2-cli-dry-gate.ts",
+        "status": "pass"
+      }
+    ],
+    "finalSpec": {
+      "path": "harness/frozen/p6-3-v2-final-prelive-spec.json",
+      "sha256": "b7d20afd14a39d98f0350b8c63c2269ba41477d91ead6e13907e7347fd1e7344"
+    },
+    "frozenEvidence": [
+      {
+        "path": "harness/frozen/p6-3-el-structural-freeze.json",
+        "sha256": "2f26b34f112b4b1ffcf9fd979cdafff20c146bc4236f4a26d5fa72f3ec5f5196"
+      },
+      {
+        "path": "harness/frozen/p6-3-execution-protocol.json",
+        "sha256": "ea72d6461a3ba1589a221864e8f9b9dc57174bbbf1bba9e87a77c26474c43408"
+      },
+      {
+        "path": "harness/frozen/p6-3-mutation-protocol-parity.json",
+        "sha256": "fb5c87779390204ad2555ee9390ef5ebe27884a01a983ba16833e00541e4a840"
+      },
+      {
+        "path": "harness/frozen/p6-3-rsem-protocol-parity.json",
+        "sha256": "134e742db585ca3d196016567a61bb8d8cd3a6e0ca66918befd85be5f9aa1e96"
+      },
+      {
+        "path": "harness/frozen/p6-3-v1-auto-infra-regression.json",
+        "sha256": "87ba46009a9b7753defed9d2f01b49b58c9e0f30ed69efb8290ab28755e56677"
+      },
+      {
+        "path": "harness/frozen/p6-3-v2-execution-parameters.json",
+        "sha256": "903f33aa46c8e5cd50871aa1ad6867eb48a6e66b75bba2a2c341d22d1b487a1d"
+      }
+    ],
+    "sourceEvidence": [
+      {
+        "path": "harness/src/p6/p6-3-v2-auto-infra.ts",
+        "sha256": "8b9d46eae86969130623827f5e82c2dda43351d2b0f64b71e676c0fb6b0105d3"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-execution-parameters.ts",
+        "sha256": "e5684fea2aa021238dfa3d740b3d3eebefaf2881b8ad547bf63f3219e4b48e8e"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-live-calibration-runner.ts",
+        "sha256": "10d8acf55cc4f7dc0b21541e12eca48b9605938b16695d60b044d676d668c6b8"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-secondary-reliability.ts",
+        "sha256": "8f4c86bba6dc87819143e61c1cb6d942ac421ecc931d30cb18547f494e6644eb"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-live-executors.ts",
+        "sha256": "480614eb1e89757e2c5ba2dfb7e2a4d349c5c10c04c00b72ef9179de45d1682d"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-frozen-input-resolver.ts",
+        "sha256": "4d257999ff4ca4ae354e7e51bd4d0424e39d52218dc7bc557393e604df9c943a"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-end-to-end.ts",
+        "sha256": "8a7882906ed1dbbae5c6d5d5494a0e0ba866aeed98bea90b926d13c0d14b92d2"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-cli-preflight.ts",
+        "sha256": "4537955601de782c5c8df2035fd76a481d745f0d45f73038976cdb119d9c9a9a"
+      },
+      {
+        "path": "harness/src/p6/p6-3-v2-final-prelive-gate.ts",
+        "sha256": "25ca077647f324cc8f57e1841b2bec0b8114640e1eba1eacbbbbea0e1178223f"
+      },
+      {
+        "path": "harness/p6-3-v2-calibration.ts",
+        "sha256": "71267df28a63459db00f5b33ceb204826061119f81bf954dbfa7c0369e3463d2"
+      }
+    ],
+    "verifierEvidence": [
+      {
+        "path": "harness/verify-p6-3-el-structural-freeze.ts",
+        "sha256": "60b29f665efdd2caf28e4150b9bc94dbae49d0e824692b1be9526e7d8e1e79dc"
+      },
+      {
+        "path": "harness/verify-p6-3-structural-invariant-hardening.ts",
+        "sha256": "06b7be81ace7c2c83b032b7b77f2da7691eaf70140a5a2b335e6628c86988873"
+      },
+      {
+        "path": "harness/verify-p6-3-el-structural-freeze-manifest.ts",
+        "sha256": "adb2a9678b896e53d773ed42ff726e5003b795d8d779ff9c4b8b1e42dea622e0"
+      },
+      {
+        "path": "harness/verify-p6-3-execution-protocol.ts",
+        "sha256": "5206a52f9b59da0c29ff4f1b458b50fb74e81b01479fce641d38d97e5f4ad933"
+      },
+      {
+        "path": "harness/verify-p6-3-mutation-protocol-parity.ts",
+        "sha256": "4315ddd0f886c309a50489619afc4dbcbb44d28d391709b7d6a890c8b41e27d4"
+      },
+      {
+        "path": "harness/verify-p6-3-rsem-protocol-parity.ts",
+        "sha256": "e10f356d7f59c669ed8fdbbbbafe3f98f91877269ea86746023f7ce8e19b4a6a"
+      },
+      {
+        "path": "harness/verify-p6-3-rsem-leak-proofing.ts",
+        "sha256": "b2558f737cef41a1a77c82e122f274ff88a86af07b14fe0b0686266ca3fc928a"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-execution-parameters.ts",
+        "sha256": "9cd9fac317a2495b0305d757b1d3a4eb5aeb276a0d8d43d06a0d0fb2f396a739"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-auto-infra-regression.ts",
+        "sha256": "3c7f3820080087af6c57233c270851611ebf0b41e18224360ed6a3ae77d1f691"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-live-calibration-runner.ts",
+        "sha256": "3b5a70d66f14b075a096a473ebfa274039385ef941a3c9e1fbeaa719e3f5c171"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-secondary-reliability.ts",
+        "sha256": "50a8588f5c735e74dd0c8b92046fb5f45685f3fb1ea465a1b259fe2639d34feb"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-live-executors.ts",
+        "sha256": "f85475cd6869d658c1d9110bdc5f61d36c9422a49cf5f8e80cc3e56e4e9041e9"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-frozen-input-resolver.ts",
+        "sha256": "50d41cc05f49c1d7b19d8ef6aa8f1553c32061b5e34413a85ec15c3cfa760d9e"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-end-to-end.ts",
+        "sha256": "fc1c8a878ad1a19c3a605bd13ecad2b611804ddff73fc9cad4a61f58cf4b352f"
+      },
+      {
+        "path": "harness/verify-p6-3-v2-cli-dry-gate.ts",
+        "sha256": "5bb574a08bbb5cdb8a6f7494ec68e0f7e1d12fd464309329b7859c254d1d0217"
+      }
+    ],
+    "operationalEvidence": [
+      {
+        "path": "docs/p6_3_cost_estimate.md",
+        "sha256": "5180b25ceb55bf5e903f6252954099858844d90511fe88a270b91a789ef001aa"
+      },
+      {
+        "path": "docs/p6_3_v2_design_audit.md",
+        "sha256": "081625e1035a41b95a66944eb74d7001bf0867aec1f671ba4fed0fb23146a5d3"
+      },
+      {
+        "path": "docs/p6_3_v2_end_to_end_wiring.md",
+        "sha256": "0ccbbd47721a2ffb18d08e7a970bdb5c1a199a2571a981ad7bf0a289936f5f8e"
+      }
+    ]
+  },
+  "verifiers": [
+    {
+      "script": "verify-p6-3-v2-live-wiring.ts",
+      "status": "pass"
+    }
+  ],
+  "wiringSpec": {
+    "path": "harness/frozen/p6-3-v2-paid-live-wiring-spec.json",
+    "sha256": "72a1db905e05100d765856ceee484293eaa3bf4ce2c89ef420ceff0d1429f6bb"
+  },
+  "sourceEvidence": [
+    {
+      "path": "harness/p6-3-v2-calibration.ts",
+      "sha256": "71267df28a63459db00f5b33ceb204826061119f81bf954dbfa7c0369e3463d2"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-cli-preflight.ts",
+      "sha256": "4537955601de782c5c8df2035fd76a481d745f0d45f73038976cdb119d9c9a9a"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-final-prelive-gate.ts",
+      "sha256": "25ca077647f324cc8f57e1841b2bec0b8114640e1eba1eacbbbbea0e1178223f"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-paid-live-gate.ts",
+      "sha256": "11c63964c285c92d92cbd575095bc1ab858bd2c3194e5d6953b5bb7bc518a04a"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-live-entrypoint.ts",
+      "sha256": "237f1ce825b5fec77686eb1ccaa132ea9feaf413b4e7a30545b1a952068628d0"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-end-to-end.ts",
+      "sha256": "8a7882906ed1dbbae5c6d5d5494a0e0ba866aeed98bea90b926d13c0d14b92d2"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-frozen-input-resolver.ts",
+      "sha256": "4d257999ff4ca4ae354e7e51bd4d0424e39d52218dc7bc557393e604df9c943a"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-live-executors.ts",
+      "sha256": "480614eb1e89757e2c5ba2dfb7e2a4d349c5c10c04c00b72ef9179de45d1682d"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-live-calibration-runner.ts",
+      "sha256": "10d8acf55cc4f7dc0b21541e12eca48b9605938b16695d60b044d676d668c6b8"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-secondary-reliability.ts",
+      "sha256": "8f4c86bba6dc87819143e61c1cb6d942ac421ecc931d30cb18547f494e6644eb"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v2-execution-parameters.ts",
+      "sha256": "e5684fea2aa021238dfa3d740b3d3eebefaf2881b8ad547bf63f3219e4b48e8e"
+    }
+  ],
+  "verifierEvidence": [
+    {
+      "path": "harness/verify-p6-3-v2-live-wiring.ts",
+      "sha256": "abc1d451240ae20b9f47eb297ab6920f018fb43b5ea853f77cda5ba38fdc4be3"
+    }
+  ],
+  "operationalEvidence": [
+    {
+      "path": "docs/p6_3_v2_paid_live_wiring.md",
+      "sha256": "84df2c79870e3f50b3af6eb5222f224661658b987489fc9827e9978144b09192"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "sequence": 199,
+    "attempt": 1,
+    "reviewer": "imahoriitsuki",
+    "reason": "Host PC reboot interrupted a provider-visible attempt before a committed result was persisted; completion status is unknown.",
+    "finalDisposition": "infrastructure-invalid"
+  }
+]
