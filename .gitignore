@@ -8,6 +8,7 @@ dist/
 # Generated smoke/calibration run artifacts
 runs/_smoke/
 runs/_calibration/
+runs/p6-3-v2-live-*/
 
 # OS / editor
 .DS_Store
