@@ -23,6 +23,7 @@ import {
 
 const MAX_TOKENS_PER_UNIT = 256;
 const BUDGETS = [0, 505, 1011, 2023, 3034, 4046] as const;
+const INTERIOR_BUDGETS = [505, 1011, 2023, 3034] as const;
 
 interface AuditTask {
   taskId: string;
@@ -53,7 +54,13 @@ interface BudgetAudit {
   actualExposedTokens: number;
   selectedUnitCount: number;
   categoryUnitCounts: CategoryCounts;
+  categoryStaticPayloadTokens: CategoryCounts;
   selectedUnits: SelectedUnitAudit[];
+}
+
+interface PrototypeDiagnostics {
+  implementationZeroInteriorBudgets: number[];
+  categoryZeroInteriorBudgets: Record<keyof CategoryCounts, number[]>;
 }
 
 function loadRepository(dir: string, baseDir: string, out: Record<string, string>): void {
@@ -123,6 +130,7 @@ function auditBudgets(args: {
       actualExposedTokens: exposure.log.actualExposedTokens,
       selectedUnitCount: exposure.log.selectedUnitCount,
       categoryUnitCounts: exposure.log.categoryUnitCounts,
+      categoryStaticPayloadTokens: exposure.log.categoryStaticPayloadTokens,
       selectedUnits: exposure.log.selectedUnits.map((unit) => ({
         unitId: unit.unitId,
         path: unit.path,
@@ -136,6 +144,34 @@ function auditBudgets(args: {
     });
   }
   return rows;
+}
+
+function prototypeDiagnostics(rows: readonly BudgetAudit[]): PrototypeDiagnostics {
+  const categories: Array<keyof CategoryCounts> = [
+    "type_definition",
+    "fixed_contract",
+    "test",
+    "implementation",
+  ];
+  const categoryZeroInteriorBudgets = {
+    type_definition: [] as number[],
+    fixed_contract: [] as number[],
+    test: [] as number[],
+    implementation: [] as number[],
+  };
+  for (const budget of INTERIOR_BUDGETS) {
+    const row = rows.find((candidate) => candidate.budget === budget);
+    assert(row, `missing interior budget row ${budget}`);
+    for (const category of categories) {
+      if (row.categoryStaticPayloadTokens[category] === 0) {
+        categoryZeroInteriorBudgets[category].push(budget);
+      }
+    }
+  }
+  return {
+    implementationZeroInteriorBudgets: [...categoryZeroInteriorBudgets.implementation],
+    categoryZeroInteriorBudgets,
+  };
 }
 
 function main(): void {
@@ -205,31 +241,39 @@ function main(): void {
       `${task.taskId}: blended selector must be a permutation of the same artifact units`
     );
 
+    const historicalBudgets = auditBudgets({
+      orderedUnits: historical,
+      repositoryFiles,
+      selectorId: `historical:${task.taskId}`,
+      rankingPolicyVersion: ranking.policyVersion,
+      surfaceEntities: ranking.surfaceEntities,
+      semanticEntities: ranking.semanticEntities,
+    });
+    const blendedBudgets = auditBudgets({
+      orderedUnits: blendedA.orderedUnits,
+      repositoryFiles,
+      selectorId: `blended:${task.taskId}`,
+      rankingPolicyVersion: BLENDED_STATIC_EXPOSURE_POLICY_VERSION,
+      surfaceEntities: ranking.surfaceEntities,
+      semanticEntities: ranking.semanticEntities,
+    });
+
     return {
       taskId: task.taskId,
-      historical: auditBudgets({
-        orderedUnits: historical,
-        repositoryFiles,
-        selectorId: `historical:${task.taskId}`,
-        rankingPolicyVersion: ranking.policyVersion,
-        surfaceEntities: ranking.surfaceEntities,
-        semanticEntities: ranking.semanticEntities,
-      }),
-      blended: auditBudgets({
-        orderedUnits: blendedA.orderedUnits,
-        repositoryFiles,
-        selectorId: `blended:${task.taskId}`,
-        rankingPolicyVersion: BLENDED_STATIC_EXPOSURE_POLICY_VERSION,
-        surfaceEntities: ranking.surfaceEntities,
-        semanticEntities: ranking.semanticEntities,
-      }),
+      historical: historicalBudgets,
+      blended: blendedBudgets,
+      historicalDiagnostics: prototypeDiagnostics(historicalBudgets),
+      blendedDiagnostics: prototypeDiagnostics(blendedBudgets),
       blendedCategoryFullContentTokens: blendedA.categoryFullContentTokens,
       blendedCategoryUnitCounts: blendedA.categoryUnitCounts,
     };
   });
 
   const report = {
-    schemaVersion: "p6-3-v3-selector-structural-audit-v2",
+    schemaVersion: "p6-3-v3-selector-structural-audit-v3",
+    auditMode: "diagnostic-prototype",
+    freezeEligible: false,
+    structuralAcceptanceGateFrozen: false,
     scientificOutcomesRead: false,
     hiddenEvaluatorResultsRead: false,
     budgets: [...BUDGETS],
