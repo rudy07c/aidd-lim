@@ -37,7 +37,7 @@ jobs:
       - name: Analyze frozen P6-3 v2 live evidence
         working-directory: harness
         env:
-          P6_3_V2_SELECTION_OUTPUT: ../runs/_smoke/p6-3-v2-selection-analysis.json
+          P6_3_V2_SELECTION_OUTPUT: runs/_smoke/p6-3-v2-selection-analysis.json
         run: npm run analyze:p6-3-v2-selection
       - name: Upload deterministic selection analysis
         uses: actions/upload-artifact@v4
