@@ -37,11 +37,23 @@ interface CategoryCounts {
   implementation: number;
 }
 
+interface SelectedUnitAudit {
+  unitId: string;
+  path: string;
+  startLine: number;
+  endLine: number;
+  category: string;
+  selectorSequence: number;
+  semanticRelevant: boolean;
+  dependencyDistance: number | null;
+}
+
 interface BudgetAudit {
   budget: number;
   actualExposedTokens: number;
   selectedUnitCount: number;
   categoryUnitCounts: CategoryCounts;
+  selectedUnits: SelectedUnitAudit[];
 }
 
 function loadRepository(dir: string, baseDir: string, out: Record<string, string>): void {
@@ -111,6 +123,16 @@ function auditBudgets(args: {
       actualExposedTokens: exposure.log.actualExposedTokens,
       selectedUnitCount: exposure.log.selectedUnitCount,
       categoryUnitCounts: exposure.log.categoryUnitCounts,
+      selectedUnits: exposure.log.selectedUnits.map((unit) => ({
+        unitId: unit.unitId,
+        path: unit.path,
+        startLine: unit.startLine,
+        endLine: unit.endLine,
+        category: unit.category,
+        selectorSequence: unit.selectorSequence,
+        semanticRelevant: unit.semanticRelevant,
+        dependencyDistance: unit.dependencyDistance,
+      })),
     });
   }
   return rows;
@@ -189,7 +211,7 @@ function main(): void {
         orderedUnits: historical,
         repositoryFiles,
         selectorId: `historical:${task.taskId}`,
-        rankingPolicyVersion: "ground-truth-dependency-system2-v1",
+        rankingPolicyVersion: ranking.policyVersion,
         surfaceEntities: ranking.surfaceEntities,
         semanticEntities: ranking.semanticEntities,
       }),
@@ -207,7 +229,7 @@ function main(): void {
   });
 
   const report = {
-    schemaVersion: "p6-3-v3-selector-structural-audit-v1",
+    schemaVersion: "p6-3-v3-selector-structural-audit-v2",
     scientificOutcomesRead: false,
     hiddenEvaluatorResultsRead: false,
     budgets: [...BUDGETS],
