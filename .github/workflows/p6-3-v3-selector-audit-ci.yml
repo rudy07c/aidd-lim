@@ -1,0 +1,56 @@
+name: P6-3 v3 Selector Structural Audit
+
+on:
+  push:
+    paths:
+      - 'harness/src/context/blended-static-exposure-selector.ts'
+      - 'harness/src/context/fixed-world-protocol-spec.ts'
+      - 'harness/audit-p6-3-v3-selector-structure.ts'
+      - 'harness/verify-p6-3-v3-fixed-protocol-spec.ts'
+      - 'docs/p6_3_v3_selector_design_audit.md'
+      - 'docs/p6_3_v3_contract_boundary_audit.md'
+      - '.github/workflows/p6-3-v3-selector-audit-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/context/blended-static-exposure-selector.ts'
+      - 'harness/src/context/fixed-world-protocol-spec.ts'
+      - 'harness/audit-p6-3-v3-selector-structure.ts'
+      - 'harness/verify-p6-3-v3-fixed-protocol-spec.ts'
+      - 'docs/p6_3_v3_selector_design_audit.md'
+      - 'docs/p6_3_v3_contract_boundary_audit.md'
+      - '.github/workflows/p6-3-v3-selector-audit-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify fixed external WorldProtocol specification
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-fixed-protocol-spec.ts > p6-3-v3-fixed-protocol-spec-verification.json
+      - name: Run outcome-blind selector structural audit
+        working-directory: harness
+        run: npx ts-node audit-p6-3-v3-selector-structure.ts > p6-3-v3-selector-structural-audit.json
+      - name: Upload structural audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-v3-selector-structural-audit
+          path: |
+            harness/p6-3-v3-selector-structural-audit.json
+            harness/p6-3-v3-fixed-protocol-spec-verification.json
+          if-no-files-found: error
