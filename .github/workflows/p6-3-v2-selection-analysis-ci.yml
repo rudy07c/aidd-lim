@@ -1,0 +1,47 @@
+name: P6-3 v2 Selection Analysis
+
+on:
+  push:
+    paths:
+      - 'harness/analyze-p6-3-v2-selection.ts'
+      - 'harness/package.json'
+      - 'docs/findings/evidence/p6-3-v2-live-calibration/state.json'
+      - '.github/workflows/p6-3-v2-selection-analysis-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/analyze-p6-3-v2-selection.ts'
+      - 'harness/package.json'
+      - 'docs/findings/evidence/p6-3-v2-live-calibration/state.json'
+      - '.github/workflows/p6-3-v2-selection-analysis-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Offline frozen-evidence selection analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Analyze frozen P6-3 v2 live evidence
+        working-directory: harness
+        env:
+          P6_3_V2_SELECTION_OUTPUT: ../runs/_smoke/p6-3-v2-selection-analysis.json
+        run: npm run analyze:p6-3-v2-selection
+      - name: Upload deterministic selection analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-v2-selection-analysis
+          path: runs/_smoke/p6-3-v2-selection-analysis.json
+          if-no-files-found: error
