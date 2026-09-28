@@ -1,6 +1,6 @@
 # P6-3 v3 selector design audit
 
-**Status:** post-v2 design audit; no P6-3 v3 selector freeze and no paid/live execution are authorized by this document  
+**Status:** post-v2 design audit; selector family direction only; no final v3 selector freeze and no paid/live execution are authorized by this document  
 **Predecessors:** `docs/findings/p6_3_v2_result_summary_ja.md`, `docs/p6_3_v2_design_audit.md`  
 **Purpose:** determine how EL static exposure should be selected after P6-3 v2 ended in `needs-design-audit`, before any new calibration data are collected.
 
@@ -17,9 +17,9 @@ B0    B1    B2      B3      B4      AF
 0  -> 0  -> 0  ->  0.947 -> 0.932 -> 0.939
 ```
 
-その後のdesign auditで、B1/B2側の失敗は独立した11 taskの難易度差というより、同じhidden-side compile / contract mismatchへ強く集中していたこと、またB1ではvisible correctnessがほぼ飽和しているのにhidden / task-specific correctnessがほぼゼロであったことが確認された。
+その後のdesign auditで、B1/B2側の失敗は独立した11 taskの難易度差というより、共通したhidden-side compile / contract mismatchへ強く集中していたこと、またB1ではvisible correctnessがほぼ飽和しているのにhidden / task-specific correctnessはほぼゼロであったことが確認された。
 
-さらにselector実装まで遡ると、現行policyは以下のstrict category priorityを持つ。
+selector実装まで遡ると、現行policyは以下のstrict category priorityを持つ。
 
 ```text
 type_definition
@@ -28,19 +28,37 @@ type_definition
   -> implementation
 ```
 
-`harness/src/context/privileged-retrieval-controller.ts`の実装は、categoryを最初のsort keyとし、異なるcategory間ではdependency distance / semantic relevanceを比較しない。implementationのtask relevanceはimplementation category内部でのみ使われる。
+`harness/src/context/privileged-retrieval-controller.ts`はcategoryを最初のsort keyとし、異なるcategory間ではdependency distance / semantic relevanceを比較しない。implementationのtask relevanceはimplementation category内部でのみ使われる。
 
-したがって低budgetでは、type / contract / testを先に埋め切るまでimplementationが1 unitも露出されない構造になりうる。
+### 1.1 v2 frozen manifestが示すexact exposure composition
 
-今回観測されたB2→B3の急変は、単純なtoken-capacity thresholdだけでなく、
+重要な訂正として、P6-3 v2のB2→B3でimplementationが初めて入ったわけではない。
+
+`harness/frozen/p6-3-el-structural-freeze.json`のfrozen profileは、代表profileについて次を記録している。
+
+| arm | nominal budget | actual tokens | type_definition | fixed_contract | test | implementation |
+|---|---:|---:|---:|---:|---:|---:|
+| B1 | 505 | 339 | 5 | 0 | 0 | 0 |
+| B2 | 1011 | 824 | 5 | 2 | 0 | 0 |
+| B3 | 2023 | 1875 | 5 | 4 | 3 | 0 |
+| B4 | 3034 | task-dependent | 5 | 4 | 7 | 1–2 |
+| AF | 4046 | 4046 | 5 | 4 | 7 | 9 |
+
+したがって、B2→B3で起きた構造変化は、少なくともcategoryレベルでは
 
 ```text
-implementation category absent
+partial fixed_contract, no tests, no implementation
           ->
-implementation category present
+full fixed_contract + partial visible tests, no implementation
 ```
 
-というranking-policy由来のcategory inclusion switchと交絡している可能性が高い。
+である。
+
+これは「B3でimplementationへ到達したからMが跳ねた」という初期仮説を否定する。
+
+現時点でより正確に言えるのは、**strict category front-loadingにより、budget増加が単なるcapacity増加ではなく、fixed contractの完成やvisible test導入という大きなcontext composition changeと結び付いていた**ということまでである。
+
+B2→B3のM急変を具体的にどのchunkが説明するかは、まだ確定していない。
 
 ---
 
@@ -68,7 +86,7 @@ Stage 0では、testsを見せないとfresh generationが前世代の回帰を�
 
 ### 2.3 historical System2 policyの継承
 
-現行`privileged-retrieval-controller.ts`の導入commit `c50532bf5c177a88ffb28001a12e40949c9e2349`は、コードコメントでcategory orderがhistorical System2 selectorを継承することを明示している。
+`privileged-retrieval-controller.ts`の導入commit `c50532bf5c177a88ffb28001a12e40949c9e2349`は、コードコメントでcategory orderがhistorical System2 selectorを継承することを明示している。
 
 つまり現在のEL/PR selectorは、P5/P6でEL理論から新しく導出された順序ではなく、過去のfunctional-continuity-oriented policyを引き継いだものである。
 
@@ -76,7 +94,7 @@ Stage 0では、testsを見せないとfresh generationが前世代の回帰を�
 
 `docs/stage1_plan.md`は、現行policyが`type_definition -> fixed_contract -> test -> implementation`を優先することを既知とし、dose-responseを作る目的でP6-3結果を見た後にtestsを事後的demoteしてはならない、と明記している。
 
-そしてinterior candidateが存在しなければ`needs-design-audit`で停止するよう事前に定めていた。
+interior candidateが存在しなければ`needs-design-audit`で停止することも事前に定めていた。
 
 したがって今回の停止はprotocol failureではなく、selector policyを結果確認後に正当に再検討するためのpredeclared exitである。
 
@@ -99,7 +117,7 @@ EL = (B_{expose}, S_{select})
 
 である。
 
-有限コンテキストはtoken量だけではない。selection policyが強いcategory switchを持つ場合、同じbudget manipulationでも実際の情報構成は不連続に変化しうる。
+有限コンテキストはtoken量だけではない。selection policyが強いcategory blockを持つ場合、同じbudget manipulationでも実際の情報構成は不連続に変化しうる。
 
 P6-3 v3では、`B_expose`を再較正する前に`S_select`をoutcome-blindに再設計・freezeする。
 
@@ -125,14 +143,13 @@ type_definition
 #### 問題
 
 - category境界がbudget境界と一致しやすい
-- 低budgetでimplementation exposureが完全に0になりうる
+- B1/B2/B3が異なる種類のartifact compositionを表すため、capacityとcompositionが交絡する
 - task relevance / dependency distanceを異category間で使えない
-- capacity effectとcategory inclusion effectを分離しにくい
-- P6-3 v2で実際にnon-degenerate interior budgetを得られなかった
+- P6-3 v2でnon-degenerate interior budgetを得られなかった
 
 #### v3での位置づけ
 
-**primary selectorとしては採用しない。**
+**primary selectorとしては採用しない方向とする。**
 
 ただしhistorical reference / offline sensitivity baselineとして保持する。v2の結果を再現するため、既存policyの実装とmanifestは変更・上書きしない。
 
@@ -142,42 +159,40 @@ type_definition
 
 型定義・固定契約・visible tests等をbudget外の共通scaffoldとして常時露出し、主としてimplementation artifactだけにfinite budgetを適用する。
 
-概念的には、
-
 \[
 Exposure(B) = Scaffold_{free} \cup LimitedImplementation(B)
 \]
-
-とする。
 
 #### 長所
 
 - 型エラー、契約不一致、回帰確認不能といった基礎的failureをcapacity treatmentから分離しやすい
 - budget変化をimplementation evidence量の変化として解釈しやすい
-- Stage 0で採用していた「土台情報は必ず残す」という思想と整合する
+- Stage 0の「土台情報は必ず残す」という思想と整合する
 
 #### 問題
 
 - artifactの一部を無条件継承するため、ELの意味が変わる
 - 「artifact全体への有限transmission bottleneck」ではなく「implementation-only bottleneck」に近づく
-- MOI vs ELのILM-core secondary contrast、PR vs ELのC3を再解釈する必要がある
-- scaffoldの定義自体が新たな研究上の特権化になる
+- MOI vs EL、PR vs ELの解釈を再定義する必要がある
+- scaffoldの定義自体が新たな特権化になる
 
 #### v3での位置づけ
 
 **primary selectorには現時点で採用しない。**
 
-ただし、blended selectorで再び型/契約系の非研究対象failureが支配的になる場合のpredeclared sensitivity / fallback familyとして残す価値がある。
+ただし、blended selectorで再び非研究対象のcontract/type failureが支配的になる場合のpredeclared sensitivity / fallback familyとして残す価値がある。
 
 ---
 
 ### Candidate C — Blended nested selector
 
-categoryをabsolute blocking orderとして使わず、全categoryが低budgetから候補になりうるようにする。
+categoryをabsolute blocking orderとして使わず、複数categoryがfinite budgetの早い段階から候補になりうるようにする。
 
 内部rankingはtask-relevance / dependency-distance等のoutcome-blind structural signalsを使い、categoryはsoft featureまたはcoverage constraintとして扱う。
 
-P6-3 v3 primary familyとしてこの方向を採用する。
+P6-3 v3の**leading candidate family**としてこの方向を検討する。
+
+まだfinal selectorとしてfreezeしない。
 
 #### 必須性質
 
@@ -186,8 +201,6 @@ P6-3 v3 primary familyとしてこの方向を採用する。
    \[
    Exposure(B_1) \subseteq Exposure(B_2) \subseteq \cdots
    \]
-
-   budget増加で既出evidenceを入れ替えない。
 
 2. **Determinism**
 
@@ -203,72 +216,73 @@ P6-3 v3 primary familyとしてこの方向を採用する。
    - P6-3 v1/v2 Rsem outcome
    - probe-wise accuracy
    - provider response history
-   - v2で特定されたsuccess/failureを直接示すdiagnostic label
+   - v2 success/failureを直接示すdiagnostic label
 
-4. **Early cross-category coverage**
+4. **Cross-category progression**
 
-   非ゼロの実用budgetでimplementation categoryが構造的に常時0になる設計を避ける。
+   full repositoryでmaterialな割合を占めるcategoryが、absolute category orderだけを理由にbudget rangeの大半で完全0になる構造を避ける。
 
 5. **Repository-scale invariance**
 
-   特定fixtureのファイル名や現在のrank 8〜12にhard-codeしない。repositoryが増減しても同じpolicy definitionを適用できる。
+   特定fixtureのファイル名、特定rank、今回成功したchunkへhard-codeしない。
 
 6. **Task relevance is allowed, answer relevance is not**
 
-   GroundTruthDelta / dependency graph等、P5で既に許容しているevaluator-side structural mappingは使用可能。ただしhidden outcomeに由来する情報は使用しない。
+   GroundTruthDelta / dependency graph等、P5で既に許容しているevaluator-side structural mappingは使用可能。ただしhidden outcome由来情報は使用しない。
 
 7. **Canonical budget accounting**
 
-   model-visible serialization全体をcanonical tokenizerで計数する。category間のbudget accounting ruleを共通化する。
+   model-visible serialization全体をcanonical tokenizerで計数する。
 
 ---
 
-## 5. Candidate Cの具体化方針
+## 5. Candidate C prototype — category-proportional progressive interleaving
 
-このauditではまだfinal scoring weightsをfreezeしない。
+first prototypeでは、full repositoryにおけるcategory別canonical content shareをtarget shareとし、各categoryのqueueをdeterministically interleaveする。
 
-ただし次の実装候補を第一候補とする。
+各category内部の順序はhistorical privileged rankingを保持するため、implementation内部ではsemantic relevance / dependency distanceが引き続き働く。
 
-### 5.1 Category-proportional progressive interleaving
+このprototypeは**性能結果を一切参照しない**。
 
-full repositoryにおけるcategory別canonical token shareを、各categoryのtarget exposure shareとして使う。
+### 5.1 初回offline structural audit
 
-例：full repositoryのtoken構成が
+PR #34のCI run `36434374075`で、11 primary M tasksに対してhistorical selectorとprototypeをoutcome-blindに再生した。
 
-```text
-type_definition  10%
-fixed_contract   15%
-test             30%
-implementation   45%
-```
+CIはtypecheck、structural audit、artifact uploadすべてsuccessだった。
 
-なら、finite budgetでも概ね同じ比率で各categoryからevidenceをprogressively admitする。
+artifact:
 
-各category内部では、許可されたstructural relevanceで順序付けする。
+- name: `p6-3-v3-selector-structural-audit`
+- artifact ID: `10974742369`
+- digest: `sha256:587e91248f0781a6d1689aa37e1369df2c476c96a6441c5f37ac1b835669ba75`
 
-- implementation: semantic relevance -> dependency distance -> path
-- type / contract / test: task-linked entity mappingやdependency relevanceが定義できるなら同じ原則を使う
-- structural relevanceが同率ならpathでdeterministic tie-break
+historical selectorでは全11 taskで、
 
-実装はweighted / deficit round-robin等、budget単位でnestednessを保証する決定的手法を用いる。
+- B1: implementation = 0
+- B2: implementation = 0
+- B3: implementation = 0
+- B4: implementation = 1–2 units
 
-### 5.2 なぜrepository-proportionalを第一候補にするか
+だった。
 
-- 現在のscientific outcomeを使わずに比率を決められる
-- 低budgetからimplementationを含められる
-- 「土台情報は無料」という新しい特権条件を作らない
-- full artifactの構成比を縮小したstatic viewとして解釈できる
-- repository規模の変化に追従できる
+prototype blended selectorでは、
 
-ただし、これはまだ**candidate algorithm family**であり、実装前にoffline structural auditで妥当性を確認し、machine-readable specとしてfreezeする。
+- B1: implementation = 0–2 units（2/11 taskでnon-zero）
+- B2: implementation = 1–3 units（11/11 taskでnon-zero）
+- B3: implementation = 4–5 units（11/11 taskでnon-zero）
+- B4: implementation = 6–7 units（11/11 taskでnon-zero）
+
+となった。
+
+したがってprototypeは、historical selectorの「implementationがB4まで完全に0」というcategory blockを大きく弱めている。
+
+ただしB1では依然として9/11 taskでimplementationが0であり、**このprototypeをそのままfinal freezeする根拠にはならない**。
 
 ---
 
 ## 6. v3 selectorをfreezeする前のoutcome-blind structural audit
 
 新selectorはP6-3 v2 scientific resultをoptimization targetにしてはならない。
-
-以下だけを使ってcandidate selectorを比較する。
 
 ### 使用してよい情報
 
@@ -284,83 +298,116 @@ implementation   45%
 ### 使用禁止
 
 - M pass/fail
-- visible / hidden / task-specific pass/fail
-- `TS2554`発生locationをselector weight調整に使用すること
+- visible / hidden / task-specific pass/failをweight optimizationへ使うこと
+- `TS2554`発生locationをselector weight調整へ使うこと
 - Rsem score / probe-wise accuracy
 - B3で成功したunitを直接bonusすること
 - B2で失敗したunitを直接penaltyすること
 
-`TS2554`やB2/B3差分は、**historical failure mechanismを理解するdiagnostic evidence**として記録してよいが、新selectorの具体的weightを最適化するラベルとしては用いない。
+historical failure mechanismの診断にoutcomeを用いることと、新selectorのweight最適化にoutcomeを用いることを区別する。
 
 ---
 
-## 7. structural acceptance gate
+## 7. structural acceptance gateの方向性
 
-v3 selector specは、paid/live calibration前に少なくとも以下を満たすこと。
+exact gateはまだfreezeしない。次のboundary-unit auditを終えてからversioned specへ固定する。
 
-### 7.1 Nestedness gate
+少なくとも以下を要求する。
+
+### 7.1 Nestedness
 
 全candidate budgetでexposure setがprefix / superset関係を満たす。
 
-### 7.2 Category coverage gate
+### 7.2 Composition provenance
 
-少なくともprimary non-zero interior budgetsについて、implementation categoryが0でないこと。
+全budgetについてcategory別 exposed token / unit数、selected unit path / line range、selector sequenceを保存する。
 
-さらにcategory別 exposed token / unit数を全budgetで保存する。
+### 7.3 No category-complete blocking artifact
 
-### 7.3 No single category switch gate
+あるmaterial categoryが、単にabsolute category orderのためだけにbudget rangeの大半で完全0となる設計を避ける。
 
-隣接budget間で、あるcategoryが`0 -> substantial`へ一括で切り替わることだけが主要構成差にならないことをstructural reportで確認する。
+ここで要求するのはperformanceの滑らかさではない。**exposure compositionに人工的なblock boundaryを作らないこと**である。
 
-これはperformanceの滑らかさを要求するgateではない。**exposure compositionの人工的なcategory cliffを避けるgate**である。
-
-### 7.4 Outcome-blindness gate
+### 7.4 Outcome-blindness
 
 selector build pathが禁止されたscientific outcome artifactへアクセスしないことをoffline verifierで確認する。
 
-### 7.5 Reproducibility gate
+### 7.5 Reproducibility
 
 selector version、repository hash、task/delta identity、budgetからordered unit listとcontent hashを完全再現できること。
 
 ---
 
-## 8. v3 recalibrationで事前に書く予測
+## 8. 次に必要なboundary-unit audit
+
+P6-3 v2 frozen profileでは、B2→B3で追加されたものはimplementationではない。
+
+したがって次に調べるべき対象は、exactに
+
+\[
+Exposure(B3) \setminus Exposure(B2)
+\]
+
+である。
+
+この差分について、
+
+- path
+- line range
+- category
+- fixed contractのどの部分か
+- visible testのどの部分か
+- selector sequence
+- mapped entities / dependency metadata
+
+を記録する。
+
+目的は「このchunkが成功を生んだ」と断定することではない。
+
+まず、**B2とB3が情報量だけでなく、どの種類・どの具体的artifact evidenceで違っていたかを正確に記述すること**である。
+
+このauditを終えるまで、v3 selector familyのexact algorithm / weightsはfreezeしない。
+
+---
+
+## 9. v3 recalibrationで事前に書く予測
 
 新selectorの目的は「きれいなdose-responseを作ること」ではない。
 
 performanceを滑らかにすること自体をacceptance criterionにしてはならない。
 
-再calibration前に許される予測は次のレベルに限定する。
+fresh calibration前に許される予測は次のレベルに限定する。
 
-> historical front-loaded selectorで存在した「implementation categoryが一定budgetまで完全に0」という構造的cliffは、blended selectorでは存在しない。
+> historical selectorで存在したcategory-complete block boundaryはblended selectorで弱まる。
 
 その上でfresh dataを集め、M / Rsemがどう反応するかを観測する。
 
-結果が再び急峻でも、それが新selectorのstructural composition artifactで説明できないなら、初めて有限情報伝達そのもののthreshold hypothesisを強く検討する。
+新selectorでも急峻なresponseが残り、かつその急変が新たなcomposition cliffで説明できない場合にのみ、有限情報伝達そのもののthreshold hypothesisを強く検討する。
 
 ---
 
-## 9. EL多水準化との関係
+## 10. EL多水準化との関係
 
 EL-tight / EL-boundary / EL-looseをStage 1/2本実験へ導入する案は、このauditではまだ採用しない。
 
-理由は、P6-3 v2で観測されたcliffがhistorical selectorのcategory-front-loadingと交絡しているためである。
+P6-3 v2のcliffがselector compositionと交絡しているためである。
 
 順序は以下とする。
 
-1. selector policyをoutcome-blindに再設計
-2. structural gatesをfreeze
-3. fresh P6-3 v3 recalibration
-4. 新selectorでもstable threshold / regime differenceが残るか確認
-5. 残る場合のみEL多水準化をformal amendmentとして再検討
+1. historical boundary-unit audit
+2. selector policyをoutcome-blindに再設計
+3. structural gatesをfreeze
+4. fresh P6-3 v3 recalibration
+5. 新selectorでもstable threshold / regime differenceが残るか確認
+6. 残る場合のみEL多水準化をformal amendmentとして再検討
 
-したがって、EL多水準化は却下ではなく**保留**である。
+EL多水準化は却下ではなく**保留**である。
 
 ---
 
-## 10. Stage 1 contrastへの影響
+## 11. Stage 1 contrastへの影響
 
-primary selector familyをblendedに変えても、ELの概念定義は維持する。
+primary selector familyをblendedに変更しても、ELの概念定義は維持可能である。
 
 ELは依然として、
 
@@ -370,62 +417,66 @@ ELは依然として、
 
 というconditionである。
 
-したがってC3 `PR - EL` のrecoverability / exposure contrast、および `MOI - EL` のILM-core secondary contrastは概念上維持できる。
+したがってC3 `PR - EL`、および`MOI - EL`のILM-core secondary contrastは概念上維持できる。
 
-ただしselector versionはcondition provenanceへ必ず記録し、historical front-loaded ELとv3 blended ELを同一conditionとして無注記でpoolしない。
+ただしselector versionはcondition provenanceへ必ず記録し、historical front-loaded ELとv3 selectorのdataを無注記でpoolしない。
 
 ---
 
-## 11. Decision
+## 12. Current decision
 
-このdesign audit時点の決定は以下。
+### leading direction
 
-### 採用
+- **blended nested selector family**を第一候補として継続評価する
+- first prototypeはcategory-proportional progressive interleaving
+- outcome-blind structural auditをlive前に必須化する
 
-- **P6-3 v3 primary selector family: blended nested selector**
-- first candidate implementation: **category-proportional progressive interleaving**
-- outcome-blind structural auditをlive前に必須化
-
-### primaryでは不採用
+### primaryでは採用しない方向
 
 - historical strict category front-loading
 - scaffold-exempt / implementation-only budget
 
-### 保留
+### まだfreezeしない
 
-- EL-tight / boundary / looseのStage 1/2多水準化
 - exact category share algorithm
 - within-category relevance scoring details
+- structural acceptance threshold
 - v3 budget grid
 - v3 repeat count
 - v3 M/Rsem selection margins
+- EL多水準化
 
-これら保留事項は、**新しいscientific outcomeを見る前に**別のversioned freeze document / machine-readable specで確定させる。
+これらは新しいscientific outcomeを見る前にversioned freeze document / machine-readable specで確定させる。
 
 ---
 
-## 12. 次の実装順序
+## 13. 次の実装順序
 
-1. historical selectorのexact ordered exposure / category composition reportを再生成するoffline toolを用意する。
-2. category-proportional progressive interleaving prototypeをoffline-onlyで実装する。
-3. M/Rsem結果を参照せず、nestedness / category coverage / deterministic replay / no-outcome-inputを検証する。
-4. candidate algorithmのexact ruleをversioned machine-readable specへfreezeする。
-5. v3 budget gridとselection ruleを別途predeclareする。
-6. offline parity / safety gateを通す。
-7. explicit paid/live authorization後にのみP6-3 v3 calibrationを開始する。
+1. B2 / B3 exact selected-unit provenanceをoffline audit artifactへ追加する。
+2. `Exposure(B3) - Exposure(B2)`をpath / line / category単位で記録する。
+3. prototype blended selectorのstructural reportと比較する。
+4. exact selector ruleをoutcome-blindに決定する。
+5. machine-readable specとoffline verifierへfreezeする。
+6. v3 budget gridとselection ruleを別途predeclareする。
+7. offline parity / safety gateを通す。
+8. explicit paid/live authorization後にのみP6-3 v3 calibrationを開始する。
 
 この文書自体はpaid/live executionを認可しない。
 
 ---
 
-## 13. Provenance
+## 14. Provenance
 
 - P6-3 v2 result summary: `docs/findings/p6_3_v2_result_summary_ja.md`
 - raw v2 evidence: `docs/findings/evidence/p6-3-v2-live-calibration/state.json`
-- historical v2 source checkout: `62110faebc0fa748effa90cb0f44f7c05f479c10`
+- v2 live source checkout: `62110faebc0fa748effa90cb0f44f7c05f479c10`
+- v2 frozen structural manifest: `harness/frozen/p6-3-el-structural-freeze.json`
 - historical selector implementation: `harness/src/context/privileged-retrieval-controller.ts`
 - selector introduction commit: `c50532bf5c177a88ffb28001a12e40949c9e2349`
 - historical Stage 0.5 selector: `calibration/src/budget-assembler.ts`
 - relevant planning records: `docs/stage0_5_plan.md`, `docs/harness_stage0_plan.md`, `docs/stage1_plan.md`
+- v3 prototype branch: `p6-3-v3-selector-prototype`
+- v3 structural audit workflow run: `36434374075`
+- v3 structural audit artifact: `10974742369`
 
 P6-3 v2 remains historical calibration evidence and must not be pooled into future v3 primary M/Rsem estimates.
