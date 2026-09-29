@@ -5,6 +5,7 @@ import type { AgentResult, AgentToolEvent } from "../agent-backend/types";
 import { createOpenAIResearchStatelessARExecutorFactory } from "../agent-backend/openai/research-stateless-ar";
 import { createOpenAIResearchStatelessPRExecutorFactory } from "../agent-backend/openai/research-stateless-pr";
 import { ResearchStatelessProviderFailure } from "../agent-backend/research-stateless-provider-failure";
+import type { FixedEnvironmentBinding } from "./fixed-environment-runtime";
 import type {
   AgentRetrievedDecision,
 } from "./agent-retrieved-episode";
@@ -53,8 +54,9 @@ export async function runRetrievedCondition(args: {
   config: RunConfig;
   task: RetrievedTaskDescriptor;
   repositoryFiles: Readonly<Record<string, string>>;
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null;
 }): Promise<RetrievedConditionExecution> {
-  const { config, task, repositoryFiles } = args;
+  const { config, task, repositoryFiles, fixedEnvironment = null } = args;
   if (config.condition !== "PR" && config.condition !== "AR") {
     throw new Error(`Retrieved condition dispatcher received ${config.condition}`);
   }
@@ -71,6 +73,7 @@ export async function runRetrievedCondition(args: {
       visibleInstruction: task.visibleInstruction,
       protocolId: PROTOCOL_ID,
       repositoryFiles,
+      fixedEnvironment,
       workingSet,
       explorationBudget,
       executorFactory: createARExecutorFactory(config),
@@ -128,6 +131,7 @@ export async function runRetrievedCondition(args: {
     visibleInstruction: task.visibleInstruction,
     protocolId: PROTOCOL_ID,
     repositoryFiles,
+    fixedEnvironment,
     groundTruth: privileged.groundTruth,
     delta: privileged.delta,
     namingScheme: privileged.namingScheme,
