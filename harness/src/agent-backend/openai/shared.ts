@@ -130,7 +130,7 @@ export function buildOpenAIStructuredResponseRequestBody(args: {
     input: responseInput,
     reasoning: { effort: options.reasoningEffort },
     max_output_tokens: options.maxOutputTokens,
-    storeResponses: options.storeResponses,
+    store: options.storeResponses,
     truncation: "disabled",
     include: includeEncryptedReasoning ? ["reasoning.encrypted_content"] : undefined,
     service_tier: options.serviceTier,
