@@ -10,6 +10,7 @@ import {
   ResearchStatelessStepResult,
   ResearchStatelessToolDefinition,
 } from "../../context/research-stateless-episode";
+import { serializeFixedEnvironmentForModel } from "../../context/fixed-environment-runtime";
 import type { TokenUsage } from "../../types";
 import {
   ResearchStatelessProviderFailure,
@@ -184,8 +185,11 @@ export function createOpenAIResearchStatelessARExecutorFactory(
 export function buildARUserMessage(input: Readonly<ResearchStatelessModelInput>): string {
   const lines = [
     `CURRENT TASK:\n${input.visibleInstruction}`,
-    "\nCURRENT WORKING SET:",
   ];
+  if (input.fixedEnvironment) {
+    lines.push(`\n${serializeFixedEnvironmentForModel(input.fixedEnvironment)}`);
+  }
+  lines.push("\nCURRENT WORKING SET:");
   if (input.artifactEvidence.length === 0) {
     lines.push("\n<empty>");
   } else {
