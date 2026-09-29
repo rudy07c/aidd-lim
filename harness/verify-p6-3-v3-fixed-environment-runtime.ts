@@ -1,7 +1,9 @@
 import assert from "assert";
 import {
   createFixedEnvironmentBinding,
+  FIXED_ENVIRONMENT_LOG_SCHEMA_VERSION,
   fixedEnvironmentIdentity,
+  fixedEnvironmentLogSnapshot,
   serializeFixedEnvironmentForModel,
 } from "./src/context/fixed-environment-runtime";
 import { buildOpenAIUserMessage } from "./src/agent-backend/openai/shared";
@@ -187,25 +189,40 @@ async function main(): Promise<void> {
   }
 
   // 4. Artifact budget accounting is unchanged by E_fixed.
+  const agentInputWithoutFixed = makeAgentInput(null);
+  const agentInputWithFixed = makeAgentInput(binding);
   const artifactTokensBefore = countCanonicalFileContentTokens(
-    makeAgentInput(null).contextFiles
+    agentInputWithoutFixed.contextFiles
   );
   const artifactTokensAfter = countCanonicalFileContentTokens(
-    makeAgentInput(binding).contextFiles
+    agentInputWithFixed.contextFiles
   );
   assert.strictEqual(artifactTokensBefore, artifactTokensAfter);
+  assert.ok(!JSON.stringify(agentInputWithFixed.contextFiles).includes(binding.modelVisibleText));
 
-  // 5. Research-stateless fresh steps replay the same E_fixed without charging B_work.
+  // 5. Exact log snapshot reconstructs E_fixed without contaminating artifact context.
+  const snapshot = fixedEnvironmentLogSnapshot(binding);
+  assert.strictEqual(snapshot.schemaVersion, FIXED_ENVIRONMENT_LOG_SCHEMA_VERSION);
+  assert.strictEqual(snapshot.identity, identity1);
+  assert.strictEqual(snapshot.modelVisibleText, binding.modelVisibleText);
+  assert.strictEqual(snapshot.modelVisibleSha256, binding.modelVisibleSha256);
+  assert.strictEqual(snapshot.modelVisibleTokens, binding.modelVisibleTokens);
+  assert.strictEqual(snapshot.surfaceSpecSha256, binding.surfaceSpecSha256);
+  assert.strictEqual(snapshot.sourceRepositorySha256, binding.sourceRepositorySha256);
+  assert.ok(JSON.stringify(snapshot).includes(binding.modelVisibleText));
+  assert.ok(!JSON.stringify(agentInputWithFixed.contextFiles).includes(snapshot.modelVisibleSha256));
+
+  // 6. Research-stateless fresh steps replay the same E_fixed without charging B_work.
   const researchStateless = await verifyResearchStatelessPropagation(binding);
 
-  // 6. Changing model-visible environment text changes binding identity.
+  // 7. Changing model-visible environment text changes binding identity.
   const changed = makeBinding(
     "interface WorldProtocol { reset(seed: number): WorldState; applyOperation(state: WorldState, name: string): OperationResult; }"
   );
   assert.notStrictEqual(binding.modelVisibleSha256, changed.modelVisibleSha256);
   assert.notStrictEqual(fixedEnvironmentIdentity(binding), fixedEnvironmentIdentity(changed));
 
-  // 7. Invalid provenance is rejected before prompt construction.
+  // 8. Invalid provenance is rejected before prompt construction.
   assert.throws(
     () =>
       createFixedEnvironmentBinding({
@@ -225,6 +242,7 @@ async function main(): Promise<void> {
         modelVisibleTokens: binding.modelVisibleTokens,
         artifactTokens: artifactTokensBefore,
         historicalNoopPreserved: true,
+        logSnapshotSchemaVersion: snapshot.schemaVersion,
         fixedEnvironmentSectionCounts: {
           standardMutation: countFixedSections(rendered),
           privilegedRetrieved: countFixedSections(prRendered),
