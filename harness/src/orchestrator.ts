@@ -14,6 +14,7 @@ import { MockNoopBackend } from "./agent-backend/mock-noop";
 import { MockOracleBackend } from "./agent-backend/mock-oracle";
 import { AnthropicBackend } from "./agent-backend/anthropic";
 import { OpenAIBackend } from "./agent-backend/openai";
+import { OpenAIV3FixedEnvironmentBackend } from "./agent-backend/openai/v3-fixed-environment";
 import { assembleContext, estimateTokenCount } from "./context/assembler";
 import { assembleELTaskStaticExposure } from "./context/el-static-exposure-runtime";
 import type { ELStaticExposureLog } from "./context/static-exposure";
@@ -53,7 +54,8 @@ interface HeldOutTask {
 export type AgentBackendFactory = (
   config: RunConfig,
   taskId: string,
-  generation: number
+  generation: number,
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null
 ) => AgentBackend;
 
 const GPT_5_6_LUNA_CONTEXT_CAPACITY_TOKENS = 1_050_000;
@@ -197,7 +199,12 @@ async function runOneGeneration(
       fixedEnvironment
     );
 
-    const backend = backendFactory(config, task.taskId, generation);
+    const backend = backendFactory(
+      config,
+      task.taskId,
+      generation,
+      fixedEnvironment
+    );
     agentResult = await backend.run({
       contextFiles,
       visibleInstruction: task.visibleInstruction,
@@ -326,7 +333,12 @@ function contextCapacityTokensFor(
   );
 }
 
-function createBackend(config: RunConfig, taskId: string, _generation: number): AgentBackend {
+function createBackend(
+  config: RunConfig,
+  taskId: string,
+  _generation: number,
+  fixedEnvironment: Readonly<FixedEnvironmentBinding> | null = null
+): AgentBackend {
   switch (config.backend) {
     case "mock-noop":
       return new MockNoopBackend();
@@ -336,8 +348,8 @@ function createBackend(config: RunConfig, taskId: string, _generation: number): 
     }
     case "anthropic":
       return new AnthropicBackend(config.model ?? "claude-haiku-4-5-20251001");
-    case "openai":
-      return new OpenAIBackend({
+    case "openai": {
+      const options = {
         model: config.model ?? "gpt-5.6-luna",
         reasoningEffort: config.reasoningEffort ?? "medium",
         maxOutputTokens: config.maxOutputTokens ?? 8192,
@@ -347,7 +359,11 @@ function createBackend(config: RunConfig, taskId: string, _generation: number): 
         maxToolRounds: config.maxToolRounds ?? 4,
         serviceTier: config.serviceTier ?? "default",
         promptCacheMode: config.promptCacheMode ?? "implicit",
-      });
+      } as const;
+      return fixedEnvironment
+        ? new OpenAIV3FixedEnvironmentBackend(options)
+        : new OpenAIBackend(options);
+    }
   }
 }
 
