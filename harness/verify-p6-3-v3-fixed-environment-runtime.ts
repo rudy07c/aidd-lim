@@ -7,10 +7,18 @@ import {
 import { buildOpenAIUserMessage } from "./src/agent-backend/openai/shared";
 import { buildPRUserMessage } from "./src/agent-backend/openai/research-stateless-pr";
 import { buildARUserMessage } from "./src/agent-backend/openai/research-stateless-ar";
+import {
+  ResearchStatelessEpisodeRunner,
+  type ResearchStatelessModelInput,
+  type ResearchStatelessTransportAttestation,
+} from "./src/context/research-stateless-episode";
+import { ExplorationBudget } from "./src/context/exploration-budget";
+import { WorkingSetManager } from "./src/context/working-set-manager";
 import { countCanonicalFileContentTokens } from "./src/measurement/token-counter";
 
 const HEX_A = "a".repeat(64);
 const HEX_B = "b".repeat(64);
+const PROTOCOL_ID = "p6-3-v3-fixed-environment-verifier";
 
 function makeBinding(text = "interface WorldProtocol { reset(seed: number): WorldState; }") {
   return createFixedEnvironmentBinding({
@@ -46,7 +54,86 @@ function countFixedSections(value: string): number {
   return value.split("FIXED ENVIRONMENT SPECIFICATION:").length - 1;
 }
 
-function main(): void {
+function validTransport(): ResearchStatelessTransportAttestation {
+  return {
+    protocolId: PROTOCOL_ID,
+    previousResponseIdUsed: false,
+    providerConversationReused: false,
+    priorAssistantHistoryReplayed: false,
+    encryptedReasoningReplayed: false,
+    compactionStateReplayed: false,
+    otherOpaqueStateReplayed: false,
+    responseStored: false,
+  };
+}
+
+async function verifyResearchStatelessPropagation(
+  binding: ReturnType<typeof makeBinding>
+): Promise<Record<string, unknown>> {
+  const workingSet = new WorkingSetManager(505);
+  const exploration = new ExplorationBudget({
+    maxRetrievalOperations: 2,
+    maxCumulativeRetrievedTokens: 1000,
+    maxModelCalls: 2,
+    maxDecisionRounds: 2,
+  });
+  const seen: Readonly<ResearchStatelessModelInput>[] = [];
+  const runner = new ResearchStatelessEpisodeRunner({
+    condition: "PR",
+    taskId: "T-fixed-environment",
+    visibleInstruction: "Preserve the fixed environment contract.",
+    protocolId: PROTOCOL_ID,
+    fixedEnvironment: binding,
+    workingSet,
+    explorationBudget: exploration,
+    executorFactory: () => ({
+      async runFresh(input) {
+        seen.push(input);
+        return {
+          decision: "continue",
+          rawResponse: "offline",
+          transport: validTransport(),
+        };
+      },
+    }),
+  });
+
+  const before = workingSet.snapshot();
+  await runner.runStep();
+  await runner.runStep();
+  const after = workingSet.snapshot();
+  const telemetry = runner.telemetry();
+
+  assert.strictEqual(seen.length, 2);
+  for (const input of seen) {
+    assert.ok(input.fixedEnvironment);
+    assert.strictEqual(
+      fixedEnvironmentIdentity(input.fixedEnvironment!),
+      fixedEnvironmentIdentity(binding)
+    );
+    assert.strictEqual(input.artifactEvidence.length, 0);
+  }
+  assert.strictEqual(before.artifactTokens, 0);
+  assert.strictEqual(after.artifactTokens, 0);
+  assert.strictEqual(before.currentTokenUsage, after.currentTokenUsage);
+  assert.strictEqual(telemetry.workingSet.currentTokenUsage, 0);
+  assert.strictEqual(telemetry.steps.length, 2);
+  assert.strictEqual(
+    telemetry.steps[0].modelInputHash,
+    telemetry.steps[1].modelInputHash,
+    "unchanged E_fixed + unchanged empty working set should reconstruct identical fresh input"
+  );
+
+  return {
+    freshSteps: seen.length,
+    fixedEnvironmentIdentity: fixedEnvironmentIdentity(binding),
+    bWorkTokensBefore: before.currentTokenUsage,
+    bWorkTokensAfter: after.currentTokenUsage,
+    modelInputHashStable: telemetry.steps[0].modelInputHash === telemetry.steps[1].modelInputHash,
+  };
+}
+
+async function main(): Promise<void> {
   const binding = makeBinding();
 
   // 1. Binding has stable run-fixed identity and canonical model-visible accounting.
@@ -101,14 +188,17 @@ function main(): void {
   );
   assert.strictEqual(artifactTokensBefore, artifactTokensAfter);
 
-  // 5. Changing model-visible environment text changes binding identity.
+  // 5. Research-stateless fresh steps replay the same E_fixed without charging B_work.
+  const researchStateless = await verifyResearchStatelessPropagation(binding);
+
+  // 6. Changing model-visible environment text changes binding identity.
   const changed = makeBinding(
     "interface WorldProtocol { reset(seed: number): WorldState; applyOperation(state: WorldState, name: string): OperationResult; }"
   );
   assert.notStrictEqual(binding.modelVisibleSha256, changed.modelVisibleSha256);
   assert.notStrictEqual(fixedEnvironmentIdentity(binding), fixedEnvironmentIdentity(changed));
 
-  // 6. Invalid provenance is rejected before prompt construction.
+  // 7. Invalid provenance is rejected before prompt construction.
   assert.throws(
     () =>
       createFixedEnvironmentBinding({
@@ -133,6 +223,7 @@ function main(): void {
           privilegedRetrieved: countFixedSections(prRendered),
           agentRetrieved: countFixedSections(arRendered),
         },
+        researchStateless,
       },
       null,
       2
@@ -140,4 +231,7 @@ function main(): void {
   );
 }
 
-main();
+main().catch((error) => {
+  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+  process.exitCode = 1;
+});
