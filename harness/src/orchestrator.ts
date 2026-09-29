@@ -58,6 +58,13 @@ export type AgentBackendFactory = (
 
 const GPT_5_6_LUNA_CONTEXT_CAPACITY_TOKENS = 1_050_000;
 
+/**
+ * Run a lineage using one optional run-fixed E_fixed binding.
+ *
+ * The caller is responsible for creating the binding once from Generation-0/run-start
+ * material. This loop validates it once and reuses the exact same binding for every
+ * generation and every condition-specific execution path. Historical callers omit it.
+ */
 export async function runGenerationLoop(
   config: RunConfig,
   backendFactory: AgentBackendFactory = createBackend,
