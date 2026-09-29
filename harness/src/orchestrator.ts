@@ -17,6 +17,11 @@ import { OpenAIBackend } from "./agent-backend/openai";
 import { assembleContext, estimateTokenCount } from "./context/assembler";
 import { assembleELTaskStaticExposure } from "./context/el-static-exposure-runtime";
 import type { ELStaticExposureLog } from "./context/static-exposure";
+import type { FixedEnvironmentBinding } from "./context/fixed-environment-runtime";
+import {
+  assertFixedEnvironmentBinding,
+  fixedEnvironmentIdentity,
+} from "./context/fixed-environment-runtime";
 import {
   ObservableInteractionRecord,
   buildObservableInteractionRecord,
@@ -55,8 +60,10 @@ const GPT_5_6_LUNA_CONTEXT_CAPACITY_TOKENS = 1_050_000;
 
 export async function runGenerationLoop(
   config: RunConfig,
-  backendFactory: AgentBackendFactory = createBackend
+  backendFactory: AgentBackendFactory = createBackend,
+  fixedEnvironment: Readonly<FixedEnvironmentBinding> | null = null
 ): Promise<OrchestratorResult> {
+  if (fixedEnvironment) assertFixedEnvironmentBinding(fixedEnvironment);
   console.log(`[orchestrator] Starting experiment "${config.experimentId}" / lineage "${config.lineageId}"`);
   console.log(`[orchestrator] Backend: ${config.backend}, Condition: ${config.condition}, Generations: ${config.generations}`);
   const tasksPath = path.join(config.syntheticWorldDir, "heldout_tasks.json");
@@ -82,7 +89,8 @@ export async function runGenerationLoop(
         task,
         currentFiles,
         previousInteractionRecord,
-        backendFactory
+        backendFactory,
+        fixedEnvironment
       );
       currentFiles = repositoryAfter;
       previousInteractionRecord = interactionRecord;
@@ -106,7 +114,8 @@ async function runOneGeneration(
   task: HeldOutTask,
   currentFiles: Record<string, string>,
   previousInteractionRecord: ObservableInteractionRecord | null,
-  backendFactory: AgentBackendFactory
+  backendFactory: AgentBackendFactory,
+  fixedEnvironment: Readonly<FixedEnvironmentBinding> | null
 ): Promise<{
   logDir: string;
   repositoryAfter: Record<string, string>;
@@ -140,7 +149,7 @@ async function runOneGeneration(
     visibleInstruction: task.visibleInstruction,
     previousInteractionRecord: inheritedInteractionRecord,
     reservedOutputTokens: config.maxOutputTokens ?? 8192,
-    contextCapacityTokens: contextCapacityTokensFor(config),
+    contextCapacityTokens: contextCapacityTokensFor(config, fixedEnvironment),
   });
   if (feasibility.checked && feasibility.feasible === false) {
     throw new Error(
@@ -160,6 +169,7 @@ async function runOneGeneration(
       config,
       task,
       repositoryFiles: currentFiles,
+      fixedEnvironment,
     });
     agentResult = retrieved.agentResult;
     retrievedEpisodeLog = retrieved.retrievedLog;
@@ -167,7 +177,8 @@ async function runOneGeneration(
     agentPromptSummary = buildRetrievedPromptSummary(
       config.condition,
       task.visibleInstruction,
-      retrieved.retrievedLog
+      retrieved.retrievedLog,
+      fixedEnvironment
     );
   } else {
     actualContextTokens =
@@ -175,13 +186,15 @@ async function runOneGeneration(
     agentPromptSummary = buildAgentPromptSummary(
       contextFiles,
       task.visibleInstruction,
-      inheritedInteractionRecord
+      inheritedInteractionRecord,
+      fixedEnvironment
     );
 
     const backend = backendFactory(config, task.taskId, generation);
     agentResult = await backend.run({
       contextFiles,
       visibleInstruction: task.visibleInstruction,
+      fixedEnvironment,
       previousInteractionRecord: inheritedInteractionRecord,
       contextBudget: config.contextBudget,
     });
@@ -293,10 +306,17 @@ export function selectInheritedInteractionRecord(
   return condition.inheritsObservableHistory ? previousInteractionRecord : null;
 }
 
-function contextCapacityTokensFor(config: RunConfig): number | null {
+function contextCapacityTokensFor(
+  config: RunConfig,
+  fixedEnvironment: Readonly<FixedEnvironmentBinding> | null
+): number | null {
   if (config.backend !== "openai") return null;
   const model = config.model ?? "gpt-5.6-luna";
-  return model === "gpt-5.6-luna" ? GPT_5_6_LUNA_CONTEXT_CAPACITY_TOKENS : null;
+  if (model !== "gpt-5.6-luna") return null;
+  return Math.max(
+    0,
+    GPT_5_6_LUNA_CONTEXT_CAPACITY_TOKENS - (fixedEnvironment?.modelVisibleTokens ?? 0)
+  );
 }
 
 function createBackend(config: RunConfig, taskId: string, _generation: number): AgentBackend {
@@ -348,18 +368,23 @@ function loadDirRecursive(
 function buildAgentPromptSummary(
   contextFiles: Record<string, string>,
   visibleInstruction: string,
-  inheritedInteractionRecord: ObservableInteractionRecord | null
+  inheritedInteractionRecord: ObservableInteractionRecord | null,
+  fixedEnvironment: Readonly<FixedEnvironmentBinding> | null
 ): string {
   const history = inheritedInteractionRecord
     ? `[Previous observable interaction: ${inheritedInteractionRecord.contentHash}]\n`
     : "[Previous observable interaction: none]\n";
-  return `${history}[Context files: ${Object.keys(contextFiles).sort().join(", ")}]\n\nTask:\n${visibleInstruction}`;
+  const fixed = fixedEnvironment
+    ? `[Fixed environment: ${fixedEnvironmentIdentity(fixedEnvironment)}]\n`
+    : "";
+  return `${history}${fixed}[Context files: ${Object.keys(contextFiles).sort().join(", ")}]\n\nTask:\n${visibleInstruction}`;
 }
 
 function buildRetrievedPromptSummary(
   condition: RunConfig["condition"],
   visibleInstruction: string,
-  retrievedLog: RetrievedGenerationLog
+  retrievedLog: RetrievedGenerationLog,
+  fixedEnvironment: Readonly<FixedEnvironmentBinding> | null
 ): string {
   if (condition !== "PR" && condition !== "AR") {
     throw new Error(`Retrieved prompt summary received non-retrieved condition: ${condition}`);
@@ -369,6 +394,9 @@ function buildRetrievedPromptSummary(
     `[Retrieval policy: ${retrievedLog.retrievalPolicy.source}/${retrievedLog.retrievalPolicy.version}]`,
     `[B_work: ${retrievedLog.summary.bWork}, peak: ${retrievedLog.summary.peakWorkingSetTokens}]`,
     `[E_max retrievals: ${retrievedLog.summary.retrievalCount}, model calls: ${retrievedLog.summary.modelCalls}]`,
+    ...(fixedEnvironment
+      ? [`[Fixed environment: ${fixedEnvironmentIdentity(fixedEnvironment)}]`]
+      : []),
     `Task:\n${visibleInstruction}`,
   ].join("\n");
 }
