@@ -1,0 +1,56 @@
+name: P6-3 v3 Fixed Environment Runtime
+
+on:
+  push:
+    paths:
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/research-stateless-episode.ts'
+      - 'harness/src/context/retrieved-episode-runtime.ts'
+      - 'harness/src/context/agent-retrieved-episode.ts'
+      - 'harness/src/context/privileged-retrieved-episode.ts'
+      - 'harness/src/context/retrieved-condition-dispatcher.ts'
+      - 'harness/src/agent-backend/types.ts'
+      - 'harness/src/agent-backend/openai/research-stateless-pr.ts'
+      - 'harness/src/agent-backend/openai/research-stateless-ar.ts'
+      - 'harness/src/agent-backend/openai/v3-fixed-environment.ts'
+      - 'harness/src/orchestrator.ts'
+      - 'harness/verify-p6-3-v3-fixed-environment-runtime.ts'
+      - '.github/workflows/p6-3-v3-fixed-environment-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/research-stateless-episode.ts'
+      - 'harness/src/context/retrieved-episode-runtime.ts'
+      - 'harness/src/context/agent-retrieved-episode.ts'
+      - 'harness/src/context/privileged-retrieved-episode.ts'
+      - 'harness/src/context/retrieved-condition-dispatcher.ts'
+      - 'harness/src/agent-backend/types.ts'
+      - 'harness/src/agent-backend/openai/research-stateless-pr.ts'
+      - 'harness/src/agent-backend/openai/research-stateless-ar.ts'
+      - 'harness/src/agent-backend/openai/v3-fixed-environment.ts'
+      - 'harness/src/orchestrator.ts'
+      - 'harness/verify-p6-3-v3-fixed-environment-runtime.ts'
+      - '.github/workflows/p6-3-v3-fixed-environment-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-fixed-environment-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 v3 fixed environment runtime
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-fixed-environment-runtime.ts
