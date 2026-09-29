@@ -18,6 +18,8 @@ export type FixedEnvironmentPolicyVersion =
  *
  * The binding is created once from Generation 0 / run-start material and reused
  * unchanged across all generations and conditions in the same treatment family.
+ * `modelVisibleTokens` is diagnostic/provider-input accounting only: it MUST NOT be
+ * added to or subtracted from artifact-budget counters.
  */
 export interface FixedEnvironmentBinding {
   policyVersion: typeof WORLD_PROTOCOL_FIXED_ENVIRONMENT_POLICY_VERSION;
