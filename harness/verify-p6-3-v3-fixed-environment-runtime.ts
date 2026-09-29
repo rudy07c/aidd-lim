@@ -5,6 +5,7 @@ import {
   serializeFixedEnvironmentForModel,
 } from "./src/context/fixed-environment-runtime";
 import { buildOpenAIUserMessage } from "./src/agent-backend/openai/shared";
+import { buildOpenAIV3FixedEnvironmentUserMessage } from "./src/agent-backend/openai/v3-fixed-environment";
 import { buildPRUserMessage } from "./src/agent-backend/openai/research-stateless-pr";
 import { buildARUserMessage } from "./src/agent-backend/openai/research-stateless-ar";
 import {
@@ -143,10 +144,12 @@ async function main(): Promise<void> {
   assert.ok(binding.modelVisibleTokens > 0);
   assert.ok(Object.isFrozen(binding));
 
-  // 2. Historical/null input is byte-for-byte equivalent to omitted input.
+  // 2. Historical mutation prompt remains byte-for-byte unchanged and ignores E_fixed.
   const historicalOmitted = buildOpenAIUserMessage(makeAgentInput(undefined));
   const historicalNull = buildOpenAIUserMessage(makeAgentInput(null));
+  const historicalWithBinding = buildOpenAIUserMessage(makeAgentInput(binding));
   assert.strictEqual(historicalOmitted, historicalNull);
+  assert.strictEqual(historicalOmitted, historicalWithBinding);
   assert.ok(!historicalOmitted.includes("FIXED ENVIRONMENT SPECIFICATION"));
 
   const historicalPROmitted = buildPRUserMessage(makeResearchInput(undefined));
@@ -159,8 +162,12 @@ async function main(): Promise<void> {
   assert.strictEqual(historicalAROmitted, historicalARNull);
   assert.strictEqual(countFixedSections(historicalAROmitted), 0);
 
-  // 3. E_fixed renders exactly once and outside artifact-evidence sections.
-  const rendered = buildOpenAIUserMessage(makeAgentInput(binding));
+  // 3. V3 mutation + PR/AR render E_fixed exactly once and outside artifact evidence.
+  assert.throws(
+    () => buildOpenAIV3FixedEnvironmentUserMessage(makeAgentInput(null)),
+    /requires fixedEnvironment/
+  );
+  const rendered = buildOpenAIV3FixedEnvironmentUserMessage(makeAgentInput(binding));
   const fixedRendered = serializeFixedEnvironmentForModel(binding);
   assert.strictEqual(countFixedSections(rendered), 1);
   assert.ok(rendered.includes(fixedRendered));
