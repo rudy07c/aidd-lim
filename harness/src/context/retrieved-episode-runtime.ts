@@ -1,3 +1,4 @@
+import type { FixedEnvironmentBinding } from "./fixed-environment-runtime";
 import {
   ResearchStatelessCondition,
   ResearchStatelessEpisodeRunner,
@@ -67,6 +68,7 @@ export interface RetrievedEpisodeRuntimeOptions<TDecision, TFinal = unknown> {
   visibleInstruction: string;
   protocolId: string;
   repositoryFiles: Readonly<Record<string, string>>;
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null;
   workingSet: WorkingSetManager;
   explorationBudget: ExplorationBudget;
   executorFactory: ResearchStatelessStepExecutorFactory<TDecision>;
@@ -130,6 +132,7 @@ export class RetrievedEpisodeRuntime<TDecision, TFinal = unknown> {
       visibleInstruction: options.visibleInstruction,
       protocolId: options.protocolId,
       toolDefinitions: this.policy.toolDefinitions,
+      fixedEnvironment: options.fixedEnvironment ?? null,
       workingSet: options.workingSet,
       explorationBudget: options.explorationBudget,
       executorFactory: options.executorFactory,

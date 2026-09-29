@@ -1,3 +1,4 @@
+import type { FixedEnvironmentBinding } from "./fixed-environment-runtime";
 import {
   ResearchStatelessEpisodeTelemetry,
   ResearchStatelessStepExecutorFactory,
@@ -47,6 +48,7 @@ export interface AgentRetrievedEpisodeOptions<TFinal = unknown> {
   visibleInstruction: string;
   protocolId: string;
   repositoryFiles: Readonly<Record<string, string>>;
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null;
   workingSet: WorkingSetManager;
   explorationBudget: ExplorationBudget;
   executorFactory: ResearchStatelessStepExecutorFactory<AgentRetrievedDecision<TFinal>>;
@@ -68,6 +70,7 @@ export class AgentRetrievedEpisode<TFinal = unknown> {
       visibleInstruction: options.visibleInstruction,
       protocolId: options.protocolId,
       repositoryFiles: options.repositoryFiles,
+      fixedEnvironment: options.fixedEnvironment ?? null,
       workingSet: options.workingSet,
       explorationBudget: options.explorationBudget,
       executorFactory: options.executorFactory,

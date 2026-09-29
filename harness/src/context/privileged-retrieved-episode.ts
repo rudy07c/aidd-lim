@@ -1,3 +1,4 @@
+import type { FixedEnvironmentBinding } from "./fixed-environment-runtime";
 import {
   ResearchStatelessEpisodeTelemetry,
   ResearchStatelessStepExecutorFactory,
@@ -52,6 +53,7 @@ export interface PrivilegedRetrievedEpisodeOptions<TFinal = unknown> {
   visibleInstruction: string;
   protocolId: string;
   repositoryFiles: Readonly<Record<string, string>>;
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null;
   groundTruth: GroundTruth;
   delta: GroundTruthDelta;
   namingScheme: NamingScheme;
@@ -91,6 +93,7 @@ export class PrivilegedRetrievedEpisode<TFinal = unknown> {
       visibleInstruction: options.visibleInstruction,
       protocolId: options.protocolId,
       repositoryFiles: options.repositoryFiles,
+      fixedEnvironment: options.fixedEnvironment ?? null,
       workingSet: options.workingSet,
       explorationBudget: options.explorationBudget,
       executorFactory: options.executorFactory,

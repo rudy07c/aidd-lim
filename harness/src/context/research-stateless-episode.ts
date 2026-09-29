@@ -1,5 +1,7 @@
 import { createHash } from "crypto";
 import type { TokenUsage } from "../types";
+import type { FixedEnvironmentBinding } from "./fixed-environment-runtime";
+import { assertFixedEnvironmentBinding } from "./fixed-environment-runtime";
 import {
   ExplorationBudget,
   ExplorationBudgetExceededError,
@@ -52,6 +54,8 @@ export interface ResearchStatelessModelInput {
   visibleInstruction: string;
   artifactEvidence: readonly string[];
   explicitMemory: string | null;
+  /** Run-fixed environment input. Absent/null preserves the historical input shape. */
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null;
   /**
    * One-step observable tool/controller outcome from the immediately prior action.
    * Omitted by legacy/offline fixtures is equivalent to null; the production
@@ -174,6 +178,8 @@ export interface ResearchStatelessEpisodeOptions<TDecision = unknown> {
   protocolId: string;
   /** Fixed function schemas visible to every fresh step; no executable closures here. */
   toolDefinitions?: readonly ResearchStatelessToolDefinition[];
+  /** Same run-fixed E_fixed is replayed to every fresh step; never charged to B_work. */
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null;
   workingSet: WorkingSetManager;
   explorationBudget: ExplorationBudget;
   executorFactory: ResearchStatelessStepExecutorFactory<TDecision>;
@@ -186,6 +192,7 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
   private readonly visibleInstruction: string;
   private readonly protocolId: string;
   private readonly toolDefinitions: readonly ResearchStatelessToolDefinition[];
+  private readonly fixedEnvironment: Readonly<FixedEnvironmentBinding> | null;
   private readonly workingSet: WorkingSetManager;
   private readonly explorationBudget: ExplorationBudget;
   private readonly executorFactory: ResearchStatelessStepExecutorFactory<TDecision>;
@@ -215,6 +222,8 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
         })
       )
     );
+    this.fixedEnvironment = options.fixedEnvironment ?? null;
+    if (this.fixedEnvironment) assertFixedEnvironmentBinding(this.fixedEnvironment);
     this.workingSet = options.workingSet;
     this.explorationBudget = options.explorationBudget;
     this.executorFactory = options.executorFactory;
@@ -248,7 +257,8 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
     const modelInput = buildResearchStatelessModelInput(
       this.visibleInstruction,
       workingBefore,
-      runtimeObservationBefore
+      runtimeObservationBefore,
+      this.fixedEnvironment
     );
     const modelInputHash = hashModelInput(modelInput);
 
@@ -352,7 +362,8 @@ export class ResearchStatelessEpisodeRunner<TDecision = unknown> {
 export function buildResearchStatelessModelInput(
   visibleInstruction: string,
   snapshot: WorkingSetSnapshot,
-  runtimeObservation: ResearchStatelessRuntimeObservation | null = null
+  runtimeObservation: ResearchStatelessRuntimeObservation | null = null,
+  fixedEnvironment: Readonly<FixedEnvironmentBinding> | null = null
 ): Readonly<ResearchStatelessModelInput> {
   const artifactEvidence = snapshot.activeUnits.map((unit) =>
     serializeArtifactUnitForWorkingSet(unit)
@@ -373,12 +384,21 @@ export function buildResearchStatelessModelInput(
       `${snapshot.currentTokenUsage}/${snapshot.budgetTokens}`
     );
   }
+  if (fixedEnvironment) assertFixedEnvironmentBinding(fixedEnvironment);
 
-  return Object.freeze({
+  const base = {
     visibleInstruction,
     artifactEvidence: Object.freeze([...artifactEvidence]),
     explicitMemory: snapshot.explicitMemory?.content ?? null,
     runtimeObservation: cloneRuntimeObservation(runtimeObservation),
+  };
+  if (!fixedEnvironment) {
+    // Preserve the historical JSON/modelInputHash shape exactly when E_fixed is disabled.
+    return Object.freeze(base);
+  }
+  return Object.freeze({
+    ...base,
+    fixedEnvironment,
   });
 }
 
