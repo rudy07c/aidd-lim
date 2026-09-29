@@ -2,6 +2,7 @@
 // provider-neutral AgentBackend interface。
 
 import type { ObservableInteractionRecord } from "../context/observable-interaction";
+import type { FixedEnvironmentBinding } from "../context/fixed-environment-runtime";
 import {
   AgentExecutionStatus,
   ModelProvenance,
@@ -29,6 +30,11 @@ export interface AgentInput {
   /** condition runnerが最終的にmodelへ提示すると決めたartifact evidence。backendは再truncateしない。 */
   contextFiles: Record<string, string>;
   visibleInstruction: string;
+  /**
+   * Run-fixed environment specification, explicitly outside artifact budgets.
+   * Undefined/null preserves historical behavior (including all P6-3 v2 paths).
+   */
+  fixedEnvironment?: Readonly<FixedEnvironmentBinding> | null;
   /** MOIのみ。直前generation一世代分のobservable interaction record。 */
   previousInteractionRecord?: ObservableInteractionRecord | null;
   /** historical backends向け。OpenAI Stage 1 backendはbudget authorityとして使用しない。 */
