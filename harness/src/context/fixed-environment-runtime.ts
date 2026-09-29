@@ -7,6 +7,8 @@ import {
 export const FIXED_ENVIRONMENT_POLICY_NONE = "none" as const;
 export const WORLD_PROTOCOL_FIXED_ENVIRONMENT_POLICY_VERSION =
   "world-protocol-surface-v1" as const;
+export const FIXED_ENVIRONMENT_LOG_SCHEMA_VERSION =
+  "p6-3-v3-fixed-environment-binding-v1" as const;
 
 export type FixedEnvironmentPolicyVersion =
   | typeof FIXED_ENVIRONMENT_POLICY_NONE
@@ -24,6 +26,20 @@ export type FixedEnvironmentPolicyVersion =
 export interface FixedEnvironmentBinding {
   policyVersion: typeof WORLD_PROTOCOL_FIXED_ENVIRONMENT_POLICY_VERSION;
   sourceKind: "generation-zero";
+  sourceRepositorySha256: string;
+  surfaceSpecVersion: string;
+  surfaceSpecSha256: string;
+  modelVisibleText: string;
+  modelVisibleSha256: string;
+  modelVisibleTokens: number;
+  tokenCountMethod: typeof CANONICAL_TOKEN_COUNT_METHOD;
+}
+
+export interface FixedEnvironmentLogSnapshot {
+  schemaVersion: typeof FIXED_ENVIRONMENT_LOG_SCHEMA_VERSION;
+  identity: string;
+  policyVersion: FixedEnvironmentBinding["policyVersion"];
+  sourceKind: FixedEnvironmentBinding["sourceKind"];
   sourceRepositorySha256: string;
   surfaceSpecVersion: string;
   surfaceSpecSha256: string;
@@ -124,6 +140,26 @@ export function fixedEnvironmentIdentity(
     binding.surfaceSpecSha256,
     binding.modelVisibleSha256,
   ].join(":");
+}
+
+/** Exact, serializable reconstruction record for one run-fixed E_fixed binding. */
+export function fixedEnvironmentLogSnapshot(
+  binding: Readonly<FixedEnvironmentBinding>
+): Readonly<FixedEnvironmentLogSnapshot> {
+  assertFixedEnvironmentBinding(binding);
+  return Object.freeze({
+    schemaVersion: FIXED_ENVIRONMENT_LOG_SCHEMA_VERSION,
+    identity: fixedEnvironmentIdentity(binding),
+    policyVersion: binding.policyVersion,
+    sourceKind: binding.sourceKind,
+    sourceRepositorySha256: binding.sourceRepositorySha256,
+    surfaceSpecVersion: binding.surfaceSpecVersion,
+    surfaceSpecSha256: binding.surfaceSpecSha256,
+    modelVisibleText: binding.modelVisibleText,
+    modelVisibleSha256: binding.modelVisibleSha256,
+    modelVisibleTokens: binding.modelVisibleTokens,
+    tokenCountMethod: binding.tokenCountMethod,
+  });
 }
 
 function requireSha256(value: string, label: string): string {

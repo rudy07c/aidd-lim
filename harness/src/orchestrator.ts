@@ -22,6 +22,7 @@ import type { FixedEnvironmentBinding } from "./context/fixed-environment-runtim
 import {
   assertFixedEnvironmentBinding,
   fixedEnvironmentIdentity,
+  fixedEnvironmentLogSnapshot,
 } from "./context/fixed-environment-runtime";
 import {
   ObservableInteractionRecord,
@@ -301,6 +302,13 @@ async function runOneGeneration(
   };
 
   const logDir = writeGenerationLog(log, config.runsDir);
+  if (fixedEnvironment) {
+    fs.writeFileSync(
+      path.join(logDir, "fixed_environment.json"),
+      JSON.stringify(fixedEnvironmentLogSnapshot(fixedEnvironment), null, 2),
+      "utf8"
+    );
+  }
   if (elStaticExposureLog) {
     fs.writeFileSync(
       path.join(logDir, "el_static_exposure.json"),
