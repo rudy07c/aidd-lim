@@ -13,7 +13,6 @@ import {
   OBSERVABLE_WORKING_NOTE_MAX_CHARS,
   serializeObservableInteractionForSuccessor,
 } from "../../context/observable-interaction";
-import { serializeFixedEnvironmentForModel } from "../../context/fixed-environment-runtime";
 import { AgentInput, AgentTool } from "../types";
 
 export const OPENAI_PROMPT_VERSION = "stage1-worker-v3-moi";
@@ -90,17 +89,11 @@ export interface StructuredMutation {
 /**
  * Common AF/MOI user-prompt structure. The only intended difference is the presence of
  * PREVIOUS OBSERVABLE INTERACTION RECORD for MOI. Repository ordering is deterministic.
- *
- * fixedEnvironment is intentionally serialized in its own section and never folded into
- * CURRENT REPOSITORY, because it is outside artifact-evidence budgets.
  */
 export function buildOpenAIUserMessage(input: AgentInput): string {
   const lines: string[] = [
     `CURRENT TASK:\n${input.visibleInstruction}`,
   ];
-  if (input.fixedEnvironment) {
-    lines.push(`\n${serializeFixedEnvironmentForModel(input.fixedEnvironment)}`);
-  }
   if (input.previousInteractionRecord) {
     lines.push(
       `\nPREVIOUS OBSERVABLE INTERACTION RECORD:\n${serializeObservableInteractionForSuccessor(input.previousInteractionRecord)}`
