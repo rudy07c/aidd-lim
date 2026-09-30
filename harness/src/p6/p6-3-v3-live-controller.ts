@@ -11,11 +11,15 @@ import {
   type P63V3CalibrationCell,
   type P63V3PreparedCalibrationRun,
 } from "./p6-3-v3-calibration-runner";
+import {
+  requireP63V3ScientificValidity,
+  type P63V3ScientificValidity,
+} from "./p6-3-v3-scientific-validity";
 
 export const P6_3_V3_LIVE_CONTROLLER_VERSION =
-  "p6-3-v3-live-controller-v1" as const;
+  "p6-3-v3-live-controller-v2-validity" as const;
 export const P6_3_V3_LIVE_STATE_SCHEMA =
-  "p6-3-v3-live-calibration-state-v1" as const;
+  "p6-3-v3-live-calibration-state-v2-validity" as const;
 export const P6_3_V3_PAID_LIVE_AUTHORIZATION_FLAG =
   "--authorize-paid-live=P6-3-v3" as const;
 export const P6_3_V3_PAID_LIVE_AUTHORIZATION_ENV =
@@ -71,6 +75,8 @@ export interface P63V3AttemptRecord {
   readonly armKind: "EL" | "AF";
   readonly budgetTokens: number | "full";
   readonly attempt: number;
+  readonly rawValidity: P63V3ScientificValidity;
+  effectiveValidity: P63V3ScientificValidity;
   readonly rawFailureDomain: P63AttemptFailureDomain | "other";
   effectiveFailureDomain: P63AttemptFailureDomain | "other";
   infrastructureAdjudication: "not-applicable" | "pending" | "infrastructure-invalid";
@@ -239,7 +245,7 @@ export function assertP63V3PaidLiveRuntimeAuthorizationToken(
   const expectedDigest = authorizationDigest({
     checkoutGitSha: token.checkoutGitSha,
     planHash: token.planHash,
-    treatmentProvenanceHash: token.treatmentProvenanceHash,
+    treatmentProvenanceHash,
     fixedEnvironmentIdentity: token.fixedEnvironmentIdentity,
   });
   if (token.authorizationDigest !== expectedDigest) {
@@ -335,6 +341,14 @@ export function assertP63V3ResumeCompatible(args: {
   if (!Array.isArray(state.attempts) || !Array.isArray(state.interruptedAttempts)) {
     throw new Error("Resume refused: P6-3 v3 attempt journals are malformed");
   }
+  for (const attempt of state.attempts) {
+    if (
+      (attempt.rawValidity !== "valid" && attempt.rawValidity !== "infrastructure-invalid") ||
+      (attempt.effectiveValidity !== "valid" && attempt.effectiveValidity !== "infrastructure-invalid")
+    ) {
+      throw new Error("Resume refused: P6-3 v3 attempt scientific validity is malformed");
+    }
+  }
 }
 
 /**
@@ -403,12 +417,15 @@ export async function executeP63V3ControlledCalibration(args: {
     // artifact persistence throws after provider visibility, persisted inFlight
     // forces explicit interruption adjudication on resume.
     const outcome = await executor.execute(cell, attempt);
+    const validity = requireP63V3ScientificValidity(outcome);
     const artifactPath = await persistence.persistAttemptArtifact(
       cell,
       attempt,
       outcome.artifactPayload
     );
     const finishedAt = new Date().toISOString();
+    const requiresInfrastructureAdjudication =
+      validity === "infrastructure-invalid" || outcome.failureDomain === "infrastructure";
     const record: P63V3AttemptRecord = {
       sequence: cell.sequence,
       measurement: cell.measurement,
@@ -418,10 +435,12 @@ export async function executeP63V3ControlledCalibration(args: {
       armKind: cell.armKind,
       budgetTokens: cell.budgetTokens,
       attempt,
+      rawValidity: validity,
+      effectiveValidity: validity,
       rawFailureDomain: outcome.failureDomain,
       effectiveFailureDomain: outcome.failureDomain,
       infrastructureAdjudication:
-        outcome.failureDomain === "infrastructure" ? "pending" : "not-applicable",
+        requiresInfrastructureAdjudication ? "pending" : "not-applicable",
       adjudication: null,
       executionStatus: outcome.executionStatus,
       passed: outcome.passed,
@@ -439,14 +458,14 @@ export async function executeP63V3ControlledCalibration(args: {
     state.inFlight = null;
     state.estimatedCostUsd += outcome.estimatedCostUsd ?? 0;
 
-    if (outcome.failureDomain === "infrastructure") {
+    if (requiresInfrastructureAdjudication) {
       state.status = "needs-audit";
       state.auditFlag = {
         kind: "infrastructure-adjudication-required",
         sequence: cell.sequence,
         attempt,
         reason:
-          "P6-3 v3 infrastructure-domain outcome requires explicit adjudication before the logical cell may be replaced.",
+          `P6-3 v3 outcome requires explicit validity adjudication before the logical cell may be replaced or consumed (validity=${validity}, failureDomain=${outcome.failureDomain}).`,
         createdAt: finishedAt,
       };
       touch(state);
@@ -521,14 +540,13 @@ export function applyP63V3Adjudication(args: {
     adjudicatedAt: request.adjudicatedAt ?? new Date().toISOString(),
   };
 
-  if (target.rawFailureDomain === "infrastructure") {
-    if (target.infrastructureAdjudication !== "pending") {
-      throw new Error("P6-3 v3 infrastructure adjudication target is not pending");
-    }
+  if (target.infrastructureAdjudication === "pending") {
     target.adjudication = adjudication;
     if (request.finalDisposition === "infrastructure-invalid") {
       target.infrastructureAdjudication = "infrastructure-invalid";
-      target.effectiveFailureDomain = "infrastructure";
+      target.effectiveValidity = "infrastructure-invalid";
+      target.effectiveFailureDomain =
+        target.rawFailureDomain === "other" ? "infrastructure" : target.rawFailureDomain;
       applyInfrastructureInvalidTransition(
         state,
         target.attempt,
@@ -538,6 +556,7 @@ export function applyP63V3Adjudication(args: {
       return;
     }
     target.infrastructureAdjudication = "not-applicable";
+    target.effectiveValidity = "valid";
     target.effectiveFailureDomain =
       request.finalDisposition === "protocol-failure" ? "protocol" : "semantic";
     state.status = "running";
@@ -549,6 +568,7 @@ export function applyP63V3Adjudication(args: {
   if (target.rawFailureDomain === "other") {
     target.adjudication = adjudication;
     if (request.finalDisposition === "infrastructure-invalid") {
+      target.effectiveValidity = "infrastructure-invalid";
       target.effectiveFailureDomain = "infrastructure";
       target.infrastructureAdjudication = "infrastructure-invalid";
       applyInfrastructureInvalidTransition(
@@ -560,6 +580,7 @@ export function applyP63V3Adjudication(args: {
       return;
     }
     target.infrastructureAdjudication = "not-applicable";
+    target.effectiveValidity = "valid";
     target.effectiveFailureDomain =
       request.finalDisposition === "protocol-failure" ? "protocol" : "semantic";
     state.status = "running";
@@ -568,7 +589,7 @@ export function applyP63V3Adjudication(args: {
     return;
   }
   throw new Error(
-    `P6-3 v3 adjudication target raw failure domain is not audit-resolvable: ${target.rawFailureDomain}`
+    `P6-3 v3 adjudication target is not audit-resolvable: validity=${target.rawValidity}, failureDomain=${target.rawFailureDomain}`
   );
 }
 
