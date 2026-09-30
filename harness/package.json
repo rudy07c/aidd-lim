@@ -15,6 +15,8 @@
     "verify:p6-3-v3-generation-zero-fixed-environment": "ts-node verify-p6-3-v3-generation-zero-fixed-environment.ts",
     "verify:p6-3-v3-m-executor": "ts-node verify-p6-3-v3-m-executor.ts",
     "verify:p6-3-v3-rsem-executor": "ts-node verify-p6-3-v3-rsem-executor.ts",
+    "verify:p6-3-v3-final-entrypoint": "ts-node verify-p6-3-v3-final-prelive-entrypoint.ts",
+    "p6:el-calibration-v3": "ts-node p6-3-v3-calibration.ts",
     "verify:p6-3-structural-invariants": "ts-node verify-p6-3-structural-invariant-hardening.ts",
     "verify:p6-3-freeze-manifest": "ts-node verify-p6-3-el-structural-freeze-manifest.ts",
     "verify:p6-3-execution-protocol": "ts-node verify-p6-3-execution-protocol.ts",

@@ -1,0 +1,81 @@
+name: P6-3 v3 Final Pre-Live Entrypoint
+
+on:
+  push:
+    paths:
+      - 'harness/p6-3-v3-calibration.ts'
+      - 'harness/verify-p6-3-v3-final-prelive-entrypoint.ts'
+      - 'harness/src/p6/p6-3-v3-final-prelive-gate.ts'
+      - 'harness/src/p6/p6-3-v3-live-entrypoint.ts'
+      - 'harness/src/p6/p6-3-v3-live-controller.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-predeclaration.ts'
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/context/p6-3-v3-static-exposure-runtime.ts'
+      - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/frozen/p6-3-mutation-protocol-parity.json'
+      - 'harness/frozen/p6-3-rsem-protocol-parity.json'
+      - 'harness/package.json'
+      - 'calibration/fixtures/probe-bank-stage1.json'
+      - 'synthetic-world/**'
+      - 'docs/p6_3_v3_final_pre_live_entrypoint.md'
+      - '.github/workflows/p6-3-v3-final-prelive-entrypoint-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/p6-3-v3-calibration.ts'
+      - 'harness/verify-p6-3-v3-final-prelive-entrypoint.ts'
+      - 'harness/src/p6/p6-3-v3-final-prelive-gate.ts'
+      - 'harness/src/p6/p6-3-v3-live-entrypoint.ts'
+      - 'harness/src/p6/p6-3-v3-live-controller.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-predeclaration.ts'
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/context/p6-3-v3-static-exposure-runtime.ts'
+      - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/frozen/p6-3-mutation-protocol-parity.json'
+      - 'harness/frozen/p6-3-rsem-protocol-parity.json'
+      - 'harness/package.json'
+      - 'calibration/fixtures/probe-bank-stage1.json'
+      - 'synthetic-world/**'
+      - 'docs/p6_3_v3_final_pre_live_entrypoint.md'
+      - '.github/workflows/p6-3-v3-final-prelive-entrypoint-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-final-entrypoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 v3 final pre-live and entrypoint offline
+        working-directory: harness
+        env:
+          P6_3_V3_LIVE_EXECUTION_ALLOWED: '0'
+        run: npm run verify:p6-3-v3-final-entrypoint > p6-3-v3-final-prelive-entrypoint.json
+      - name: Upload final pre-live entrypoint receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-v3-final-prelive-entrypoint
+          path: harness/p6-3-v3-final-prelive-entrypoint.json
+          if-no-files-found: error
