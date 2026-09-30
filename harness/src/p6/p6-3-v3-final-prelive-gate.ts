@@ -110,6 +110,20 @@ export function runP63V3FinalPreLiveGate(
       runVerifier(harnessRoot, scratchRoot, script);
       return Object.freeze({ script, status: "pass" as const });
     });
+
+    // The receipt identifies the exact tracked checkout that was verified.
+    // Re-check both tracked cleanliness and HEAD after every verifier has run so
+    // no verifier-side mutation or concurrent checkout movement can be hidden
+    // behind a pre-verification SHA captured earlier.
+    assertTrackedWorktreeClean(repoRoot);
+    const checkoutGitShaAfterVerification = resolveCheckoutGitSha(repoRoot);
+    if (checkoutGitShaAfterVerification !== checkoutGitSha) {
+      throw new Error(
+        `P6-3 v3 final pre-live checkout changed during verification: ` +
+        `${checkoutGitSha} -> ${checkoutGitShaAfterVerification}`
+      );
+    }
+
     const receipt: P63V3FinalPreLiveReceipt = Object.freeze({
       schemaVersion: P6_3_V3_FINAL_PRELIVE_RECEIPT_SCHEMA,
       gateVersion: P6_3_V3_FINAL_PRELIVE_GATE_VERSION,
