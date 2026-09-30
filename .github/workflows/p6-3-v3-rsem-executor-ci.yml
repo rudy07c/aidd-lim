@@ -1,0 +1,54 @@
+name: P6-3 v3 Rsem Executor
+
+on:
+  push:
+    paths:
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/p6/p6-3-rsem-protocol-parity.ts'
+      - 'harness/src/p6/p6-3-live-calibration-runner.ts'
+      - 'harness/p6-af-baseline-live.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/verify-p6-3-v3-rsem-executor.ts'
+      - 'harness/package.json'
+      - 'harness/package-lock.json'
+      - 'docs/p6_3_v3_rsem_executor.md'
+      - '.github/workflows/p6-3-v3-rsem-executor-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/p6/p6-3-rsem-protocol-parity.ts'
+      - 'harness/src/p6/p6-3-live-calibration-runner.ts'
+      - 'harness/p6-af-baseline-live.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/verify-p6-3-v3-rsem-executor.ts'
+      - 'harness/package.json'
+      - 'harness/package-lock.json'
+      - 'docs/p6_3_v3_rsem_executor.md'
+      - '.github/workflows/p6-3-v3-rsem-executor-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-v3-rsem-executor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 v3 Rsem executor
+        working-directory: harness
+        run: npm run verify:p6-3-v3-rsem-executor
