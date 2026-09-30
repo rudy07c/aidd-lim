@@ -111,10 +111,17 @@ export function runP63V3FinalPreLiveGate(
       return Object.freeze({ script, status: "pass" as const });
     });
 
-    // The receipt identifies the exact tracked checkout that was verified.
-    // Re-check both tracked cleanliness and HEAD after every verifier has run so
-    // no verifier-side mutation or concurrent checkout movement can be hidden
-    // behind a pre-verification SHA captured earlier.
+    // Capture all evidence first, then make the final clean/HEAD check. This
+    // ensures the receipt cannot describe file bytes observed after the last
+    // exact-checkout validation.
+    const sourceEvidence = inspectFiles(repoRoot, P6_3_V3_FINAL_SOURCE_FILES);
+    const frozenEvidence = inspectFiles(repoRoot, P6_3_V3_FINAL_FROZEN_EVIDENCE_FILES);
+    const inputEvidence = inspectFiles(repoRoot, P6_3_V3_FINAL_INPUT_FILES);
+    const verifierEvidence = inspectFiles(
+      repoRoot,
+      P6_3_V3_FINAL_PRELIVE_VERIFIER_SCRIPTS.map((script) => `harness/${script}`)
+    );
+
     assertTrackedWorktreeClean(repoRoot);
     const checkoutGitShaAfterVerification = resolveCheckoutGitSha(repoRoot);
     if (checkoutGitShaAfterVerification !== checkoutGitSha) {
@@ -140,13 +147,10 @@ export function runP63V3FinalPreLiveGate(
       liveAuthorized: false,
       providerCallsMade: false,
       verifiers: Object.freeze(verifiers),
-      sourceEvidence: inspectFiles(repoRoot, P6_3_V3_FINAL_SOURCE_FILES),
-      frozenEvidence: inspectFiles(repoRoot, P6_3_V3_FINAL_FROZEN_EVIDENCE_FILES),
-      inputEvidence: inspectFiles(repoRoot, P6_3_V3_FINAL_INPUT_FILES),
-      verifierEvidence: inspectFiles(
-        repoRoot,
-        P6_3_V3_FINAL_PRELIVE_VERIFIER_SCRIPTS.map((script) => `harness/${script}`)
-      ),
+      sourceEvidence,
+      frozenEvidence,
+      inputEvidence,
+      verifierEvidence,
     });
     return Object.freeze({ receipt, [FINAL_PRELIVE_PASS_BRAND]: true as const });
   } finally {
@@ -178,6 +182,19 @@ export function assertP63V3FinalPreLiveGatePassToken(
   }
   if (receipt.verifiers.length !== P6_3_V3_FINAL_PRELIVE_VERIFIER_SCRIPTS.length) {
     throw new Error("P6-3 v3 final pre-live verifier receipt count mismatch");
+  }
+
+  // A pass token is valid only while the exact tracked checkout it verified is
+  // still active. This closes the gap between gate completion and the later
+  // provider-capable entrypoint/resume boundary.
+  const repoRoot = path.resolve(__dirname, "../../..");
+  assertTrackedWorktreeClean(repoRoot);
+  const currentCheckoutGitSha = resolveCheckoutGitSha(repoRoot);
+  if (currentCheckoutGitSha !== receipt.checkoutGitSha) {
+    throw new Error(
+      `P6-3 v3 final pre-live token checkout drifted: ` +
+      `${receipt.checkoutGitSha} -> ${currentCheckoutGitSha}`
+    );
   }
 }
 
