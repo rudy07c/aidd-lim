@@ -1,13 +1,14 @@
 # P6-3 v3 final pre-live gate and provider-capable entrypoint
 
-**Status:** final provider-capable wiring exists; no paid/provider run is authorized or executed by this document  
-**Final gate:** `p6-3-v3-final-prelive-gate-v1`  
+**Status:** hardened final provider-capable wiring exists; no paid/provider run is authorized or executed by this document  
+**Final gate:** `p6-3-v3-final-prelive-gate-v2-hardening`  
 **Live entrypoint:** `p6-3-v3-live-entrypoint-v1`  
+**Result finalizer:** `p6-3-v3-result-finalizer-v1`  
 **CLI:** `npm run p6:el-calibration-v3 -- ...`
 
 ## 1. Purpose
 
-All scientific design and lower-level v3 runtime pieces are already merged:
+The final pre-live boundary now covers the complete predeclared scientific path before any v3 paid/live outcome is observed:
 
 - fixed WorldProtocol environment surface;
 - Generation-0 fixed-environment binding/provenance;
@@ -16,19 +17,55 @@ All scientific design and lower-level v3 runtime pieces are already merged:
 - outcome-blind structural selector acceptance rule;
 - final artifact selector;
 - v3 calibration predeclaration;
-- v3 864-cell offline runner;
-- fail-closed live state controller.
+- v3 864-cell runner;
+- fail-closed live state controller;
+- independent Rsem scientific-validity propagation;
+- deterministic v3 result finalizer;
+- concrete runtime dependency/environment verification.
 
-This slice adds the final engineering boundary between those frozen pieces and a future paid/provider calibration.
+This gate changes no treatment parameter and makes no provider call.
 
-It does **not** change any treatment parameter and it does **not** execute a paid/provider run.
+## 2. Exact checkout and runtime-consumed filesystem boundary
 
-## 2. Final exact-checkout pre-live gate
+`runP63V3FinalPreLiveGate()` still requires the tracked checkout to be clean and records the exact `git rev-parse HEAD` SHA.
 
-`runP63V3FinalPreLiveGate()` first requires a clean tracked checkout and resolves the exact `git rev-parse HEAD` SHA.
+The older tracked-only cleanliness check intentionally ignores general untracked files. That is appropriate for run outputs, but the v3 production CLI recursively loads TypeScript files from:
 
-It then reconstructs the exact 864-cell plan and executes the merged offline verifier surfaces with provider credentials stripped from the environment:
+```text
+synthetic-world/repository
+```
 
+Therefore the hardened gate separately runs:
+
+```text
+git ls-files --others --exclude-standard -- synthetic-world/repository
+```
+
+and refuses any untracked `.ts` file under that runtime-consumed repository. Unrelated untracked files elsewhere, and non-TypeScript files that the repository loader does not consume, are not globally banned.
+
+The same targeted check is repeated when a final-gate pass token is consumed, closing the gate-to-provider TOCTOU boundary.
+
+## 3. Concrete runtime dependency provenance
+
+The gate verifies the environment that will actually run the experiment, not only dependency intent in `package.json`.
+
+It requires the existing `verify-package-version.ts`, which compares the installed OpenAI SDK version against `package-lock.json`.
+
+The receipt also persists:
+
+```text
+nodeVersion
+openaiSdkVersion
+packageLockSha256
+```
+
+The runtime environment is resolved before and after the offline verifier suite and must remain identical. It is resolved again when the pass token is consumed. A changed Node version, installed OpenAI SDK, or package-lock hash makes a previously-issued token invalid.
+
+## 4. Required offline verifier surface
+
+The hardened final gate runs the existing frozen/runtime verifiers with provider credentials removed, including:
+
+- installed package-version parity;
 - fixed WorldProtocol public-surface verifier;
 - Generation-0 fixed-environment builder verifier;
 - v3 M executor verifier;
@@ -39,45 +76,52 @@ It then reconstructs the exact 864-cell plan and executes the merged offline ver
 - calibration predeclaration verifier;
 - offline calibration runner verifier;
 - live-controller verifier;
+- **Rsem scientific-validity propagation verifier**;
+- **v3 deterministic result-finalizer verifier**;
 - mutation-protocol parity verifier;
 - Rsem-protocol parity verifier.
 
+The validity and finalizer gates are therefore part of the same pre-live receipt that authorizes entry into the provider-capable path; they are not merely independent CI checks.
+
 Scratch outputs from recomputed historical parity/freeze verifiers are redirected outside the repository checkout.
 
-After all verifier processes finish, the gate captures the exact source/input/evidence hashes, then **re-runs tracked-worktree cleanliness and re-resolves `HEAD`**. The gate emits a pass receipt only if the checkout is still clean and `HEAD` is byte-for-byte the same SHA captured before verification. This prevents a verifier-side tracked mutation or concurrent checkout movement from being hidden behind an earlier SHA.
+## 5. Receipt and evidence
 
-The resulting receipt contains hashes for:
+After all verifier processes finish, the gate captures the exact source/input/evidence hashes, rechecks tracked cleanliness, rechecks runtime-consumed untracked `.ts` files, re-resolves `HEAD`, and re-resolves runtime dependency provenance.
 
-- v3 scientific/runtime source files;
-- the provider-capable live entrypoint;
-- the production CLI;
-- frozen mutation/Rsem parity evidence;
-- task/probe/ground-truth inputs;
-- every verifier used by the final gate.
+The source evidence now includes the Step-2/Step-3 and runtime hardening surfaces, including:
 
-The receipt is deliberately non-self-authorizing:
+- `p6-3-v3-scientific-validity.ts`;
+- `p6-3-v3-result-finalizer.ts`;
+- `p6-3-v3-runtime-environment.ts`;
+- `p6-3-v3-finalize.ts`;
+- provider-capable live entrypoint and production CLI;
+- `package-lock.json` and package-version resolver.
+
+The hardened receipt is deliberately non-self-authorizing:
 
 ```text
 preflightPassed = true
 exactCleanCheckoutVerified = true
+runtimeConsumedUntrackedFilesVerified = true
 paidLiveAuthorizationRequired = true
 liveAuthorized = false
 providerCallsMade = false
 ```
 
-A pass token is also **revalidated when it is consumed**. `assertP63V3FinalPreLiveGatePassToken()` again requires the current tracked worktree to be clean and the current `HEAD` to equal `receipt.checkoutGitSha`. Therefore changing the tracked checkout after the gate but before the provider-capable entrypoint or resume boundary fails closed instead of reusing a stale receipt.
+It also records the result-finalizer version and runtime dependency provenance.
 
-## 3. Production CLI
+## 6. Production CLI and authorization order
 
-Dry mode is the default:
+Dry mode remains the default:
 
 ```bash
 npm run p6:el-calibration-v3
 ```
 
-It runs the entire final pre-live gate and stops without loading the provider-capable live entrypoint.
+It runs the complete hardened pre-live gate and stops without loading the provider-capable live entrypoint.
 
-A future paid/live invocation requires all of:
+A future paid/live invocation still requires all of:
 
 ```bash
 P6_3_V3_LIVE_EXECUTION_ALLOWED=1 \
@@ -89,7 +133,7 @@ npm run p6:el-calibration-v3 -- \
 
 The CLI checks, in order:
 
-1. final exact-checkout pre-live gate;
+1. hardened final pre-live gate;
 2. `--live` request;
 3. explicit `--authorize-paid-live=P6-3-v3`;
 4. `P6_3_V3_LIVE_EXECUTION_ALLOWED=1`;
@@ -97,11 +141,11 @@ The CLI checks, in order:
 
 Only after those checks does it dynamically import the provider-capable entrypoint.
 
-The entrypoint immediately revalidates the final pre-live token against the current tracked checkout. The controller then repeats the explicit authorization checks and binds the runtime token to checkout SHA, plan hash, treatment-provenance hash, and `E_fixed` identity.
+The entrypoint immediately revalidates the final token against the still-current checkout, targeted untracked-file boundary, and runtime dependency environment. The controller then binds the paid-live runtime token to checkout SHA, plan hash, treatment-provenance hash, and `E_fixed` identity.
 
-## 4. Run-directory persistence order
+## 7. Persistence, resume, and post-collection finalization
 
-For a new run, the provider-capable entrypoint resolves a run directory and persists the following before the first scientific executor call:
+For a new run, the provider-capable entrypoint persists before the first scientific executor call:
 
 ```text
 p6-3-v3-final-prelive-receipt.json
@@ -110,75 +154,42 @@ treatment-provenance.json
 state.json
 ```
 
-Attempt payloads are then committed as:
+Attempt payloads are committed under `attempts/`. The controller persists `inFlight` before each provider-visible attempt, so interruption cannot silently create an automatic duplicate call.
 
-```text
-attempts/<sequence>-<measurement>-<arm>-attempt-<n>.json
-```
+Resume recomputes the current hardened final gate and requires exact persisted provenance compatibility. Unresolved provider-visible `inFlight` attempts stop in `needs-audit` until explicitly adjudicated.
 
-The controller persists `inFlight` in `state.json` before each executor/provider-visible attempt. Therefore a process interruption cannot silently cause an automatic duplicate provider call on resume.
+Completing 864 cells does not itself select `B_expose`. After terminal completion, the provider-free finalizer must convert the state into exactly one valid scientific observation per sequence, enforce M=132 outcomes/arm and Rsem=144 probe judgments/arm, and only then call the already-predeclared co-gate.
 
-## 5. Frozen runtime inputs
+A missing/null Rsem primary score, membership drift, denominator drift, or unresolved invalid replacement fails finalization rather than being imputed or silently dropped.
 
-The live entrypoint loads M tasks in the exact predeclared 11-task ID order.
+## 8. Offline verification
 
-Rsem probes are loaded in the exact 12-probe ID order from the frozen Rsem parity manifest. The entrypoint rejects missing probes, non-boolean probes, or naming-scheme drift.
+`verify-p6-3-v3-runtime-environment.ts` verifies without provider calls that:
 
-Finite artifact exposures are constructed by the final v3 selector runtime. Because static exposure is repeat-independent, the provider executor caches only the 72 unique treatment exposures:
+- installed OpenAI SDK provenance resolves and matches the lockfile;
+- Node and lockfile provenance are recordable;
+- a tracked repository `.ts` is allowed;
+- an untracked non-TypeScript note is not treated as runtime input;
+- an untracked runtime-consumed `.ts` under `synthetic-world/repository` is rejected.
 
-```text
-11 M tasks × 6 arms + 1 Rsem bank × 6 arms = 72
-```
+`verify-p6-3-v3-final-prelive-entrypoint.ts` then executes the actual hardened final gate and verifies:
 
-This cache changes no treatment content; it prevents recomputing identical static evidence across 12 repeats.
-
-## 6. Resume and adjudication
-
-Resume is explicit:
-
-```bash
-npm run p6:el-calibration-v3 -- \
-  --live \
-  --authorize-paid-live=P6-3-v3 \
-  --resume runs/.../state.json
-```
-
-The CLI recomputes the current final gate. The live entrypoint then revalidates that gate against the still-current tracked checkout, prepares the treatment, and requires exact equality of the persisted:
-
-- final pre-live receipt;
-- run-fixed environment provenance;
-- treatment provenance;
-- controller checkout/plan/treatment/`E_fixed` identities.
-
-If the persisted state contains an unresolved provider-visible `inFlight` attempt, resume first converts it to `uncertain-in-flight-attempt` and stops in `needs-audit`; it does not retry.
-
-Adjudications are supplied from a JSON array with `--adjudications <path>`. Replacement remains limited to explicitly adjudicated infrastructure-invalid attempts and the existing three-attempt ceiling.
-
-## 7. Offline final verifier
-
-`verify-p6-3-v3-final-prelive-entrypoint.ts` verifies the final wiring without a provider call.
-
-It checks:
-
-- exact clean-checkout final gate passes all merged v3 verifier surfaces;
-- the receipt includes hashes for the live entrypoint and CLI;
-- production CLI dry-run succeeds with provider credentials removed;
-- direct production entrypoint refuses a missing API key when no test executor is injected;
-- the actual live-entrypoint persistence/exposure/controller path completes all 864 cells using mock M/Rsem executors;
+- the receipt carries runtime and result-finalizer provenance;
+- package-version, validity-propagation and result-finalizer verifiers are required by the gate;
+- hardened source files are included in receipt evidence;
+- dry CLI succeeds with provider credentials removed;
+- direct production entrypoint refuses a missing API key;
+- the actual entrypoint/persistence/controller path completes all 864 cells using mock M/Rsem executors;
 - exactly 792 M and 72 Rsem mock calls occur;
-- one run-fixed binding object is shared across the whole mocked run;
-- pre-live receipt, fixed-environment provenance, treatment provenance and state are persisted;
-- exactly 864 attempt artifacts are written;
-- completed resume verifies the same provenance and makes zero additional scientific calls;
-- CLI source order places the dynamic provider-capable import after all explicit authorization/API-key guards.
+- a single run-fixed `E_fixed` binding is shared;
+- completed resume makes zero additional scientific calls;
+- provider-capable dynamic import remains after all explicit authorization/API-key guards.
 
-The final gate itself additionally requires post-verifier tracked cleanliness/HEAD stability, and every pass-token consumption rechecks the current checkout SHA before entering provider-capable execution.
+Actual provider calls made by these verifiers: **0**.
 
-Actual provider calls made by the verifier: **0**.
+## 9. Scientific boundary remains unchanged
 
-## 8. Scientific boundary remains unchanged
-
-This final wiring does not alter:
+This hardening does not alter:
 
 - `B_expose` grid;
 - artifact chunk size;
@@ -193,4 +204,4 @@ This final wiring does not alter:
 - calibration-only status;
 - non-pooling of v2 primary estimates.
 
-The next action after this PR is **not automatically to run the provider**. The repository may be technically live-ready after all PR checks pass, but a paid calibration still requires an explicit operator decision/authorization at the time of execution.
+This completes Step 4 of `docs/p6_3_post_audit_execution_plan.md` once the PR is merged and all CI is green. Step 5 (main protection / operational work-order protection) remains required before any paid/live v3 calibration.
