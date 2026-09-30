@@ -77,11 +77,6 @@ export interface P63V3LiveEntrypointResult {
   readonly execution: ReturnType<typeof summarizeP63V3ExecutionState>;
 }
 
-/**
- * Provider-capable v3 entrypoint. The production CLI dynamically imports this
- * module only after the exact-checkout final pre-live gate, explicit paid flag,
- * v3 environment authorization, and OPENAI_API_KEY checks have passed.
- */
 export async function runP63V3LiveEntrypoint(
   args: P63V3LiveEntrypointArgs
 ): Promise<P63V3LiveEntrypointResult> {
@@ -213,7 +208,7 @@ function createProductionExecutor(args: {
       }
       return prepared.runStart.executeRSemCell({
         contextFiles: exposure.contextFiles,
-        probes: runtimeInputs.probes,
+        probes: [...runtimeInputs.probes],
         repeat: cell.repeat,
         exposure: exposure.evidence,
       });
@@ -229,7 +224,6 @@ function loadP63V3RuntimeInputs(repoRoot: string): RuntimeInputs {
     path.join(syntheticWorldDir, "repository"),
     repositoryFiles
   );
-
   const rawTasks = JSON.parse(
     fs.readFileSync(path.join(syntheticWorldDir, "heldout_tasks.json"), "utf8")
   ) as Array<Record<string, unknown>>;
