@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "p6-3-v2-budget-selection-result-v1",
+  "runClass": "scientific-calibration",
+  "calibrationOnly": true,
+  "confirmatoryStage1AEligible": false,
+  "sourceEvidence": {
+    "path": "docs/findings/evidence/p6-3-v2-live-calibration/state.json",
+    "sha256": "e5579674e5fa83c6b68b8f73b9ce67897f7de6cc5f24486f81b57f822ca03069",
+    "liveCheckoutGitSha": "62110faebc0fa748effa90cb0f44f7c05f479c10",
+    "planHash": "6f213e4244a3c12528ed6d27270c54fd18098ce5f3aacbe1f45b28f2c3c93622"
+  },
+  "analysisProvenance": {
+    "implementationCommitSha": "2f8b82afa17a86f705b57f26ed623b57dec9dd2c",
+    "workflowRunId": 36425009382,
+    "workflowArtifactId": 10970497640,
+    "workflowArtifactDigest": "sha256:ecb8b3fbf9ed671817cce4a4f91add91a66d944fab470b43253266ac01569360",
+    "analysisJsonSha256": "d5db2f572e7fba33abafee873bd18bed3f3c1c631a8740ac0524ea7b59e8e90b",
+    "typecheckPassed": true,
+    "analysisStepPassed": true,
+    "artifactUploadPassed": true
+  },
+  "integrity": {
+    "stateStatus": "completed",
+    "totalLogicalCells": 864,
+    "validScientificObservations": 864,
+    "committedAttempts": 866,
+    "infrastructureInvalidCommittedAttempts": 2,
+    "interruptedAttempts": 1,
+    "exhaustedLogicalCells": 0,
+    "unresolvedAuditFlag": false
+  },
+  "frozenRule": {
+    "calibrationRepeats": 12,
+    "primaryMTasks": 11,
+    "rsemPrimaryProbes": 12,
+    "deltaM": 0.09090909090909091,
+    "deltaR": 0.08333333333333333,
+    "mObservationsPerArm": 132,
+    "rsemProbeJudgmentsPerArm": 144,
+    "mDeltaUnits": 12,
+    "rsemDeltaUnits": 12,
+    "tieBreak": "smallest-qualifying-interior-budget"
+  },
+  "anchors": {
+    "M": {
+      "B0PassCount": 0,
+      "AFPassCount": 124,
+      "totalPerArm": 132,
+      "B0Mean": 0.0,
+      "AFMean": 0.9393939393939394,
+      "span": 0.9393939393939394,
+      "minimumRequiredSpan": 0.18181818181818182,
+      "sufficient": true
+    },
+    "Rsem": {
+      "B0Correct": 80,
+      "AFCorrect": 132,
+      "totalPerArm": 144,
+      "B0Mean": 0.5555555555555556,
+      "AFMean": 0.9166666666666666,
+      "span": 0.36111111111111105,
+      "minimumRequiredSpan": 0.16666666666666666,
+      "sufficient": true
+    }
+  },
+  "arms": [
+    {
+      "arm": "B0",
+      "budgetTokens": 0,
+      "M": { "passCount": 0, "total": 132, "mean": 0.0 },
+      "Rsem": { "correct": 80, "total": 144, "mean": 0.5555555555555556 },
+      "candidate": null
+    },
+    {
+      "arm": "B1",
+      "budgetTokens": 505,
+      "M": { "passCount": 0, "total": 132, "mean": 0.0, "aboveB0Units": 0, "belowAFUnits": 124, "passes": false },
+      "Rsem": { "correct": 72, "total": 144, "mean": 0.5, "aboveB0Units": -8, "belowAFUnits": 60, "passes": false },
+      "candidate": false
+    },
+    {
+      "arm": "B2",
+      "budgetTokens": 1011,
+      "M": { "passCount": 0, "total": 132, "mean": 0.0, "aboveB0Units": 0, "belowAFUnits": 124, "passes": false },
+      "Rsem": { "correct": 74, "total": 144, "mean": 0.5138888888888888, "aboveB0Units": -6, "belowAFUnits": 58, "passes": false },
+      "candidate": false
+    },
+    {
+      "arm": "B3",
+      "budgetTokens": 2023,
+      "M": { "passCount": 125, "total": 132, "mean": 0.946969696969697, "aboveB0Units": 125, "belowAFUnits": -1, "passes": false },
+      "Rsem": { "correct": 113, "total": 144, "mean": 0.7847222222222222, "aboveB0Units": 33, "belowAFUnits": 19, "passes": true },
+      "candidate": false
+    },
+    {
+      "arm": "B4",
+      "budgetTokens": 3034,
+      "M": { "passCount": 123, "total": 132, "mean": 0.9318181818181818, "aboveB0Units": 123, "belowAFUnits": 1, "passes": false },
+      "Rsem": { "correct": 142, "total": 144, "mean": 0.9861111111111112, "aboveB0Units": 62, "belowAFUnits": -10, "passes": false },
+      "candidate": false
+    },
+    {
+      "arm": "AF",
+      "budgetTokens": 4046,
+      "M": { "passCount": 124, "total": 132, "mean": 0.9393939393939394 },
+      "Rsem": { "correct": 132, "total": 144, "mean": 0.9166666666666666 },
+      "candidate": null
+    }
+  ],
+  "qualifyingInteriorArms": [],
+  "selectionStatus": "needs-design-audit",
+  "selectedBExpose": null,
+  "reasonCodes": ["NO_CONJUNCTIVE_INTERIOR_BUDGET"],
+  "interpretationBoundary": {
+    "formalEquivalenceClaimed": false,
+    "stage1AEffectClaimed": false,
+    "p63DataReusableForStage1A": false
+  }
+}
