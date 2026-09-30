@@ -204,6 +204,14 @@ function main(): void {
     !orchestratorSource.includes("generation-zero-fixed-environment"),
     "orchestrator.ts must not import the Generation-0 builder in this PR"
   );
+  assert.ok(
+    !orchestratorSource.includes("buildGenerationZeroFixedEnvironment"),
+    "orchestrator.ts must not call the Generation-0 builder in this PR"
+  );
+  assert.ok(
+    !orchestratorSource.includes("createFixedEnvironmentBinding"),
+    "orchestrator.ts must not call createFixedEnvironmentBinding directly"
+  );
 
   console.log(
     JSON.stringify(
