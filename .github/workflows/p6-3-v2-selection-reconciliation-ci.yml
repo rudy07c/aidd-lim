@@ -32,8 +32,21 @@ permissions:
   contents: read
 
 jobs:
-  verify:
-    name: Reconcile frozen v2 evidence to durable selection result
+  provenance:
+    name: Verify historical provenance identity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify historical analyzer/result blob identity
+        run: |
+          test "$(git hash-object harness/analyze-p6-3-v2-selection.ts)" = "ea1cff950cb9162e6582f0cfbebee3c16b30567b"
+          test "$(git hash-object docs/findings/evidence/p6-3-v2-selection-analysis/result.json)" = "858b08941362fab19e3cde44916dc092fe464417"
+      - name: Verify frozen v2 raw-evidence hash
+        run: |
+          test "$(sha256sum docs/findings/evidence/p6-3-v2-live-calibration/state.json | awk '{print $1}')" = "e5579674e5fa83c6b68b8f73b9ce67897f7de6cc5f24486f81b57f822ca03069"
+
+  machine-result:
+    name: Recompute and verify machine result
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -48,19 +61,26 @@ jobs:
       - name: Typecheck harness
         working-directory: harness
         run: npm run typecheck
-      - name: Verify historical analyzer/result blob identity
-        run: |
-          test "$(git hash-object harness/analyze-p6-3-v2-selection.ts)" = "ea1cff950cb9162e6582f0cfbebee3c16b30567b"
-          test "$(git hash-object docs/findings/evidence/p6-3-v2-selection-analysis/result.json)" = "858b08941362fab19e3cde44916dc092fe464417"
-      - name: Verify frozen v2 raw-evidence hash
-        run: |
-          test "$(sha256sum docs/findings/evidence/p6-3-v2-live-calibration/state.json | awk '{print $1}')" = "e5579674e5fa83c6b68b8f73b9ce67897f7de6cc5f24486f81b57f822ca03069"
       - name: Re-run historical analyzer on current-main lineage
         working-directory: harness
         run: npx ts-node analyze-p6-3-v2-selection.ts > /tmp/p6-3-v2-selection-analysis.json
       - name: Verify machine-result reconciliation
         working-directory: harness
         run: npx ts-node verify-p6-3-v2-selection-reconciliation.ts machine
+
+  current-summary:
+    name: Verify current summary against durable result
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
       - name: Verify current-summary reconciliation
         working-directory: harness
         run: npx ts-node verify-p6-3-v2-selection-reconciliation.ts summary
