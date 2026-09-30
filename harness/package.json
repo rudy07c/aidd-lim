@@ -13,6 +13,7 @@
     "verify:el-orchestrator": "ts-node verify-el-orchestrator.ts",
     "verify:p6-3-structural-freeze": "ts-node verify-p6-3-el-structural-freeze.ts",
     "verify:p6-3-v3-generation-zero-fixed-environment": "ts-node verify-p6-3-v3-generation-zero-fixed-environment.ts",
+    "verify:p6-3-v3-m-executor": "ts-node verify-p6-3-v3-m-executor.ts",
     "verify:p6-3-structural-invariants": "ts-node verify-p6-3-structural-invariant-hardening.ts",
     "verify:p6-3-freeze-manifest": "ts-node verify-p6-3-el-structural-freeze-manifest.ts",
     "verify:p6-3-execution-protocol": "ts-node verify-p6-3-execution-protocol.ts",
