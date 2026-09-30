@@ -195,7 +195,7 @@ export function authorizeP63V3PaidLiveInvocation(args: {
   const checkoutGitSha = requireSha(invocation.checkoutGitSha, "checkoutGitSha");
   assertPreparedSelfConsistent(prepared);
   const treatmentProvenanceHash = p63V3TreatmentProvenanceHash(prepared);
-  const authorizationDigest = authorizationDigest({
+  const authDigest = authorizationDigest({
     checkoutGitSha,
     planHash: prepared.planHash,
     treatmentProvenanceHash,
@@ -209,7 +209,7 @@ export function authorizeP63V3PaidLiveInvocation(args: {
     planHash: prepared.planHash,
     treatmentProvenanceHash,
     fixedEnvironmentIdentity: prepared.provenance.fixedEnvironmentIdentity,
-    authorizationDigest,
+    authorizationDigest: authDigest,
     [PAID_LIVE_RUNTIME_AUTH_BRAND]: true as const,
   });
 }
