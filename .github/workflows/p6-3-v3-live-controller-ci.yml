@@ -1,0 +1,59 @@
+name: P6-3 v3 Live Controller Offline
+
+on:
+  push:
+    paths:
+      - 'harness/src/p6/p6-3-v3-live-controller.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-predeclaration.ts'
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-execution-protocol.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/verify-p6-3-v3-live-controller.ts'
+      - 'synthetic-world/repository/**'
+      - 'docs/p6_3_v3_live_controller_offline.md'
+      - '.github/workflows/p6-3-v3-live-controller-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/p6/p6-3-v3-live-controller.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-predeclaration.ts'
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-execution-protocol.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/verify-p6-3-v3-live-controller.ts'
+      - 'synthetic-world/repository/**'
+      - 'docs/p6_3_v3_live_controller_offline.md'
+      - '.github/workflows/p6-3-v3-live-controller-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-controller:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 v3 live controller offline
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-live-controller.ts > p6-3-v3-live-controller-offline.json
+      - name: Upload controller receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-v3-live-controller-offline
+          path: harness/p6-3-v3-live-controller-offline.json
+          if-no-files-found: error
