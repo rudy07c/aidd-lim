@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'harness/assess-p6-3-v3-selector-promotion.ts'
+      - 'harness/verify-p6-3-v3-final-selector.ts'
+      - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
       - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
       - 'harness/src/context/blended-static-exposure-selector.ts'
       - 'harness/src/context/privileged-retrieval-controller.ts'
@@ -11,11 +13,14 @@ on:
       - 'harness/src/measurement/file-classification.ts'
       - 'harness/src/measurement/token-counter.ts'
       - 'harness/src/p6/af-baseline.ts'
+      - 'docs/p6_3_v3_final_selector_freeze.md'
       - 'synthetic-world/**'
       - '.github/workflows/p6-3-v3-selector-promotion-assessment-ci.yml'
   pull_request:
     paths:
       - 'harness/assess-p6-3-v3-selector-promotion.ts'
+      - 'harness/verify-p6-3-v3-final-selector.ts'
+      - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
       - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
       - 'harness/src/context/blended-static-exposure-selector.ts'
       - 'harness/src/context/privileged-retrieval-controller.ts'
@@ -23,6 +28,7 @@ on:
       - 'harness/src/measurement/file-classification.ts'
       - 'harness/src/measurement/token-counter.ts'
       - 'harness/src/p6/af-baseline.ts'
+      - 'docs/p6_3_v3_final_selector_freeze.md'
       - 'synthetic-world/**'
       - '.github/workflows/p6-3-v3-selector-promotion-assessment-ci.yml'
 
@@ -52,9 +58,14 @@ jobs:
       - name: Apply frozen rule to actual synthetic-world structure
         working-directory: harness
         run: npx ts-node assess-p6-3-v3-selector-promotion.ts > p6-3-v3-selector-promotion-assessment.json
+      - name: Verify promoted final selector
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-final-selector.ts > p6-3-v3-final-selector-verification.json
       - name: Upload promotion assessment
         uses: actions/upload-artifact@v4
         with:
           name: p6-3-v3-selector-promotion-assessment
-          path: harness/p6-3-v3-selector-promotion-assessment.json
+          path: |
+            harness/p6-3-v3-selector-promotion-assessment.json
+            harness/p6-3-v3-final-selector-verification.json
           if-no-files-found: error
