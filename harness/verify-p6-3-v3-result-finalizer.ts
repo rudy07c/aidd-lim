@@ -276,17 +276,20 @@ function main(): void {
   );
 
   const nullScore = cloneState(selectedState);
-  firstValidRSem(nullScore).semanticScore = null;
+  Object.assign(firstValidRSem(nullScore), { semanticScore: null });
   assert.throws(
     () => finalizeP63V3Calibration(nullScore),
     /semanticScore is missing; no zero-imputation or denominator drop is allowed/
   );
 
   const denominatorDrift = cloneState(selectedState);
-  firstValidRSem(denominatorDrift).diagnosticSummary = {
-    ...firstValidRSem(denominatorDrift).diagnosticSummary,
-    booleanTotal: 11,
-  };
+  const denominatorRow = firstValidRSem(denominatorDrift);
+  Object.assign(denominatorRow, {
+    diagnosticSummary: {
+      ...denominatorRow.diagnosticSummary,
+      booleanTotal: 11,
+    },
+  });
   assert.throws(
     () => finalizeP63V3Calibration(denominatorDrift),
     /probe denominator\/count drift/
