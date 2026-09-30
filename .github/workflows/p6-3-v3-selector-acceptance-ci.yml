@@ -1,0 +1,51 @@
+name: P6-3 v3 Selector Structural Acceptance
+
+on:
+  push:
+    paths:
+      - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
+      - 'harness/src/context/blended-static-exposure-selector.ts'
+      - 'harness/src/context/static-exposure.ts'
+      - 'harness/src/context/privileged-retrieval-controller.ts'
+      - 'harness/src/measurement/artifact-unit.ts'
+      - 'harness/src/measurement/file-classification.ts'
+      - 'harness/src/measurement/token-counter.ts'
+      - 'harness/verify-p6-3-v3-selector-structural-acceptance.ts'
+      - 'docs/p6_3_v3_selector_structural_acceptance.md'
+      - '.github/workflows/p6-3-v3-selector-acceptance-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
+      - 'harness/src/context/blended-static-exposure-selector.ts'
+      - 'harness/src/context/static-exposure.ts'
+      - 'harness/src/context/privileged-retrieval-controller.ts'
+      - 'harness/src/measurement/artifact-unit.ts'
+      - 'harness/src/measurement/file-classification.ts'
+      - 'harness/src/measurement/token-counter.ts'
+      - 'harness/verify-p6-3-v3-selector-structural-acceptance.ts'
+      - 'docs/p6_3_v3_selector_structural_acceptance.md'
+      - '.github/workflows/p6-3-v3-selector-acceptance-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-selector-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify outcome-blind selector structural acceptance rule
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-selector-structural-acceptance.ts
