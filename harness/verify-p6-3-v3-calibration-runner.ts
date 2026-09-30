@@ -87,11 +87,12 @@ async function main(): Promise<void> {
   const rawTasks = JSON.parse(
     fs.readFileSync(path.join(syntheticWorldDir, "heldout_tasks.json"), "utf8")
   ) as Array<Record<string, unknown>>;
+  const rawTaskById = new Map(rawTasks.map((raw) => [String(raw.taskId ?? ""), raw]));
   const primaryIds = P6_3_V3_CALIBRATION_PREDECLARATION.measurements.M.primaryTaskIds;
   const taskById = new Map<string, FixtureTask>();
-  for (const raw of rawTasks) {
-    const taskId = String(raw.taskId ?? "");
-    if (!primaryIds.includes(taskId as any)) continue;
+  for (const taskId of primaryIds) {
+    const raw = rawTaskById.get(taskId);
+    if (!raw) throw new Error(`${taskId}: frozen primary task missing`);
     if (typeof raw.visibleInstruction !== "string") throw new Error(`${taskId}: visibleInstruction missing`);
     if (typeof raw.namingScheme !== "string") throw new Error(`${taskId}: namingScheme missing`);
     if (!raw.groundTruthDelta || typeof raw.groundTruthDelta !== "object") {
