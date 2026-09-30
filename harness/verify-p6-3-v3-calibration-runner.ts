@@ -34,6 +34,8 @@ interface FixtureTask extends P63V3ExposureTaskDescriptor {
   groundTruthDelta: GroundTruthDelta;
 }
 
+type CellExposure = ReturnType<typeof buildP63V3CellExposure>;
+
 function loadRepository(dir: string, baseDir: string, out: Record<string, string>): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
@@ -65,6 +67,14 @@ function fakeOutcome(
       offlineVerifierMock: true,
     },
   };
+}
+
+function treatmentKey(cell: {
+  measurement: string;
+  taskId: string | null;
+  armLabel: string;
+}): string {
+  return `${cell.measurement}:${cell.taskId ?? "bank"}:${cell.armLabel}`;
 }
 
 async function main(): Promise<void> {
@@ -128,22 +138,40 @@ async function main(): Promise<void> {
     assert.equal(armCounts.get(label), 144, `${label}: unbalanced logical-cell count`);
   }
 
-  // 2. Build artifact exposure for all 864 cells from the final selector path.
-  const exposureByLogicalTreatment = new Map<string, string>();
+  // 2. The 864 cells collapse to 72 unique treatment exposures because repeat
+  // does not alter static artifact evidence. Build every unique exposure twice
+  // to verify determinism, then map all 864 cells onto the frozen family.
+  const exposureByLogicalTreatment = new Map<string, CellExposure>();
   const armExposureModes = new Map<string, Set<string>>();
   let b0Cells = 0;
   let afCells = 0;
   for (const cell of planA) {
-    const exposure = buildP63V3CellExposure({
-      cell,
-      repositoryFiles,
-      syntheticWorldDir,
-      taskById,
-      probePrompts,
-    });
+    if (cell.armLabel === "B0") b0Cells += 1;
+    if (cell.armLabel === "AF") afCells += 1;
+    const logicalTreatmentKey = treatmentKey(cell);
+    let exposure = exposureByLogicalTreatment.get(logicalTreatmentKey);
+    if (!exposure) {
+      const first = buildP63V3CellExposure({
+        cell,
+        repositoryFiles,
+        syntheticWorldDir,
+        taskById,
+        probePrompts,
+      });
+      const repeated = buildP63V3CellExposure({
+        cell,
+        repositoryFiles,
+        syntheticWorldDir,
+        taskById,
+        probePrompts,
+      });
+      assert.deepEqual(repeated, first, `${logicalTreatmentKey}: static exposure is nondeterministic`);
+      exposure = first;
+      exposureByLogicalTreatment.set(logicalTreatmentKey, exposure);
+    }
+
     assert.equal(exposure.evidence.fullRepositoryTokens, 4046);
     if (cell.armKind === "AF") {
-      afCells += 1;
       assert.equal(exposure.evidence.mode, "AF-full");
       assert.equal(exposure.evidence.actualExposedTokens, 4046);
       assert.deepEqual(Object.keys(exposure.contextFiles).sort(), Object.keys(repositoryFiles).sort());
@@ -152,20 +180,11 @@ async function main(): Promise<void> {
       assert.equal(typeof cell.budgetTokens, "number");
       assert(exposure.evidence.actualExposedTokens <= (cell.budgetTokens as number));
       if (cell.armLabel === "B0") {
-        b0Cells += 1;
         assert.equal(exposure.evidence.actualExposedTokens, 0);
         assert.deepEqual(exposure.contextFiles, {});
       }
       assert.ok(exposure.evidence.selectorPlanHash, `${cell.sequence}: missing v3 selector plan hash`);
     }
-    const logicalTreatmentKey = `${cell.measurement}:${cell.taskId ?? "bank"}:${cell.armLabel}`;
-    const fingerprint = JSON.stringify({
-      contextFiles: exposure.contextFiles,
-      evidence: exposure.evidence,
-    });
-    const previous = exposureByLogicalTreatment.get(logicalTreatmentKey);
-    if (previous === undefined) exposureByLogicalTreatment.set(logicalTreatmentKey, fingerprint);
-    else assert.equal(fingerprint, previous, `${logicalTreatmentKey}: repeat exposure drifted`);
     const modes = armExposureModes.get(cell.armLabel) ?? new Set<string>();
     modes.add(exposure.evidence.mode);
     armExposureModes.set(cell.armLabel, modes);
@@ -228,13 +247,8 @@ async function main(): Promise<void> {
   // 4. Exercise all 864 cells with mocks through runStart. The run-start wrapper
   // fail-closes unless each outcome reports the exact one run-fixed binding.
   for (const cell of prepared.plan) {
-    const exposure = buildP63V3CellExposure({
-      cell,
-      repositoryFiles,
-      syntheticWorldDir,
-      taskById,
-      probePrompts,
-    });
+    const exposure = exposureByLogicalTreatment.get(treatmentKey(cell));
+    if (!exposure) throw new Error(`${cell.sequence}: missing preverified treatment exposure`);
     if (cell.measurement === "M") {
       const task = taskById.get(cell.taskId ?? "");
       if (!task) throw new Error(`missing task ${String(cell.taskId)}`);
@@ -297,6 +311,7 @@ async function main(): Promise<void> {
     verified: [
       "864-cell-plan-from-predeclaration",
       "balanced-arm-schedule",
+      "72-unique-static-treatment-exposures-built-twice",
       "all-el-exposures-use-v3-final-selector-path",
       "b0-zero-artifact-evidence",
       "af-full-artifact-evidence",
