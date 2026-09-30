@@ -16,6 +16,8 @@ import {
   P6_3_V3_FINAL_SOURCE_FILES,
   runP63V3FinalPreLiveGate,
 } from "./src/p6/p6-3-v3-final-prelive-gate";
+import { P6_3_V3_RESULT_FINALIZER_VERSION } from "./src/p6/p6-3-v3-result-finalizer";
+import { P6_3_V3_RUNTIME_ENVIRONMENT_VERSION } from "./src/p6/p6-3-v3-runtime-environment";
 import {
   P6_3_V3_PAID_LIVE_AUTHORIZATION_ENV,
 } from "./src/p6/p6-3-v3-live-controller";
@@ -52,24 +54,46 @@ function mockOutcome(args: {
 
 async function main(): Promise<void> {
   const harnessRoot = __dirname;
-  const repoRoot = path.resolve(harnessRoot, "..");
   const token = runP63V3FinalPreLiveGate(harnessRoot);
   const receipt = token.receipt;
 
-  // 1. Final gate is exact-checkout, non-self-authorizing, and complete.
+  // 1. Final gate is exact-checkout/runtime, non-self-authorizing, and complete.
   assert.equal(receipt.schemaVersion, P6_3_V3_FINAL_PRELIVE_RECEIPT_SCHEMA);
   assert.equal(receipt.gateVersion, P6_3_V3_FINAL_PRELIVE_GATE_VERSION);
+  assert.equal(receipt.resultFinalizerVersion, P6_3_V3_RESULT_FINALIZER_VERSION);
   assert.equal(receipt.preflightPassed, true);
   assert.equal(receipt.exactCleanCheckoutVerified, true);
+  assert.equal(receipt.runtimeConsumedUntrackedFilesVerified, true);
   assert.equal(receipt.totalLogicalCells, 864);
   assert.equal(receipt.liveAuthorized, false);
   assert.equal(receipt.providerCallsMade, false);
+  assert.equal(receipt.runtimeEnvironment.version, P6_3_V3_RUNTIME_ENVIRONMENT_VERSION);
+  assert.match(receipt.runtimeEnvironment.nodeVersion, /^v\d+\.\d+\.\d+/);
+  assert.match(receipt.runtimeEnvironment.openaiSdkVersion, /^\d+\.\d+\.\d+(?:[-+].*)?$/);
+  assert.match(receipt.runtimeEnvironment.packageLockSha256, /^[0-9a-f]{64}$/);
   assert.equal(receipt.verifiers.length, P6_3_V3_FINAL_PRELIVE_VERIFIER_SCRIPTS.length);
   assert(receipt.verifiers.every((entry) => entry.status === "pass"));
+  const verifierNames = new Set(receipt.verifiers.map((entry) => entry.script));
+  for (const required of [
+    "verify-package-version.ts",
+    "verify-p6-3-v3-validity-propagation.ts",
+    "verify-p6-3-v3-result-finalizer.ts",
+  ]) {
+    assert(verifierNames.has(required), `missing hardened final-gate verifier: ${required}`);
+  }
   assert(/^[0-9a-f]{40}$/.test(receipt.checkoutGitSha));
   const sourcePaths = new Set(receipt.sourceEvidence.map((entry) => entry.path));
-  assert(sourcePaths.has("harness/src/p6/p6-3-v3-live-entrypoint.ts"));
-  assert(sourcePaths.has("harness/p6-3-v3-calibration.ts"));
+  for (const required of [
+    "harness/package-lock.json",
+    "harness/src/p6/p6-3-v3-scientific-validity.ts",
+    "harness/src/p6/p6-3-v3-result-finalizer.ts",
+    "harness/src/p6/p6-3-v3-runtime-environment.ts",
+    "harness/src/p6/p6-3-v3-live-entrypoint.ts",
+    "harness/p6-3-v3-finalize.ts",
+    "harness/p6-3-v3-calibration.ts",
+  ]) {
+    assert(sourcePaths.has(required), `missing hardened final-gate source evidence: ${required}`);
+  }
   assert.equal(sourcePaths.size, P6_3_V3_FINAL_SOURCE_FILES.length);
 
   // 2. Production CLI dry-run must complete the same final gate with provider
@@ -219,7 +243,9 @@ async function main(): Promise<void> {
     status: "ok",
     gateVersion: P6_3_V3_FINAL_PRELIVE_GATE_VERSION,
     entrypointVersion: P6_3_V3_LIVE_ENTRYPOINT_VERSION,
+    resultFinalizerVersion: receipt.resultFinalizerVersion,
     checkoutGitSha: receipt.checkoutGitSha,
+    runtimeEnvironment: receipt.runtimeEnvironment,
     verifierCount: receipt.verifiers.length,
     sourceEvidenceCount: receipt.sourceEvidence.length,
     logicalCells: 864,
@@ -232,8 +258,13 @@ async function main(): Promise<void> {
     actualPaidLiveRunPerformed: false,
     verified: [
       "exact-clean-checkout-final-gate",
+      "runtime-consumed-untracked-ts-rejected",
+      "installed-openai-sdk-package-lock-parity",
+      "runtime-dependency-provenance-in-receipt",
+      "rsem-validity-propagation-verifier-in-final-gate",
+      "result-finalizer-verifier-in-final-gate",
       "all-v3-offline-verifiers-pass",
-      "entrypoint-and-cli-hashes-in-gate-receipt",
+      "entrypoint-finalizer-and-cli-hashes-in-gate-receipt",
       "production-cli-dry-run-without-provider-credentials",
       "production-entrypoint-requires-api-key-without-test-injection",
       "mocked-production-entrypoint-completes-864-cells",

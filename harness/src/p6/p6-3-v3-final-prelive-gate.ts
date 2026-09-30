@@ -8,15 +8,22 @@ import { buildP63V3CalibrationPlan } from "./p6-3-v3-calibration-runner";
 import { P6_3_V3_CALIBRATION_PREDECLARATION_VERSION } from "./p6-3-v3-calibration-predeclaration";
 import { P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION } from "../context/p6-3-v3-final-static-exposure-selector";
 import { P6_3_V3_LIVE_CONTROLLER_VERSION } from "./p6-3-v3-live-controller";
+import { P6_3_V3_RESULT_FINALIZER_VERSION } from "./p6-3-v3-result-finalizer";
+import {
+  assertNoUntrackedP63V3RuntimeRepositoryFiles,
+  resolveP63V3RuntimeEnvironmentProvenance,
+  type P63V3RuntimeEnvironmentProvenance,
+} from "./p6-3-v3-runtime-environment";
 
 export const P6_3_V3_FINAL_PRELIVE_GATE_VERSION =
-  "p6-3-v3-final-prelive-gate-v1" as const;
+  "p6-3-v3-final-prelive-gate-v2-hardening" as const;
 export const P6_3_V3_FINAL_PRELIVE_RECEIPT_SCHEMA =
-  "p6-3-v3-final-prelive-receipt-v1" as const;
+  "p6-3-v3-final-prelive-receipt-v2-hardening" as const;
 
 const FINAL_PRELIVE_PASS_BRAND: unique symbol = Symbol("p6-3-v3-final-prelive-pass");
 
 export const P6_3_V3_FINAL_PRELIVE_VERIFIER_SCRIPTS = Object.freeze([
+  "verify-package-version.ts",
   "verify-p6-3-v3-fixed-protocol-spec.ts",
   "verify-p6-3-v3-generation-zero-fixed-environment.ts",
   "verify-p6-3-v3-m-executor.ts",
@@ -27,11 +34,15 @@ export const P6_3_V3_FINAL_PRELIVE_VERIFIER_SCRIPTS = Object.freeze([
   "verify-p6-3-v3-calibration-predeclaration.ts",
   "verify-p6-3-v3-calibration-runner.ts",
   "verify-p6-3-v3-live-controller.ts",
+  "verify-p6-3-v3-validity-propagation.ts",
+  "verify-p6-3-v3-result-finalizer.ts",
   "verify-p6-3-mutation-protocol-parity.ts",
   "verify-p6-3-rsem-protocol-parity.ts",
 ] as const);
 
 export const P6_3_V3_FINAL_SOURCE_FILES = Object.freeze([
+  "harness/package-lock.json",
+  "harness/src/agent-backend/package-version.ts",
   "harness/src/context/fixed-world-protocol-spec.ts",
   "harness/src/context/generation-zero-fixed-environment.ts",
   "harness/src/context/fixed-environment-runtime.ts",
@@ -43,9 +54,13 @@ export const P6_3_V3_FINAL_SOURCE_FILES = Object.freeze([
   "harness/src/p6/p6-3-v3-run-start.ts",
   "harness/src/p6/p6-3-v3-calibration-predeclaration.ts",
   "harness/src/p6/p6-3-v3-calibration-runner.ts",
+  "harness/src/p6/p6-3-v3-scientific-validity.ts",
   "harness/src/p6/p6-3-v3-live-controller.ts",
+  "harness/src/p6/p6-3-v3-result-finalizer.ts",
+  "harness/src/p6/p6-3-v3-runtime-environment.ts",
   "harness/src/p6/p6-3-v3-final-prelive-gate.ts",
   "harness/src/p6/p6-3-v3-live-entrypoint.ts",
+  "harness/p6-3-v3-finalize.ts",
   "harness/p6-3-v3-calibration.ts",
 ] as const);
 
@@ -76,8 +91,11 @@ export interface P63V3FinalPreLiveReceipt {
   readonly predeclarationVersion: typeof P6_3_V3_CALIBRATION_PREDECLARATION_VERSION;
   readonly finalSelectorVersion: typeof P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION;
   readonly liveControllerVersion: typeof P6_3_V3_LIVE_CONTROLLER_VERSION;
+  readonly resultFinalizerVersion: typeof P6_3_V3_RESULT_FINALIZER_VERSION;
   readonly preflightPassed: true;
   readonly exactCleanCheckoutVerified: true;
+  readonly runtimeConsumedUntrackedFilesVerified: true;
+  readonly runtimeEnvironment: Readonly<P63V3RuntimeEnvironmentProvenance>;
   readonly paidLiveAuthorizationRequired: true;
   readonly liveAuthorized: false;
   readonly providerCallsMade: false;
@@ -98,7 +116,9 @@ export function runP63V3FinalPreLiveGate(
 ): P63V3FinalPreLiveGatePassToken {
   const repoRoot = path.resolve(harnessRoot, "..");
   assertTrackedWorktreeClean(repoRoot);
+  assertNoUntrackedP63V3RuntimeRepositoryFiles(repoRoot);
   const checkoutGitSha = resolveCheckoutGitSha(repoRoot);
+  const runtimeEnvironmentBefore = resolveP63V3RuntimeEnvironmentProvenance(harnessRoot);
   const plan = buildP63V3CalibrationPlan();
   if (plan.length !== 864) {
     throw new Error(`P6-3 v3 final pre-live requires 864 logical cells, got ${plan.length}`);
@@ -111,9 +131,9 @@ export function runP63V3FinalPreLiveGate(
       return Object.freeze({ script, status: "pass" as const });
     });
 
-    // Capture all evidence first, then make the final clean/HEAD check. This
-    // ensures the receipt cannot describe file bytes observed after the last
-    // exact-checkout validation.
+    // Capture all evidence first, then make the final checkout/runtime checks.
+    // This ensures the receipt cannot describe bytes or dependencies observed
+    // after the final exact-environment validation.
     const sourceEvidence = inspectFiles(repoRoot, P6_3_V3_FINAL_SOURCE_FILES);
     const frozenEvidence = inspectFiles(repoRoot, P6_3_V3_FINAL_FROZEN_EVIDENCE_FILES);
     const inputEvidence = inspectFiles(repoRoot, P6_3_V3_FINAL_INPUT_FILES);
@@ -123,12 +143,17 @@ export function runP63V3FinalPreLiveGate(
     );
 
     assertTrackedWorktreeClean(repoRoot);
+    assertNoUntrackedP63V3RuntimeRepositoryFiles(repoRoot);
     const checkoutGitShaAfterVerification = resolveCheckoutGitSha(repoRoot);
     if (checkoutGitShaAfterVerification !== checkoutGitSha) {
       throw new Error(
         `P6-3 v3 final pre-live checkout changed during verification: ` +
         `${checkoutGitSha} -> ${checkoutGitShaAfterVerification}`
       );
+    }
+    const runtimeEnvironment = resolveP63V3RuntimeEnvironmentProvenance(harnessRoot);
+    if (!sameRuntimeEnvironment(runtimeEnvironmentBefore, runtimeEnvironment)) {
+      throw new Error("P6-3 v3 final pre-live runtime dependency environment changed during verification");
     }
 
     const receipt: P63V3FinalPreLiveReceipt = Object.freeze({
@@ -141,8 +166,11 @@ export function runP63V3FinalPreLiveGate(
       predeclarationVersion: P6_3_V3_CALIBRATION_PREDECLARATION_VERSION,
       finalSelectorVersion: P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION,
       liveControllerVersion: P6_3_V3_LIVE_CONTROLLER_VERSION,
+      resultFinalizerVersion: P6_3_V3_RESULT_FINALIZER_VERSION,
       preflightPassed: true,
       exactCleanCheckoutVerified: true,
+      runtimeConsumedUntrackedFilesVerified: true,
+      runtimeEnvironment,
       paidLiveAuthorizationRequired: true,
       liveAuthorized: false,
       providerCallsMade: false,
@@ -168,8 +196,10 @@ export function assertP63V3FinalPreLiveGatePassToken(
   if (
     receipt.schemaVersion !== P6_3_V3_FINAL_PRELIVE_RECEIPT_SCHEMA ||
     receipt.gateVersion !== P6_3_V3_FINAL_PRELIVE_GATE_VERSION ||
+    receipt.resultFinalizerVersion !== P6_3_V3_RESULT_FINALIZER_VERSION ||
     receipt.preflightPassed !== true ||
     receipt.exactCleanCheckoutVerified !== true ||
+    receipt.runtimeConsumedUntrackedFilesVerified !== true ||
     receipt.calibrationOnly !== true ||
     receipt.confirmatoryStage1AEligible !== false ||
     receipt.totalLogicalCells !== 864 ||
@@ -184,17 +214,23 @@ export function assertP63V3FinalPreLiveGatePassToken(
     throw new Error("P6-3 v3 final pre-live verifier receipt count mismatch");
   }
 
-  // A pass token is valid only while the exact tracked checkout it verified is
-  // still active. This closes the gap between gate completion and the later
-  // provider-capable entrypoint/resume boundary.
+  // A pass token is valid only while the exact checkout and runtime environment
+  // it verified are still active. This closes the gap between gate completion
+  // and the later provider-capable entrypoint/resume boundary.
   const repoRoot = path.resolve(__dirname, "../../..");
+  const harnessRoot = path.resolve(__dirname, "../..");
   assertTrackedWorktreeClean(repoRoot);
+  assertNoUntrackedP63V3RuntimeRepositoryFiles(repoRoot);
   const currentCheckoutGitSha = resolveCheckoutGitSha(repoRoot);
   if (currentCheckoutGitSha !== receipt.checkoutGitSha) {
     throw new Error(
       `P6-3 v3 final pre-live token checkout drifted: ` +
       `${receipt.checkoutGitSha} -> ${currentCheckoutGitSha}`
     );
+  }
+  const currentRuntimeEnvironment = resolveP63V3RuntimeEnvironmentProvenance(harnessRoot);
+  if (!sameRuntimeEnvironment(receipt.runtimeEnvironment, currentRuntimeEnvironment)) {
+    throw new Error("P6-3 v3 final pre-live token runtime dependency environment drifted");
   }
 }
 
@@ -273,4 +309,16 @@ function inspectFile(repoRoot: string, repoRelativePath: string): P63V3FinalPreL
     path: repoRelativePath,
     sha256: crypto.createHash("sha256").update(fs.readFileSync(absolute)).digest("hex"),
   });
+}
+
+function sameRuntimeEnvironment(
+  a: Readonly<P63V3RuntimeEnvironmentProvenance>,
+  b: Readonly<P63V3RuntimeEnvironmentProvenance>
+): boolean {
+  return (
+    a.version === b.version &&
+    a.nodeVersion === b.nodeVersion &&
+    a.openaiSdkVersion === b.openaiSdkVersion &&
+    a.packageLockSha256 === b.packageLockSha256
+  );
 }

@@ -4,8 +4,16 @@ on:
   push:
     paths:
       - 'harness/p6-3-v3-calibration.ts'
+      - 'harness/p6-3-v3-finalize.ts'
       - 'harness/verify-p6-3-v3-final-prelive-entrypoint.ts'
+      - 'harness/verify-p6-3-v3-runtime-environment.ts'
+      - 'harness/verify-p6-3-v3-validity-propagation.ts'
+      - 'harness/verify-p6-3-v3-result-finalizer.ts'
+      - 'harness/verify-package-version.ts'
       - 'harness/src/p6/p6-3-v3-final-prelive-gate.ts'
+      - 'harness/src/p6/p6-3-v3-runtime-environment.ts'
+      - 'harness/src/p6/p6-3-v3-result-finalizer.ts'
+      - 'harness/src/p6/p6-3-v3-scientific-validity.ts'
       - 'harness/src/p6/p6-3-v3-live-entrypoint.ts'
       - 'harness/src/p6/p6-3-v3-live-controller.ts'
       - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
@@ -13,6 +21,7 @@ on:
       - 'harness/src/p6/p6-3-v3-run-start.ts'
       - 'harness/src/p6/p6-3-v3-m-executor.ts'
       - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/agent-backend/package-version.ts'
       - 'harness/src/context/p6-3-v3-static-exposure-runtime.ts'
       - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
       - 'harness/src/context/fixed-environment-runtime.ts'
@@ -20,6 +29,7 @@ on:
       - 'harness/frozen/p6-3-mutation-protocol-parity.json'
       - 'harness/frozen/p6-3-rsem-protocol-parity.json'
       - 'harness/package.json'
+      - 'harness/package-lock.json'
       - 'calibration/fixtures/probe-bank-stage1.json'
       - 'synthetic-world/**'
       - 'docs/p6_3_v3_final_pre_live_entrypoint.md'
@@ -27,8 +37,16 @@ on:
   pull_request:
     paths:
       - 'harness/p6-3-v3-calibration.ts'
+      - 'harness/p6-3-v3-finalize.ts'
       - 'harness/verify-p6-3-v3-final-prelive-entrypoint.ts'
+      - 'harness/verify-p6-3-v3-runtime-environment.ts'
+      - 'harness/verify-p6-3-v3-validity-propagation.ts'
+      - 'harness/verify-p6-3-v3-result-finalizer.ts'
+      - 'harness/verify-package-version.ts'
       - 'harness/src/p6/p6-3-v3-final-prelive-gate.ts'
+      - 'harness/src/p6/p6-3-v3-runtime-environment.ts'
+      - 'harness/src/p6/p6-3-v3-result-finalizer.ts'
+      - 'harness/src/p6/p6-3-v3-scientific-validity.ts'
       - 'harness/src/p6/p6-3-v3-live-entrypoint.ts'
       - 'harness/src/p6/p6-3-v3-live-controller.ts'
       - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
@@ -36,6 +54,7 @@ on:
       - 'harness/src/p6/p6-3-v3-run-start.ts'
       - 'harness/src/p6/p6-3-v3-m-executor.ts'
       - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/agent-backend/package-version.ts'
       - 'harness/src/context/p6-3-v3-static-exposure-runtime.ts'
       - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
       - 'harness/src/context/fixed-environment-runtime.ts'
@@ -43,6 +62,7 @@ on:
       - 'harness/frozen/p6-3-mutation-protocol-parity.json'
       - 'harness/frozen/p6-3-rsem-protocol-parity.json'
       - 'harness/package.json'
+      - 'harness/package-lock.json'
       - 'calibration/fixtures/probe-bank-stage1.json'
       - 'synthetic-world/**'
       - 'docs/p6_3_v3_final_pre_live_entrypoint.md'
@@ -68,6 +88,9 @@ jobs:
       - name: Typecheck harness
         working-directory: harness
         run: npm run typecheck
+      - name: Verify P6-3 v3 runtime environment hardening
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-runtime-environment.ts
       - name: Verify P6-3 v3 final pre-live and entrypoint offline
         working-directory: harness
         env:
