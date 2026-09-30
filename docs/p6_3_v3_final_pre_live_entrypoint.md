@@ -44,6 +44,8 @@ It then reconstructs the exact 864-cell plan and executes the merged offline ver
 
 Scratch outputs from recomputed historical parity/freeze verifiers are redirected outside the repository checkout.
 
+After all verifier processes finish, the gate captures the exact source/input/evidence hashes, then **re-runs tracked-worktree cleanliness and re-resolves `HEAD`**. The gate emits a pass receipt only if the checkout is still clean and `HEAD` is byte-for-byte the same SHA captured before verification. This prevents a verifier-side tracked mutation or concurrent checkout movement from being hidden behind an earlier SHA.
+
 The resulting receipt contains hashes for:
 
 - v3 scientific/runtime source files;
@@ -62,6 +64,8 @@ paidLiveAuthorizationRequired = true
 liveAuthorized = false
 providerCallsMade = false
 ```
+
+A pass token is also **revalidated when it is consumed**. `assertP63V3FinalPreLiveGatePassToken()` again requires the current tracked worktree to be clean and the current `HEAD` to equal `receipt.checkoutGitSha`. Therefore changing the tracked checkout after the gate but before the provider-capable entrypoint or resume boundary fails closed instead of reusing a stale receipt.
 
 ## 3. Production CLI
 
@@ -93,7 +97,7 @@ The CLI checks, in order:
 
 Only after those checks does it dynamically import the provider-capable entrypoint.
 
-The controller repeats the explicit authorization checks and binds the runtime token to checkout SHA, plan hash, treatment-provenance hash, and `E_fixed` identity.
+The entrypoint immediately revalidates the final pre-live token against the current tracked checkout. The controller then repeats the explicit authorization checks and binds the runtime token to checkout SHA, plan hash, treatment-provenance hash, and `E_fixed` identity.
 
 ## 4. Run-directory persistence order
 
@@ -139,7 +143,7 @@ npm run p6:el-calibration-v3 -- \
   --resume runs/.../state.json
 ```
 
-The entrypoint recomputes the current final gate and prepared treatment, then requires exact equality of the persisted:
+The CLI recomputes the current final gate. The live entrypoint then revalidates that gate against the still-current tracked checkout, prepares the treatment, and requires exact equality of the persisted:
 
 - final pre-live receipt;
 - run-fixed environment provenance;
@@ -167,6 +171,8 @@ It checks:
 - exactly 864 attempt artifacts are written;
 - completed resume verifies the same provenance and makes zero additional scientific calls;
 - CLI source order places the dynamic provider-capable import after all explicit authorization/API-key guards.
+
+The final gate itself additionally requires post-verifier tracked cleanliness/HEAD stability, and every pass-token consumption rechecks the current checkout SHA before entering provider-capable execution.
 
 Actual provider calls made by the verifier: **0**.
 
