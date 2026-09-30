@@ -45,6 +45,8 @@ export const P6_3_V3_FINAL_SOURCE_FILES = Object.freeze([
   "harness/src/p6/p6-3-v3-calibration-runner.ts",
   "harness/src/p6/p6-3-v3-live-controller.ts",
   "harness/src/p6/p6-3-v3-final-prelive-gate.ts",
+  "harness/src/p6/p6-3-v3-live-entrypoint.ts",
+  "harness/p6-3-v3-calibration.ts",
 ] as const);
 
 export const P6_3_V3_FINAL_FROZEN_EVIDENCE_FILES = Object.freeze([
