@@ -58,6 +58,9 @@ jobs:
       - name: Re-run historical analyzer on current-main lineage
         working-directory: harness
         run: npx ts-node analyze-p6-3-v2-selection.ts > /tmp/p6-3-v2-selection-analysis.json
-      - name: Verify durable result and current summary reconciliation
+      - name: Verify machine-result reconciliation
         working-directory: harness
-        run: npx ts-node verify-p6-3-v2-selection-reconciliation.ts
+        run: npx ts-node verify-p6-3-v2-selection-reconciliation.ts machine
+      - name: Verify current-summary reconciliation
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v2-selection-reconciliation.ts summary
