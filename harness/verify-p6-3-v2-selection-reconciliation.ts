@@ -37,7 +37,15 @@ function byArm<T extends { arm: string }>(rows: readonly T[], arm: string): T {
   return row;
 }
 
-function main(): void {
+function loadAnalysisAndDurable(): { analysis: ReturnType<typeof analyzeP63V2Selection>; durable: any } {
+  const state = JSON.parse(fs.readFileSync(statePath, "utf8")) as P63V2CalibrationState;
+  return {
+    analysis: analyzeP63V2Selection(state),
+    durable: JSON.parse(fs.readFileSync(resultPath, "utf8")) as any,
+  };
+}
+
+function verifyProvenance(): void {
   assert.equal(
     gitBlobSha1(analyzerPath),
     HISTORICAL_ANALYZER_GIT_BLOB,
@@ -53,10 +61,10 @@ function main(): void {
     P6_3_V2_LIVE_EVIDENCE_SHA256,
     "frozen P6-3 v2 raw evidence changed"
   );
+}
 
-  const state = JSON.parse(fs.readFileSync(statePath, "utf8")) as P63V2CalibrationState;
-  const analysis = analyzeP63V2Selection(state);
-  const durable = JSON.parse(fs.readFileSync(resultPath, "utf8")) as any;
+function verifyMachineResult(): void {
+  const { analysis, durable } = loadAnalysisAndDurable();
 
   assert.equal(analysis.source.repoPath, durable.sourceEvidence.path);
   assert.equal(analysis.source.sha256, durable.sourceEvidence.sha256);
@@ -132,8 +140,12 @@ function main(): void {
   assert.deepEqual(analysis.selectedBExpose, durable.selectedBExpose);
   assert.deepEqual(analysis.reasonCodes, durable.reasonCodes);
   assert.deepEqual(analysis.interpretationBoundary, durable.interpretationBoundary);
+}
 
+function verifyCurrentSummary(): void {
+  const durable = JSON.parse(fs.readFileSync(resultPath, "utf8")) as any;
   const summary = fs.readFileSync(summaryPath, "utf8");
+
   for (const durableArm of durable.arms as any[]) {
     const line = summary
       .split("\n")
@@ -148,12 +160,22 @@ function main(): void {
       `${durableArm.arm}: current summary Rsem count drifted from machine result`
     );
   }
+
   assert.ok(summary.includes("qualifyingInteriorArms = []"));
   assert.ok(summary.includes("selectedBExpose = null"));
   assert.ok(summary.includes("selectionStatus = needs-design-audit"));
   assert.ok(summary.includes("reason = NO_CONJUNCTIVE_INTERIOR_BUDGET"));
+}
 
-  console.log("P6-3 v2 selection reconciliation verification passed");
+function main(): void {
+  const scope = process.argv[2] ?? "all";
+  if (scope === "provenance" || scope === "all") verifyProvenance();
+  if (scope === "machine" || scope === "all") verifyMachineResult();
+  if (scope === "summary" || scope === "all") verifyCurrentSummary();
+  if (!["provenance", "machine", "summary", "all"].includes(scope)) {
+    throw new Error(`unknown reconciliation verification scope: ${scope}`);
+  }
+  console.log(`P6-3 v2 selection reconciliation verification passed (${scope})`);
 }
 
 main();
