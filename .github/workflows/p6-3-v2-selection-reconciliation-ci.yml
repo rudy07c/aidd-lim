@@ -5,6 +5,7 @@ on:
     paths:
       - 'harness/analyze-p6-3-v2-selection.ts'
       - 'harness/verify-p6-3-v2-selection-reconciliation.ts'
+      - 'harness/verify-p6-3-v2-selection-summary-reconciliation.ts'
       - 'harness/package-lock.json'
       - 'harness/src/p6/af-baseline.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
@@ -18,6 +19,7 @@ on:
     paths:
       - 'harness/analyze-p6-3-v2-selection.ts'
       - 'harness/verify-p6-3-v2-selection-reconciliation.ts'
+      - 'harness/verify-p6-3-v2-selection-summary-reconciliation.ts'
       - 'harness/package-lock.json'
       - 'harness/src/p6/af-baseline.ts'
       - 'harness/src/p6/p6-3-live-calibration-runner.ts'
@@ -83,4 +85,4 @@ jobs:
         run: npm ci
       - name: Verify current-summary reconciliation
         working-directory: harness
-        run: npx ts-node verify-p6-3-v2-selection-reconciliation.ts summary
+        run: npx ts-node verify-p6-3-v2-selection-summary-reconciliation.ts
