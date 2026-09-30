@@ -11,6 +11,12 @@ export type P63V3ScientificValidity = "valid" | "infrastructure-invalid";
  * result under `artifactPayload.result`, including `validity`. This bridge makes
  * that independent axis explicit at the v3 controller boundary without changing
  * historical executor/failure-domain semantics.
+ *
+ * Two historical combinations are unambiguous even when a legacy offline mock
+ * omits the explicit field: `infrastructure` is necessarily
+ * `infrastructure-invalid`, and `executionStatus=ok` + `failureDomain=none` is
+ * necessarily `valid`. Ambiguous semantic/protocol/system/other outcomes remain
+ * fail-closed unless explicit validity is present.
  */
 export function requireP63V3ScientificValidity(
   outcome: Readonly<P63CellOutcome>
@@ -29,13 +35,19 @@ export function requireP63V3ScientificValidity(
       `P6-3 v3 scientific validity mismatch between diagnostic and artifact result: ${diagnostic} != ${artifactValidity}`
     );
   }
-  const validity = diagnostic ?? artifactValidity;
-  if (validity === null) {
-    throw new Error(
-      "P6-3 v3 outcome is missing scientific validity; refusing to classify the observation from failureDomain alone"
-    );
+  const explicitValidity = diagnostic ?? artifactValidity;
+  if (explicitValidity !== null) return explicitValidity;
+
+  if (outcome.failureDomain === "infrastructure") {
+    return "infrastructure-invalid";
   }
-  return validity;
+  if (outcome.failureDomain === "none" && outcome.executionStatus === "ok") {
+    return "valid";
+  }
+
+  throw new Error(
+    `P6-3 v3 outcome is missing scientific validity for ambiguous failure semantics: executionStatus=${outcome.executionStatus}, failureDomain=${outcome.failureDomain}`
+  );
 }
 
 function normalizeValidity(value: unknown): P63V3ScientificValidity | null {
