@@ -28,32 +28,36 @@ const v3ExecutorPath = path.join(harnessDir, "src", "p6", "p6-3-v3-m-executor.ts
 const historicalExecutorPath = path.join(harnessDir, "src", "p6", "p6-3-live-executors.ts");
 const v3Source = fs.readFileSync(v3ExecutorPath, "utf8");
 const historicalSource = fs.readFileSync(historicalExecutorPath, "utf8");
+const v3ExecutableSource = stripComments(v3Source);
+const historicalExecutableSource = stripComments(historicalSource);
 
 // 1. PR B is additive: historical executeP63MCell/executeP63RSemCell remain the
 //    only functions in the historical executor file, and no v3 executor/backend
 //    wiring is introduced there.
-assert.ok(historicalSource.includes("export async function executeP63MCell"));
-assert.ok(historicalSource.includes("export async function executeP63RSemCell"));
-assert.ok(!historicalSource.includes("executeP63V3MCell"));
-assert.ok(!historicalSource.includes("OpenAIV3FixedEnvironmentBackend"));
-assert.ok(!historicalSource.includes("p6-3-v3-m-executor"));
+assert.ok(historicalExecutableSource.includes("export async function executeP63MCell"));
+assert.ok(historicalExecutableSource.includes("export async function executeP63RSemCell"));
+assert.ok(!historicalExecutableSource.includes("executeP63V3MCell"));
+assert.ok(!historicalExecutableSource.includes("OpenAIV3FixedEnvironmentBackend"));
+assert.ok(!historicalExecutableSource.includes("p6-3-v3-m-executor"));
 
 // 2. The v3 executor is a distinct, versioned production surface.
 assert.equal(P6_3_V3_M_EXECUTOR_VERSION, "p6-3-v3-m-executor-v1");
-assert.ok(v3Source.includes("export async function executeP63V3MCell"));
+assert.ok(v3ExecutableSource.includes("export async function executeP63V3MCell"));
 
 // 3. The executor consumes an already-built binding. It must never construct
-//    E_fixed itself or import the Generation-0 builder.
-assert.ok(!v3Source.includes("generation-zero-fixed-environment"));
-assert.ok(!v3Source.includes("buildGenerationZeroFixedEnvironment"));
-assert.ok(!v3Source.includes("createFixedEnvironmentBinding"));
-assert.ok(v3Source.includes("assertFixedEnvironmentBinding(args.fixedEnvironment)"));
+//    E_fixed itself or import the Generation-0 builder. Comments are stripped
+//    before these checks so documentation of the prohibition is not mistaken
+//    for an executable reference.
+assert.ok(!v3ExecutableSource.includes("generation-zero-fixed-environment"));
+assert.ok(!v3ExecutableSource.includes("buildGenerationZeroFixedEnvironment"));
+assert.ok(!v3ExecutableSource.includes("createFixedEnvironmentBinding"));
+assert.ok(v3ExecutableSource.includes("assertFixedEnvironmentBinding(args.fixedEnvironment)"));
 
 // 4. The only mutation backend used by PR B is the dedicated v3 backend, and
 //    the exact caller-supplied binding is forwarded unchanged.
-assert.ok(v3Source.includes("new OpenAIV3FixedEnvironmentBackend"));
-assert.ok(v3Source.includes("fixedEnvironment: args.fixedEnvironment"));
-assert.ok(!v3Source.includes("new OpenAIBackend"));
+assert.ok(v3ExecutableSource.includes("new OpenAIV3FixedEnvironmentBackend"));
+assert.ok(v3ExecutableSource.includes("fixedEnvironment: args.fixedEnvironment"));
+assert.ok(!v3ExecutableSource.includes("new OpenAIBackend"));
 
 // 5. Provider execution settings remain the already-frozen P6-3/P6-2-compatible
 //    mutation contract. PR B changes prompt framing only through the dedicated
@@ -64,28 +68,28 @@ assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens, 7000);
 assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.requestTimeoutMs, 180000);
 assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.providerMaxRetries, 2);
 assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.maxToolRounds, 0);
-assert.ok(v3Source.includes("model: P6_3_MUTATION_PROVIDER_CONTRACT.model"));
-assert.ok(v3Source.includes("reasoningEffort: P6_3_MUTATION_PROVIDER_CONTRACT.reasoningEffort"));
-assert.ok(v3Source.includes("maxOutputTokens: P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens"));
-assert.ok(v3Source.includes("requestTimeoutMs: P6_3_MUTATION_PROVIDER_CONTRACT.requestTimeoutMs"));
-assert.ok(v3Source.includes("maxRetries: P6_3_MUTATION_PROVIDER_CONTRACT.providerMaxRetries"));
-assert.ok(v3Source.includes("maxToolRounds: P6_3_MUTATION_PROVIDER_CONTRACT.maxToolRounds"));
+assert.ok(v3ExecutableSource.includes("model: P6_3_MUTATION_PROVIDER_CONTRACT.model"));
+assert.ok(v3ExecutableSource.includes("reasoningEffort: P6_3_MUTATION_PROVIDER_CONTRACT.reasoningEffort"));
+assert.ok(v3ExecutableSource.includes("maxOutputTokens: P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens"));
+assert.ok(v3ExecutableSource.includes("requestTimeoutMs: P6_3_MUTATION_PROVIDER_CONTRACT.requestTimeoutMs"));
+assert.ok(v3ExecutableSource.includes("maxRetries: P6_3_MUTATION_PROVIDER_CONTRACT.providerMaxRetries"));
+assert.ok(v3ExecutableSource.includes("maxToolRounds: P6_3_MUTATION_PROVIDER_CONTRACT.maxToolRounds"));
 
 // 6. B_expose/contextBudget remains artifact-only: the executor forwards the
 //    budget and exposure unchanged and never arithmetically mixes E_fixed token
 //    accounting into either value.
-assert.ok(v3Source.includes("contextBudget: args.contextBudget"));
-assert.ok(v3Source.includes("args.exposure"));
-assert.ok(!/contextBudget\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3Source));
-assert.ok(!/budgetTokens\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3Source));
-assert.ok(!/actualExposedTokens\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3Source));
+assert.ok(v3ExecutableSource.includes("contextBudget: args.contextBudget"));
+assert.ok(v3ExecutableSource.includes("args.exposure"));
+assert.ok(!/contextBudget\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3ExecutableSource));
+assert.ok(!/budgetTokens\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3ExecutableSource));
+assert.ok(!/actualExposedTokens\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3ExecutableSource));
 
 // 7. The exact fixed-environment identity/snapshot is persisted into each M
 //    outcome so a later run-level gate can prove equality across arms/repeats.
-assert.ok(v3Source.includes("fixedEnvironmentIdentity(fixedEnvironment)"));
-assert.ok(v3Source.includes("fixedEnvironmentLogSnapshot(fixedEnvironment)"));
-assert.ok(v3Source.includes("fixedEnvironmentIdentity: environmentIdentity"));
-assert.ok(v3Source.includes("fixedEnvironmentModelVisibleTokens"));
+assert.ok(v3ExecutableSource.includes("fixedEnvironmentIdentity(fixedEnvironment)"));
+assert.ok(v3ExecutableSource.includes("fixedEnvironmentLogSnapshot(fixedEnvironment)"));
+assert.ok(v3ExecutableSource.includes("fixedEnvironmentIdentity: environmentIdentity"));
+assert.ok(v3ExecutableSource.includes("fixedEnvironmentModelVisibleTokens"));
 
 // 8. Prompt-level separation is concrete, not merely documented: E_fixed is a
 //    distinct section before CURRENT REPOSITORY and the artifact serializer is
@@ -127,10 +131,10 @@ assert.equal(snapshot.sourceRepositorySha256, fixtureBinding.sourceRepositorySha
 // 11. The v3 executor still reuses the P6-2-compatible scientific semantics:
 //     shared path validation, scoring, and repeat classification rather than a
 //     v3-only success definition.
-assert.ok(v3Source.includes("validateP63MutationPathsP62Compatible"));
-assert.ok(v3Source.includes("runScoring"));
-assert.ok(v3Source.includes("classifyP62MRepeat(raw, \"primary\")"));
-assert.ok(v3Source.includes("scoring.protocolContractViolated"));
+assert.ok(v3ExecutableSource.includes("validateP63MutationPathsP62Compatible"));
+assert.ok(v3ExecutableSource.includes("runScoring"));
+assert.ok(v3ExecutableSource.includes("classifyP62MRepeat(raw, \"primary\")"));
+assert.ok(v3ExecutableSource.includes("scoring.protocolContractViolated"));
 
 console.log(JSON.stringify({
   status: "ok",
@@ -156,4 +160,10 @@ console.log(JSON.stringify({
 function countOccurrences(value: string, needle: string): number {
   if (!needle) return 0;
   return value.split(needle).length - 1;
+}
+
+function stripComments(value: string): string {
+  return value
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\/\/.*$/gm, "");
 }
