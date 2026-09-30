@@ -1,0 +1,49 @@
+name: P6-3 v3 Scientific Validity Propagation
+
+on:
+  push:
+    paths:
+      - 'harness/src/p6/p6-3-v3-scientific-validity.ts'
+      - 'harness/src/p6/p6-3-v3-live-controller.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/p6/p6-3-rsem-protocol-parity.ts'
+      - 'harness/verify-p6-3-v3-validity-propagation.ts'
+      - 'harness/package.json'
+      - 'harness/package-lock.json'
+      - '.github/workflows/p6-3-v3-validity-propagation-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/p6/p6-3-v3-scientific-validity.ts'
+      - 'harness/src/p6/p6-3-v3-live-controller.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/p6/p6-3-rsem-protocol-parity.ts'
+      - 'harness/verify-p6-3-v3-validity-propagation.ts'
+      - 'harness/package.json'
+      - 'harness/package-lock.json'
+      - '.github/workflows/p6-3-v3-validity-propagation-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck and verify v3 validity propagation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify v3 scientific validity propagation
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-validity-propagation.ts
