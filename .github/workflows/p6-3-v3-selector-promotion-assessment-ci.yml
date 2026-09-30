@@ -1,0 +1,60 @@
+name: P6-3 v3 Selector Promotion Assessment
+
+on:
+  push:
+    paths:
+      - 'harness/assess-p6-3-v3-selector-promotion.ts'
+      - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
+      - 'harness/src/context/blended-static-exposure-selector.ts'
+      - 'harness/src/context/privileged-retrieval-controller.ts'
+      - 'harness/src/measurement/artifact-unit.ts'
+      - 'harness/src/measurement/file-classification.ts'
+      - 'harness/src/measurement/token-counter.ts'
+      - 'harness/src/p6/af-baseline.ts'
+      - 'synthetic-world/**'
+      - '.github/workflows/p6-3-v3-selector-promotion-assessment-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/assess-p6-3-v3-selector-promotion.ts'
+      - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
+      - 'harness/src/context/blended-static-exposure-selector.ts'
+      - 'harness/src/context/privileged-retrieval-controller.ts'
+      - 'harness/src/measurement/artifact-unit.ts'
+      - 'harness/src/measurement/file-classification.ts'
+      - 'harness/src/measurement/token-counter.ts'
+      - 'harness/src/p6/af-baseline.ts'
+      - 'synthetic-world/**'
+      - '.github/workflows/p6-3-v3-selector-promotion-assessment-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  assess:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Re-verify frozen structural acceptance specification
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-selector-structural-acceptance.ts
+      - name: Apply frozen rule to actual synthetic-world structure
+        working-directory: harness
+        run: npx ts-node assess-p6-3-v3-selector-promotion.ts > p6-3-v3-selector-promotion-assessment.json
+      - name: Upload promotion assessment
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-v3-selector-promotion-assessment
+          path: harness/p6-3-v3-selector-promotion-assessment.json
+          if-no-files-found: error
