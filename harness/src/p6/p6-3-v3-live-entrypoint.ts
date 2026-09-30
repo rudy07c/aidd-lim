@@ -25,9 +25,11 @@ import {
 import {
   assertP63V3FinalPreLiveGatePassToken,
   type P63V3FinalPreLiveGatePassToken,
-  type P63V3FinalPreLiveReceipt,
 } from "./p6-3-v3-final-prelive-gate";
-import type { P63V3RunFixedEnvironmentProvenance } from "./p6-3-v3-run-start";
+import type {
+  P63V3RunFixedEnvironmentProvenance,
+  P63V3RunStartDependencies,
+} from "./p6-3-v3-run-start";
 import type { P63V3ExposureTaskDescriptor } from "../context/p6-3-v3-static-exposure-runtime";
 
 export const P6_3_V3_LIVE_ENTRYPOINT_VERSION =
@@ -54,12 +56,19 @@ interface RuntimeInputs {
   readonly syntheticWorldDir: string;
 }
 
+export interface P63V3LiveEntrypointTestDependencies {
+  readonly runStartDependencies?: P63V3RunStartDependencies;
+  readonly newStatePath?: string;
+}
+
 export interface P63V3LiveEntrypointArgs {
   readonly finalPreLiveToken: P63V3FinalPreLiveGatePassToken;
   readonly paidAuthorization: boolean;
   readonly environment?: NodeJS.ProcessEnv;
   readonly resumePath: string | null;
   readonly adjudicationsPath: string | null;
+  /** Offline verifier injection only. Production CLI never supplies this. */
+  readonly testDependencies?: P63V3LiveEntrypointTestDependencies;
 }
 
 export interface P63V3LiveEntrypointResult {
@@ -69,9 +78,9 @@ export interface P63V3LiveEntrypointResult {
 }
 
 /**
- * Provider-capable v3 entrypoint. The CLI must dynamically import this module
- * only after the exact-checkout final pre-live gate, explicit paid flag, v3
- * environment authorization, and OPENAI_API_KEY checks have passed.
+ * Provider-capable v3 entrypoint. The production CLI dynamically imports this
+ * module only after the exact-checkout final pre-live gate, explicit paid flag,
+ * v3 environment authorization, and OPENAI_API_KEY checks have passed.
  */
 export async function runP63V3LiveEntrypoint(
   args: P63V3LiveEntrypointArgs
@@ -81,16 +90,24 @@ export async function runP63V3LiveEntrypoint(
   if (receipt.liveAuthorized !== false || receipt.providerCallsMade !== false) {
     throw new Error("P6-3 v3 live entrypoint requires a non-self-authorizing final pre-live receipt");
   }
+  const environment = args.environment ?? process.env;
+  if (!args.testDependencies?.runStartDependencies && !environment.OPENAI_API_KEY) {
+    throw new Error(
+      "P6-3 v3 live entrypoint requires OPENAI_API_KEY when no offline executor injection is supplied; no provider calls were made."
+    );
+  }
 
   const repoRoot = path.resolve(__dirname, "../../..");
   const runtimeInputs = loadP63V3RuntimeInputs(repoRoot);
-  const statePath = resolveStatePath(repoRoot, args.resumePath);
+  const statePath = resolveStatePath(
+    repoRoot,
+    args.resumePath,
+    args.testDependencies?.newStatePath
+  );
   const runDir = path.dirname(statePath);
   const resume = args.resumePath !== null;
   fs.mkdirSync(runDir, { recursive: true });
 
-  // Persist/verify the exact pre-live receipt before constructing a prepared
-  // provider-capable treatment. Resume never accepts a different checkout gate.
   persistOrVerifyJson(
     path.join(runDir, PRELIVE_RECEIPT_FILE),
     receipt,
@@ -101,6 +118,7 @@ export async function runP63V3LiveEntrypoint(
   const prepared = await prepareP63V3CalibrationRun({
     generationZeroRepositoryFiles: runtimeInputs.repositoryFiles,
     persistence: createPreparationPersistence(runDir, resume),
+    runStartDependencies: args.testDependencies?.runStartDependencies,
   });
   if (prepared.plan.length !== 864) {
     throw new Error(`P6-3 v3 live entrypoint requires 864 logical cells, got ${prepared.plan.length}`);
@@ -114,7 +132,7 @@ export async function runP63V3LiveEntrypoint(
       live: true,
       paidAuthorization: args.paidAuthorization,
       checkoutGitSha: receipt.checkoutGitSha,
-      environment: args.environment ?? process.env,
+      environment,
     },
     prepared,
   });
@@ -123,7 +141,6 @@ export async function runP63V3LiveEntrypoint(
   let state = loadOrCreateState({ statePath, resume, prepared, authorization });
 
   if (!resume) {
-    // State exists on disk before the first provider-capable executor is called.
     await controllerPersistence.persistState(state);
   } else if (state.inFlight) {
     recoverInterruptedP63V3State(state);
@@ -166,15 +183,21 @@ function createProductionExecutor(args: {
   runtimeInputs: RuntimeInputs;
 }) {
   const { prepared, runtimeInputs } = args;
+  const exposureCache = new Map<string, ReturnType<typeof buildP63V3CellExposure>>();
   return {
     execute: async (cell: (typeof prepared.plan)[number]) => {
-      const exposure = buildP63V3CellExposure({
-        cell,
-        repositoryFiles: runtimeInputs.repositoryFiles,
-        syntheticWorldDir: runtimeInputs.syntheticWorldDir,
-        taskById: runtimeInputs.taskById,
-        probePrompts: runtimeInputs.probePrompts,
-      });
+      const key = `${cell.measurement}:${cell.taskId ?? "bank"}:${cell.armLabel}`;
+      let exposure = exposureCache.get(key);
+      if (!exposure) {
+        exposure = buildP63V3CellExposure({
+          cell,
+          repositoryFiles: runtimeInputs.repositoryFiles,
+          syntheticWorldDir: runtimeInputs.syntheticWorldDir,
+          taskById: runtimeInputs.taskById,
+          probePrompts: runtimeInputs.probePrompts,
+        });
+        exposureCache.set(key, exposure);
+      }
       if (cell.measurement === "M") {
         const task = runtimeInputs.taskById.get(cell.taskId ?? "");
         if (!task) throw new Error(`P6-3 v3 live M task missing: ${String(cell.taskId)}`);
@@ -335,8 +358,13 @@ function loadOrCreateState(args: {
   return state;
 }
 
-function resolveStatePath(repoRoot: string, resumePath: string | null): string {
+function resolveStatePath(
+  repoRoot: string,
+  resumePath: string | null,
+  newStatePath?: string
+): string {
   if (resumePath) return path.resolve(resumePath);
+  if (newStatePath) return path.resolve(newStatePath);
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   return path.join(repoRoot, "runs", `p6-3-v3-live-${stamp}`, "state.json");
 }
