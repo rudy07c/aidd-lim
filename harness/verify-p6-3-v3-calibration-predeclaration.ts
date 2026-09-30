@@ -133,7 +133,7 @@ function main(): void {
     arm("B1", 0.10, 0.10),
   ]);
   assert.equal(multipleQualifiers.status, "selected");
-  assert.deepEqual(multipleQualifiers.qualifyingInteriorArms, ["B2", "B3"]);
+  assert.deepEqual(multipleQualifiers.qualifyingInteriorArms, ["B2", "B3", "B4"]);
   assert.equal(multipleQualifiers.selectedArm, "B2");
   assert.equal(multipleQualifiers.selectedBExpose, 1011);
 
