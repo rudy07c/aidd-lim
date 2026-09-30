@@ -83,7 +83,9 @@ function persistenceJournal(): {
     states,
     artifacts,
     persistence: {
-      persistState: (state) => states.push(JSON.stringify(state)),
+      persistState: (state) => {
+        states.push(JSON.stringify(state));
+      },
       persistAttemptArtifact: (cell, attempt, payload) => {
         artifacts.push(JSON.stringify({ sequence: cell.sequence, attempt, payload }));
         return `mock/${cell.sequence}/attempt-${attempt}.json`;
@@ -129,7 +131,6 @@ async function main(): Promise<void> {
     protocolValid: null,
   });
 
-  // Explicit executor validity is authoritative and remains independent of domain.
   assert.equal(
     requireP63V3ScientificValidity(outcome({
       validity: "infrastructure-invalid",
@@ -173,8 +174,6 @@ async function main(): Promise<void> {
   assert.equal(prepared.plan[FIRST_RSEM_SEQUENCE]?.measurement, "Rsem");
   const auth = authorization(prepared);
 
-  // Regression: frozen probe-scoring-error is invalid even though its raw domain
-  // is system. It must pause at the same logical cell and require adjudication.
   const invalidState = createP63V3LiveCalibrationState({ prepared, authorization: auth });
   invalidState.cursorCellIndex = FIRST_RSEM_SEQUENCE;
   const invalidJournal = persistenceJournal();
@@ -225,8 +224,6 @@ async function main(): Promise<void> {
   assert.equal(invalidState.attempts[0].effectiveFailureDomain, "system");
   assert.equal(invalidState.attempts[0].infrastructureAdjudication, "infrastructure-invalid");
 
-  // A valid protocol failure remains a scientific observation. The following
-  // cell then emits the invalid scoring case so the test stops after two calls.
   const protocolState = createP63V3LiveCalibrationState({ prepared, authorization: auth });
   protocolState.cursorCellIndex = FIRST_RSEM_SEQUENCE;
   const protocolJournal = persistenceJournal();
@@ -266,8 +263,6 @@ async function main(): Promise<void> {
   assert.equal(protocolState.attempts[1].rawValidity, "infrastructure-invalid");
   assert.equal(protocolState.status, "needs-audit");
 
-  // Ambiguous system-domain results without validity fail before committing a
-  // scientific attempt. Persisted inFlight therefore protects resume semantics.
   const missingState = createP63V3LiveCalibrationState({ prepared, authorization: auth });
   missingState.cursorCellIndex = FIRST_RSEM_SEQUENCE;
   const missingJournal = persistenceJournal();
