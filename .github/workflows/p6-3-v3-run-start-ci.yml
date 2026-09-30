@@ -1,0 +1,44 @@
+name: P6-3 v3 Run-Start Wiring
+
+on:
+  push:
+    paths:
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/verify-p6-3-v3-run-start.ts'
+      - '.github/workflows/p6-3-v3-run-start-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/verify-p6-3-v3-run-start.ts'
+      - '.github/workflows/p6-3-v3-run-start-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-v3-run-start:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 v3 run-start wiring
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-run-start.ts
