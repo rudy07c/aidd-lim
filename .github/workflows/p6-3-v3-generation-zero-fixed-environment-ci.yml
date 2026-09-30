@@ -1,0 +1,54 @@
+name: P6-3 v3 Generation-0 Fixed Environment Builder
+
+on:
+  push:
+    paths:
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/fixed-world-protocol-spec.ts'
+      - 'harness/src/context/static-exposure.ts'
+      - 'harness/src/measurement/token-counter.ts'
+      - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/orchestrator.ts'
+      - 'harness/verify-p6-3-v3-generation-zero-fixed-environment.ts'
+      - 'harness/package.json'
+      - 'harness/package-lock.json'
+      - 'synthetic-world/**'
+      - '.github/workflows/p6-3-v3-generation-zero-fixed-environment-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/fixed-world-protocol-spec.ts'
+      - 'harness/src/context/static-exposure.ts'
+      - 'harness/src/measurement/token-counter.ts'
+      - 'harness/src/p6/p6-3-live-executors.ts'
+      - 'harness/src/orchestrator.ts'
+      - 'harness/verify-p6-3-v3-generation-zero-fixed-environment.ts'
+      - 'harness/package.json'
+      - 'harness/package-lock.json'
+      - 'synthetic-world/**'
+      - '.github/workflows/p6-3-v3-generation-zero-fixed-environment-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-generation-zero-fixed-environment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify Generation-0 fixed environment builder
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-generation-zero-fixed-environment.ts
