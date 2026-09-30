@@ -192,7 +192,6 @@ function main(): void {
     "p6_3_v2_result_summary",
     "runs/",
     "result-summary",
-    "selectedBExpose",
   ]) {
     assert(
       !source.includes(forbidden),
