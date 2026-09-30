@@ -1,0 +1,81 @@
+name: P6-3 v3 Calibration Runner Offline
+
+on:
+  push:
+    paths:
+      - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-predeclaration.ts'
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/p6/p6-3-execution-protocol.ts'
+      - 'harness/src/context/p6-3-v3-static-exposure-runtime.ts'
+      - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
+      - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/static-exposure.ts'
+      - 'harness/src/context/privileged-retrieval-controller.ts'
+      - 'harness/src/measurement/**'
+      - 'harness/verify-p6-3-v3-calibration-runner.ts'
+      - 'calibration/fixtures/probe-bank-stage1.json'
+      - 'synthetic-world/ground_truth.json'
+      - 'synthetic-world/naming_schemes.json'
+      - 'synthetic-world/heldout_tasks.json'
+      - 'synthetic-world/repository/**'
+      - 'docs/p6_3_v3_calibration_runner_offline.md'
+      - '.github/workflows/p6-3-v3-calibration-runner-ci.yml'
+  pull_request:
+    paths:
+      - 'harness/src/p6/p6-3-v3-calibration-runner.ts'
+      - 'harness/src/p6/p6-3-v3-calibration-predeclaration.ts'
+      - 'harness/src/p6/p6-3-v3-run-start.ts'
+      - 'harness/src/p6/p6-3-v3-m-executor.ts'
+      - 'harness/src/p6/p6-3-v3-rsem-executor.ts'
+      - 'harness/src/p6/p6-3-execution-protocol.ts'
+      - 'harness/src/context/p6-3-v3-static-exposure-runtime.ts'
+      - 'harness/src/context/p6-3-v3-final-static-exposure-selector.ts'
+      - 'harness/src/context/p6-3-v3-selector-structural-acceptance.ts'
+      - 'harness/src/context/generation-zero-fixed-environment.ts'
+      - 'harness/src/context/fixed-environment-runtime.ts'
+      - 'harness/src/context/static-exposure.ts'
+      - 'harness/src/context/privileged-retrieval-controller.ts'
+      - 'harness/src/measurement/**'
+      - 'harness/verify-p6-3-v3-calibration-runner.ts'
+      - 'calibration/fixtures/probe-bank-stage1.json'
+      - 'synthetic-world/ground_truth.json'
+      - 'synthetic-world/naming_schemes.json'
+      - 'synthetic-world/heldout_tasks.json'
+      - 'synthetic-world/repository/**'
+      - 'docs/p6_3_v3_calibration_runner_offline.md'
+      - '.github/workflows/p6-3-v3-calibration-runner-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-offline-runner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Verify P6-3 v3 calibration runner offline
+        working-directory: harness
+        run: npx ts-node verify-p6-3-v3-calibration-runner.ts > p6-3-v3-calibration-runner-offline.json
+      - name: Upload offline runner receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: p6-3-v3-calibration-runner-offline
+          path: harness/p6-3-v3-calibration-runner-offline.json
+          if-no-files-found: error
