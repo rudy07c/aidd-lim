@@ -19,13 +19,13 @@ Repository-visible progress against this plan is:
 2. Rsem validity propagation fix      COMPLETE — PR #49
 3. v3 result finalizer                COMPLETE — PR #50
 4. final pre-live gate hardening      COMPLETE — PR #51
-5. main / workflow protection         IN PROGRESS
-6. fresh v3 paid/live calibration     BLOCKED BY STEP 5
+5. main / workflow protection         COMPLETE — active main-protection ruleset
+6. fresh v3 paid/live calibration     READY — not started
 ```
 
-The merged Step-4 main checkpoint is `74b2fee9527e15bc52982fdf108cf462fa919451`. No P6-3 v3 paid/provider calibration has been performed at this checkpoint.
+No P6-3 v3 paid/provider calibration has been performed at this checkpoint.
 
-Step 5 is the first incomplete completion condition. Repository-side protection artifacts are defined in `docs/p6_3_repository_protection_policy.md`; Step 5 remains incomplete until GitHub itself enforces the required `main` protection/rules and that state is independently observed.
+Step 5 was independently verified from GitHub after the repository-side protection artifacts were merged. The repository-level ruleset `main-protection` is active on the default branch and enforces pull-request-only changes, requires the exact `P6-3 Required Merge Gate` status with strict/up-to-date checking, blocks branch deletion and non-fast-forward updates, and has no bypass actors. Step 6 is therefore the first incomplete completion condition.
 
 ## 1. Reconcile the P6-3 v2 analysis lineage into `main`
 
@@ -114,7 +114,7 @@ At minimum verify:
 
 **Completion condition:** a clean checkout that passes the final gate is sufficient to identify both the treatment and the deterministic result-processing path that will be used after collection.
 
-**Checkpoint:** complete via PR #51. Its PR-triggered Final Pre-Live Entrypoint, Harness CI, Unified Pre-Live Gate, Rsem Protocol Parity, and Mutation Protocol Parity workflows all completed successfully.
+**Checkpoint:** complete via PR #51. Its PR-triggered Final Pre-Live Entrypoint, Harness CI, Unified Pre-Live Gate, Rsem Protocol Parity, and Mutation Protocol Parity workflows all completed successfully. Subsequent CI-only PRs #53 and #55 reduced duplicate PR latency and aligned Final Pre-Live trigger coverage without changing the frozen scientific/runtime treatment.
 
 ## 5. Protect `main` and preserve the execution order operationally
 
@@ -152,11 +152,13 @@ For future GPT/session handoffs:
 
 **Completion condition:** repository policy and project documentation both preserve the agreed work order, **and GitHub itself enforces PR-only mutation of `main` with `P6-3 Required Merge Gate` required before merge**.
 
-**Current status:** in progress. Repository-side policy/check preparation is being completed first; GitHub protection is not to be treated as complete until the protected/rules state is independently observed.
+**Checkpoint:** complete. GitHub ruleset `main-protection` (ruleset id `24311247`) was independently read after activation and confirmed to target the default branch with active enforcement, PR-required mutation, strict required check `P6-3 Required Merge Gate`, deletion protection, non-fast-forward protection, and no bypass actors.
 
 ## 6. Only then run the fresh P6-3 v3 paid/live calibration
 
 Paid/live execution remains prohibited until stages 1–5 are complete and all required CI is green.
+
+Before the first paid/provider call, rerun the complete hardened P6-3 v3 final pre-live gate on the exact checkout that will execute the calibration. Branch protection does not substitute for that scientific pre-live gate.
 
 The v3 calibration is a **fresh** calibration:
 
@@ -177,6 +179,8 @@ If so, treat that as the result of the frozen design rather than modifying the g
 
 **Completion condition:** v3 live evidence is collected under the frozen treatment and transformed into the scientific selection result only by the pre-live-merged finalizer.
 
+**Current status:** ready but not started. No v3 paid/provider result has been observed. Paid/live execution still requires explicit operator authorization at invocation.
+
 ## Canonical order
 
 ```text
@@ -188,9 +192,9 @@ If so, treat that as the result of the frozen design rather than modifying the g
         ↓
 4. final pre-live gate hardening      [complete]
         ↓
-5. main / workflow protection         [current]
+5. main / workflow protection         [complete]
         ↓
-6. fresh v3 paid/live calibration     [blocked]
+6. fresh v3 paid/live calibration     [current — not started]
 ```
 
 No later implementation convenience, session split, or already-written code should be treated as authority to bypass this order. The repository-visible completion conditions above determine the next step.
