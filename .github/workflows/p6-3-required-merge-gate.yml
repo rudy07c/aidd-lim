@@ -1,0 +1,33 @@
+name: P6-3 Required Merge Gate
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  required:
+    name: required
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: harness/package-lock.json
+      - name: Install harness dependencies
+        working-directory: harness
+        run: npm ci
+      - name: Typecheck harness
+        working-directory: harness
+        run: npm run typecheck
+      - name: Run hardened P6-3 v3 final pre-live gate
+        working-directory: harness
+        env:
+          P6_3_V3_LIVE_EXECUTION_ALLOWED: '0'
+        run: npm run verify:p6-3-v3-final-entrypoint
