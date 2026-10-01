@@ -20,19 +20,21 @@ Repository-visible progress against this plan is:
 3. v3 result finalizer                COMPLETE — PR #50
 4. final pre-live gate hardening      COMPLETE — PR #51
 5. main / workflow protection         COMPLETE — active main-protection ruleset
-6. fresh v3 paid/live calibration     BLOCKED — final runtime audit fixes remain before first provider call
+6. fresh v3 paid/live calibration     BLOCKED — supported local Node + exact-main dry preflight still required
 ```
 
 No P6-3 v3 paid/provider calibration has been performed at this checkpoint.
 
 Step 5 was independently verified from GitHub after the repository-side protection artifacts were merged. The repository-level ruleset `main-protection` is active on the default branch and enforces pull-request-only changes, requires the exact `P6-3 Required Merge Gate` status with strict/up-to-date checking, blocks branch deletion and non-fast-forward updates, and has no bypass actors.
 
-A final operator-side dry preflight after Step 5 exposed two pre-provider issues that must be resolved before Step 6 may start:
+A final operator-side dry preflight after Step 5 exposed two pre-provider issues:
 
 1. the first v3 M executor had accidentally fallen back to the historical 7,000-token P6-2/P6-3-v1 mutation parity cap instead of inheriting the already-frozen P6-3 v2 reliability envelope (`maxOutputTokens = 14000`);
 2. the local runtime used Node 20 even though the installed OpenAI SDK declares Node `>=22` support.
 
-The M reliability issue is a pre-live execution-envelope correction, not a result-driven treatment change. It is corrected by versioning the v3 M executor/predeclaration/treatment provenance and explicitly inheriting `p6-3-v2-execution-parameters-v1`. The historical 7,000-token parity contract remains unchanged. The Node runtime enforcement issue remains a separate blocker after that correction.
+The M reliability issue was closed by PR #57 before any v3 provider outcome: v3 now explicitly inherits the frozen P6-3 v2 14,000-token reliability envelope while the historical 7,000-token parity contract remains unchanged.
+
+The Node issue is also treated as a pre-provider execution-environment correction rather than a scientific treatment change. The final pre-live runtime resolver now reads the OpenAI SDK Node engine from both the lockfile and installed package, requires them to match, records the engine in runtime provenance, and refuses a Node runtime that does not satisfy it. For the currently locked `openai@7.10.0`, Node `>=22.0.0` is required. The remaining operator boundary is to use a supported local Node version and rerun the exact-main dry preflight successfully before paid/live authorization.
 
 ## 1. Reconcile the P6-3 v2 analysis lineage into `main`
 
@@ -123,7 +125,7 @@ At minimum verify:
 
 **Checkpoint:** complete via PR #51. Its PR-triggered Final Pre-Live Entrypoint, Harness CI, Unified Pre-Live Gate, Rsem Protocol Parity, and Mutation Protocol Parity workflows all completed successfully. Subsequent CI-only PRs #53 and #55 reduced duplicate PR latency and aligned Final Pre-Live trigger coverage without changing the frozen scientific/runtime treatment.
 
-The later final operator-side audit found that runtime-environment enforcement was still incomplete for the installed OpenAI SDK's Node engine requirement, and that the v3 M executor had regressed from the frozen v2 reliability envelope to the older 7,000-token parity cap. These are pre-provider corrections required before Step 6, not evidence from a v3 outcome.
+The later final operator-side audit found two execution-envelope gaps before any v3 outcome. PR #57 restored the already-frozen v2 M 14,000-token reliability envelope. The Node runtime hardening then made the installed OpenAI SDK engine requirement fail-closed instead of merely recording `process.version`. These corrections do not alter the v3 treatment, grid, margins, selector, or result-processing rule.
 
 ## 5. Protect `main` and preserve the execution order operationally
 
@@ -169,6 +171,8 @@ Paid/live execution remains prohibited until stages 1–5 are complete, all pre-
 
 Before the first paid/provider call, rerun the complete hardened P6-3 v3 final pre-live gate on the exact checkout that will execute the calibration. Branch protection does not substitute for that scientific pre-live gate.
 
+The operator runtime must satisfy the Node engine declared by the exact installed OpenAI SDK and lockfile. For the current `openai@7.10.0`, this is `>=22.0.0`; an unsupported runtime must fail the dry preflight before any provider-capable path is entered.
+
 The v3 calibration is a **fresh** calibration:
 
 - collect the predeclared 864 logical cells under the v3 treatment;
@@ -188,7 +192,7 @@ If so, treat that as the result of the frozen design rather than modifying the g
 
 **Completion condition:** v3 live evidence is collected under the frozen treatment and transformed into the scientific selection result only by the pre-live-merged finalizer.
 
-**Current status:** blocked before first provider call. The v3 M execution-reliability inheritance is being corrected to the frozen v2 14,000-token envelope. After that correction is merged, the remaining known blocker is fail-closed enforcement of the OpenAI SDK's Node `>=22` runtime requirement, followed by a fresh exact-main dry preflight. No v3 paid/provider result has been observed.
+**Current status:** blocked before first provider call only by the operator runtime/preflight boundary. The v3 M reliability regression is closed by PR #57, and the final pre-live runtime code now rejects Node versions outside the installed OpenAI SDK engine range. No v3 paid/provider result has been observed. Before paid/live, switch the operator machine to a supported Node version, run `npm ci`, and obtain a fresh successful `npm run p6:el-calibration-v3` receipt on exact `main`.
 
 ## Canonical order
 
@@ -203,7 +207,7 @@ If so, treat that as the result of the frozen design rather than modifying the g
         ↓
 5. main / workflow protection         [complete]
         ↓
-6. fresh v3 paid/live calibration     [blocked — pre-provider runtime audit fixes]
+6. fresh v3 paid/live calibration     [blocked — supported local Node + exact-main dry preflight]
 ```
 
 No later implementation convenience, session split, or already-written code should be treated as authority to bypass this order. The repository-visible completion conditions above determine the next step.
