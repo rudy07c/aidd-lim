@@ -67,9 +67,17 @@ on:
       - 'synthetic-world/**'
       - 'docs/p6_3_v3_final_pre_live_entrypoint.md'
       - '.github/workflows/p6-3-v3-final-prelive-entrypoint-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
+
+env:
+  TS_NODE_TRANSPILE_ONLY: '1'
 
 jobs:
   verify-final-entrypoint:
