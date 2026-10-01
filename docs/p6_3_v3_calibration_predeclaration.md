@@ -1,7 +1,7 @@
 # P6-3 v3 calibration predeclaration
 
-**Status:** complete scientific-design freeze for the next v3 calibration; amended before any v3 provider outcome to restore the frozen v2 M reliability envelope; provider/live execution remains unauthorized  
-**Predeclaration version:** `p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance`  
+**Status:** complete scientific-design freeze for the next v3 calibration; amended before any v3 provider outcome to restore the frozen v2 M reliability envelope; provider/live execution remains unauthorized
+**Predeclaration version:** `p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance`
 **Final artifact selector:** `p6-3-v3-category-proportional-interleave-final-v1`
 
 ## 1. Scope
