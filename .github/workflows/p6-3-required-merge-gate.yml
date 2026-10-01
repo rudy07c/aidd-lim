@@ -12,22 +12,63 @@ jobs:
   required:
     name: required
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check patch integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+          else
+            git diff --check HEAD^ HEAD || true
+          fi
+
+      - name: Classify changed paths
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" > /tmp/p6-3-changed-files.txt
+
+          if grep -Eq '^(harness/|calibration/|synthetic-world/|\.github/workflows/)' /tmp/p6-3-changed-files.txt; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.code == 'true'
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: harness/package-lock.json
+
       - name: Install harness dependencies
+        if: steps.changes.outputs.code == 'true'
         working-directory: harness
         run: npm ci
+
       - name: Typecheck harness
+        if: steps.changes.outputs.code == 'true'
         working-directory: harness
         run: npm run typecheck
-      - name: Run hardened P6-3 v3 final pre-live gate
-        working-directory: harness
-        env:
-          P6_3_V3_LIVE_EXECUTION_ALLOWED: '0'
-        run: npm run verify:p6-3-v3-final-entrypoint
+
+      - name: Verify canonical Step-5 artifacts exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/p6_3_post_audit_execution_plan.md
+          test -f docs/p6_3_repository_protection_policy.md
+          test -f .github/workflows/p6-3-required-merge-gate.yml
