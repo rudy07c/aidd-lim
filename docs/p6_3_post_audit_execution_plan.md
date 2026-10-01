@@ -126,10 +126,10 @@ branch → PR → CI → review → merge
 
 Do not write implementation commits directly to `main`.
 
-The repository-side Step-5 policy is `docs/p6_3_repository_protection_policy.md`. It defines the stable always-on branch-protection check:
+The repository-side Step-5 policy is `docs/p6_3_repository_protection_policy.md`. It defines the stable always-on branch-protection check with exact GitHub check-run name:
 
 ```text
-P6-3 Required Merge Gate / required
+P6-3 Required Merge Gate
 ```
 
 implemented by:
@@ -150,7 +150,7 @@ For future GPT/session handoffs:
 4. continue from that stage rather than inferring the plan from the latest code alone;
 5. if the plan itself must change, update this document in the same PR that changes the scientific/workflow decision.
 
-**Completion condition:** repository policy and project documentation both preserve the agreed work order, **and GitHub itself enforces PR-only mutation of `main` with `P6-3 Required Merge Gate / required` required before merge**.
+**Completion condition:** repository policy and project documentation both preserve the agreed work order, **and GitHub itself enforces PR-only mutation of `main` with `P6-3 Required Merge Gate` required before merge**.
 
 **Current status:** in progress. Repository-side policy/check preparation is being completed first; GitHub protection is not to be treated as complete until the protected/rules state is independently observed.
 
