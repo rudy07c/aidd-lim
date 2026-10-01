@@ -164,9 +164,11 @@ export function resolveP63V3RuntimeEnvironmentProvenance(
 }
 
 function parseNodeVersion(value: string): readonly [number, number, number] {
-  const match = /^v?(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(value.trim());
+  // Production calibration accepts stable Node releases only. Treat prerelease
+  // or build-tagged runtimes as unreviewed rather than approximating npm semver.
+  const match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(value.trim());
   if (!match) {
-    throw new Error(`P6-3 v3 runtime environment unexpected Node version: ${value}`);
+    throw new Error(`P6-3 v3 runtime environment unexpected or non-stable Node version: ${value}`);
   }
   return [Number(match[1]), Number(match[2]), Number(match[3])];
 }
