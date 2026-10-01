@@ -20,6 +20,18 @@ import {
 } from "./src/p6/p6-3-v3-calibration-predeclaration";
 import { P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION } from "./src/context/p6-3-v3-final-static-exposure-selector";
 import { P6_3_V3_SELECTOR_STRUCTURAL_ACCEPTANCE_SPEC_VERSION } from "./src/context/p6-3-v3-selector-structural-acceptance";
+import {
+  P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+  P6_3_V3_M_PROVIDER_CONTRACT,
+  P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+} from "./src/p6/p6-3-v3-m-executor";
+import {
+  P6_3_V2_EXECUTION_PARAMETERS_VERSION,
+  P6_3_V2_MUTATION_PROVIDER_CONTRACT,
+} from "./src/p6/p6-3-v2-execution-parameters";
+import {
+  P6_3_MUTATION_PROVIDER_CONTRACT,
+} from "./src/p6/p6-3-mutation-protocol-parity";
 
 function loadRepository(dir: string, baseDir: string, out: Record<string, string>): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -123,7 +135,37 @@ function main(): void {
     "zero-artifact-evidence-with-common-E_fixed-present"
   );
 
-  // 5. Frozen co-gate selects the smallest qualifying interior budget.
+  // 5. The pre-live M reliability amendment is inherited from the already
+  //    frozen v2 execution envelope. Historical v1/P6-2 parity stays at 7000;
+  //    v2 and v3 use 14000. No v3 outcome exists to tune this decision.
+  assert.equal(
+    P6_3_V3_CALIBRATION_PREDECLARATION_VERSION,
+    "p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance"
+  );
+  assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens, 7000);
+  assert.equal(P6_3_V2_EXECUTION_PARAMETERS_VERSION, "p6-3-v2-execution-parameters-v1");
+  assert.equal(P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxOutputTokens, 14000);
+  assert.equal(P6_3_V3_M_RELIABILITY_SOURCE_VERSION, P6_3_V2_EXECUTION_PARAMETERS_VERSION);
+  assert.equal(
+    P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+    "p6-3-v3-m-execution-reliability-v1-inherit-v2"
+  );
+  assert.deepEqual(P6_3_V3_M_PROVIDER_CONTRACT, P6_3_V2_MUTATION_PROVIDER_CONTRACT);
+  assert.equal(P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens, 14000);
+  assert.equal(
+    P6_3_V3_CALIBRATION_PREDECLARATION.measurements.M.executionReliabilityVersion,
+    P6_3_V3_M_EXECUTION_RELIABILITY_VERSION
+  );
+  assert.equal(
+    P6_3_V3_CALIBRATION_PREDECLARATION.measurements.M.reliabilitySourceVersion,
+    P6_3_V2_EXECUTION_PARAMETERS_VERSION
+  );
+  assert.equal(
+    P6_3_V3_CALIBRATION_PREDECLARATION.measurements.M.providerMaxOutputTokens,
+    14000
+  );
+
+  // 6. Frozen co-gate selects the smallest qualifying interior budget.
   const multipleQualifiers = selectP63V3ArtifactBudget([
     arm("AF", 0.95, 0.95),
     arm("B4", 0.80, 0.80),
@@ -137,7 +179,7 @@ function main(): void {
   assert.equal(multipleQualifiers.selectedArm, "B2");
   assert.equal(multipleQualifiers.selectedBExpose, 1011);
 
-  // 6. Both endpoints are conjunctive: failing either one rejects the arm.
+  // 7. Both endpoints are conjunctive: failing either one rejects the arm.
   const endpointMismatch = selectP63V3ArtifactBudget([
     arm("B0", 0.00, 0.00),
     arm("B1", 0.20, 0.02),
@@ -150,7 +192,7 @@ function main(): void {
   assert.equal(endpointMismatch.selectedBExpose, null);
   assert.equal(endpointMismatch.reason, "NO_CONJUNCTIVE_INTERIOR_BUDGET");
 
-  // 7. AF-near or above-AF point estimates fail the upper interior guard.
+  // 8. AF-near or above-AF point estimates fail the upper interior guard.
   const afNear = selectP63V3ArtifactBudget([
     arm("B0", 0.00, 0.00),
     arm("B1", 0.02, 0.02),
@@ -161,7 +203,7 @@ function main(): void {
   ]);
   assert.equal(afNear.status, "needs-design-audit");
 
-  // 8. Monotonic dose response is not a prerequisite; only the predeclared guards matter.
+  // 9. Monotonic dose response is not a prerequisite; only the predeclared guards matter.
   const nonMonotonic = selectP63V3ArtifactBudget([
     arm("B0", 0.05, 0.05),
     arm("B1", 0.40, 0.40),
@@ -173,7 +215,7 @@ function main(): void {
   assert.equal(nonMonotonic.status, "selected");
   assert.equal(nonMonotonic.selectedArm, "B1");
 
-  // 9. No live authorization and no historical primary-estimate pooling are granted here.
+  // 10. No live authorization and no historical primary-estimate pooling are granted here.
   assert.equal(P6_3_V3_CALIBRATION_PREDECLARATION.liveAuthorization, false);
   assert.equal(P6_3_V3_CALIBRATION_PREDECLARATION.confirmatoryStage1AEligible, false);
   assert.equal(P6_3_V3_CALIBRATION_PREDECLARATION.historicalV2PrimaryEstimatePooling, false);
@@ -182,7 +224,7 @@ function main(): void {
     "not-an-input-to-grid-margins-or-selection-rule"
   );
 
-  // 10. The predeclaration source itself must not import findings/results artifacts.
+  // 11. The predeclaration source itself must not import findings/results artifacts.
   const source = fs.readFileSync(
     path.join(__dirname, "src", "p6", "p6-3-v3-calibration-predeclaration.ts"),
     "utf8"
@@ -208,6 +250,10 @@ function main(): void {
     deltaR: P6_3_V3_DELTA_R,
     expectedTotalLogicalCells: P6_3_V3_CALIBRATION_PREDECLARATION.execution.expectedTotalLogicalCells,
     finalSelectorVersion: P6_3_V3_CALIBRATION_PREDECLARATION.selector.policyVersion,
+    mExecutionReliabilityVersion:
+      P6_3_V3_CALIBRATION_PREDECLARATION.measurements.M.executionReliabilityVersion,
+    mProviderMaxOutputTokens:
+      P6_3_V3_CALIBRATION_PREDECLARATION.measurements.M.providerMaxOutputTokens,
     historicalV2PrimaryEstimatePooling: false,
     liveAuthorization: false,
     verified: [
@@ -216,6 +262,8 @@ function main(): void {
       "measurement-banks-and-repeat-design-unchanged",
       "delta-m-and-delta-r-unchanged",
       "final-selector-and-fixed-environment-identity-pinned",
+      "v3-m-inherits-v2-14000-reliability-envelope",
+      "historical-7000-parity-contract-remains-intact",
       "conjunctive-co-gate-and-minimum-budget-tie-break",
       "no-monotonicity-assumption",
       "no-v2-primary-estimate-pooling",
