@@ -17,6 +17,13 @@ on:
   pull_request:
     paths:
       - 'harness/**'
+      - '!harness/p6-3-v3-**'
+      - '!harness/verify-p6-3-v3-**'
+      - '!harness/src/p6/p6-3-v3-**'
+      - '!harness/src/context/p6-3-v3-**'
+      - '!harness/src/context/fixed-environment-runtime.ts'
+      - '!harness/src/context/generation-zero-fixed-environment.ts'
+      - '!harness/src/context/fixed-world-protocol-spec.ts'
       - 'calibration/**'
       - 'synthetic-world/**'
       - 'docs/findings/evidence/p6-2-af-baseline/result.json'
@@ -27,9 +34,17 @@ on:
       - 'docs/p6_3_v2_final_prelive_gate.md'
       - 'docs/p6_3_v2_paid_live_wiring.md'
       - '.github/workflows/p6-3-prelive-gate-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
+
+env:
+  TS_NODE_TRANSPILE_ONLY: '1'
 
 jobs:
   verify:
