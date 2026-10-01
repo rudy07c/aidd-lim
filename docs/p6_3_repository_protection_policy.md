@@ -1,6 +1,6 @@
 # P6-3 repository protection policy
 
-**Status:** Step 5 operational policy for `docs/p6_3_post_audit_execution_plan.md`  
+**Status:** Step 5 operational policy for `docs/p6_3_post_audit_execution_plan.md`
 **Scope:** protect the frozen P6-3 v3 pre-live treatment, finalizer, and agreed work order before paid/live calibration.
 
 ## 1. Required repository workflow
