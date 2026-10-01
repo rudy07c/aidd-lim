@@ -1,9 +1,9 @@
 # P6-3 v3 calibration runner — offline pre-live wiring
 
-**Status:** offline/pre-live runner wiring only; amended before any v3 provider outcome to persist the inherited v2 M reliability envelope; provider/live execution is not authorized  
-**Runner version:** `p6-3-v3-calibration-runner-v2-m-reliability`  
-**Treatment provenance schema:** `p6-3-v3-calibration-treatment-provenance-v2-m-reliability`  
-**Predeclaration:** `p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance`  
+**Status:** offline/pre-live runner wiring only; amended before any v3 provider outcome to persist the inherited v2 M reliability envelope; provider/live execution is not authorized
+**Runner version:** `p6-3-v3-calibration-runner-v2-m-reliability`
+**Treatment provenance schema:** `p6-3-v3-calibration-treatment-provenance-v2-m-reliability`
+**Predeclaration:** `p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance`
 **Final selector:** `p6-3-v3-category-proportional-interleave-final-v1`
 
 ## 1. Purpose
