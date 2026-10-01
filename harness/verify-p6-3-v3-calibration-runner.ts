@@ -23,8 +23,14 @@ import {
   p63V3CalibrationPlanHash,
   prepareP63V3CalibrationRun,
   P6_3_V3_CALIBRATION_RUNNER_VERSION,
+  P6_3_V3_CALIBRATION_TREATMENT_PROVENANCE_SCHEMA,
   type P63V3CalibrationTreatmentProvenance,
 } from "./src/p6/p6-3-v3-calibration-runner";
+import {
+  P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+  P6_3_V3_M_PROVIDER_CONTRACT,
+  P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+} from "./src/p6/p6-3-v3-m-executor";
 import type { P63V3RunFixedEnvironmentProvenance } from "./src/p6/p6-3-v3-run-start";
 
 interface FixtureTask extends P63V3ExposureTaskDescriptor {
@@ -232,9 +238,30 @@ async function main(): Promise<void> {
   assert.equal(persistedTreatment.length, 1, "treatment provenance must persist exactly once");
   assert.equal(prepared.plan.length, 864);
   assert.equal(prepared.planHash, p63V3CalibrationPlanHash(planA));
+  assert.equal(
+    P6_3_V3_CALIBRATION_RUNNER_VERSION,
+    "p6-3-v3-calibration-runner-v2-m-reliability"
+  );
+  assert.equal(
+    P6_3_V3_CALIBRATION_TREATMENT_PROVENANCE_SCHEMA,
+    "p6-3-v3-calibration-treatment-provenance-v2-m-reliability"
+  );
   assert.equal(prepared.provenance.predeclarationVersion, P6_3_V3_CALIBRATION_PREDECLARATION_VERSION);
   assert.equal(prepared.provenance.runnerVersion, P6_3_V3_CALIBRATION_RUNNER_VERSION);
   assert.equal(prepared.provenance.finalSelectorVersion, P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION);
+  assert.equal(
+    prepared.provenance.mExecutionReliabilityVersion,
+    P6_3_V3_M_EXECUTION_RELIABILITY_VERSION
+  );
+  assert.equal(
+    prepared.provenance.mReliabilitySourceVersion,
+    P6_3_V3_M_RELIABILITY_SOURCE_VERSION
+  );
+  assert.equal(prepared.provenance.mProviderMaxOutputTokens, 14000);
+  assert.equal(
+    prepared.provenance.mProviderMaxOutputTokens,
+    P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens
+  );
   assert.equal(prepared.provenance.liveAuthorized, false);
   assert.equal(
     prepared.provenance.fixedEnvironmentIdentity,
@@ -244,6 +271,11 @@ async function main(): Promise<void> {
     persistedTreatment[0].fixedEnvironmentIdentity,
     persistedFixed[0].fixedEnvironmentIdentity
   );
+  assert.equal(
+    persistedTreatment[0].mExecutionReliabilityVersion,
+    P6_3_V3_M_EXECUTION_RELIABILITY_VERSION
+  );
+  assert.equal(persistedTreatment[0].mProviderMaxOutputTokens, 14000);
 
   // 4. Exercise all 864 cells with mocks through runStart. The run-start wrapper
   // fail-closes unless each outcome reports the exact one run-fixed binding.
@@ -277,7 +309,8 @@ async function main(): Promise<void> {
   assert.ok(receivedBindingRefs.has(prepared.runStart.fixedEnvironment));
 
   // 5. New v3 runner/exposure modules must not import the historical v2 live
-  // executors/runner or any scientific outcome artifacts.
+  // executors/runner or any scientific outcome artifacts. Importing the frozen
+  // v2 execution-parameter contract is allowed and is independently versioned.
   for (const sourcePath of [
     path.join(__dirname, "src", "p6", "p6-3-v3-calibration-runner.ts"),
     path.join(__dirname, "src", "context", "p6-3-v3-static-exposure-runtime.ts"),
@@ -297,8 +330,12 @@ async function main(): Promise<void> {
   process.stdout.write(JSON.stringify({
     status: "ok",
     runnerVersion: P6_3_V3_CALIBRATION_RUNNER_VERSION,
+    provenanceSchema: P6_3_V3_CALIBRATION_TREATMENT_PROVENANCE_SCHEMA,
     predeclarationVersion: P6_3_V3_CALIBRATION_PREDECLARATION_VERSION,
     finalSelectorVersion: P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION,
+    mExecutionReliabilityVersion: prepared.provenance.mExecutionReliabilityVersion,
+    mReliabilitySourceVersion: prepared.provenance.mReliabilitySourceVersion,
+    mProviderMaxOutputTokens: prepared.provenance.mProviderMaxOutputTokens,
     logicalCells: prepared.plan.length,
     mCells: mMockCalls,
     rsemCells: rsemMockCalls,
@@ -320,6 +357,7 @@ async function main(): Promise<void> {
       "one-generation-zero-fixed-environment",
       "same-binding-object-across-all-864-mocked-cells",
       "run-fixed-and-treatment-provenance-persisted",
+      "m-v2-reliability-envelope-persisted-as-14000",
       "historical-v2-runner-and-outcome-artifacts-not-imported",
       "no-provider-calls",
     ],
