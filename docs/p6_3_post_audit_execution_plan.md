@@ -10,6 +10,23 @@ The audit found that a previous GPT/session branch split preserved the scientifi
 
 The main lesson is therefore not merely to preserve code or conclusions. The repository must also preserve the **agreed execution order** that connects one scientific step to the next. This document is the canonical handoff for that order so a future session can resume without reconstructing the plan from chat history.
 
+## Current checkpoint — 2026-10-01
+
+Repository-visible progress against this plan is:
+
+```text
+1. v2 provenance reconciliation       COMPLETE — PR #48
+2. Rsem validity propagation fix      COMPLETE — PR #49
+3. v3 result finalizer                COMPLETE — PR #50
+4. final pre-live gate hardening      COMPLETE — PR #51
+5. main / workflow protection         IN PROGRESS
+6. fresh v3 paid/live calibration     BLOCKED BY STEP 5
+```
+
+The merged Step-4 main checkpoint is `74b2fee9527e15bc52982fdf108cf462fa919451`. No P6-3 v3 paid/provider calibration has been performed at this checkpoint.
+
+Step 5 is the first incomplete completion condition. Repository-side protection artifacts are defined in `docs/p6_3_repository_protection_policy.md`; Step 5 remains incomplete until GitHub itself enforces the required `main` protection/rules and that state is independently observed.
+
 ## 1. Reconcile the P6-3 v2 analysis lineage into `main`
 
 - Do **not** close PR #33 until the reconciliation is merged.
@@ -24,14 +41,16 @@ The main lesson is therefore not merely to preserve code or conclusions. The rep
 
 **Completion condition:** raw v2 evidence → deterministic analyzer → durable machine result → current human-readable summary is a reproducible chain on `main`.
 
+**Checkpoint:** complete via PR #48; PR #33 was then closed as superseded rather than merged.
+
 ## 2. Fix P6-3 v3 Rsem validity propagation
 
 The audit confirmed a specific information-loss bug:
 
 - frozen Rsem semantics can produce `validity = infrastructure-invalid` with `failureDomain = system` for `probe-scoring-error`;
-- `P63CellOutcome` currently carries `failureDomain` but not `validity`;
-- the v3 Rsem executor therefore drops the validity information;
-- the live controller only treats `failureDomain === infrastructure` as replacement-eligible, so the invalid observation can otherwise advance as if it were a scientific observation.
+- the pre-repair `P63CellOutcome` carried `failureDomain` but not `validity`;
+- the v3 Rsem executor therefore dropped the validity information;
+- the live controller only treated `failureDomain === infrastructure` as replacement-eligible, so the invalid observation could otherwise advance as if it were a scientific observation.
 
 Required changes:
 
@@ -41,6 +60,8 @@ Required changes:
 - add an offline regression test covering `probe-scoring-error` and any equivalent missing-score invalid path.
 
 **Completion condition:** validity and failure domain remain distinct, no invalid Rsem observation can silently enter the scientific dataset, and the behavior is frozen by offline tests.
+
+**Checkpoint:** complete via PR #49.
 
 ## 3. Implement the P6-3 v3 result finalizer before live data exist
 
@@ -73,6 +94,8 @@ Persist an immutable machine-readable result including source state identity/has
 
 **Completion condition:** collection → scientific-observation resolution → M/Rsem aggregation → frozen budget selection is fully deterministic and merged before any v3 outcome is observed.
 
+**Checkpoint:** complete via PR #50.
+
 ## 4. Re-harden the P6-3 v3 pre-live gate
 
 After stages 2 and 3, update the final pre-live gate so it proves the entire collection-and-finalization path is frozen.
@@ -91,6 +114,8 @@ At minimum verify:
 
 **Completion condition:** a clean checkout that passes the final gate is sufficient to identify both the treatment and the deterministic result-processing path that will be used after collection.
 
+**Checkpoint:** complete via PR #51. Its PR-triggered Final Pre-Live Entrypoint, Harness CI, Unified Pre-Live Gate, Rsem Protocol Parity, and Mutation Protocol Parity workflows all completed successfully.
+
 ## 5. Protect `main` and preserve the execution order operationally
 
 Continue the repository workflow as:
@@ -101,7 +126,21 @@ branch → PR → CI → review → merge
 
 Do not write implementation commits directly to `main`.
 
-Where repository settings permit, enable branch protection / rules so direct pushes to `main` are blocked and required CI must pass before merge. This is especially important because the repository already experienced accidental direct placeholder commits and a session-branch split that left a scientifically important analyzer unmerged.
+The repository-side Step-5 policy is `docs/p6_3_repository_protection_policy.md`. It defines the stable always-on branch-protection check:
+
+```text
+P6-3 Required Merge Gate / required
+```
+
+implemented by:
+
+```text
+.github/workflows/p6-3-required-merge-gate.yml
+```
+
+Unlike historical path-filtered workflows, this check must be emitted on every pull request so it is safe to configure as a globally required status.
+
+Where repository settings permit, enable branch protection / rules so direct pushes to `main` are blocked and the required merge gate must pass before merge. Block force pushes and branch deletion. Do not use an ordinary bypass path for routine implementation changes.
 
 For future GPT/session handoffs:
 
@@ -111,7 +150,9 @@ For future GPT/session handoffs:
 4. continue from that stage rather than inferring the plan from the latest code alone;
 5. if the plan itself must change, update this document in the same PR that changes the scientific/workflow decision.
 
-**Completion condition:** repository policy and project documentation both preserve the agreed work order, not just the latest code state.
+**Completion condition:** repository policy and project documentation both preserve the agreed work order, **and GitHub itself enforces PR-only mutation of `main` with `P6-3 Required Merge Gate / required` required before merge**.
+
+**Current status:** in progress. Repository-side policy/check preparation is being completed first; GitHub protection is not to be treated as complete until the protected/rules state is independently observed.
 
 ## 6. Only then run the fresh P6-3 v3 paid/live calibration
 
@@ -139,17 +180,17 @@ If so, treat that as the result of the frozen design rather than modifying the g
 ## Canonical order
 
 ```text
-1. v2 provenance reconciliation
+1. v2 provenance reconciliation       [complete]
         ↓
-2. Rsem validity propagation fix
+2. Rsem validity propagation fix      [complete]
         ↓
-3. v3 result finalizer
+3. v3 result finalizer                [complete]
         ↓
-4. final pre-live gate hardening
+4. final pre-live gate hardening      [complete]
         ↓
-5. main / workflow protection
+5. main / workflow protection         [current]
         ↓
-6. fresh v3 paid/live calibration
+6. fresh v3 paid/live calibration     [blocked]
 ```
 
 No later implementation convenience, session split, or already-written code should be treated as authority to bypass this order. The repository-visible completion conditions above determine the next step.
