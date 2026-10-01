@@ -17,17 +17,21 @@ If the canonical P6-3 execution order changes, update `docs/p6_3_post_audit_exec
 
 ## 2. Stable required status check
 
-The repository provides one status check intended specifically for branch protection:
+The repository provides one status check intended specifically for branch protection.
+
+The exact GitHub **check-run name** is:
 
 ```text
-P6-3 Required Merge Gate / required
+P6-3 Required Merge Gate
 ```
 
-It is defined by:
+The workflow has the same display name and is defined by:
 
 ```text
 .github/workflows/p6-3-required-merge-gate.yml
 ```
+
+The job id remains `required`, but branch protection must select the emitted check-run named `P6-3 Required Merge Gate`, not the internal job id.
 
 Unlike the historical path-filtered workflows, this workflow runs on every pull request, so GitHub can safely require it globally.
 
@@ -47,7 +51,7 @@ The CI layers have different purposes:
 ### Fast merge gate
 
 ```text
-P6-3 Required Merge Gate / required
+P6-3 Required Merge Gate
 ```
 
 Purpose: stable, always-reported branch-protection status with fast feedback.
@@ -76,7 +80,7 @@ Before Step 5 is considered complete, repository settings should enforce the fol
 
 - require a pull request before merging;
 - block direct pushes to `main`;
-- require status check `P6-3 Required Merge Gate / required`;
+- require status check `P6-3 Required Merge Gate`;
 - require the branch to be up to date before merging, if supported by the selected protection mechanism;
 - block force pushes;
 - block branch deletion;
@@ -95,7 +99,7 @@ Making one of those checks globally required can leave an unrelated PR permanent
 Step 5 is complete only after both repository-visible conditions hold:
 
 1. this policy, the always-on merge gate, and the canonical execution-plan checkpoint are merged to `main`; and
-2. GitHub reports protection/rules for `main` that prevent direct mutation and require `P6-3 Required Merge Gate / required` before merge.
+2. GitHub reports protection/rules for `main` that prevent direct mutation and require `P6-3 Required Merge Gate` before merge.
 
 Until condition 2 is independently observed, Step 6 paid/live calibration remains blocked even if all code-level pre-live gates are green.
 
