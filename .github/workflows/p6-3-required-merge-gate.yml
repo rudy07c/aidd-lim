@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   required:
-    name: required
+    name: P6-3 Required Merge Gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
