@@ -1,15 +1,16 @@
 # P6-3 v3 calibration runner — offline pre-live wiring
 
-**Status:** offline/pre-live runner wiring only; provider/live execution is not authorized  
-**Runner version:** `p6-3-v3-calibration-runner-v1`  
-**Predeclaration:** `p6-3-v3-calibration-predeclaration-v1`  
+**Status:** offline/pre-live runner wiring only; amended before any v3 provider outcome to persist the inherited v2 M reliability envelope; provider/live execution is not authorized  
+**Runner version:** `p6-3-v3-calibration-runner-v2-m-reliability`  
+**Treatment provenance schema:** `p6-3-v3-calibration-treatment-provenance-v2-m-reliability`  
+**Predeclaration:** `p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance`  
 **Final selector:** `p6-3-v3-category-proportional-interleave-final-v1`
 
 ## 1. Purpose
 
-This slice closes the remaining offline wiring gap between the already-frozen P6-3 v3 design and a future paid/live calibration.
+This runner closes the offline wiring boundary between the frozen P6-3 v3 design and a future paid/live calibration.
 
-It does **not** add a live CLI or provider authorization path. Instead it proves that the exact predeclared treatment can be constructed end-to-end without a provider call:
+It proves that the exact predeclared treatment can be constructed end-to-end without a provider call:
 
 ```text
 Generation-0 repository
@@ -19,6 +20,8 @@ Generation-0 repository
   -> full artifact repository for AF
   -> v3 M / Rsem run-start closures
 ```
+
+The pre-live amendment also makes the M execution-reliability envelope explicit in treatment provenance. P6-3 v3 inherits the already-frozen P6-3 v2 mutation provider envelope, including `maxOutputTokens = 14000`; the historical 7,000-token P6-2/P6-3-v1 parity contract remains unchanged as historical provenance.
 
 ## 2. v3-only artifact exposure runtime
 
@@ -60,7 +63,7 @@ Total = 864
 
 Each arm therefore appears exactly 144 times.
 
-The runner owns a distinct v3 plan hash and does not call the historical v2 live runner to obtain the plan.
+The runner owns a distinct v3 plan hash and does not call the historical v2 live runner to obtain the plan. The M reliability amendment does not change this plan hash because it changes provider execution headroom, not logical-cell identity or treatment exposure.
 
 ## 4. Artifact treatment construction
 
@@ -81,7 +84,37 @@ B0 therefore produces an empty artifact context while the separate run-fixed `E_
 
 AF bypasses finite selection and receives the complete artifact repository. It still receives the same `E_fixed` as every EL arm.
 
-## 5. Run-start and provenance boundary
+## 5. M execution-reliability provenance
+
+P6-3 v3 M now uses a dedicated versioned reliability identity:
+
+```text
+p6-3-v3-m-execution-reliability-v1-inherit-v2
+```
+
+whose source is:
+
+```text
+p6-3-v2-execution-parameters-v1
+```
+
+The complete v3 M provider contract equals the frozen v2 mutation provider contract:
+
+```text
+model = gpt-5.6-luna
+reasoningEffort = high
+maxOutputTokens = 14000
+requestTimeoutMs = 180000
+providerMaxRetries = 2
+serviceTier = default
+promptCacheMode = implicit
+storeResponses = false
+maxToolRounds = 0
+```
+
+This amendment was made before any v3 provider outcome. It does not alter `B_expose`, `E_fixed`, selector ordering, task/probe membership, repeats, margins, or the co-gate.
+
+## 6. Run-start and provenance boundary
 
 `prepareP63V3CalibrationRun()` performs preparation only. It does not execute any logical cell.
 
@@ -91,18 +124,19 @@ It:
 2. calls `initializeP63V3RunStart()` once;
 3. therefore builds exactly one Generation-0 `FixedEnvironmentBinding`;
 4. persists the existing run-fixed environment provenance;
-5. persists v3 treatment provenance containing the predeclaration, schedule, selector, exposure-runtime, M/Rsem executor, plan, budget, task/probe-bank, and fixed-environment identities;
+5. persists v3 treatment provenance containing the predeclaration, schedule, selector, exposure-runtime, M/Rsem executor, plan, budget, task/probe-bank, fixed-environment identities, and M reliability envelope;
 6. returns the prepared plan and run-start closures.
 
 The persisted treatment provenance explicitly carries:
 
 ```text
+mExecutionReliabilityVersion = p6-3-v3-m-execution-reliability-v1-inherit-v2
+mReliabilitySourceVersion = p6-3-v2-execution-parameters-v1
+mProviderMaxOutputTokens = 14000
 liveAuthorized = false
 ```
 
-No production live-dispatch loop or paid-authorization flag is added in this slice.
-
-## 6. Offline verifier
+## 7. Offline verifier
 
 `harness/verify-p6-3-v3-calibration-runner.ts` uses the real synthetic-world repository, task bank, probe bank, final selector, and Generation-0 fixed-environment builder.
 
@@ -117,6 +151,7 @@ It verifies:
 - every finite arm is produced by the v3 final-selector path;
 - run-fixed environment provenance is persisted exactly once;
 - complete treatment provenance is persisted exactly once;
+- treatment provenance records the inherited v2 M reliability version and `maxOutputTokens = 14000`;
 - all 864 mock-dispatched cells pass through `initializeP63V3RunStart()` and receive the same binding object;
 - the run-start fail-closed identity/snapshot checks accept every mock outcome;
 - new v3 runner/exposure modules do not import historical v2 live executors or outcome artifacts;
@@ -124,31 +159,21 @@ It verifies:
 
 The executor dependencies are mocked only at the final execution boundary. The actual Generation-0 fixed-environment builder is used.
 
-## 7. Historical boundary
+## 8. Historical boundary
 
-This slice does not modify:
+This amendment does not rewrite:
 
+- `p6-3-mutation-protocol-parity.ts` and its historical 7,000-token contract;
 - `p6-3-live-executors.ts`;
 - `p6-3-v2-live-executors.ts`;
 - historical v2 calibration state/results;
 - the historical EL selector/runtime;
 - v2 scientific evidence.
 
-The old path remains reproducible historical evidence. The new path is additive and v3-only.
+The v2 execution-parameter contract is imported as a frozen reliability source, not as scientific outcome data.
 
-## 8. What remains before live calibration
+## 9. Live boundary
 
-After this offline runner gate is merged and green, the remaining engineering step is a **v3 paid/live execution controller** that adds fail-closed state persistence, resume/adjudication behavior, and explicit paid authorization around this already-frozen runner.
+The provider-capable entrypoint remains separately guarded by the hardened final pre-live gate and explicit paid/live authorization. This document does not authorize a provider call.
 
-That later controller must not change:
-
-- the predeclared grid;
-- repeats;
-- task/probe bank;
-- M/Rsem margins;
-- selector;
-- `E_fixed` surface;
-- plan ordering;
-- treatment provenance schema.
-
-Until that separate gate is reviewed and green, P6-3 v3 provider/live execution remains unauthorized.
+Before the first live call, the exact checkout must pass the final pre-live gate again and the runtime environment must satisfy all supported dependency requirements.
