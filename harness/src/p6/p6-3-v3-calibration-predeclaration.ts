@@ -16,12 +16,17 @@ import {
   P6_3_CALIBRATION_REPEAT_COUNT,
   P6_3_EXECUTION_PROTOCOL_VERSION,
 } from "./p6-3-execution-protocol";
-import { P6_3_V3_M_EXECUTOR_VERSION } from "./p6-3-v3-m-executor";
+import {
+  P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+  P6_3_V3_M_EXECUTOR_VERSION,
+  P6_3_V3_M_PROVIDER_CONTRACT,
+  P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+} from "./p6-3-v3-m-executor";
 import { P6_3_V3_RSEM_EXECUTOR_VERSION } from "./p6-3-v3-rsem-executor";
 import { P6_3_V3_RUN_START_WIRING_VERSION } from "./p6-3-v3-run-start";
 
 export const P6_3_V3_CALIBRATION_PREDECLARATION_VERSION =
-  "p6-3-v3-calibration-predeclaration-v1" as const;
+  "p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance" as const;
 export const P6_3_V3_ARTIFACT_CHUNK_MAX_TOKENS = 256 as const;
 export const P6_3_V3_FULL_ARTIFACT_TOKENS = 4046 as const;
 export const P6_3_V3_RSEM_NAMING_SCHEME_ID = "A-obfuscated" as const;
@@ -56,7 +61,11 @@ export const P6_3_V3_INTERIOR_ARM_ORDER: readonly P63V3InteriorArmLabel[] =
  * - conjunctive co-gate and minimum-budget tie-break.
  *
  * The v3 treatment correction is isolated to the already-frozen E_fixed boundary
- * and final artifact selector. No observed v2 outcome is an input here.
+ * and final artifact selector. The M execution-reliability envelope separately
+ * inherits the pre-v2-live 14,000-token amendment after the final pre-live audit
+ * found that the first v3 executor had accidentally fallen back to the historical
+ * 7,000-token P6-2/P6-3-v1 parity cap. No v3 provider outcome was observed before
+ * this amendment.
  */
 export const P6_3_V3_CALIBRATION_PREDECLARATION = Object.freeze({
   version: P6_3_V3_CALIBRATION_PREDECLARATION_VERSION,
@@ -90,6 +99,9 @@ export const P6_3_V3_CALIBRATION_PREDECLARATION = Object.freeze({
       primaryTaskCount: P6_2_PRIMARY_TASK_IDS.length,
       margin: P6_3_V3_DELTA_M,
       executorVersion: P6_3_V3_M_EXECUTOR_VERSION,
+      executionReliabilityVersion: P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+      reliabilitySourceVersion: P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+      providerMaxOutputTokens: P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens,
       aggregate: "mean-binary-pass-rate-across-primary-tasks-and-repeats",
     }),
     Rsem: Object.freeze({

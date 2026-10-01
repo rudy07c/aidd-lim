@@ -11,15 +11,35 @@ import { runScoring } from "../scoring";
 import type { TestSuiteResult } from "../types";
 import { classifyP62MRepeat } from "./af-baseline";
 import {
-  P6_3_MUTATION_PROVIDER_CONTRACT,
   validateP63MutationPathsP62Compatible,
 } from "./p6-3-mutation-protocol-parity";
+import {
+  P6_3_V2_EXECUTION_PARAMETERS_VERSION,
+  P6_3_V2_MUTATION_PROVIDER_CONTRACT,
+} from "./p6-3-v2-execution-parameters";
 import type {
   P63CellOutcome,
   P63ExposureEvidence,
 } from "./p6-3-live-calibration-runner";
 
-export const P6_3_V3_M_EXECUTOR_VERSION = "p6-3-v3-m-executor-v1" as const;
+export const P6_3_V3_M_EXECUTION_RELIABILITY_VERSION =
+  "p6-3-v3-m-execution-reliability-v1-inherit-v2" as const;
+export const P6_3_V3_M_RELIABILITY_SOURCE_VERSION =
+  P6_3_V2_EXECUTION_PARAMETERS_VERSION;
+
+/**
+ * P6-3 v3 changes the treatment boundary (E_fixed + artifact exposure), not the
+ * already-amended mutation reliability envelope. P6-3 v2 raised the M output
+ * cap from 7,000 to 14,000 before its live run after v1 demonstrated repeated
+ * max-output censoring. v3 therefore inherits the complete frozen v2 provider
+ * contract instead of falling back to the historical P6-2/P6-3-v1 parity cap.
+ */
+export const P6_3_V3_M_PROVIDER_CONTRACT = Object.freeze({
+  ...P6_3_V2_MUTATION_PROVIDER_CONTRACT,
+} as const);
+
+export const P6_3_V3_M_EXECUTOR_VERSION =
+  "p6-3-v3-m-executor-v2-v2-reliability-envelope" as const;
 
 export interface P63V3MutationTask {
   taskId: string;
@@ -73,15 +93,15 @@ export async function executeP63V3MCell(args: {
   assertFixedEnvironmentBinding(args.fixedEnvironment);
 
   const backend = new OpenAIV3FixedEnvironmentBackend({
-    model: P6_3_MUTATION_PROVIDER_CONTRACT.model,
-    reasoningEffort: P6_3_MUTATION_PROVIDER_CONTRACT.reasoningEffort,
-    maxOutputTokens: P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens,
-    requestTimeoutMs: P6_3_MUTATION_PROVIDER_CONTRACT.requestTimeoutMs,
-    maxRetries: P6_3_MUTATION_PROVIDER_CONTRACT.providerMaxRetries,
-    storeResponses: P6_3_MUTATION_PROVIDER_CONTRACT.storeResponses,
-    maxToolRounds: P6_3_MUTATION_PROVIDER_CONTRACT.maxToolRounds,
-    serviceTier: P6_3_MUTATION_PROVIDER_CONTRACT.serviceTier,
-    promptCacheMode: P6_3_MUTATION_PROVIDER_CONTRACT.promptCacheMode,
+    model: P6_3_V3_M_PROVIDER_CONTRACT.model,
+    reasoningEffort: P6_3_V3_M_PROVIDER_CONTRACT.reasoningEffort,
+    maxOutputTokens: P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens,
+    requestTimeoutMs: P6_3_V3_M_PROVIDER_CONTRACT.requestTimeoutMs,
+    maxRetries: P6_3_V3_M_PROVIDER_CONTRACT.providerMaxRetries,
+    storeResponses: P6_3_V3_M_PROVIDER_CONTRACT.storeResponses,
+    maxToolRounds: P6_3_V3_M_PROVIDER_CONTRACT.maxToolRounds,
+    serviceTier: P6_3_V3_M_PROVIDER_CONTRACT.serviceTier,
+    promptCacheMode: P6_3_V3_M_PROVIDER_CONTRACT.promptCacheMode,
   });
 
   const agent = await backend.run({
@@ -249,9 +269,16 @@ function finalizeP63V3MOutcome(
       taskSpecificPassed: classified.taskSpecific?.passed ?? null,
       fixedEnvironmentIdentity: environmentIdentity,
       fixedEnvironmentModelVisibleTokens: fixedEnvironment.modelVisibleTokens,
+      mExecutionReliabilityVersion: P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+      mProviderMaxOutputTokens: P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens,
     },
     artifactPayload: {
       executorVersion: P6_3_V3_M_EXECUTOR_VERSION,
+      executionReliability: {
+        version: P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+        inheritedFrom: P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+        providerContract: P6_3_V3_M_PROVIDER_CONTRACT,
+      },
       result: classified,
       agent: {
         rawResponse: agent.rawResponse,

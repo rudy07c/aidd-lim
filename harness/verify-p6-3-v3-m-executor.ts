@@ -17,7 +17,14 @@ import {
   P6_3_MUTATION_PROVIDER_CONTRACT,
 } from "./src/p6/p6-3-mutation-protocol-parity";
 import {
+  P6_3_V2_EXECUTION_PARAMETERS_VERSION,
+  P6_3_V2_MUTATION_PROVIDER_CONTRACT,
+} from "./src/p6/p6-3-v2-execution-parameters";
+import {
+  P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
   P6_3_V3_M_EXECUTOR_VERSION,
+  P6_3_V3_M_PROVIDER_CONTRACT,
+  P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
 } from "./src/p6/p6-3-v3-m-executor";
 import {
   serializeStaticRepositoryPayload,
@@ -31,17 +38,19 @@ const historicalSource = fs.readFileSync(historicalExecutorPath, "utf8");
 const v3ExecutableSource = stripComments(v3Source);
 const historicalExecutableSource = stripComments(historicalSource);
 
-// 1. PR B is additive: historical executeP63MCell/executeP63RSemCell remain the
-//    only functions in the historical executor file, and no v3 executor/backend
-//    wiring is introduced there.
+// 1. Historical executors and historical P6-2/P6-3-v1 parity remain intact.
 assert.ok(historicalExecutableSource.includes("export async function executeP63MCell"));
 assert.ok(historicalExecutableSource.includes("export async function executeP63RSemCell"));
 assert.ok(!historicalExecutableSource.includes("executeP63V3MCell"));
 assert.ok(!historicalExecutableSource.includes("OpenAIV3FixedEnvironmentBackend"));
 assert.ok(!historicalExecutableSource.includes("p6-3-v3-m-executor"));
+assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens, 7000);
 
 // 2. The v3 executor is a distinct, versioned production surface.
-assert.equal(P6_3_V3_M_EXECUTOR_VERSION, "p6-3-v3-m-executor-v1");
+assert.equal(
+  P6_3_V3_M_EXECUTOR_VERSION,
+  "p6-3-v3-m-executor-v2-v2-reliability-envelope"
+);
 assert.ok(v3ExecutableSource.includes("export async function executeP63V3MCell"));
 
 // 3. The executor consumes an already-built binding. It must never construct
@@ -53,27 +62,35 @@ assert.ok(!v3ExecutableSource.includes("buildGenerationZeroFixedEnvironment"));
 assert.ok(!v3ExecutableSource.includes("createFixedEnvironmentBinding"));
 assert.ok(v3ExecutableSource.includes("assertFixedEnvironmentBinding(args.fixedEnvironment)"));
 
-// 4. The only mutation backend used by PR B is the dedicated v3 backend, and
-//    the exact caller-supplied binding is forwarded unchanged.
+// 4. The only mutation backend used by v3 is the dedicated fixed-environment
+//    backend, and the exact caller-supplied binding is forwarded unchanged.
 assert.ok(v3ExecutableSource.includes("new OpenAIV3FixedEnvironmentBackend"));
 assert.ok(v3ExecutableSource.includes("fixedEnvironment: args.fixedEnvironment"));
 assert.ok(!v3ExecutableSource.includes("new OpenAIBackend"));
 
-// 5. Provider execution settings remain the already-frozen P6-3/P6-2-compatible
-//    mutation contract. PR B changes prompt framing only through the dedicated
-//    v3 backend; it does not introduce a new model/reasoning/retry contract.
-assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.model, "gpt-5.6-luna");
-assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.reasoningEffort, "high");
-assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens, 7000);
-assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.requestTimeoutMs, 180000);
-assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.providerMaxRetries, 2);
-assert.equal(P6_3_MUTATION_PROVIDER_CONTRACT.maxToolRounds, 0);
-assert.ok(v3ExecutableSource.includes("model: P6_3_MUTATION_PROVIDER_CONTRACT.model"));
-assert.ok(v3ExecutableSource.includes("reasoningEffort: P6_3_MUTATION_PROVIDER_CONTRACT.reasoningEffort"));
-assert.ok(v3ExecutableSource.includes("maxOutputTokens: P6_3_MUTATION_PROVIDER_CONTRACT.maxOutputTokens"));
-assert.ok(v3ExecutableSource.includes("requestTimeoutMs: P6_3_MUTATION_PROVIDER_CONTRACT.requestTimeoutMs"));
-assert.ok(v3ExecutableSource.includes("maxRetries: P6_3_MUTATION_PROVIDER_CONTRACT.providerMaxRetries"));
-assert.ok(v3ExecutableSource.includes("maxToolRounds: P6_3_MUTATION_PROVIDER_CONTRACT.maxToolRounds"));
+// 5. v3 explicitly inherits the complete frozen v2 mutation reliability
+//    envelope. This is the critical pre-live repair: v1/P6-2 parity remains at
+//    7000, while v2 and v3 use the pre-v2-live 14000 reliability amendment.
+assert.equal(P6_3_V2_EXECUTION_PARAMETERS_VERSION, "p6-3-v2-execution-parameters-v1");
+assert.equal(P6_3_V2_MUTATION_PROVIDER_CONTRACT.maxOutputTokens, 14000);
+assert.equal(
+  P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+  "p6-3-v3-m-execution-reliability-v1-inherit-v2"
+);
+assert.equal(P6_3_V3_M_RELIABILITY_SOURCE_VERSION, P6_3_V2_EXECUTION_PARAMETERS_VERSION);
+assert.deepEqual(P6_3_V3_M_PROVIDER_CONTRACT, P6_3_V2_MUTATION_PROVIDER_CONTRACT);
+assert.equal(P6_3_V3_M_PROVIDER_CONTRACT.model, "gpt-5.6-luna");
+assert.equal(P6_3_V3_M_PROVIDER_CONTRACT.reasoningEffort, "high");
+assert.equal(P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens, 14000);
+assert.equal(P6_3_V3_M_PROVIDER_CONTRACT.requestTimeoutMs, 180000);
+assert.equal(P6_3_V3_M_PROVIDER_CONTRACT.providerMaxRetries, 2);
+assert.equal(P6_3_V3_M_PROVIDER_CONTRACT.maxToolRounds, 0);
+assert.ok(v3ExecutableSource.includes("model: P6_3_V3_M_PROVIDER_CONTRACT.model"));
+assert.ok(v3ExecutableSource.includes("reasoningEffort: P6_3_V3_M_PROVIDER_CONTRACT.reasoningEffort"));
+assert.ok(v3ExecutableSource.includes("maxOutputTokens: P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens"));
+assert.ok(v3ExecutableSource.includes("requestTimeoutMs: P6_3_V3_M_PROVIDER_CONTRACT.requestTimeoutMs"));
+assert.ok(v3ExecutableSource.includes("maxRetries: P6_3_V3_M_PROVIDER_CONTRACT.providerMaxRetries"));
+assert.ok(v3ExecutableSource.includes("maxToolRounds: P6_3_V3_M_PROVIDER_CONTRACT.maxToolRounds"));
 
 // 6. B_expose/contextBudget remains artifact-only: the executor forwards the
 //    budget and exposure unchanged and never arithmetically mixes E_fixed token
@@ -84,12 +101,16 @@ assert.ok(!/contextBudget\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.tes
 assert.ok(!/budgetTokens\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3ExecutableSource));
 assert.ok(!/actualExposedTokens\s*[:=][^\n]*(modelVisibleTokens|fixedEnvironment)/.test(v3ExecutableSource));
 
-// 7. The exact fixed-environment identity/snapshot is persisted into each M
-//    outcome so a later run-level gate can prove equality across arms/repeats.
+// 7. The exact fixed-environment identity/snapshot and M reliability envelope
+//    are persisted into each M outcome for later provenance checks.
 assert.ok(v3ExecutableSource.includes("fixedEnvironmentIdentity(fixedEnvironment)"));
 assert.ok(v3ExecutableSource.includes("fixedEnvironmentLogSnapshot(fixedEnvironment)"));
 assert.ok(v3ExecutableSource.includes("fixedEnvironmentIdentity: environmentIdentity"));
 assert.ok(v3ExecutableSource.includes("fixedEnvironmentModelVisibleTokens"));
+assert.ok(v3ExecutableSource.includes("mExecutionReliabilityVersion"));
+assert.ok(v3ExecutableSource.includes("mProviderMaxOutputTokens"));
+assert.ok(v3ExecutableSource.includes("executionReliability:"));
+assert.ok(v3ExecutableSource.includes("providerContract: P6_3_V3_M_PROVIDER_CONTRACT"));
 
 // 8. Prompt-level separation is concrete, not merely documented: E_fixed is a
 //    distinct section before CURRENT REPOSITORY and the artifact serializer is
@@ -138,18 +159,23 @@ assert.ok(v3ExecutableSource.includes("scoring.protocolContractViolated"));
 
 console.log(JSON.stringify({
   status: "ok",
-  slice: "p6-3-v3-m-executor-pr-b",
+  slice: "p6-3-v3-m-executor-v2-reliability-inheritance",
   executorVersion: P6_3_V3_M_EXECUTOR_VERSION,
+  executionReliabilityVersion: P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+  inheritedFrom: P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+  maxOutputTokens: P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens,
   promptVersion: OPENAI_V3_FIXED_ENVIRONMENT_PROMPT_VERSION,
   fixedEnvironmentIdentity: fixedEnvironmentIdentity(fixtureBinding),
   verified: [
+    "historical-v1-parity-contract-remains-7000",
+    "v2-reliability-contract-remains-14000",
+    "v3-m-inherits-complete-v2-provider-contract",
     "historical-executors-remain-v2-only",
     "v3-m-executor-is-distinct-and-versioned",
     "executor-consumes-prebuilt-binding-and-never-builds-e-fixed",
     "dedicated-v3-backend-receives-exact-binding",
-    "provider-contract-remains-p6-2-compatible",
     "artifact-budget-accounting-excludes-e-fixed",
-    "cell-artifact-persists-fixed-environment-identity-and-snapshot",
+    "cell-artifact-persists-fixed-environment-and-reliability-provenance",
     "prompt-keeps-fixed-environment-separate-from-repository-evidence",
     "v3-prompt-provenance-is-versioned",
     "fixed-environment-snapshot-reconstructs-identity",

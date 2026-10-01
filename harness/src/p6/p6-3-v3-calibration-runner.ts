@@ -30,13 +30,18 @@ import {
   type P63V3RunStartDependencies,
   type P63V3RunStartPersistence,
 } from "./p6-3-v3-run-start";
-import { P6_3_V3_M_EXECUTOR_VERSION } from "./p6-3-v3-m-executor";
+import {
+  P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+  P6_3_V3_M_EXECUTOR_VERSION,
+  P6_3_V3_M_PROVIDER_CONTRACT,
+  P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+} from "./p6-3-v3-m-executor";
 import { P6_3_V3_RSEM_EXECUTOR_VERSION } from "./p6-3-v3-rsem-executor";
 
 export const P6_3_V3_CALIBRATION_RUNNER_VERSION =
-  "p6-3-v3-calibration-runner-v1" as const;
+  "p6-3-v3-calibration-runner-v2-m-reliability" as const;
 export const P6_3_V3_CALIBRATION_TREATMENT_PROVENANCE_SCHEMA =
-  "p6-3-v3-calibration-treatment-provenance-v1" as const;
+  "p6-3-v3-calibration-treatment-provenance-v2-m-reliability" as const;
 
 export type P63V3Measurement = "M" | "Rsem";
 
@@ -60,6 +65,9 @@ export interface P63V3CalibrationTreatmentProvenance {
   readonly finalSelectorVersion: typeof P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION;
   readonly runStartWiringVersion: typeof P6_3_V3_RUN_START_WIRING_VERSION;
   readonly mExecutorVersion: typeof P6_3_V3_M_EXECUTOR_VERSION;
+  readonly mExecutionReliabilityVersion: typeof P6_3_V3_M_EXECUTION_RELIABILITY_VERSION;
+  readonly mReliabilitySourceVersion: typeof P6_3_V3_M_RELIABILITY_SOURCE_VERSION;
+  readonly mProviderMaxOutputTokens: number;
   readonly rsemExecutorVersion: typeof P6_3_V3_RSEM_EXECUTOR_VERSION;
   readonly fixedEnvironmentIdentity: string;
   readonly planHash: string;
@@ -181,6 +189,9 @@ export async function prepareP63V3CalibrationRun(args: {
     finalSelectorVersion: P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION,
     runStartWiringVersion: P6_3_V3_RUN_START_WIRING_VERSION,
     mExecutorVersion: P6_3_V3_M_EXECUTOR_VERSION,
+    mExecutionReliabilityVersion: P6_3_V3_M_EXECUTION_RELIABILITY_VERSION,
+    mReliabilitySourceVersion: P6_3_V3_M_RELIABILITY_SOURCE_VERSION,
+    mProviderMaxOutputTokens: P6_3_V3_M_PROVIDER_CONTRACT.maxOutputTokens,
     rsemExecutorVersion: P6_3_V3_RSEM_EXECUTOR_VERSION,
     fixedEnvironmentIdentity: runStart.provenance.fixedEnvironmentIdentity,
     planHash,

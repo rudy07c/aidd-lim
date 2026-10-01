@@ -1,7 +1,7 @@
 # P6-3 v3 calibration predeclaration
 
-**Status:** complete scientific-design freeze for the next v3 calibration; provider/live execution remains unauthorized  
-**Predeclaration version:** `p6-3-v3-calibration-predeclaration-v1`  
+**Status:** complete scientific-design freeze for the next v3 calibration; amended before any v3 provider outcome to restore the frozen v2 M reliability envelope; provider/live execution remains unauthorized
+**Predeclaration version:** `p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance`
 **Final artifact selector:** `p6-3-v3-category-proportional-interleave-final-v1`
 
 ## 1. Scope
@@ -23,14 +23,29 @@ This document freezes the remaining calibration choices **before any v3 provider
 
 ## 2. What changes from v2
 
-Only the treatment construction changes:
+The scientific treatment construction changes in two intended ways:
 
 - `E_fixed` is built once from Generation 0, kept outside `B_expose`, and reused unchanged across arms, measurements, and repeats;
 - artifact evidence uses the structurally frozen final Candidate-C selector.
 
 The measurement bank, repeat design, capacity grid, margins, and selection logic are intentionally not retuned.
 
-This is the conservative choice because v2 outcomes are already known. Introducing a finer grid around a previously observed transition, changing margins, or changing repeats now would create additional post-outcome researcher degrees of freedom. v3 therefore reuses the historical **capacity design** unchanged while correcting the treatment-boundary confound.
+### Pre-live M reliability inheritance amendment
+
+The final pre-live audit found one unintended execution-envelope regression before any v3 provider call: the first v3 M executor still referenced the historical P6-2/P6-3-v1 mutation parity contract with `maxOutputTokens = 7000`.
+
+That 7,000-token envelope had already been superseded for P6-3 v2, before its live run, after v1 demonstrated repeated exact-cap `max_output_tokens` censoring. The frozen v2 mutation reliability contract raised only this provider output cap to `14000` while retaining the same model, reasoning effort, timeout, SDK retry count, service tier, cache mode, response storage, and tool-round settings.
+
+v3 therefore inherits the complete frozen v2 mutation provider contract:
+
+```text
+M maxOutputTokens = 14000
+reliability source = p6-3-v2-execution-parameters-v1
+```
+
+The historical 7,000-token parity contract remains unchanged as provenance; it is not rewritten. This amendment changes execution reliability only. It does not alter `E_fixed`, artifact exposure, the budget grid, task/probe membership, repeat count, margins, or selection rule, and no v3 outcome was available to tune the amendment.
+
+This remains the conservative choice because v2 outcomes are already known. Introducing a finer grid around a previously observed transition, changing margins, or changing repeats now would create additional post-outcome researcher degrees of freedom. v3 therefore reuses the historical **capacity design** unchanged while correcting the treatment-boundary confound and preserving the already-amended v2 M execution envelope.
 
 ## 3. Frozen artifact-capacity grid
 
@@ -86,6 +101,20 @@ Delta_M = 1/11
 ```
 
 For an arm `B`, `M(B)` is the mean binary pass rate across the 11 primary tasks and 12 repeats.
+
+The v3 M provider reliability envelope inherits P6-3 v2:
+
+```text
+model = gpt-5.6-luna
+reasoning = high
+maxOutputTokens = 14000
+requestTimeoutMs = 180000
+providerMaxRetries = 2
+serviceTier = default
+promptCacheMode = implicit
+storeResponses = false
+maxToolRounds = 0
+```
 
 ### Rsem
 
@@ -163,6 +192,8 @@ A valid v3 calibration run must pin at minimum:
 - fixed-environment policy version;
 - run-start wiring version;
 - v3 M executor version;
+- v3 M execution-reliability version and its v2 source version;
+- v3 M provider `maxOutputTokens = 14000`;
 - v3 Rsem executor version;
 - historical balanced execution-protocol version;
 - exact 11-task M bank;
@@ -182,7 +213,7 @@ v2: artifact budget could control fixed-contract observability
 v3: E_fixed is common and outside artifact budget
 ```
 
-The v2 result can motivate why redesign occurred, but it is not an input to the v3 grid, margins, or selection calculation.
+The v2 primary M/Rsem outcomes are not inputs to the v3 grid, margins, or selection calculation. The v2 execution-reliability contract is reused only as an already-frozen provider envelope established before the v2 live run.
 
 ## 8. What this freeze does not authorize
 
@@ -201,16 +232,8 @@ liveAuthorization = false
 confirmatoryStage1AEligible = false
 ```
 
-## 9. Next gate
+## 9. Current gate
 
-The next engineering slice is a **v3-only calibration runner / offline dry gate** that consumes this predeclaration, the final artifact selector, and `initializeP63V3RunStart(...)`.
+The merged v3 final pre-live gate must verify this amended predeclaration, the v3 M executor, the frozen v2 reliability source contract, the final selector, the single run-fixed `E_fixed`, the 864-cell plan, the validity propagation path, and the deterministic result finalizer on the exact checkout that will execute the calibration.
 
-Before any live authorization it must prove offline that:
-
-1. all 864 logical cells are generated from this exact predeclaration;
-2. B0…B4 exposure is built only by the final selector;
-3. AF receives the full artifact repository;
-4. one Generation-0 `E_fixed` binding is reused across every cell;
-5. v3 M and Rsem executors receive that same binding;
-6. all treatment/version identities are persisted;
-7. historical v2 runner and evidence remain untouched.
+No paid/live execution is authorized by this document.
