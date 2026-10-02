@@ -167,7 +167,7 @@ accumulatedEstimatedCostUsd
 + reservedUnknownCostUsd
 ```
 
-If a process resumes with a provider attempt left in-flight, the controller cannot know whether provider-side work was billed. That interrupted attempt is therefore conservatively assigned the same candidate-specific projected worst-case cost and added to `reservedUnknownCostUsd`. The reservation remains in the run's control total even after a replacement is adjudicated.
+If a provider-visible attempt returns without usable usage/cost accounting, or if a process resumes with a provider attempt left in-flight, the controller cannot know the provider-side billed work exactly. That attempt is therefore conservatively assigned the same candidate-specific projected worst-case cost and added to `reservedUnknownCostUsd`. The reservation remains in the run's control total even after a replacement is adjudicated.
 
 If:
 
