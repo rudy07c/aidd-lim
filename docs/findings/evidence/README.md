@@ -19,7 +19,12 @@
 
 通常の live-run evidence は引き続き、研究上引用するために必要な代表ファイルのみを保存する。
 
-ただし、fail-close によって停止した実験について、停止状態そのものの provenance・attempt 履歴・human adjudication・controller state を一体として監査可能にする必要がある場合は、明示的な **diagnostic evidence promotion** として完全な診断 payload を保存してよい。
+ただし、fail-close によって停止した実験について、停止状態そのものの
+provenance・attempt 履歴・human adjudication・controller state を一体として
+監査可能にする必要がある場合は、明示的な **diagnostic evidence promotion**
+として、診断に必要な全 payload の repository copy を保存してよい。
+必要な sanitization を行った場合は、その内容・範囲・pre-sanitization
+fingerprint を併せて保存する。
 
 その場合は以下を必須とする。
 
