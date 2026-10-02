@@ -18,9 +18,9 @@ import type {
 } from "./p6-3-v3-rsem-reliability-audit-executor";
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTROLLER_VERSION =
-  "p6-3-v3-rsem-reliability-audit-controller-v1" as const;
+  "p6-3-v3-rsem-reliability-audit-controller-v2" as const;
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_STATE_SCHEMA =
-  "p6-3-v3-rsem-reliability-audit-state-v1" as const;
+  "p6-3-v3-rsem-reliability-audit-state-v2" as const;
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_PAID_FLAG =
   "--authorize-paid-live=P6-3-v3-rsem-reliability-audit" as const;
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_PAID_ENV =
@@ -78,6 +78,7 @@ export interface P63V3RSemReliabilityAuditInterruptedAttempt {
   readonly sequence: number;
   readonly attempt: number;
   readonly startedAt: string;
+  readonly reservedCostUsd: number;
   adjudication: P63V3RSemReliabilityAuditAdjudication | null;
 }
 
@@ -101,6 +102,7 @@ export interface P63V3RSemReliabilityAuditState {
   interruptedAttempts: P63V3RSemReliabilityAuditInterruptedAttempt[];
   auditFlag: P63V3RSemReliabilityAuditFlag | null;
   accumulatedEstimatedCostUsd: number;
+  reservedUnknownCostUsd: number;
   readonly operationalCostCeilingUsd: number;
   readonly startedAt: string;
   updatedAt: string;
@@ -206,6 +208,7 @@ export function createP63V3RSemReliabilityAuditState(args: {
     interruptedAttempts: [],
     auditFlag: null,
     accumulatedEstimatedCostUsd: 0,
+    reservedUnknownCostUsd: 0,
     operationalCostCeilingUsd:
       P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD,
     startedAt: now,
@@ -240,7 +243,9 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
     const projected =
       projectedP63V3RSemReliabilityAttemptCostUsd(cell.candidateCap);
     if (
-      state.accumulatedEstimatedCostUsd + projected >
+      state.accumulatedEstimatedCostUsd +
+        state.reservedUnknownCostUsd +
+        projected >
       state.operationalCostCeilingUsd
     ) {
       setAuditFlag(state, {
@@ -248,7 +253,7 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
         sequence: cell.sequence,
         attempt: state.nextAttempt,
         reason:
-          `projected cost ${projected.toFixed(6)} would cross ceiling ${state.operationalCostCeilingUsd.toFixed(2)}`,
+          `projected cost ${projected.toFixed(6)} with known=${state.accumulatedEstimatedCostUsd.toFixed(6)} reserved=${state.reservedUnknownCostUsd.toFixed(6)} would cross ceiling ${state.operationalCostCeilingUsd.toFixed(2)}`,
       });
       await persistence.persistState(state);
       break;
@@ -286,6 +291,10 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
       reasoningOutputTokens: decision.reasoningOutputTokens,
       totalTokens: decision.totalTokens,
       structureValid: decision.structureValid,
+      capUsageMatchedConfiguredLimit:
+        decision.capUsageMatchedConfiguredLimit,
+      outputUtilizationRatio: decision.outputUtilizationRatio,
+      reasoningUtilizationRatio: decision.reasoningUtilizationRatio,
       estimatedCostUsd: decision.estimatedCostUsd,
       failureReason: decision.failureReason,
       artifactPath,
@@ -305,7 +314,8 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
     touch(state);
 
     if (
-      state.accumulatedEstimatedCostUsd >
+      state.accumulatedEstimatedCostUsd +
+        state.reservedUnknownCostUsd >
       state.operationalCostCeilingUsd
     ) {
       setAuditFlag(state, {
@@ -313,7 +323,7 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
         sequence: cell.sequence,
         attempt: record.attempt,
         reason:
-          `accumulated estimated cost ${state.accumulatedEstimatedCostUsd.toFixed(6)} exceeded ceiling ${state.operationalCostCeilingUsd.toFixed(2)}`,
+          `cost-control total known=${state.accumulatedEstimatedCostUsd.toFixed(6)} reserved=${state.reservedUnknownCostUsd.toFixed(6)} exceeded ceiling ${state.operationalCostCeilingUsd.toFixed(2)}`,
       });
       await persistence.persistState(state);
       break;
@@ -504,15 +514,29 @@ export function assertP63V3RSemReliabilityAuditResumeCompatible(args: {
   assertStateCompatible(args.state, args.prepared, args.authorization);
 }
 
-export function recoverInterruptedP63V3RSemReliabilityAuditState(
-  state: P63V3RSemReliabilityAuditState
-): void {
+export function recoverInterruptedP63V3RSemReliabilityAuditState(args: {
+  state: P63V3RSemReliabilityAuditState;
+  prepared: Readonly<P63V3PreparedRSemReliabilityAudit>;
+}): void {
+  const { state, prepared } = args;
   if (!state.inFlight) return;
   const interrupted = state.inFlight;
+  const cell = prepared.plan.find(
+    (candidate) => candidate.sequence === interrupted.sequence
+  );
+  if (!cell) {
+    throw new Error(
+      `Rsem reliability audit interrupted sequence missing from frozen plan: ${interrupted.sequence}`
+    );
+  }
+  const reservedCostUsd =
+    projectedP63V3RSemReliabilityAttemptCostUsd(cell.candidateCap);
+  state.reservedUnknownCostUsd += reservedCostUsd;
   state.interruptedAttempts.push({
     sequence: interrupted.sequence,
     attempt: interrupted.attempt,
     startedAt: interrupted.startedAt,
+    reservedCostUsd,
     adjudication: null,
   });
   state.inFlight = null;
@@ -521,7 +545,7 @@ export function recoverInterruptedP63V3RSemReliabilityAuditState(
     sequence: interrupted.sequence,
     attempt: interrupted.attempt,
     reason:
-      "provider call may have been issued before interruption; blind replay is prohibited",
+      `provider call may have been issued before interruption; blind replay is prohibited and ${reservedCostUsd.toFixed(6)} USD is reserved conservatively`,
   });
 }
 
@@ -535,6 +559,9 @@ export function summarizeP63V3RSemReliabilityAudit(
     providerVisibleCommittedAttempts: state.attempts.length,
     interruptedAttempts: state.interruptedAttempts.length,
     accumulatedEstimatedCostUsd: state.accumulatedEstimatedCostUsd,
+    reservedUnknownCostUsd: state.reservedUnknownCostUsd,
+    costControlTotalUsd:
+      state.accumulatedEstimatedCostUsd + state.reservedUnknownCostUsd,
     operationalCostCeilingUsd: state.operationalCostCeilingUsd,
     candidate32000: summarizeP63V3RSemReliabilityCandidate(
       state.attempts,
