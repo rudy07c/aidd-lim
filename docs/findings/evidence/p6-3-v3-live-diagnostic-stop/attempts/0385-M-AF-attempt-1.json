@@ -1,0 +1,135 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-5",
+    "taskType": "local",
+    "repeat": 5,
+    "modifiedPaths": [
+      "src/protocol_adapter.ts",
+      "src/zef/rules.ts"
+    ],
+    "workingNote": "Added recoverZef as an immutable dor-to-pex Zef rule with a dor precondition, and registered it in protocol operation dispatch. Existing protocol methods and snapshot/entity mappings remain unchanged.",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 4544,
+      "output": 2181,
+      "cachedInput": 4541,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 516,
+      "total": 6725
+    },
+    "estimatedCostUsd": 0.0027086199999999997,
+    "passed": true,
+    "validity": "valid",
+    "failureCategory": null,
+    "failureReason": null,
+    "executionStatus": "ok",
+    "protocolContractViolated": false,
+    "visible": {
+      "passed": true,
+      "numPassed": 13,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "hidden": {
+      "passed": true,
+      "numPassed": 22,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "taskSpecific": {
+      "passed": true,
+      "numPassed": 3,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "failureDomain": "none",
+    "semanticFailure": false,
+    "protocolFailure": false,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "none",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/zef/rules.ts\",\"content\":\"import { WorldState } from \\\"../world\\\";\\n\\n/**\\n * advanceZef1 (= O3): Zef: nim -> pex, requires Tal === \\\"pex\\\"\\n * (D2: O3 depends on E3)\\n *\\n * このpreconditionが、Invariant I1（Vok=dor ならば Tal=pex）を\\n * \\\"distributed\\\" に成立させる根拠の一部である。advanceVok2自体はTalを\\n * 一切参照しないが、advanceVok2の前提であるZef=pexへ到達するには\\n * 必ずこのpreconditionを経由するため、結果としてTal=pexが連鎖的に\\n * 保証される（Talは後退しないため、一度pexになれば恒久的に成立する）。\\n */\\nexport function advanceZef1(world: WorldState): WorldState {\\n  if (world.zef !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceZef1: Zef must be in state 'nim'\\\");\\n  }\\n  if (world.tal !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceZef1: requires Tal to be 'pex'\\\");\\n  }\\n  return { ...world, zef: \\\"pex\\\" };\\n}\\n\\n/**\\n * advanceZef2 (= O4): Zef: pex -> dor, requires Tal === \\\"pex\\\" AND Fen === \\\"pex\\\"\\n * (D4: O4 depends on E3 — Invariant I2: Zef=dor → Tal=pex, explicit)\\n * (D5: O4 depends on E4 — Invariant I5: Zef=dor → Osk=pex, distributed via Fen=pex → Osk=pex chain)\\n */\\nexport function advanceZef2(world: WorldState): WorldState {\\n  if (world.zef !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceZef2: Zef must be in state 'pex'\\\");\\n  }\\n  if (world.tal !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceZef2: requires Tal to be 'pex'\\\");\\n  }\\n  if (world.fen !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceZef2: requires Fen to be 'pex'\\\");\\n  }\\n  return { ...world, zef: \\\"dor\\\" };\\n}\\n\\n/**\\n * recoverZef: Zef: dor -> pex\\n */\\nexport function recoverZef(world: WorldState): WorldState {\\n  if (world.zef !== \\\"dor\\\") {\\n    throw new Error(\\\"recoverZef: Zef must be in state 'dor'\\\");\\n  }\\n  return { ...world, zef: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"// protocol_adapter.ts\\n//\\n// これは「文化的に継承されるartifact」ではなく、実験世界の固定された\\n// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。\\n// H(G) は internal な rules.ts / entity module 構造を一切知らず、\\n// このファイルがexportする関数だけを呼ぶ。\\n//\\n// worker AIは、内部構造（vok/zef/tal/fen/osk ディレクトリ、rules.ts の分割方法等）を\\n// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する\\n// エクスポート名・振る舞いだけは保持しなければならない\\n// （Generation 0で確定した固定契約）。\\n\\nimport { WorldProtocol, OperationResult } from \\\"../../schema\\\";\\nimport { WorldState, createInitialWorld } from \\\"./world\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2, recoverZef } from \\\"./zef/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\n\\n// displayName -> 内部操作の対応表。この対応表自体は世代を経て\\n// リファクタされてよい（新operationの追加や、内部関数の再編を含む）。\\n// ただし各displayNameのキー文字列（\\\"advanceVok1\\\"等）はcontractの一部として固定。\\nconst operationTable: Record<string, (w: WorldState) => WorldState> = {\\n  advanceVok1,\\n  advanceVok2,\\n  advanceZef1,\\n  advanceZef2,\\n  recoverZef,\\n  advanceTal1,\\n  advanceOsk1,\\n  advanceFen1,\\n  advanceFen2,\\n};\\n\\n// entity display name -> WorldStateのプロパティ名\\nconst entityFieldTable: Record<string, keyof WorldState> = {\\n  Vok: \\\"vok\\\",\\n  Zef: \\\"zef\\\",\\n  Tal: \\\"tal\\\",\\n  Fen: \\\"fen\\\",\\n  Osk: \\\"osk\\\",\\n};\\n\\nexport const protocol: WorldProtocol<WorldState> = {\\n  reset(): WorldState {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(world: WorldState, operationDisplayName: string): OperationResult<WorldState> {\\n    const fn = operationTable[operationDisplayName];\\n    if (!fn) {\\n      return { success: false, error: `unknown operation: ${operationDisplayName}` };\\n    }\\n    try {\\n      const next = fn(world); // immutable: 新しいWorldStateを返す\\n      return { success: true, newState: next };\\n    } catch (e) {\\n      return { success: false, error: e instanceof Error ? e.message : String(e) };\\n    }\\n  },\\n\\n  getEntityState(world: WorldState, entityDisplayName: string): string {\\n    const field = entityFieldTable[entityDisplayName];\\n    if (!field) throw new Error(`unknown entity: ${entityDisplayName}`);\\n    return world[field];\\n  },\\n\\n  toAbstractSnapshot(world: WorldState): Record<string, string> {\\n    // displayName -> abstract EntityId/StateId への逆変換。\\n    // naming_schemes.json の A-obfuscated スキームの逆写像テーブル。\\n    const stateReverse: Record<string, string> = { nim: \\\"q1\\\", pex: \\\"q2\\\", dor: \\\"q3\\\" };\\n    return {\\n      E1: stateReverse[world.vok],\\n      E2: stateReverse[world.zef],\\n      E3: stateReverse[world.tal],\\n      E4: stateReverse[world.fen],\\n      E5: stateReverse[world.osk],\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"Added recoverZef as an immutable dor-to-pex Zef rule with a dor precondition, and registered it in protocol operation dispatch. Existing protocol methods and snapshot/entity mappings remain unchanged.\"}",
+    "modifiedFiles": {
+      "src/zef/rules.ts": "import { WorldState } from \"../world\";\n\n/**\n * advanceZef1 (= O3): Zef: nim -> pex, requires Tal === \"pex\"\n * (D2: O3 depends on E3)\n *\n * このpreconditionが、Invariant I1（Vok=dor ならば Tal=pex）を\n * \"distributed\" に成立させる根拠の一部である。advanceVok2自体はTalを\n * 一切参照しないが、advanceVok2の前提であるZef=pexへ到達するには\n * 必ずこのpreconditionを経由するため、結果としてTal=pexが連鎖的に\n * 保証される（Talは後退しないため、一度pexになれば恒久的に成立する）。\n */\nexport function advanceZef1(world: WorldState): WorldState {\n  if (world.zef !== \"nim\") {\n    throw new Error(\"advanceZef1: Zef must be in state 'nim'\");\n  }\n  if (world.tal !== \"pex\") {\n    throw new Error(\"advanceZef1: requires Tal to be 'pex'\");\n  }\n  return { ...world, zef: \"pex\" };\n}\n\n/**\n * advanceZef2 (= O4): Zef: pex -> dor, requires Tal === \"pex\" AND Fen === \"pex\"\n * (D4: O4 depends on E3 — Invariant I2: Zef=dor → Tal=pex, explicit)\n * (D5: O4 depends on E4 — Invariant I5: Zef=dor → Osk=pex, distributed via Fen=pex → Osk=pex chain)\n */\nexport function advanceZef2(world: WorldState): WorldState {\n  if (world.zef !== \"pex\") {\n    throw new Error(\"advanceZef2: Zef must be in state 'pex'\");\n  }\n  if (world.tal !== \"pex\") {\n    throw new Error(\"advanceZef2: requires Tal to be 'pex'\");\n  }\n  if (world.fen !== \"pex\") {\n    throw new Error(\"advanceZef2: requires Fen to be 'pex'\");\n  }\n  return { ...world, zef: \"dor\" };\n}\n\n/**\n * recoverZef: Zef: dor -> pex\n */\nexport function recoverZef(world: WorldState): WorldState {\n  if (world.zef !== \"dor\") {\n    throw new Error(\"recoverZef: Zef must be in state 'dor'\");\n  }\n  return { ...world, zef: \"pex\" };\n}\n",
+      "src/protocol_adapter.ts": "// protocol_adapter.ts\n//\n// これは「文化的に継承されるartifact」ではなく、実験世界の固定された\n// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。\n// H(G) は internal な rules.ts / entity module 構造を一切知らず、\n// このファイルがexportする関数だけを呼ぶ。\n//\n// worker AIは、内部構造（vok/zef/tal/fen/osk ディレクトリ、rules.ts の分割方法等）を\n// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する\n// エクスポート名・振る舞いだけは保持しなければならない\n// （Generation 0で確定した固定契約）。\n\nimport { WorldProtocol, OperationResult } from \"../../schema\";\nimport { WorldState, createInitialWorld } from \"./world\";\nimport { advanceVok1, advanceVok2 } from \"./vok/rules\";\nimport { advanceZef1, advanceZef2, recoverZef } from \"./zef/rules\";\nimport { advanceTal1 } from \"./tal/rules\";\nimport { advanceOsk1 } from \"./osk/rules\";\nimport { advanceFen1, advanceFen2 } from \"./fen/rules\";\n\n// displayName -> 内部操作の対応表。この対応表自体は世代を経て\n// リファクタされてよい（新operationの追加や、内部関数の再編を含む）。\n// ただし各displayNameのキー文字列（\"advanceVok1\"等）はcontractの一部として固定。\nconst operationTable: Record<string, (w: WorldState) => WorldState> = {\n  advanceVok1,\n  advanceVok2,\n  advanceZef1,\n  advanceZef2,\n  recoverZef,\n  advanceTal1,\n  advanceOsk1,\n  advanceFen1,\n  advanceFen2,\n};\n\n// entity display name -> WorldStateのプロパティ名\nconst entityFieldTable: Record<string, keyof WorldState> = {\n  Vok: \"vok\",\n  Zef: \"zef\",\n  Tal: \"tal\",\n  Fen: \"fen\",\n  Osk: \"osk\",\n};\n\nexport const protocol: WorldProtocol<WorldState> = {\n  reset(): WorldState {\n    return createInitialWorld();\n  },\n\n  applyOperation(world: WorldState, operationDisplayName: string): OperationResult<WorldState> {\n    const fn = operationTable[operationDisplayName];\n    if (!fn) {\n      return { success: false, error: `unknown operation: ${operationDisplayName}` };\n    }\n    try {\n      const next = fn(world); // immutable: 新しいWorldStateを返す\n      return { success: true, newState: next };\n    } catch (e) {\n      return { success: false, error: e instanceof Error ? e.message : String(e) };\n    }\n  },\n\n  getEntityState(world: WorldState, entityDisplayName: string): string {\n    const field = entityFieldTable[entityDisplayName];\n    if (!field) throw new Error(`unknown entity: ${entityDisplayName}`);\n    return world[field];\n  },\n\n  toAbstractSnapshot(world: WorldState): Record<string, string> {\n    // displayName -> abstract EntityId/StateId への逆変換。\n    // naming_schemes.json の A-obfuscated スキームの逆写像テーブル。\n    const stateReverse: Record<string, string> = { nim: \"q1\", pex: \"q2\", dor: \"q3\" };\n    return {\n      E1: stateReverse[world.vok],\n      E2: stateReverse[world.zef],\n      E3: stateReverse[world.tal],\n      E4: stateReverse[world.fen],\n      E5: stateReverse[world.osk],\n    };\n  },\n};\n"
+    },
+    "explicitWorkingNote": "Added recoverZef as an immutable dor-to-pex Zef rule with a dor precondition, and registered it in protocol operation dispatch. Existing protocol methods and snapshot/entity mappings remain unchanged.",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_03b0a2f594c44968016abf366f473487d0bcb34c7c0c622fb4",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 4544,
+      "output": 2181,
+      "cachedInput": 4541,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 516,
+      "total": 6725
+    },
+    "estimatedCostUsd": 0.0027086199999999997,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

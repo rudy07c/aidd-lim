@@ -1,0 +1,133 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-crosscut-3",
+    "taskType": "cross_cutting",
+    "repeat": 8,
+    "modifiedPaths": [
+      "src/protocol_adapter.ts"
+    ],
+    "workingNote": "protocol に advanceOskFen を追加し、Osk と Fen がともに nim の場合だけ原子​​的に pex へ遷移させます。既存操作のディスパッチと WorldProtocol の公開シグネチャを維持し、前提不成立時は元状態を変更せず失敗を返します。",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 814,
+      "output": 7541,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 6654,
+      "total": 8355
+    },
+    "estimatedCostUsd": 0.009211999999999998,
+    "passed": true,
+    "validity": "valid",
+    "failureCategory": null,
+    "failureReason": null,
+    "executionStatus": "ok",
+    "protocolContractViolated": false,
+    "visible": {
+      "passed": true,
+      "numPassed": 13,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "hidden": {
+      "passed": true,
+      "numPassed": 22,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "taskSpecific": {
+      "passed": true,
+      "numPassed": 3,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "failureDomain": "none",
+    "semanticFailure": false,
+    "protocolFailure": false,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "none",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { createInitialWorld } from \\\"./world\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\n\\ntype WorldStateHandle = ReturnType<typeof createInitialWorld>;\\ntype Operation = (state: WorldStateHandle) => WorldStateHandle;\\n\\nexport interface WorldProtocol<Handle = WorldStateHandle> {\\n  reset(): Handle;\\n  applyOperation(\\n    state: Handle,\\n    operationDisplayName: string\\n  ): { success: true; newState: Handle } | { success: false; error: string };\\n  getEntityState(state: Handle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: Handle): Record<string, string>;\\n}\\n\\nconst advanceOskFen: Operation = (state) => {\\n  // The combined operation is atomic: both entities must be at nim first.\\n  if (state.osk !== \\\"nim\\\" || state.fen !== \\\"nim\\\") {\\n    return state;\\n  }\\n\\n  return {\\n    ...state,\\n    osk: \\\"pex\\\",\\n    fen: \\\"pex\\\",\\n  };\\n};\\n\\nconst operations: Record<string, Operation> = {\\n  advanceFen1,\\n  advanceFen2,\\n  advanceOsk1,\\n  advanceOskFen,\\n  advanceTal1,\\n  advanceVok1,\\n  advanceVok2,\\n  advanceZef1,\\n  advanceZef2,\\n};\\n\\nconst entityKeyByDisplayName: Record<string, keyof WorldStateHandle> = {\\n  fen: \\\"fen\\\",\\n  osk: \\\"osk\\\",\\n  tal: \\\"tal\\\",\\n  vok: \\\"vok\\\",\\n  zef: \\\"zef\\\",\\n};\\n\\nexport const protocol: WorldProtocol = {\\n  reset: createInitialWorld,\\n\\n  applyOperation(state, operationDisplayName) {\\n    const operation = operations[operationDisplayName];\\n    if (!operation) {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    try {\\n      const newState = operation(state);\\n      if (newState === state) {\\n        return {\\n          success: false,\\n          error: `Operation cannot be applied: ${operationDisplayName}`,\\n        };\\n      }\\n      return { success: true, newState };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    const key = entityKeyByDisplayName[entityDisplayName.trim().toLowerCase()];\\n    return key ? String(state[key]) : \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return {\\n      Fen: state.fen,\\n      Osk: state.osk,\\n      Tal: state.tal,\\n      Vok: state.vok,\\n      Zef: state.zef,\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"protocol に advanceOskFen を追加し、Osk と Fen がともに nim の場合だけ原子​​的に pex へ遷移させます。既存操作のディスパッチと WorldProtocol の公開シグネチャを維持し、前提不成立時は元状態を変更せず失敗を返します。\"}",
+    "modifiedFiles": {
+      "src/protocol_adapter.ts": "import { createInitialWorld } from \"./world\";\nimport { advanceFen1, advanceFen2 } from \"./fen/rules\";\nimport { advanceOsk1 } from \"./osk/rules\";\nimport { advanceTal1 } from \"./tal/rules\";\nimport { advanceVok1, advanceVok2 } from \"./vok/rules\";\nimport { advanceZef1, advanceZef2 } from \"./zef/rules\";\n\ntype WorldStateHandle = ReturnType<typeof createInitialWorld>;\ntype Operation = (state: WorldStateHandle) => WorldStateHandle;\n\nexport interface WorldProtocol<Handle = WorldStateHandle> {\n  reset(): Handle;\n  applyOperation(\n    state: Handle,\n    operationDisplayName: string\n  ): { success: true; newState: Handle } | { success: false; error: string };\n  getEntityState(state: Handle, entityDisplayName: string): string;\n  toAbstractSnapshot(state: Handle): Record<string, string>;\n}\n\nconst advanceOskFen: Operation = (state) => {\n  // The combined operation is atomic: both entities must be at nim first.\n  if (state.osk !== \"nim\" || state.fen !== \"nim\") {\n    return state;\n  }\n\n  return {\n    ...state,\n    osk: \"pex\",\n    fen: \"pex\",\n  };\n};\n\nconst operations: Record<string, Operation> = {\n  advanceFen1,\n  advanceFen2,\n  advanceOsk1,\n  advanceOskFen,\n  advanceTal1,\n  advanceVok1,\n  advanceVok2,\n  advanceZef1,\n  advanceZef2,\n};\n\nconst entityKeyByDisplayName: Record<string, keyof WorldStateHandle> = {\n  fen: \"fen\",\n  osk: \"osk\",\n  tal: \"tal\",\n  vok: \"vok\",\n  zef: \"zef\",\n};\n\nexport const protocol: WorldProtocol = {\n  reset: createInitialWorld,\n\n  applyOperation(state, operationDisplayName) {\n    const operation = operations[operationDisplayName];\n    if (!operation) {\n      return {\n        success: false,\n        error: `Unknown operation: ${operationDisplayName}`,\n      };\n    }\n\n    try {\n      const newState = operation(state);\n      if (newState === state) {\n        return {\n          success: false,\n          error: `Operation cannot be applied: ${operationDisplayName}`,\n        };\n      }\n      return { success: true, newState };\n    } catch (error) {\n      return {\n        success: false,\n        error: error instanceof Error ? error.message : String(error),\n      };\n    }\n  },\n\n  getEntityState(state, entityDisplayName) {\n    const key = entityKeyByDisplayName[entityDisplayName.trim().toLowerCase()];\n    return key ? String(state[key]) : \"unknown\";\n  },\n\n  toAbstractSnapshot(state) {\n    return {\n      Fen: state.fen,\n      Osk: state.osk,\n      Tal: state.tal,\n      Vok: state.vok,\n      Zef: state.zef,\n    };\n  },\n};\n"
+    },
+    "explicitWorkingNote": "protocol に advanceOskFen を追加し、Osk と Fen がともに nim の場合だけ原子​​的に pex へ遷移させます。既存操作のディスパッチと WorldProtocol の公開シグネチャを維持し、前提不成立時は元状態を変更せず失敗を返します。",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0b47566d965c802b016abf5742334c87d0af83eecd67b29e60",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 814,
+      "output": 7541,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 6654,
+      "total": 8355
+    },
+    "estimatedCostUsd": 0.009211999999999998,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

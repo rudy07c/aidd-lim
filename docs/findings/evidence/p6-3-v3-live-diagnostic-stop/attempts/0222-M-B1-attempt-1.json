@@ -1,0 +1,150 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-3",
+    "taskType": "local",
+    "repeat": 2,
+    "modifiedPaths": [
+      "src/fen/rules.ts",
+      "src/protocol_adapter.ts"
+    ],
+    "workingNote": "Added protocol dispatch for resetFen. The operation succeeds only when Fen is pex and returns an immutable state with Fen set to nim; invalid or unknown operations remain reported as failures.",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 804,
+      "output": 5017,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 4127,
+      "total": 5821
+    },
+    "estimatedCostUsd": 0.0061811999999999995,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "protocol-contract",
+    "failureReason": "visible:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/fen/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m10\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m         ~~~~~\u001b[0m\n | hidden:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m64\u001b[0m     const value = (state as Record<string, unknown>)[entityKey];\n    \u001b[7m  \u001b[0m \u001b[91m                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m71\u001b[0m:\u001b[93m22\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m71\u001b[0m       const value = (state as Record<string, unknown>)[key];\n    \u001b[7m  \u001b[0m \u001b[91m                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n | task-specific:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m64\u001b[0m     const value = (state as Record<string, unknown>)[entityKey];\n    \u001b[7m  \u001b[0m \u001b[91m                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m71\u001b[0m:\u001b[93m22\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m71\u001b[0m       const value = (state as Record<string, unknown>)[key];\n    \u001b[7m  \u001b[0m \u001b[91m                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n",
+    "executionStatus": "ok",
+    "protocolContractViolated": true,
+    "visible": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/fen/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m10\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m         ~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "hidden": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m64\u001b[0m     const value = (state as Record<string, unknown>)[entityKey];\n    \u001b[7m  \u001b[0m \u001b[91m                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m71\u001b[0m:\u001b[93m22\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m71\u001b[0m       const value = (state as Record<string, unknown>)[key];\n    \u001b[7m  \u001b[0m \u001b[91m                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "taskSpecific": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m20\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m64\u001b[0m     const value = (state as Record<string, unknown>)[entityKey];\n    \u001b[7m  \u001b[0m \u001b[91m                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m71\u001b[0m:\u001b[93m22\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2352: \u001b[0mConversion of type 'WorldState' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m71\u001b[0m       const value = (state as Record<string, unknown>)[key];\n    \u001b[7m  \u001b[0m \u001b[91m                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { createInitialWorld } from \\\"./world\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\n\\ntype WorldState = ReturnType<typeof createInitialWorld>;\\n\\ntype OperationResult =\\n  | { success: true; newState: WorldState }\\n  | { success: false; error: string };\\n\\nexport interface WorldProtocol {\\n  reset(): WorldState;\\n  applyOperation(state: WorldState, operationDisplayName: string): OperationResult;\\n  getEntityState(state: WorldState, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldState): Record<string, string>;\\n}\\n\\nfunction resetFen(state: WorldState): WorldState {\\n  if (state.fen !== \\\"pex\\\") {\\n    throw new Error('resetFen requires Fen to be in the \\\"pex\\\" state');\\n  }\\n  return { ...state, fen: \\\"nim\\\" };\\n}\\n\\nconst operations: Record<string, (state: WorldState) => WorldState> = {\\n  advanceFen1,\\n  advanceFen2,\\n  advanceOsk1,\\n  advanceTal1,\\n  advanceVok1,\\n  advanceVok2,\\n  advanceZef1,\\n  advanceZef2,\\n  resetFen,\\n};\\n\\nexport const protocol: WorldProtocol = {\\n  reset: createInitialWorld,\\n\\n  applyOperation(state, operationDisplayName) {\\n    const operation = operations[operationDisplayName];\\n    if (!operation) {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    try {\\n      return { success: true, newState: operation(state) };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    const entityKey = entityDisplayName.toLowerCase();\\n    const value = (state as Record<string, unknown>)[entityKey];\\n    return typeof value === \\\"string\\\" ? value : \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    const snapshot: Record<string, string> = {};\\n    for (const key of Object.keys(state)) {\\n      const value = (state as Record<string, unknown>)[key];\\n      if (typeof value === \\\"string\\\") {\\n        snapshot[key] = value;\\n      }\\n    }\\n    return snapshot;\\n  },\\n};\\n\"},{\"path\":\"src/fen/rules.ts\",\"content\":\"import { World } from \\\"../world\\\";\\n\\nexport function advanceFen1(world: World): World {\\n  if (world.fen !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceFen1 requires Fen to be in the nim state\\\");\\n  }\\n  return { ...world, fen: \\\"pex\\\" };\\n}\\n\\nexport function advanceFen2(world: World): World {\\n  if (world.fen !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceFen2 requires Fen to be in the pex state\\\");\\n  }\\n  return { ...world, fen: \\\"dor\\\" };\\n}\\n\"}],\"workingNote\":\"Added protocol dispatch for resetFen. The operation succeeds only when Fen is pex and returns an immutable state with Fen set to nim; invalid or unknown operations remain reported as failures.\"}",
+    "modifiedFiles": {
+      "src/protocol_adapter.ts": "import { createInitialWorld } from \"./world\";\nimport { advanceFen1, advanceFen2 } from \"./fen/rules\";\nimport { advanceOsk1 } from \"./osk/rules\";\nimport { advanceTal1 } from \"./tal/rules\";\nimport { advanceVok1, advanceVok2 } from \"./vok/rules\";\nimport { advanceZef1, advanceZef2 } from \"./zef/rules\";\n\ntype WorldState = ReturnType<typeof createInitialWorld>;\n\ntype OperationResult =\n  | { success: true; newState: WorldState }\n  | { success: false; error: string };\n\nexport interface WorldProtocol {\n  reset(): WorldState;\n  applyOperation(state: WorldState, operationDisplayName: string): OperationResult;\n  getEntityState(state: WorldState, entityDisplayName: string): string;\n  toAbstractSnapshot(state: WorldState): Record<string, string>;\n}\n\nfunction resetFen(state: WorldState): WorldState {\n  if (state.fen !== \"pex\") {\n    throw new Error('resetFen requires Fen to be in the \"pex\" state');\n  }\n  return { ...state, fen: \"nim\" };\n}\n\nconst operations: Record<string, (state: WorldState) => WorldState> = {\n  advanceFen1,\n  advanceFen2,\n  advanceOsk1,\n  advanceTal1,\n  advanceVok1,\n  advanceVok2,\n  advanceZef1,\n  advanceZef2,\n  resetFen,\n};\n\nexport const protocol: WorldProtocol = {\n  reset: createInitialWorld,\n\n  applyOperation(state, operationDisplayName) {\n    const operation = operations[operationDisplayName];\n    if (!operation) {\n      return {\n        success: false,\n        error: `Unknown operation: ${operationDisplayName}`,\n      };\n    }\n\n    try {\n      return { success: true, newState: operation(state) };\n    } catch (error) {\n      return {\n        success: false,\n        error: error instanceof Error ? error.message : String(error),\n      };\n    }\n  },\n\n  getEntityState(state, entityDisplayName) {\n    const entityKey = entityDisplayName.toLowerCase();\n    const value = (state as Record<string, unknown>)[entityKey];\n    return typeof value === \"string\" ? value : \"unknown\";\n  },\n\n  toAbstractSnapshot(state) {\n    const snapshot: Record<string, string> = {};\n    for (const key of Object.keys(state)) {\n      const value = (state as Record<string, unknown>)[key];\n      if (typeof value === \"string\") {\n        snapshot[key] = value;\n      }\n    }\n    return snapshot;\n  },\n};\n",
+      "src/fen/rules.ts": "import { World } from \"../world\";\n\nexport function advanceFen1(world: World): World {\n  if (world.fen !== \"nim\") {\n    throw new Error(\"advanceFen1 requires Fen to be in the nim state\");\n  }\n  return { ...world, fen: \"pex\" };\n}\n\nexport function advanceFen2(world: World): World {\n  if (world.fen !== \"pex\") {\n    throw new Error(\"advanceFen2 requires Fen to be in the pex state\");\n  }\n  return { ...world, fen: \"dor\" };\n}\n"
+    },
+    "explicitWorkingNote": "Added protocol dispatch for resetFen. The operation succeeds only when Fen is pex and returns an immutable state with Fen set to nim; invalid or unknown operations remain reported as failures.",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0fe7b252b27fb1bd016abf21253a1887d08494b71eaf9e5fe1",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 804,
+      "output": 5017,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 4127,
+      "total": 5821
+    },
+    "estimatedCostUsd": 0.0061811999999999995,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

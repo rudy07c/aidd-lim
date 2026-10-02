@@ -1,0 +1,115 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-7",
+    "taskType": "local",
+    "repeat": 10,
+    "modifiedPaths": [],
+    "workingNote": null,
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 500,
+      "output": 6510,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 5707,
+      "total": 7010
+    },
+    "estimatedCostUsd": 0.007912,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "output-parse",
+    "failureReason": "Invalid structured JSON: Unexpected non-whitespace character after JSON at position 209 (line 1 column 210)",
+    "executionStatus": "output-parse-failure",
+    "protocolContractViolated": null,
+    "visible": null,
+    "hidden": null,
+    "taskSpecific": null,
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[],\"workingNote\":\"I’m inspecting the protocol adapter and related world-state code to identify the existing operation model and add fullResetVok without changing the required public surface.\"}{\"modifiedFiles\":[{\"path\":\"src/protocol_adapter.ts\",\"content\":\"type WorldStateHandle = {\\n  readonly entities: Record<string, string>;\\n};\\n\\nexport interface WorldProtocol {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nconst initialState = (): WorldStateHandle => ({\\n  entities: { Vok: \\\"nim\\\" },\\n});\\n\\nexport const protocol: WorldProtocol = {\\n  reset: initialState,\\n\\n  applyOperation(state, operationDisplayName) {\\n    if (operationDisplayName !== \\\"fullResetVok\\\") {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    return {\\n      success: true,\\n      newState: {\\n        entities: {\\n          ...state.entities,\\n          Vok: \\\"nim\\\",\\n        },\\n      },\\n    };\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    return state.entities[entityDisplayName] ?? \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return { ...state.entities };\\n  },\\n};\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"type WorldStateHandle = {\\n  readonly entities: Record<string, string>;\\n};\\n\\nexport interface WorldProtocol {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nconst initialState = (): WorldStateHandle => ({\\n  entities: { Vok: \\\"nim\\\" },\\n});\\n\\nexport const protocol: WorldProtocol = {\\n  reset: initialState,\\n\\n  applyOperation(state, operationDisplayName) {\\n    if (operationDisplayName !== \\\"fullResetVok\\\") {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    return {\\n      success: true,\\n      newState: {\\n        entities: {\\n          ...state.entities,\\n          Vok: \\\"nim\\\",\\n        },\\n      },\\n    };\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    return state.entities[entityDisplayName] ?? \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return { ...state.entities };\\n  },\\n};\\n\"}],\"workingNote\":\"Added fullResetVok to the protocol adapter. The operation returns a new immutable state with Vok set to nim while preserving other entities, and the required protocol method names and signatures remain unchanged.\"}",
+    "modifiedFiles": {},
+    "explicitWorkingNote": null,
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0d8add1df95cb879016abf4ee085dc87d0bd691a7bd50f9574",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 500,
+      "output": 6510,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 5707,
+      "total": 7010
+    },
+    "estimatedCostUsd": 0.007912,
+    "executionStatus": "output-parse-failure",
+    "error": {
+      "category": "output-parse",
+      "message": "Invalid structured JSON: Unexpected non-whitespace character after JSON at position 209 (line 1 column 210)",
+      "retryable": false
+    }
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

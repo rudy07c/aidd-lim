@@ -1,0 +1,115 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-crosscut-3",
+    "taskType": "cross_cutting",
+    "repeat": 2,
+    "modifiedPaths": [],
+    "workingNote": null,
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 502,
+      "output": 4335,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 2789,
+      "total": 4837
+    },
+    "estimatedCostUsd": 0.0053024,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "output-parse",
+    "failureReason": "Invalid structured JSON: Unexpected non-whitespace character after JSON at position 194 (line 1 column 195)",
+    "executionStatus": "output-parse-failure",
+    "protocolContractViolated": null,
+    "visible": null,
+    "hidden": null,
+    "taskSpecific": null,
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[],\"workingNote\":\"I will inspect the repository protocol implementation and tests, then add the operation while preserving the required protocol surface and existing behavior.\"}{\"modifiedFiles\":[{\"path\":\"src/protocol_adapter.ts\",\"content\":\"type WorldState = {\\n  Osk: string;\\n  Fen: string;\\n};\\n\\nexport interface WorldProtocol<WorldStateHandle = WorldState> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(\\n    state: WorldStateHandle,\\n    entityDisplayName: string\\n  ): string;\\n  toAbstractSnapshot(\\n    state: WorldStateHandle\\n  ): Record<string, string>;\\n}\\n\\nconst initialState = (): WorldState => ({\\n  Osk: \\\"nim\\\",\\n  Fen: \\\"nim\\\",\\n});\\n\\nconst advanceEntity = (\\n  state: WorldState,\\n  entity: \\\"Osk\\\" | \\\"Fen\\\"\\n): { success: true; newState: WorldState } | { success: false; error: string } => {\\n  if (state[entity] !== \\\"nim\\\") {\\n    return {\\n      success: false,\\n      error: `${entity} cannot be advanced from ${state[entity]}`,\\n    };\\n  }\\n\\n  return {\\n    success: true,\\n    newState: {\\n      ...state,\\n      [entity]: \\\"pex\\\",\\n    },\\n  };\\n};\\n\\nexport const protocol: WorldProtocol = {\\n  reset(): WorldState {\\n    return initialState();\\n  },\\n\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string\\n  ):\\n    | { success: true; newState: WorldState }\\n    | { success: false; error: string } {\\n    switch (operationDisplayName) {\\n      case \\\"advanceOsk\\\":\\n        return advanceEntity(state, \\\"Osk\\\");\\n      case \\\"advanceFen\\\":\\n        return advanceEntity(state, \\\"Fen\\\");\\n      case \\\"advanceOskFen\\\":\\n        if (state.Osk !== \\\"nim\\\" || state.Fen !== \\\"nim\\\") {\\n          return {\\n            success: false,\\n            error: \\\"Osk and Fen must both be nim to advance together\\\",\\n          };\\n        }\\n\\n        return {\\n          success: true,\\n          newState: {\\n            ...state,\\n            Osk: \\\"pex\\\",\\n            Fen: \\\"pex\\\",\\n          },\\n        };\\n      default:\\n        return {\\n          success: false,\\n          error: `Unknown operation: ${operationDisplayName}`,\\n        };\\n    }\\n  },\\n\\n  getEntityState(state: WorldState, entityDisplayName: string): string {\\n    if (entityDisplayName === \\\"Osk\\\" || entityDisplayName === \\\"Fen\\\") {\\n      return state[entityDisplayName];\\n    }\\n    return \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\\n    return {\\n      Osk: state.Osk,\\n      Fen: state.Fen,\\n    };\\n  },\\n};\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"type WorldState = {\\n  Osk: string;\\n  Fen: string;\\n};\\n\\nexport interface WorldProtocol<WorldStateHandle = WorldState> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(\\n    state: WorldStateHandle,\\n    entityDisplayName: string\\n  ): string;\\n  toAbstractSnapshot(\\n    state: WorldStateHandle\\n  ): Record<string, string>;\\n}\\n\\nconst initialState = (): WorldState => ({\\n  Osk: \\\"nim\\\",\\n  Fen: \\\"nim\\\",\\n});\\n\\nconst advanceEntity = (\\n  state: WorldState,\\n  entity: \\\"Osk\\\" | \\\"Fen\\\"\\n): { success: true; newState: WorldState } | { success: false; error: string } => {\\n  if (state[entity] !== \\\"nim\\\") {\\n    return {\\n      success: false,\\n      error: `${entity} cannot be advanced from ${state[entity]}`,\\n    };\\n  }\\n\\n  return {\\n    success: true,\\n    newState: {\\n      ...state,\\n      [entity]: \\\"pex\\\",\\n    },\\n  };\\n};\\n\\nexport const protocol: WorldProtocol = {\\n  reset(): WorldState {\\n    return initialState();\\n  },\\n\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string\\n  ):\\n    | { success: true; newState: WorldState }\\n    | { success: false; error: string } {\\n    switch (operationDisplayName) {\\n      case \\\"advanceOsk\\\":\\n        return advanceEntity(state, \\\"Osk\\\");\\n      case \\\"advanceFen\\\":\\n        return advanceEntity(state, \\\"Fen\\\");\\n      case \\\"advanceOskFen\\\":\\n        if (state.Osk !== \\\"nim\\\" || state.Fen !== \\\"nim\\\") {\\n          return {\\n            success: false,\\n            error: \\\"Osk and Fen must both be nim to advance together\\\",\\n          };\\n        }\\n\\n        return {\\n          success: true,\\n          newState: {\\n            ...state,\\n            Osk: \\\"pex\\\",\\n            Fen: \\\"pex\\\",\\n          },\\n        };\\n      default:\\n        return {\\n          success: false,\\n          error: `Unknown operation: ${operationDisplayName}`,\\n        };\\n    }\\n  },\\n\\n  getEntityState(state: WorldState, entityDisplayName: string): string {\\n    if (entityDisplayName === \\\"Osk\\\" || entityDisplayName === \\\"Fen\\\") {\\n      return state[entityDisplayName];\\n    }\\n    return \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\\n    return {\\n      Osk: state.Osk,\\n      Fen: state.Fen,\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"Added atomic advanceOskFen handling: it succeeds only when both Osk and Fen are nim, returns a cloned state with both set to pex, and leaves the input unchanged on failure. Existing individual advances and the required protocol methods remain available.\"}",
+    "modifiedFiles": {},
+    "explicitWorkingNote": null,
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_00d395e7e835c44c016abf528479f087d08cb5e576f4b0efb7",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 502,
+      "output": 4335,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 2789,
+      "total": 4837
+    },
+    "estimatedCostUsd": 0.0053024,
+    "executionStatus": "output-parse-failure",
+    "error": {
+      "category": "output-parse",
+      "message": "Invalid structured JSON: Unexpected non-whitespace character after JSON at position 194 (line 1 column 195)",
+      "retryable": false
+    }
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

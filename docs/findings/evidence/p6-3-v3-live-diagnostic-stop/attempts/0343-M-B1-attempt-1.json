@@ -1,0 +1,150 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-4",
+    "taskType": "local",
+    "repeat": 10,
+    "modifiedPaths": [
+      "src/protocol_adapter.ts",
+      "src/vok/rules.ts"
+    ],
+    "workingNote": "Added recoverVok with the dor -> pex transition and a dor precondition. Registered the operation in protocol dispatch while preserving immutable world updates, existing advancement operations, entity lookup, and abstract snapshots.",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 811,
+      "output": 6852,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 5735,
+      "total": 7663
+    },
+    "estimatedCostUsd": 0.008384599999999999,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "protocol-contract",
+    "failureReason": "visible:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m15\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import type { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m              ~~~~~\u001b[0m\n | hidden:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m15\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import type { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m              ~~~~~\u001b[0m\n | task-specific:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m15\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import type { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m              ~~~~~\u001b[0m\n",
+    "executionStatus": "ok",
+    "protocolContractViolated": true,
+    "visible": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m15\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import type { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m              ~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "hidden": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m15\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import type { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m              ~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "taskSpecific": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/vok/rules.ts\u001b[0m:\u001b[93m1\u001b[0m:\u001b[93m15\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../world\"' has no exported member 'World'.\n\n    \u001b[7m1\u001b[0m import type { World } from \"../world\";\n    \u001b[7m \u001b[0m \u001b[91m              ~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { createInitialWorld } from \\\"./world\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\n\\ntype WorldState = ReturnType<typeof createInitialWorld>;\\n\\ntype OperationResult<State> =\\n  | { success: true; newState: State }\\n  | { success: false; error: string };\\n\\nexport interface WorldProtocol<WorldStateHandle> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): OperationResult<WorldStateHandle>;\\n  getEntityState(\\n    state: WorldStateHandle,\\n    entityDisplayName: string\\n  ): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nfunction recoverVok(state: WorldState): WorldState {\\n  if (state.vok !== \\\"dor\\\") {\\n    throw new Error(\\\"Vok can only recover from dor\\\");\\n  }\\n\\n  return { ...state, vok: \\\"pex\\\" };\\n}\\n\\nconst operations: Record<\\n  string,\\n  (state: WorldState) => WorldState\\n> = {\\n  advanceFen1,\\n  advanceFen2,\\n  advanceOsk1,\\n  advanceVok1,\\n  advanceVok2,\\n  advanceZef1,\\n  advanceZef2,\\n  advanceTal1,\\n  recoverVok,\\n};\\n\\nfunction errorMessage(error: unknown): string {\\n  return error instanceof Error ? error.message : String(error);\\n}\\n\\nexport const protocol: WorldProtocol<WorldState> = {\\n  reset(): WorldState {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string\\n  ): OperationResult<WorldState> {\\n    const operation = operations[operationDisplayName];\\n    if (!operation) {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    try {\\n      return { success: true, newState: operation(state) };\\n    } catch (error) {\\n      return { success: false, error: errorMessage(error) };\\n    }\\n  },\\n\\n  getEntityState(\\n    state: WorldState,\\n    entityDisplayName: string\\n  ): string {\\n    const entityKey = entityDisplayName.trim().toLowerCase();\\n    const value = (state as unknown as Record<string, unknown>)[entityKey];\\n\\n    if (typeof value !== \\\"string\\\") {\\n      throw new Error(`Unknown entity: ${entityDisplayName}`);\\n    }\\n\\n    return value;\\n  },\\n\\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\\n    const snapshot: Record<string, string> = {};\\n\\n    for (const key of Object.keys(state)) {\\n      const value = (state as unknown as Record<string, unknown>)[key];\\n      if (typeof value === \\\"string\\\") {\\n        snapshot[key] = value;\\n      }\\n    }\\n\\n    return snapshot;\\n  },\\n};\\n\"},{\"path\":\"src/vok/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nexport function advanceVok1(world: World): World {\\n  if (world.vok !== \\\"nim\\\") {\\n    throw new Error(\\\"Vok must be nim to advance to pex\\\");\\n  }\\n\\n  return { ...world, vok: \\\"pex\\\" };\\n}\\n\\nexport function advanceVok2(world: World): World {\\n  if (world.vok !== \\\"pex\\\") {\\n    throw new Error(\\\"Vok must be pex to advance to dor\\\");\\n  }\\n  if (world.zef !== \\\"pex\\\") {\\n    throw new Error(\\\"Zef must be pex\\\");\\n  }\\n\\n  return { ...world, vok: \\\"dor\\\" };\\n}\\n\\nexport function recoverVok(world: World): World {\\n  if (world.vok !== \\\"dor\\\") {\\n    throw new Error(\\\"Vok can only recover from dor\\\");\\n  }\\n\\n  return { ...world, vok: \\\"pex\\\" };\\n}\\n\"}],\"workingNote\":\"Added recoverVok with the dor -> pex transition and a dor precondition. Registered the operation in protocol dispatch while preserving immutable world updates, existing advancement operations, entity lookup, and abstract snapshots.\"}",
+    "modifiedFiles": {
+      "src/protocol_adapter.ts": "import { createInitialWorld } from \"./world\";\nimport { advanceFen1, advanceFen2 } from \"./fen/rules\";\nimport { advanceOsk1 } from \"./osk/rules\";\nimport { advanceVok1, advanceVok2 } from \"./vok/rules\";\nimport { advanceZef1, advanceZef2 } from \"./zef/rules\";\nimport { advanceTal1 } from \"./tal/rules\";\n\ntype WorldState = ReturnType<typeof createInitialWorld>;\n\ntype OperationResult<State> =\n  | { success: true; newState: State }\n  | { success: false; error: string };\n\nexport interface WorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): OperationResult<WorldStateHandle>;\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\n}\n\nfunction recoverVok(state: WorldState): WorldState {\n  if (state.vok !== \"dor\") {\n    throw new Error(\"Vok can only recover from dor\");\n  }\n\n  return { ...state, vok: \"pex\" };\n}\n\nconst operations: Record<\n  string,\n  (state: WorldState) => WorldState\n> = {\n  advanceFen1,\n  advanceFen2,\n  advanceOsk1,\n  advanceVok1,\n  advanceVok2,\n  advanceZef1,\n  advanceZef2,\n  advanceTal1,\n  recoverVok,\n};\n\nfunction errorMessage(error: unknown): string {\n  return error instanceof Error ? error.message : String(error);\n}\n\nexport const protocol: WorldProtocol<WorldState> = {\n  reset(): WorldState {\n    return createInitialWorld();\n  },\n\n  applyOperation(\n    state: WorldState,\n    operationDisplayName: string\n  ): OperationResult<WorldState> {\n    const operation = operations[operationDisplayName];\n    if (!operation) {\n      return {\n        success: false,\n        error: `Unknown operation: ${operationDisplayName}`,\n      };\n    }\n\n    try {\n      return { success: true, newState: operation(state) };\n    } catch (error) {\n      return { success: false, error: errorMessage(error) };\n    }\n  },\n\n  getEntityState(\n    state: WorldState,\n    entityDisplayName: string\n  ): string {\n    const entityKey = entityDisplayName.trim().toLowerCase();\n    const value = (state as unknown as Record<string, unknown>)[entityKey];\n\n    if (typeof value !== \"string\") {\n      throw new Error(`Unknown entity: ${entityDisplayName}`);\n    }\n\n    return value;\n  },\n\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\n    const snapshot: Record<string, string> = {};\n\n    for (const key of Object.keys(state)) {\n      const value = (state as unknown as Record<string, unknown>)[key];\n      if (typeof value === \"string\") {\n        snapshot[key] = value;\n      }\n    }\n\n    return snapshot;\n  },\n};\n",
+      "src/vok/rules.ts": "import type { World } from \"../world\";\n\nexport function advanceVok1(world: World): World {\n  if (world.vok !== \"nim\") {\n    throw new Error(\"Vok must be nim to advance to pex\");\n  }\n\n  return { ...world, vok: \"pex\" };\n}\n\nexport function advanceVok2(world: World): World {\n  if (world.vok !== \"pex\") {\n    throw new Error(\"Vok must be pex to advance to dor\");\n  }\n  if (world.zef !== \"pex\") {\n    throw new Error(\"Zef must be pex\");\n  }\n\n  return { ...world, vok: \"dor\" };\n}\n\nexport function recoverVok(world: World): World {\n  if (world.vok !== \"dor\") {\n    throw new Error(\"Vok can only recover from dor\");\n  }\n\n  return { ...world, vok: \"pex\" };\n}\n"
+    },
+    "explicitWorkingNote": "Added recoverVok with the dor -> pex transition and a dor precondition. Registered the operation in protocol dispatch while preserving immutable world updates, existing advancement operations, entity lookup, and abstract snapshots.",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0f40189d26bc72f4016abf30c0fe2c87d0a9afe75125520668",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 811,
+      "output": 6852,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 5735,
+      "total": 7663
+    },
+    "estimatedCostUsd": 0.008384599999999999,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

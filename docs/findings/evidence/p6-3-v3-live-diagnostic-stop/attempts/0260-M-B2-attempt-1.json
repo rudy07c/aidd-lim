@@ -1,0 +1,115 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-3",
+    "taskType": "local",
+    "repeat": 8,
+    "modifiedPaths": [],
+    "workingNote": null,
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 1398,
+      "output": 4108,
+      "cachedInput": 1395,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 2489,
+      "total": 5506
+    },
+    "estimatedCostUsd": 0.004958099999999999,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "output-parse",
+    "failureReason": "Invalid structured JSON: Unexpected non-whitespace character after JSON at position 123 (line 1 column 124)",
+    "executionStatus": "output-parse-failure",
+    "protocolContractViolated": null,
+    "visible": null,
+    "hidden": null,
+    "taskSpecific": null,
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[],\"workingNote\":\"リポジトリの既存 protocol_adapter と WorldState の全体構造を確認し、resetFen の既存命名・状態遷移・公開プロトコル互換性を確認します。\"}{\"modifiedFiles\":[{\"path\":\"src/fen/rules.ts\",\"content\":\"import { WorldState } from \\\"../world\\\";\\n\\n/**\\n * advanceFen1 (= O7): Fen: nim -> pex, requires Osk === \\\"pex\\\"\\n * (D6: O7 depends on E5)\\n */\\nexport function advanceFen1(world: WorldState): WorldState {\\n  if (world.fen !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceFen1: Fen must be in state 'nim'\\\");\\n  }\\n  if (world.osk !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceFen1: requires Osk to be 'pex'\\\");\\n  }\\n  return { ...world, fen: \\\"pex\\\" };\\n}\\n\\n/**\\n * advanceFen2 (= O8): Fen: pex -> dor, requires Osk === \\\"pex\\\" AND Zef === \\\"pex\\\"\\n * (D7: O8 depends on E5 — Invariant I3: Fen=dor → Osk=pex, explicit)\\n * (D8: O8 depends on E2 — Invariant I6: Fen=dor → Tal=pex, distributed via Zef=pex → Tal=pex chain)\\n */\\nexport function advanceFen2(world: WorldState): WorldState {\\n  if (world.fen !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceFen2: Fen must be in state 'pex'\\\");\\n  }\\n  if (world.osk !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceFen2: requires Osk to be 'pex'\\\");\\n  }\\n  if (world.zef !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceFen2: requires Zef to be 'pex'\\\");\\n  }\\n  return { ...world, fen: \\\"dor\\\" };\\n}\\n\\n/**\\n * resetFen: Fen: pex -> nim.\\n * This is intentionally limited to the pex state; a reset must not silently\\n * alter Fen when it is still nim or has already advanced to dor.\\n */\\nexport function resetFen(world: WorldState): WorldState {\\n  if (world.fen !== \\\"pex\\\") {\\n    throw new Error(\\\"resetFen: Fen must be in state 'pex'\\\");\\n  }\\n  return { ...world, fen: \\\"nim\\\" };\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"// protocol_adapter.ts\\n//\\n// これは「文化的に継承されるartifact」ではなく、実験世界の固定された\\n// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。\\n// H(G) は internal な rules.ts / entity module 構造を一切知らず、\\n// このファイルがexportする関数だけを呼ぶ。\\n//\\n// worker AIは、内部構造（vok/zef/tal/fen/osk ディレクトリ、rules.ts の分割方法等）を\\n// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する\\n// エクスポート名・振る舞いだけは保持しなければならない\\n// （Generation 0で確定した固定契約）。\\n\\nimport { WorldProtocol, OperationResult } from \\\"../../schema\\\";\\nimport { WorldState, createInitialWorld } from \\\"./world\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceFen1, advanceFen2, resetFen } from \\\"./fen/rules\\\";\\n\\nfunction applyOperationToWorld(\\n  state: WorldState,\\n  operationDisplayName: string\\n): WorldState {\\n  switch (operationDisplayName) {\\n    case \\\"advanceVok1\\\":\\n      return advanceVok1(state);\\n    case \\\"advanceVok2\\\":\\n      return advanceVok2(state);\\n    case \\\"advanceZef1\\\":\\n      return advanceZef1(state);\\n    case \\\"advanceZef2\\\":\\n      return advanceZef2(state);\\n    case \\\"advanceTal1\\\":\\n      return advanceTal1(state);\\n    case \\\"advanceOsk1\\\":\\n      return advanceOsk1(state);\\n    case \\\"advanceFen1\\\":\\n      return advanceFen1(state);\\n    case \\\"advanceFen2\\\":\\n      return advanceFen2(state);\\n    case \\\"resetFen\\\":\\n      return resetFen(state);\\n    default:\\n      throw new Error(`Unknown operation: ${operationDisplayName}`);\\n  }\\n}\\n\\nfunction asWorldState(state: unknown): WorldState {\\n  return state as WorldState;\\n}\\n\\n/** The stable world protocol boundary. */\\nexport const protocol: WorldProtocol = {\\n  reset(): WorldState {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(\\n    state: unknown,\\n    operationDisplayName: string\\n  ): OperationResult {\\n    try {\\n      return {\\n        success: true,\\n        newState: applyOperationToWorld(\\n          asWorldState(state),\\n          operationDisplayName\\n        ),\\n      };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state: unknown, entityDisplayName: string): string {\\n    const world = asWorldState(state);\\n    switch (entityDisplayName) {\\n      case \\\"Vok\\\":\\n        return world.vok;\\n      case \\\"Zef\\\":\\n        return world.zef;\\n      case \\\"Tal\\\":\\n        return world.tal;\\n      case \\\"Osk\\\":\\n        return world.osk;\\n      case \\\"Fen\\\":\\n        return world.fen;\\n      default:\\n        throw new Error(`Unknown entity: ${entityDisplayName}`);\\n    }\\n  },\\n\\n  toAbstractSnapshot(state: unknown): Record<string, string> {\\n    const world = asWorldState(state);\\n    return {\\n      Vok: world.vok,\\n      Zef: world.zef,\\n      Tal: world.tal,\\n      Osk: world.osk,\\n      Fen: world.fen,\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"Fen に pex→nim の resetFen ルールを追加し、protocol の operation dispatch へ接続しました。resetFen は Fen が pex の場合だけ状態を変更し、既存の operation、entity lookup、snapshot、エラー結果の公開面は維持しています。\"}",
+    "modifiedFiles": {},
+    "explicitWorkingNote": null,
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0c6779ebbe9d3bf3016abf25da785c87d093babb4b740cc306",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 1398,
+      "output": 4108,
+      "cachedInput": 1395,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 2489,
+      "total": 5506
+    },
+    "estimatedCostUsd": 0.004958099999999999,
+    "executionStatus": "output-parse-failure",
+    "error": {
+      "category": "output-parse",
+      "message": "Invalid structured JSON: Unexpected non-whitespace character after JSON at position 123 (line 1 column 124)",
+      "retryable": false
+    }
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

@@ -1,0 +1,115 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-4",
+    "taskType": "local",
+    "repeat": 5,
+    "modifiedPaths": [],
+    "workingNote": null,
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 811,
+      "output": 6872,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 4259,
+      "total": 7683
+    },
+    "estimatedCostUsd": 0.008408599999999999,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "output-parse",
+    "failureReason": "Duplicate modified file path: src/protocol_adapter.ts",
+    "executionStatus": "output-parse-failure",
+    "protocolContractViolated": null,
+    "visible": null,
+    "hidden": null,
+    "taskSpecific": null,
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/zef/state.ts\",\"content\":\"export type ZefState = \\\"nim\\\" | \\\"pex\\\" | \\\"dor\\\";\\n\"},{\"path\":\"src/tal/state.ts\",\"content\":\"export type TalState = \\\"nim\\\" | \\\"pex\\\" | \\\"dor\\\";\\n\"},{\"path\":\"src/world.ts\",\"content\":\"import type { FenState } from \\\"./fen/state\\\";\\nimport type { OskState } from \\\"./osk/state\\\";\\nimport type { TalState } from \\\"./tal/state\\\";\\nimport type { VokState } from \\\"./vok/state\\\";\\nimport type { ZefState } from \\\"./zef/state\\\";\\n\\nexport interface World {\\n  fen: FenState;\\n  osk: OskState;\\n  tal: TalState;\\n  vok: VokState;\\n  zef: ZefState;\\n}\\n\\nexport function createInitialWorld(): World {\\n  return {\\n    fen: \\\"nim\\\",\\n    osk: \\\"nim\\\",\\n    tal: \\\"nim\\\",\\n    vok: \\\"nim\\\",\\n    zef: \\\"nim\\\",\\n  };\\n}\\n\"},{\"path\":\"src/vok/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nfunction requireState(actual: string, expected: string, operation: string, entity: string): void {\\n  if (actual !== expected) {\\n    throw new Error(`${operation} requires ${entity} to be '${expected}'.`);\\n  }\\n}\\n\\nexport function advanceVok1(world: World): World {\\n  requireState(world.vok, \\\"nim\\\", \\\"advanceVok1\\\", \\\"Vok\\\");\\n  return { ...world, vok: \\\"pex\\\" };\\n}\\n\\nexport function advanceVok2(world: World): World {\\n  requireState(world.vok, \\\"pex\\\", \\\"advanceVok2\\\", \\\"Vok\\\");\\n  requireState(world.zef, \\\"pex\\\", \\\"advanceVok2\\\", \\\"Zef\\\");\\n  return { ...world, vok: \\\"dor\\\" };\\n}\\n\\n/** Move Vok back by one stage after it has reached dor. */\\nexport function recoverVok(world: World): World {\\n  requireState(world.vok, \\\"dor\\\", \\\"recoverVok\\\", \\\"Vok\\\");\\n  return { ...world, vok: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/zef/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nfunction requireState(actual: string, expected: string, operation: string, entity: string): void {\\n  if (actual !== expected) {\\n    throw new Error(`${operation} requires ${entity} to be '${expected}'.`);\\n  }\\n}\\n\\nexport function advanceZef1(world: World): World {\\n  requireState(world.zef, \\\"nim\\\", \\\"advanceZef1\\\", \\\"Zef\\\");\\n  return { ...world, zef: \\\"pex\\\" };\\n}\\n\\nexport function advanceZef2(world: World): World {\\n  requireState(world.zef, \\\"pex\\\", \\\"advanceZef2\\\", \\\"Zef\\\");\\n  return { ...world, zef: \\\"dor\\\" };\\n}\\n\"},{\"path\":\"src/tal/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nexport function advanceTal1(world: World): World {\\n  if (world.tal !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceTal1 requires Tal to be 'nim'.\\\");\\n  }\\n  return { ...world, tal: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/osk/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nexport function advanceOsk1(world: World): World {\\n  if (world.osk !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceOsk1 requires Osk to be 'nim'.\\\");\\n  }\\n  return { ...world, osk: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/fen/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nfunction requireState(actual: string, expected: string, operation: string, entity: string): void {\\n  if (actual !== expected) {\\n    throw new Error(`${operation} requires ${entity} to be '${expected}'.`);\\n  }\\n}\\n\\nexport function advanceFen1(world: World): World {\\n  requireState(world.fen, \\\"nim\\\", \\\"advanceFen1\\\", \\\"Fen\\\");\\n  return { ...world, fen: \\\"pex\\\" };\\n}\\n\\nexport function advanceFen2(world: World): World {\\n  requireState(world.fen, \\\"pex\\\", \\\"advanceFen2\\\", \\\"Fen\\\");\\n  return { ...world, fen: \\\"dor\\\" };\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceVok1, advanceVok2, recoverVok } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\nimport { createInitialWorld, type World } from \\\"./world\\\";\\n\\nexport interface WorldProtocol<WorldStateHandle = World> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nfunction operation(world: World, name: string): World {\\n  switch (name) {\\n    case \\\"advanceFen1\\\":\\n      return advanceFen1(world);\\n    case \\\"advanceFen2\\\":\\n      return advanceFen2(world);\\n    case \\\"advanceOsk1\\\":\\n      return advanceOsk1(world);\\n    case \\\"advanceTal1\\\":\\n      return advanceTal1(world);\\n    case \\\"advanceVok1\\\":\\n      return advanceVok1(world);\\n    case \\\"advanceVok2\\\":\\n      return advanceVok2(world);\\n    case \\\"recoverVok\\\":\\n      return recoverVok(world);\\n    case \\\"advanceZef1\\\":\\n      return advanceZef1(world);\\n    case \\\"advanceZef2\\\":\\n      return advanceZef2(world);\\n    default:\\n      throw new Error(`Unknown operation '${name}'.`);\\n  }\\n}\\n\\nfunction entityKey(displayName: string): keyof World | undefined {\\n  switch (displayName.toLowerCase()) {\\n    case \\\"fen\\\":\\n      return \\\"fen\\\";\\n    case \\\"osk\\\":\\n      return \\\"osk\\\";\\n    case \\\"tal\\\":\\n      return \\\"tal\\\";\\n    case \\\"vok\\\":\\n      return \\\"vok\\\";\\n    case \\\"zef\\\":\\n      return \\\"zef\\\";\\n    default:\\n      return undefined;\\n  }\\n}\\n\\nexport const protocol: WorldProtocol<World> = {\\n  reset(): World {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(state, operationDisplayName) {\\n    try {\\n      return {\\n        success: true,\\n        newState: operation(state, operationDisplayName),\\n      };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    const key = entityKey(entityDisplayName);\\n    return key === undefined ? \\\"unknown\\\" : state[key];\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return {\\n      fen: state.fen,\\n      osk: state.osk,\\n      tal: state.tal,\\n      vok: state.vok,\\n      zef: state.zef,\\n    };\\n  },\\n};\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceVok1, advanceVok2, recoverVok } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\nimport { createInitialWorld, type World } from \\\"./world\\\";\\n\\nexport interface WorldProtocol<WorldStateHandle = World> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nfunction operation(world: World, name: string): World {\\n  switch (name) {\\n    case \\\"advanceFen1\\\": return advanceFen1(world);\\n    case \\\"advanceFen2\\\": return advanceFen2(world);\\n    case \\\"advanceOsk1\\\": return advanceOsk1(world);\\n    case \\\"advanceTal1\\\": return advanceTal1(world);\\n    case \\\"advanceVok1\\\": return advanceVok1(world);\\n    case \\\"advanceVok2\\\": return advanceVok2(world);\\n    case \\\"recoverVok\\\": return recoverVok(world);\\n    case \\\"advanceZef1\\\": return advanceZef1(world);\\n    case \\\"advanceZef2\\\": return advanceZef2(world);\\n    default: throw new Error(`Unknown operation '${name}'.`);\\n  }\\n}\\n\\nfunction entityKey(displayName: string): keyof World | undefined {\\n  switch (displayName.toLowerCase()) {\\n    case \\\"fen\\\": return \\\"fen\\\";\\n    case \\\"osk\\\": return \\\"osk\\\";\\n    case \\\"tal\\\": return \\\"tal\\\";\\n    case \\\"vok\\\": return \\\"vok\\\";\\n    case \\\"zef\\\": return \\\"zef\\\";\\n    default: return undefined;\\n  }\\n}\\n\\nexport const protocol: WorldProtocol<World> = {\\n  reset: createInitialWorld,\\n  applyOperation(state, operationDisplayName) {\\n    try {\\n      return { success: true, newState: operation(state, operationDisplayName) };\\n    } catch (error) {\\n      return { success: false, error: error instanceof Error ? error.message : String(error) };\\n    }\\n  },\\n  getEntityState(state, entityDisplayName) {\\n    const key = entityKey(entityDisplayName);\\n    return key === undefined ? \\\"unknown\\\" : state[key];\\n  },\\n  toAbstractSnapshot(state) {\\n    return { fen: state.fen, osk: state.osk, tal: state.tal, vok: state.vok, zef: state.zef };\\n  },\\n};\\n\"}],\"workingNote\":\"Added immutable Vok recovery with a strict dor -> pex precondition, exposed recoverVok through the fixed protocol surface, and retained failure results for invalid operations. Added the minimal world/rule modules required by the protocol and visible rule imports.\"}",
+    "modifiedFiles": {},
+    "explicitWorkingNote": null,
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0d96a2ded84d1bb3016abf2ce680f487d0be664989afedb85e",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 811,
+      "output": 6872,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 4259,
+      "total": 7683
+    },
+    "estimatedCostUsd": 0.008408599999999999,
+    "executionStatus": "output-parse-failure",
+    "error": {
+      "category": "output-parse",
+      "message": "Duplicate modified file path: src/protocol_adapter.ts",
+      "retryable": false
+    }
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}
