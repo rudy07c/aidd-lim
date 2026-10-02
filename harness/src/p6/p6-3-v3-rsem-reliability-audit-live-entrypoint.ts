@@ -9,6 +9,7 @@ import {
 } from "./p6-3-v3-rsem-reliability-audit-runner";
 import {
   executeP63V3RSemReliabilityAuditAttempt,
+  type P63V3RSemReliabilityAuditProbe,
 } from "./p6-3-v3-rsem-reliability-audit-executor";
 import {
   applyP63V3RSemReliabilityAuditAdjudication,
@@ -40,7 +41,7 @@ const AUDIT_PROVENANCE_FILE = "audit-provenance.json";
 
 interface RuntimeInputs {
   readonly repositoryFiles: Readonly<Record<string, string>>;
-  readonly probes: readonly GeneratedProbe[];
+  readonly probes: readonly P63V3RSemReliabilityAuditProbe[];
   readonly syntheticWorldDir: string;
 }
 
@@ -276,7 +277,10 @@ function loadRuntimeInputs(repoRoot: string): RuntimeInputs {
         `Rsem reliability audit probe contract drift: ${probeId}`
       );
     }
-    return probe;
+    return Object.freeze({
+      probeId: probe.probeId,
+      prompt: probe.prompt,
+    });
   });
 
   return Object.freeze({
