@@ -1,7 +1,7 @@
 # P6-3 v3 Rsem reliability audit cost estimate
 
-**Date:** 2026-10-03  
-**Scope:** operational planning for the predeclared Rsem reliability audit only  
+**Date:** 2026-10-03
+**Scope:** operational planning for the predeclared Rsem reliability audit only
 **Scientific status:** operational evidence; not a scientific endpoint and not a live authorization
 
 ## 1. Workload envelope
