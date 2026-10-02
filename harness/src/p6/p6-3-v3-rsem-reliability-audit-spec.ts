@@ -84,7 +84,11 @@ export const P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT = Object.freeze({
       P6_3_V3_RSEM_RELIABILITY_AUDIT_OUTPUT_PRICE_PER_MTOK,
     accumulatedEstimatedCostCeilingUsd:
       P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD,
-    action: "needs-audit-before-call-if-projected-attempt-crosses-ceiling",
+    unknownUsageAttemptPolicy:
+      "reserve-candidate-specific-projected-worst-case-cost",
+    interruptedAttemptPolicy:
+      "reserve-candidate-specific-projected-worst-case-cost",
+    action: "needs-audit-before-call-if-cost-control-total-plus-projected-attempt-crosses-ceiling",
   }),
   liveAuthorization: false,
 } as const);
