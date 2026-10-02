@@ -1,7 +1,7 @@
 # P6-3 v3 Rsem reliability audit predeclaration
 
-**Status:** complete pre-live reliability-audit design freeze; paid/provider execution is not authorized by this document  
-**Run class:** `reliability-audit`  
+**Status:** complete pre-live reliability-audit design freeze; paid/provider execution is not authorized by this document
+**Run class:** `reliability-audit`
 **Machine-readable freeze:** `harness/frozen/p6-3-v3-rsem-reliability-audit.json`
 
 ## 1. Purpose and boundary
