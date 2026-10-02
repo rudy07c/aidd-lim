@@ -4,6 +4,18 @@
 **Run class:** `reliability-audit`
 **Machine-readable freeze:** `harness/frozen/p6-3-v3-rsem-reliability-audit.json`
 
+## Amendment provenance
+
+Audit v1 was merged as the pre-live implementation in PR #61, but **no paid/provider reliability-audit call was executed under v1**.
+
+Before the first paid audit call, self-review identified three instrumentation/control issues:
+
+1. SDK automatic retries could hide a non-cap infrastructure event inside one controller attempt;
+2. requiring `output_tokens == configured cap` added an unsupported extra condition to the provider-declared `max_output_tokens` incomplete signal;
+3. interrupted or usage-less attempts could leave uncertain provider cost outside the operational cost-control total.
+
+This v2 amendment fixes those issues before observation of any new reliability-audit outcome. The candidate caps, arm allocation, 60-valid-trial qualification size, 64k hard stop, semantic firewall, and non-pooling rule are unchanged.
+
 ## 1. Purpose and boundary
 
 The incomplete P6-3 v3 live calibration established an execution-reliability failure in the frozen Rsem envelope:
