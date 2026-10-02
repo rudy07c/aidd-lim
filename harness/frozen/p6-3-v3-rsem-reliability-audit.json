@@ -90,5 +90,24 @@
       "p95OutputUtilizationRatio",
       "maxReasoningUtilizationRatio"
     ]
+  },
+  "amendmentProvenance": {
+    "priorVersion": "p6-3-v3-rsem-reliability-audit-spec-v1",
+    "priorVersionMerged": true,
+    "paidProviderAuditCallsExecutedBeforeV2": 0,
+    "amendmentTiming": "before-first-paid-reliability-audit-call",
+    "reasons": [
+      "disable-sdk-automatic-retries-so-non-cap-infrastructure-events-remain-observable",
+      "use-provider-incomplete-reason-max_output_tokens-without-output-token-equality-requirement",
+      "reserve-worst-case-cost-for-interrupted-or-usage-less-attempts"
+    ],
+    "unchangedCoreDesign": [
+      "candidate-caps-32000-64000",
+      "six-arms-times-ten-valid-trials-per-candidate",
+      "zero-cap-censoring-in-60-valid-trials-qualification",
+      "64000-hard-stop",
+      "semantic-firewall",
+      "scientific-non-pooling"
+    ]
   }
 }
