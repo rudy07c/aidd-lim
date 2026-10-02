@@ -251,7 +251,7 @@ known accumulated estimated cost
 + reserved unknown cost for interrupted/in-flight calls
 ```
 
-If a process resumes with an unresolved in-flight provider attempt, that attempt is treated as consumed and the candidate-specific projected worst-case attempt cost is conservatively reserved before any replacement may be adjudicated. The reservation is not silently released.
+If a provider-visible attempt returns without usable usage/cost accounting, the candidate-specific projected worst-case attempt cost is conservatively reserved. Likewise, if a process resumes with an unresolved in-flight provider attempt, that attempt is treated as consumed and receives the same reservation before any replacement may be adjudicated. Reservations are not silently released.
 
 If the pre-call projection would exceed the ceiling, the audit stops as `needs-audit`.
 
