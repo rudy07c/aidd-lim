@@ -72,8 +72,9 @@
     "controlEnvelopeCostUsd": 21.276,
     "accumulatedEstimatedCostCeilingUsd": 22,
     "costCeilingRule": "ceil-control-envelope-to-next-whole-usd",
-    "action": "needs-audit-before-call-if-projected-attempt-crosses-ceiling",
-    "interruptedAttemptPolicy": "reserve-candidate-specific-projected-worst-case-cost-until-run-end",
+    "action": "needs-audit-before-call-if-cost-control-total-plus-projected-attempt-crosses-ceiling",
+    "unknownUsageAttemptPolicy": "reserve-candidate-specific-projected-worst-case-cost",
+    "interruptedAttemptPolicy": "reserve-candidate-specific-projected-worst-case-cost",
     "costControlTotal": "accumulatedEstimatedCostUsd + reservedUnknownCostUsd"
   },
   "liveExecutionAuthorized": false,
