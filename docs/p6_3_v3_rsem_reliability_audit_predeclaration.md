@@ -1,6 +1,6 @@
 # P6-3 v3 Rsem reliability audit predeclaration
 
-**Status:** complete pre-live reliability-audit design freeze; paid/provider execution is not authorized by this document
+**Status:** pre-live reliability-audit design freeze v2; paid/provider execution has not started and is not authorized by this document
 **Run class:** `reliability-audit`
 **Machine-readable freeze:** `harness/frozen/p6-3-v3-rsem-reliability-audit.json`
 
@@ -17,7 +17,7 @@ At logical sequence 793, all three allowed attempts returned `response-incomplet
 
 This audit exists only to answer:
 
-> What predeclared Rsem `maxOutputTokens` envelope can complete the existing P6-3 v3 Rsem measurement path without exact-cap censoring under a balanced reliability qualification?
+> What predeclared Rsem `maxOutputTokens` envelope can complete the existing P6-3 v3 Rsem measurement path without provider-declared max-output-token censoring under a balanced reliability qualification?
 
 This is not a scientific calibration. Audit calls are never pooled into:
 
@@ -30,7 +30,7 @@ The stopped v3 calibration remains immutable diagnostic evidence and is not resu
 
 ## 2. Variable changed
 
-Only one provider parameter is varied:
+Only one experimental provider-envelope parameter varies across candidate conditions:
 
 ```text
 Rsem maxOutputTokens
@@ -41,7 +41,7 @@ The following remain fixed:
 - model: `gpt-5.6-luna`;
 - reasoning effort: `high`;
 - request timeout: `180000 ms`;
-- provider SDK retries: `2`;
+- provider SDK automatic retries: `0` for this audit instrumentation only;
 - service tier: `default`;
 - prompt-cache mode: `implicit`;
 - response storage: `false`;
@@ -55,6 +55,20 @@ The following remain fixed:
 - B0/B1/B2/B3/B4/AF context construction.
 
 No budget point is retuned because the diagnostic stop happened at B1.
+
+### Audit-only instrumentation amendment
+
+The scientific Rsem contract remains unchanged and historically uses SDK `maxRetries=2`. The reliability audit deliberately fixes SDK automatic retries to `0`.
+
+This is not a candidate treatment. It is constant across 32k and 64k and exists so that one controller attempt maps to one SDK provider attempt. Otherwise a 429/5xx event could be retried internally by the SDK and become invisible to the audit controller, contradicting the predeclared rule that non-cap infrastructure events must stop for adjudication.
+
+Therefore:
+
+```text
+scientific Rsem provider retry contract = unchanged
+audit instrumentation maxRetries        = 0
+candidate-varying parameter             = maxOutputTokens only
+```
 
 ## 3. Candidate cap ladder
 
@@ -115,10 +129,10 @@ This denominator is distinct from provider attempts.
 A candidate qualifies only when all 60 planned balanced audit trials produce valid audit observations and:
 
 ```text
-exact-cap max_output_tokens censoring = 0 / 60
+provider-declared `max_output_tokens` censoring = 0 / 60
 ```
 
-The first exact-cap censoring event rejects the current candidate immediately. The remaining trials at that candidate need not be collected.
+The first provider-declared max-output-token censoring event rejects the current candidate immediately. The remaining trials at that candidate need not be collected.
 
 The escalation rule is fixed:
 
@@ -151,7 +165,7 @@ The following do not count as evidence that a candidate cap is insufficient:
 - HTTP 429;
 - 5xx/provider error;
 - refusal;
-- other incomplete/provider states that do not meet the exact-cap censoring predicate.
+- other incomplete/provider states that do not meet the provider-declared max-output-token censoring predicate.
 
 Such an event transitions the audit to `needs-audit`. A human adjudication is required before the same planned trial may be replaced.
 
@@ -167,13 +181,14 @@ An interrupted/in-flight call is not blindly repeated. It must be treated as a c
 
 ## 7. Exact-cap censoring predicate
 
-A provider response counts as cap censoring only when all of the following are true:
+A provider response counts as cap censoring when:
 
 ```text
-response status        != completed
-incomplete reason      == max_output_tokens
-provider output tokens == configured candidate cap
+response status   != completed
+incomplete reason == max_output_tokens
 ```
+
+Provider-reported `output_tokens == configured candidate cap` is recorded only as a diagnostic invariant. Equality is not required for censoring classification because the provider's explicit incomplete reason is the authoritative execution signal.
 
 This is an execution-reliability event, not a semantic failure.
 
@@ -201,6 +216,14 @@ Raw structured output may be preserved in an attempt artifact for provenance, bu
 
 Completed output is checked only for structural validity: exact probe IDs must be present and every answer must be exactly `"true"` or `"false"`. No answer is compared with a correct answer inside the audit path.
 
+For valid completed trials, the audit also reports non-selective headroom diagnostics:
+
+- maximum output-token utilization ratio;
+- p95 output-token utilization ratio;
+- maximum reasoning-token utilization ratio.
+
+These diagnostics are descriptive only. They cannot qualify, reject, escalate, or retune a candidate cap in this audit.
+
 ## 9. Cost and call boundary
 
 Qualification denominator and provider-call envelope are intentionally separate:
@@ -221,7 +244,16 @@ The machine-readable audit contract freezes:
 accumulated estimated cost ceiling = USD 22.00
 ```
 
-Before each provider call, the controller must check whether accumulated estimated cost plus the candidate-specific projected worst-case attempt cost would exceed that ceiling. If so, it stops before the call as `needs-audit`.
+Before each provider call, the controller must check whether the cost-control total plus the candidate-specific projected worst-case attempt cost would exceed that ceiling. The cost-control total is:
+
+```text
+known accumulated estimated cost
++ reserved unknown cost for interrupted/in-flight calls
+```
+
+If a process resumes with an unresolved in-flight provider attempt, that attempt is treated as consumed and the candidate-specific projected worst-case attempt cost is conservatively reserved before any replacement may be adjudicated. The reservation is not silently released.
+
+If the pre-call projection would exceed the ceiling, the audit stops as `needs-audit`.
 
 Cost is an operational stop only. It is not a scientific or cap-selection endpoint.
 
