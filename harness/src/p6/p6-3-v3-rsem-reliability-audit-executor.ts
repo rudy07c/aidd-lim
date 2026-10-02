@@ -1,6 +1,5 @@
 import { createHash } from "crypto";
 import OpenAI from "openai";
-import type { GeneratedProbe } from "../../../calibration/src/probe-generator";
 import {
   buildOpenAIStructuredResponseRequestBody,
   estimateOpenAICostUsd,
@@ -15,8 +14,6 @@ import {
   type FixedEnvironmentBinding,
 } from "../context/fixed-environment-runtime";
 import {
-  buildP63RSemPromptP62Compatible,
-  buildP63RSemSchemaP62Compatible,
   P6_3_RSEM_OUTPUT_INSTRUCTIONS,
   P6_3_RSEM_PROVIDER_CONTRACT,
   P6_3_RSEM_SCHEMA_VERSION,
@@ -33,6 +30,11 @@ import type {
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_EXECUTOR_VERSION =
   "p6-3-v3-rsem-reliability-audit-executor-v1" as const;
+
+export interface P63V3RSemReliabilityAuditProbe {
+  readonly probeId: string;
+  readonly prompt: string;
+}
 
 export interface P63V3RSemReliabilityAuditClient {
   responses: { create(body: any): Promise<any> };
@@ -82,7 +84,7 @@ export interface P63V3RSemReliabilityAuditExecutorOutcome {
 
 export function buildP63V3RSemReliabilityAuditRequestBody(args: {
   contextFiles: Readonly<Record<string, string>>;
-  probes: readonly GeneratedProbe[];
+  probes: readonly P63V3RSemReliabilityAuditProbe[];
   fixedEnvironment: Readonly<FixedEnvironmentBinding>;
   maxOutputTokens: P63V3RSemReliabilityAuditCandidateCap;
 }): Record<string, unknown> {
@@ -97,21 +99,57 @@ export function buildP63V3RSemReliabilityAuditRequestBody(args: {
     },
     responseInput: [{
       role: "user",
-      content: buildP63RSemPromptP62Compatible(args.contextFiles, args.probes),
+      content: buildAuditProbePrompt(args.contextFiles, args.probes),
     }],
     outputSpec: {
       instructions: P6_3_RSEM_OUTPUT_INSTRUCTIONS,
       schemaName: P6_3_RSEM_SCHEMA_VERSION.replace(/-/g, "_"),
-      schema: buildP63RSemSchemaP62Compatible(args.probes),
+      schema: buildAuditProbeSchema(args.probes),
     },
   });
   return buildP63V3RSemRequestBody(historicalBody, args.fixedEnvironment);
 }
 
+function buildAuditProbePrompt(
+  contextFiles: Readonly<Record<string, string>>,
+  probes: readonly P63V3RSemReliabilityAuditProbe[]
+): string {
+  const repo = Object.keys(contextFiles)
+    .sort()
+    .map((filePath) => `\n--- ${filePath} ---\n${contextFiles[filePath]}`)
+    .join("");
+  const questions = probes
+    .map((probe) => [
+      `[${probe.probeId}] (boolean)`,
+      probe.prompt,
+      'Answer exactly "true" or "false".',
+    ].join("\n"))
+    .join("\n\n");
+  return `REPOSITORY FILES:${repo}\n\nQUESTIONS:\n${questions}\n\nReturn one string answer for every exact probe ID.`;
+}
+
+function buildAuditProbeSchema(
+  probes: readonly P63V3RSemReliabilityAuditProbe[]
+): {
+  type: "object";
+  properties: Record<string, { type: "string" }>;
+  required: string[];
+  additionalProperties: false;
+} {
+  return {
+    type: "object",
+    properties: Object.fromEntries(
+      probes.map((probe) => [probe.probeId, { type: "string" as const }])
+    ),
+    required: probes.map((probe) => probe.probeId),
+    additionalProperties: false,
+  };
+}
+
 export async function executeP63V3RSemReliabilityAuditAttempt(
   args: {
     contextFiles: Readonly<Record<string, string>>;
-    probes: readonly GeneratedProbe[];
+    probes: readonly P63V3RSemReliabilityAuditProbe[];
     fixedEnvironment: Readonly<FixedEnvironmentBinding>;
     maxOutputTokens: P63V3RSemReliabilityAuditCandidateCap;
   },
@@ -271,7 +309,7 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
 
 function validateBooleanProbeStructure(
   rawResponse: string,
-  probes: readonly GeneratedProbe[]
+  probes: readonly P63V3RSemReliabilityAuditProbe[]
 ): { ok: true } | { ok: false; error: string } {
   let parsed: unknown;
   try {
