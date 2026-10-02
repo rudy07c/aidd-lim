@@ -1,5 +1,4 @@
 import { createHash } from "crypto";
-import type { GeneratedProbe } from "../../../calibration/src/probe-generator";
 import { P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION } from "../context/p6-3-v3-final-static-exposure-selector";
 import type { FixedEnvironmentBinding } from "../context/fixed-environment-runtime";
 import {
@@ -21,6 +20,7 @@ import {
 } from "./p6-3-v3-rsem-reliability-audit-spec";
 import {
   P6_3_V3_RSEM_RELIABILITY_AUDIT_EXECUTOR_VERSION,
+  type P63V3RSemReliabilityAuditProbe,
 } from "./p6-3-v3-rsem-reliability-audit-executor";
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_RUNNER_VERSION =
@@ -124,7 +124,7 @@ export function buildP63V3RSemReliabilityAuditExposure(args: {
   cell: Readonly<P63V3RSemReliabilityAuditCell>;
   repositoryFiles: Readonly<Record<string, string>>;
   syntheticWorldDir: string;
-  probes: readonly GeneratedProbe[];
+  probes: readonly P63V3RSemReliabilityAuditProbe[];
 }) {
   return buildP63V3CellExposure({
     cell: {
