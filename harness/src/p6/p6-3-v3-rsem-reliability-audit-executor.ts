@@ -72,7 +72,7 @@ export interface P63V3RSemReliabilityAuditExecutorArtifact {
   readonly fixedEnvironment: ReturnType<typeof fixedEnvironmentLogSnapshot>;
   readonly rawResponse: string;
   readonly decision: P63V3RSemReliabilityAuditExecutorDecision;
-  readonly sdkVersion: string;
+  readonly sdkVersion: string | null;
 }
 
 export interface P63V3RSemReliabilityAuditExecutorOutcome {
