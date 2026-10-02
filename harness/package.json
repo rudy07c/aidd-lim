@@ -74,7 +74,9 @@
     "p6:adjudicate-af-baseline": "ts-node adjudicate-p6-af-baseline.ts",
     "p6:adjudicate-af-variance": "ts-node adjudicate-p6-af-variance-pilot.ts",
     "verify:package-version": "ts-node verify-package-version.ts",
-    "verify:heldout-invariant-coverage": "ts-node verify-heldout-invariant-coverage.ts"
+    "verify:heldout-invariant-coverage": "ts-node verify-heldout-invariant-coverage.ts",
+    "verify:p6-3-v3-rsem-reliability-audit": "ts-node verify-p6-3-v3-rsem-reliability-audit-core.ts",
+    "verify:p6-3-v3-rsem-reliability-audit-final-prelive": "ts-node verify-p6-3-v3-rsem-reliability-audit-final-prelive-gate.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
