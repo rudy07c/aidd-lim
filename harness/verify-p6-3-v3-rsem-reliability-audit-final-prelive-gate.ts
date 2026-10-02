@@ -52,6 +52,7 @@ async function main(): Promise<void> {
   assert.equal(receipt.auditProviderMaxRetries, 0);
   assert.equal(receipt.sdkAutomaticRetriesDisabled, true);
   assert.equal(receipt.interruptedAttemptCostReservation, true);
+  assert.equal(receipt.usageLessAttemptCostReservation, true);
   assert.equal(receipt.headroomDiagnosticsAffectQualification, false);
   assert.equal(receipt.operationalCostCeilingUsd, 22);
   assert.equal(receipt.preflightPassed, true);
@@ -382,6 +383,8 @@ async function main(): Promise<void> {
     sdkAutomaticRetriesDisabled: receipt.sdkAutomaticRetriesDisabled,
     interruptedAttemptCostReservation:
       receipt.interruptedAttemptCostReservation,
+    usageLessAttemptCostReservation:
+      receipt.usageLessAttemptCostReservation,
     headroomDiagnosticsAffectQualification:
       receipt.headroomDiagnosticsAffectQualification,
     operationalCostCeilingUsd: receipt.operationalCostCeilingUsd,
@@ -400,6 +403,7 @@ async function main(): Promise<void> {
       "sdk-automatic-retries-disabled-and-bound",
       "provider-declared-cap-censoring-bound",
       "interrupted-attempt-cost-reservation-bound",
+      "usage-less-attempt-cost-reservation-bound",
       "headroom-diagnostics-remain-non-selective",
       "22-usd-operational-ceiling-bound",
       "predeclaration-cost-freeze-operational-evidence-hashed",
