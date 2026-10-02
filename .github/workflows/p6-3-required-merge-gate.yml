@@ -69,6 +69,13 @@ jobs:
         working-directory: harness
         run: npm run typecheck
 
+      - name: Verify P6-3 v3 Rsem reliability audit
+        if: steps.changes.outputs.code == 'true'
+        working-directory: harness
+        run: |
+          npm run verify:p6-3-v3-rsem-reliability-audit
+          npm run verify:p6-3-v3-rsem-reliability-audit-final-prelive
+
       - name: Verify canonical Step-5 artifacts exist
         shell: bash
         run: |

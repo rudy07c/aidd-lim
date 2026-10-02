@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "p6-3-v3-rsem-reliability-audit-manifest-v1",
+  "specVersion": "p6-3-v3-rsem-reliability-audit-spec-v1",
+  "status": "pre-live-reliability-audit-freeze",
+  "runClass": "reliability-audit",
+  "purpose": "provider-envelope-reliability-only",
+  "scientificPoolingAllowed": false,
+  "confirmatoryStage1AEligible": false,
+  "targetParameter": "Rsem.maxOutputTokens-only",
+  "provider": {
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "high",
+    "requestTimeoutMs": 180000,
+    "providerMaxRetries": 2,
+    "serviceTier": "default",
+    "promptCacheMode": "implicit",
+    "storeResponses": false,
+    "executionMode": "sync"
+  },
+  "candidateCaps": [
+    32000,
+    64000
+  ],
+  "candidateOrigin": {
+    "previousFailedCap": 8000,
+    "externalGuidanceMinimumReasoningAndOutputReserve": 25000,
+    "rule": "smallest-binary-headroom-candidate-above-external-guidance-then-one-predeclared-doubling",
+    "firstCandidate": 32000
+  },
+  "hardAuditCap": 64000,
+  "providerTechnicalMaxOutputTokens": 128000,
+  "providerTechnicalMaximumIsAutomaticEscalationTarget": false,
+  "trialDesign": {
+    "arms": [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "AF"
+    ],
+    "validTrialsPerArmPerCandidate": 10,
+    "validTrialsPerCandidate": 60,
+    "maximumValidTrials": 120,
+    "schedule": "first-10-blocks-of-frozen-balanced-p6-3-execution-schedule",
+    "budgetCensoringMonotonicityAssumed": false
+  },
+  "decisionRules": {
+    "accept": "zero-exact-cap-censoring-in-60-valid-balanced-trials",
+    "reject": "first-exact-cap-censoring-rejects-current-candidate",
+    "after32000Reject": "advance-to-64000",
+    "after64000Reject": "needs-design-audit-no-128k-auto-escalation",
+    "nonCapInfrastructure": "needs-audit-human-adjudication-before-replacement",
+    "protocolInvalid": "needs-audit-no-cap-inference",
+    "semanticSelectionInputsAllowed": false
+  },
+  "attemptPolicy": {
+    "maxAttemptsPerPlannedTrial": 3,
+    "maximumProviderAttempts": 360,
+    "qualificationDenominatorCountsOnlyValidAuditTrials": true
+  },
+  "operationalCost": {
+    "pricingSnapshotDate": "2026-10-03",
+    "planningMaxInputTokensPerAttempt": 6000,
+    "inputPriceCeilingPerMillionTokensUsd": 0.25,
+    "outputPricePerMillionTokensUsd": 1.2,
+    "maximumControlEnvelopeOutputTokens": 17280000,
+    "controlEnvelopeCostUsd": 21.276,
+    "accumulatedEstimatedCostCeilingUsd": 22,
+    "costCeilingRule": "ceil-control-envelope-to-next-whole-usd",
+    "action": "needs-audit-before-call-if-projected-attempt-crosses-ceiling"
+  },
+  "liveExecutionAuthorized": false
+}
