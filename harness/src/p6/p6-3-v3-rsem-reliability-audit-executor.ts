@@ -26,10 +26,11 @@ import {
 import type {
   P63V3RSemReliabilityAuditCandidateCap,
   P63V3RSemReliabilityAuditDisposition,
+  P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
 } from "./p6-3-v3-rsem-reliability-audit-spec";
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_EXECUTOR_VERSION =
-  "p6-3-v3-rsem-reliability-audit-executor-v1" as const;
+  "p6-3-v3-rsem-reliability-audit-executor-v2" as const;
 
 export interface P63V3RSemReliabilityAuditProbe {
   readonly probeId: string;
@@ -166,7 +167,7 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
   try {
     const client = clientFactory({
       timeout: P6_3_RSEM_PROVIDER_CONTRACT.requestTimeoutMs,
-      maxRetries: P6_3_RSEM_PROVIDER_CONTRACT.providerMaxRetries,
+      maxRetries: P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
     });
     response = await client.responses.create(body as any);
     rawResponse = extractOutputText(response);
@@ -187,12 +188,19 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
     const responseId = typeof response?.id === "string" ? response.id : null;
     const responseStatus = typeof response?.status === "string" ? response.status : null;
 
-    const exactCapCensoring =
+    const providerDeclaredCapCensoring =
       responseStatus !== "completed" &&
-      failure.incompleteReason === "max_output_tokens" &&
-      outputTokens === args.maxOutputTokens;
+      failure.incompleteReason === "max_output_tokens";
+    const capUsageMatchedConfiguredLimit =
+      providerDeclaredCapCensoring
+        ? outputTokens === args.maxOutputTokens
+        : null;
+    const outputUtilizationRatio =
+      outputTokens / args.maxOutputTokens;
+    const reasoningUtilizationRatio =
+      reasoningOutputTokens / args.maxOutputTokens;
 
-    if (exactCapCensoring) {
+    if (providerDeclaredCapCensoring) {
       decision = {
         disposition: "cap-censored",
         responseStatus,
@@ -203,11 +211,14 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
         reasoningOutputTokens,
         totalTokens,
         structureValid: null,
+        capUsageMatchedConfiguredLimit,
+        outputUtilizationRatio,
+        reasoningUtilizationRatio,
         estimatedCostUsd,
         actualModel,
         responseId,
         providerErrorCode: failure.providerErrorCode,
-        failureReason: "exact-cap-max_output_tokens",
+        failureReason: "provider-declared-max_output_tokens",
       };
     } else if (refusal !== null || responseStatus !== "completed") {
       decision = {
@@ -220,6 +231,9 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
         reasoningOutputTokens,
         totalTokens,
         structureValid: null,
+        capUsageMatchedConfiguredLimit: null,
+        outputUtilizationRatio,
+        reasoningUtilizationRatio,
         estimatedCostUsd,
         actualModel,
         responseId,
@@ -241,6 +255,9 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
         reasoningOutputTokens,
         totalTokens,
         structureValid: null,
+        capUsageMatchedConfiguredLimit: null,
+        outputUtilizationRatio,
+        reasoningUtilizationRatio,
         estimatedCostUsd,
         actualModel,
         responseId,
@@ -260,6 +277,9 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
         reasoningOutputTokens,
         totalTokens,
         structureValid: structure.ok,
+        capUsageMatchedConfiguredLimit: null,
+        outputUtilizationRatio,
+        reasoningUtilizationRatio,
         estimatedCostUsd,
         actualModel,
         responseId,
@@ -280,6 +300,9 @@ export async function executeP63V3RSemReliabilityAuditAttempt(
       reasoningOutputTokens: 0,
       totalTokens: 0,
       structureValid: null,
+      capUsageMatchedConfiguredLimit: null,
+      outputUtilizationRatio: null,
+      reasoningUtilizationRatio: null,
       estimatedCostUsd: null,
       actualModel: null,
       responseId: null,
