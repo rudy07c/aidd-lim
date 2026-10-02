@@ -61,6 +61,8 @@ export const P6_3_V3_RSEM_RELIABILITY_AUDIT_FINAL_SOURCE_FILES =
     "harness/src/p6/p6-3-v3-rsem-reliability-audit-runner.ts",
     "harness/src/p6/p6-3-v3-rsem-reliability-audit-controller.ts",
     "harness/src/p6/p6-3-v3-rsem-reliability-audit-final-prelive-gate.ts",
+    "harness/src/p6/p6-3-v3-rsem-reliability-audit-live-entrypoint.ts",
+    "harness/p6-3-v3-rsem-reliability-audit.ts",
   ] as const);
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_FINAL_FROZEN_EVIDENCE_FILES =
