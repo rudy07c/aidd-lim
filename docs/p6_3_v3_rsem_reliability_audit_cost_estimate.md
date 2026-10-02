@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-03
 **Scope:** operational planning for the predeclared Rsem reliability audit only
-**Scientific status:** operational evidence; not a scientific endpoint and not a live authorization
+**Scientific status:** operational evidence for reliability-audit freeze v2; not a scientific endpoint and not a live authorization
 
 ## 1. Workload envelope
 
@@ -34,6 +34,8 @@ Non-cap infrastructure replacement is limited to three attempts per planned tria
 ```
 
 This 360 figure is an execution-control ceiling, not an expected call count.
+
+For audit v2, SDK automatic retries are disabled (`maxRetries=0`), so one controller attempt is not silently expanded by SDK retry behavior. The scientific Rsem retry contract is not changed by this audit-only instrumentation rule.
 
 ## 2. Current GPT-5.6 Luna pricing and provider limits
 
@@ -158,10 +160,20 @@ projected worst-case attempt cost
   + C    x $1.20 / 1M
 ```
 
+The cost-control total is:
+
+```text
+accumulatedEstimatedCostUsd
++ reservedUnknownCostUsd
+```
+
+If a process resumes with a provider attempt left in-flight, the controller cannot know whether provider-side work was billed. That interrupted attempt is therefore conservatively assigned the same candidate-specific projected worst-case cost and added to `reservedUnknownCostUsd`. The reservation remains in the run's control total even after a replacement is adjudicated.
+
 If:
 
 ```text
 accumulatedEstimatedCostUsd
++ reservedUnknownCostUsd
 + projectedWorstCaseAttemptCostUsd(C)
 > 22.00
 ```
@@ -184,6 +196,8 @@ The $22.00 figure is an operational fail-close ceiling derived from:
 
 It is not a theoretical guarantee on provider billing under every future pricing or tokenization change.
 
-Actual usage and estimated cost must be persisted for each provider-visible attempt. A pricing/model/runtime change requires a new versioned operational evidence update before paid execution.
+Actual usage and estimated cost must be persisted for each completed provider-visible attempt. Interrupted attempts without recoverable usage are represented by conservative reserved cost instead of being treated as free.
+
+A pricing/model/runtime change requires a new versioned operational evidence update before paid execution.
 
 This document does not authorize paid/live calls.
