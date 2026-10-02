@@ -32,7 +32,7 @@ import type {
 } from "./p6-3-v3-run-start";
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_LIVE_ENTRYPOINT_VERSION =
-  "p6-3-v3-rsem-reliability-audit-live-entrypoint-v1" as const;
+  "p6-3-v3-rsem-reliability-audit-live-entrypoint-v2" as const;
 
 const PRELIVE_RECEIPT_FILE =
   "p6-3-v3-rsem-reliability-audit-final-prelive-receipt.json";
@@ -143,7 +143,10 @@ export async function runP63V3RSemReliabilityAuditLiveEntrypoint(
   if (!resume) {
     await controllerPersistence.persistState(state);
   } else if (state.inFlight) {
-    recoverInterruptedP63V3RSemReliabilityAuditState(state);
+    recoverInterruptedP63V3RSemReliabilityAuditState({
+      state,
+      prepared,
+    });
     await controllerPersistence.persistState(state);
   }
 

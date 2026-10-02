@@ -24,6 +24,7 @@ import {
   P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_PROVIDER_ATTEMPTS,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_VALID_TRIALS,
+  P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_VALID_TRIALS_PER_CANDIDATE,
   buildP63V3RSemReliabilityAuditPlan,
   projectedP63V3RSemReliabilityAttemptCostUsd,
@@ -42,6 +43,7 @@ import {
   authorizeP63V3RSemReliabilityAuditPaidInvocation,
   createP63V3RSemReliabilityAuditState,
   executeP63V3ControlledRSemReliabilityAudit,
+  recoverInterruptedP63V3RSemReliabilityAuditState,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_PAID_ENV,
   summarizeP63V3RSemReliabilityAudit,
   type P63V3RSemReliabilityAuditPersistence,
@@ -75,6 +77,16 @@ assert.equal(
   P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_PROVIDER_ATTEMPTS,
   360
 );
+assert.equal(P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES, 0);
+assert.equal(
+  P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT.provider.providerMaxRetries,
+  0
+);
+assert.equal(
+  P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT.provider
+    .historicalScientificProviderMaxRetries,
+  P6_3_RSEM_PROVIDER_CONTRACT.providerMaxRetries
+);
 for (const cap of [32000, 64000] as const) {
   const candidate = plan.filter((cell) => cell.candidateCap === cap);
   assert.equal(
@@ -102,6 +114,22 @@ assert.equal(frozen.hardAuditCap, 64000);
 assert.equal(frozen.providerTechnicalMaxOutputTokens, 128000);
 assert.equal(frozen.trialDesign.validTrialsPerCandidate, 60);
 assert.equal(frozen.attemptPolicy.maximumProviderAttempts, 360);
+assert.equal(frozen.provider.providerMaxRetries, 0);
+assert.equal(
+  frozen.provider.historicalScientificProviderMaxRetries,
+  P6_3_RSEM_PROVIDER_CONTRACT.providerMaxRetries
+);
+assert.equal(frozen.instrumentationAmendments.sdkAutomaticRetriesDisabled, true);
+assert.equal(frozen.decisionRules.outputTokenEqualityIsDiagnosticOnly, true);
+assert.equal(frozen.decisionRules.headroomDiagnosticsAffectQualification, false);
+assert.equal(
+  frozen.operationalCost.unknownUsageAttemptPolicy,
+  "reserve-candidate-specific-projected-worst-case-cost"
+);
+assert.equal(
+  frozen.operationalCost.interruptedAttemptPolicy,
+  "reserve-candidate-specific-projected-worst-case-cost"
+);
 assert.equal(
   frozen.operationalCost.accumulatedEstimatedCostCeilingUsd,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD
@@ -157,10 +185,13 @@ const expectedV3AtAuditCap = buildP63V3RSemRequestBody(
 assert.deepEqual(
   request,
   expectedV3AtAuditCap,
-  "audit request must equal the frozen v3 Rsem request with max_output_tokens as the only provider-envelope change"
-);
+  "audit request body must equal the frozen v3 Rsem request body with max_output_tokens as the only candidate-varying provider-envelope field");
 
 async function verifyExecutor(): Promise<void> {
+  const observedClientOptions: Array<{
+    timeout: number;
+    maxRetries: number;
+  }> = [];
   const completed = await executeP63V3RSemReliabilityAuditAttempt(
     {
       contextFiles: { "src/a.ts": "export const a = 1;\n" },
@@ -168,15 +199,24 @@ async function verifyExecutor(): Promise<void> {
       fixedEnvironment,
       maxOutputTokens: 32000,
     },
-    () => ({
-      responses: {
-        create: async () => completedResponse(probes),
-      },
-    })
+    (options) => {
+      observedClientOptions.push(options);
+      return {
+        responses: {
+          create: async () => completedResponse(probes),
+        },
+      };
+    }
   );
   assert.equal(completed.decision.disposition, "valid-audit-trial");
   assert.equal(completed.decision.structureValid, true);
   assert.equal(completed.decision.configuredMaxOutputTokens, 32000);
+  assert.equal(observedClientOptions.length, 1);
+  assert.equal(observedClientOptions[0].maxRetries, 0);
+  assert.equal(
+    observedClientOptions[0].timeout,
+    P6_3_RSEM_PROVIDER_CONTRACT.requestTimeoutMs
+  );
   assert.equal((completed.decision as any).booleanCorrect, undefined);
   assert.equal((completed.decision as any).booleanAccuracy, undefined);
   assert.equal((completed.decision as any).semanticScore, undefined);
@@ -190,12 +230,15 @@ async function verifyExecutor(): Promise<void> {
     },
     () => ({
       responses: {
-        create: async () => incompleteResponse(32000, "max_output_tokens"),
+        create: async () => incompleteResponse(31999, "max_output_tokens"),
       },
     })
   );
   assert.equal(capped.decision.disposition, "cap-censored");
-  assert.equal(capped.decision.outputTokens, 32000);
+  assert.equal(capped.decision.outputTokens, 31999);
+  assert.equal(capped.decision.capUsageMatchedConfiguredLimit, false);
+  assert(capped.decision.outputUtilizationRatio !== null);
+  assert(capped.decision.outputUtilizationRatio < 1);
 
   const timeoutLike = await executeP63V3RSemReliabilityAuditAttempt(
     {
@@ -271,7 +314,11 @@ async function verifyController(): Promise<void> {
       executor: {
         execute: async (cell, attempt) => {
           calls += 1;
-          return fakeOutcome(cell.candidateCap, "valid-audit-trial");
+          return fakeOutcome(
+            cell.candidateCap,
+            "valid-audit-trial",
+            cell.candidateCap - 1
+          );
         },
       },
       persistence: memoryPersistence(),
@@ -280,9 +327,11 @@ async function verifyController(): Promise<void> {
     assert.equal(state.selectedMaxOutputTokens, 32000);
     assert.equal(calls, 60);
     assert.equal(state.attempts.length, 60);
-    assert.equal(
-      summarizeP63V3RSemReliabilityAudit(state).candidate32000.status,
-      "qualified"
+    const summary = summarizeP63V3RSemReliabilityAudit(state);
+    assert.equal(summary.candidate32000.status, "qualified");
+    assert(
+      (summary.candidate32000.p95OutputUtilizationRatio ?? 0) > 0.99,
+      "near-cap completed responses must remain descriptive headroom diagnostics only"
     );
   }
 
@@ -389,6 +438,64 @@ async function verifyController(): Promise<void> {
       prepared,
       authorization,
     });
+    await executeP63V3ControlledRSemReliabilityAudit({
+      state,
+      prepared,
+      authorization,
+      executor: {
+        execute: async (cell) =>
+          fakeOutcome(
+            cell.candidateCap,
+            "non-cap-infrastructure",
+            0,
+            null
+          ),
+      },
+      persistence: memoryPersistence(),
+    });
+    const expectedReserved =
+      projectedP63V3RSemReliabilityAttemptCostUsd(32000);
+    assert.equal(state.status, "needs-audit");
+    assert.equal(state.reservedUnknownCostUsd, expectedReserved);
+    assert.equal(state.attempts[0].reservedCostUsd, expectedReserved);
+    assert.equal(state.attempts[0].estimatedCostUsd, null);
+  }
+
+  {
+    const state = createP63V3RSemReliabilityAuditState({
+      prepared,
+      authorization,
+    });
+    state.inFlight = {
+      sequence: 0,
+      attempt: 1,
+      startedAt: "2026-10-03T00:00:00.000Z",
+    };
+    recoverInterruptedP63V3RSemReliabilityAuditState({
+      state,
+      prepared,
+    });
+    const expectedReserved =
+      projectedP63V3RSemReliabilityAttemptCostUsd(32000);
+    assert.equal(state.status, "needs-audit");
+    assert.equal(state.auditFlag?.kind, "uncertain-in-flight-attempt");
+    assert.equal(state.interruptedAttempts.length, 1);
+    assert.equal(
+      state.interruptedAttempts[0].reservedCostUsd,
+      expectedReserved
+    );
+    assert.equal(state.reservedUnknownCostUsd, expectedReserved);
+    assert.equal(
+      summarizeP63V3RSemReliabilityAudit(state).costControlTotalUsd,
+      expectedReserved
+    );
+  }
+
+  {
+    const state = createP63V3RSemReliabilityAuditState({
+      prepared,
+      authorization,
+    });
     state.accumulatedEstimatedCostUsd = 21.99;
     let calls = 0;
     await executeP63V3ControlledRSemReliabilityAudit({
@@ -419,9 +526,13 @@ function fakeOutcome(
   disposition:
     | "valid-audit-trial"
     | "cap-censored"
-    | "non-cap-infrastructure"
+    | "non-cap-infrastructure",
+  outputTokensOverride?: number,
+  estimatedCostUsdOverride?: number | null
 ): P63V3RSemReliabilityAuditExecutorOutcome {
-  const outputTokens = disposition === "cap-censored" ? cap : 1000;
+  const outputTokens =
+    outputTokensOverride ??
+    (disposition === "cap-censored" ? cap : 1000);
   const decision = {
     disposition,
     responseStatus:
@@ -434,13 +545,20 @@ function fakeOutcome(
     reasoningOutputTokens: Math.min(outputTokens, 900),
     totalTokens: 1000 + outputTokens,
     structureValid: disposition === "valid-audit-trial" ? true : null,
-    estimatedCostUsd: 0,
+    capUsageMatchedConfiguredLimit:
+      disposition === "cap-censored" ? outputTokens === cap : null,
+    outputUtilizationRatio: outputTokens / cap,
+    reasoningUtilizationRatio: Math.min(outputTokens, 900) / cap,
+    estimatedCostUsd:
+      estimatedCostUsdOverride === undefined
+        ? 0
+        : estimatedCostUsdOverride,
     actualModel: "gpt-5.6-luna",
     responseId: "resp_fixture",
     providerErrorCode: null,
     failureReason:
       disposition === "cap-censored"
-        ? "exact-cap-max_output_tokens"
+        ? "provider-declared-max_output_tokens"
         : disposition === "non-cap-infrastructure"
         ? "fixture-infrastructure"
         : null,
@@ -448,7 +566,7 @@ function fakeOutcome(
   return {
     decision,
     artifact: {
-      executorVersion: "p6-3-v3-rsem-reliability-audit-executor-v1",
+      executorVersion: "p6-3-v3-rsem-reliability-audit-executor-v2",
       v3PromptVersion: "p6-3-v3-rsem-fixed-environment-v1",
       v3OutputInstructionsSha256:
         "301aa3b5741c120cf1d749bbde76affa9fd73838097bb8fd4c27310abdbf4323",
@@ -571,8 +689,9 @@ async function main(): Promise<void> {
       "six-arms-times-ten-valid-trials",
       "120-valid-vs-360-attempt-boundary",
       "machine-readable-freeze",
-      "v3-request-shape-with-cap-only-provider-change",
-      "exact-cap-censoring-classification",
+      "v3-request-shape-with-cap-only-candidate-change",
+      "sdk-automatic-retries-disabled",
+      "provider-declared-cap-censoring-without-output-token-equality",
       "non-cap-infrastructure-separation",
       "structural-output-validation-without-semantic-scoring",
       "32k-qualification",
@@ -580,6 +699,9 @@ async function main(): Promise<void> {
       "64k-reject-to-needs-design-audit",
       "human-adjudicated-non-cap-replacement",
       "pre-call-operational-cost-stop",
+      "usage-less-attempt-worst-case-cost-reservation",
+      "interrupted-call-worst-case-cost-reservation",
+      "non-selective-headroom-diagnostics",
       "semantic-firewall",
     ],
   }, null, 2));

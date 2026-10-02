@@ -49,6 +49,11 @@ async function main(): Promise<void> {
   assert.equal(receipt.hardAuditCap, 64000);
   assert.equal(receipt.plannedValidTrialCeiling, 120);
   assert.equal(receipt.providerAttemptCeiling, 360);
+  assert.equal(receipt.auditProviderMaxRetries, 0);
+  assert.equal(receipt.sdkAutomaticRetriesDisabled, true);
+  assert.equal(receipt.interruptedAttemptCostReservation, true);
+  assert.equal(receipt.usageLessAttemptCostReservation, true);
+  assert.equal(receipt.headroomDiagnosticsAffectQualification, false);
   assert.equal(receipt.operationalCostCeilingUsd, 22);
   assert.equal(receipt.preflightPassed, true);
   assert.equal(receipt.exactCleanCheckoutVerified, true);
@@ -210,6 +215,7 @@ async function main(): Promise<void> {
     assert.equal(calls, 60);
     assert.equal(result.state.attempts.length, 60);
     assert.equal(result.state.interruptedAttempts.length, 0);
+    assert.equal(result.state.reservedUnknownCostUsd, 0);
     assert.equal(result.state.scientificPoolingAllowed, false);
 
     const runDir = path.dirname(statePath);
@@ -239,6 +245,7 @@ async function main(): Promise<void> {
     assert.equal(persistedState.status, "completed");
     assert.equal(persistedState.selectedMaxOutputTokens, 32000);
     assert.equal(persistedState.attempts.length, 60);
+    assert.equal(persistedState.reservedUnknownCostUsd, 0);
     assert.equal(persistedState.checkoutGitSha, receipt.checkoutGitSha);
     assert.equal(persistedState.scientificPoolingAllowed, false);
     assert.equal(
@@ -268,6 +275,77 @@ async function main(): Promise<void> {
     assert.equal(calls, beforeResumeCalls);
   } finally {
     fs.rmSync(tempRoot, { recursive: true, force: true });
+  }
+
+  // An interrupted provider-capable attempt must be persisted as in-flight,
+  // then converted on resume into a consumed attempt with conservative cost
+  // reservation before any replacement is allowed.
+  const interruptedRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), "p6-3-v3-rsem-reliability-interrupted-")
+  );
+  const interruptedStatePath =
+    path.join(interruptedRoot, "run", "state.json");
+  try {
+    await assert.rejects(
+      () =>
+        runP63V3RSemReliabilityAuditLiveEntrypoint({
+          finalPreLiveToken: token,
+          paidAuthorization: true,
+          environment: {
+            [P6_3_V3_RSEM_RELIABILITY_AUDIT_PAID_ENV]: "1",
+          },
+          resumePath: null,
+          adjudicationPath: null,
+          testDependencies: {
+            executor: {
+              execute: async () => {
+                throw new Error("offline simulated process interruption");
+              },
+            },
+            newStatePath: interruptedStatePath,
+          },
+        }),
+      /offline simulated process interruption/
+    );
+    const beforeRecovery = JSON.parse(
+      fs.readFileSync(interruptedStatePath, "utf8")
+    ) as any;
+    assert(beforeRecovery.inFlight);
+    assert.equal(beforeRecovery.reservedUnknownCostUsd, 0);
+
+    let replacementCalls = 0;
+    const recovered =
+      await runP63V3RSemReliabilityAuditLiveEntrypoint({
+        finalPreLiveToken: token,
+        paidAuthorization: true,
+        environment: {
+          [P6_3_V3_RSEM_RELIABILITY_AUDIT_PAID_ENV]: "1",
+        },
+        resumePath: interruptedStatePath,
+        adjudicationPath: null,
+        testDependencies: {
+          executor: {
+            execute: async (cell) => {
+              replacementCalls += 1;
+              return validOutcome(cell.candidateCap);
+            },
+          },
+        },
+      });
+    assert.equal(recovered.state.status, "needs-audit");
+    assert.equal(
+      recovered.state.auditFlag?.kind,
+      "uncertain-in-flight-attempt"
+    );
+    assert.equal(recovered.state.interruptedAttempts.length, 1);
+    assert(recovered.state.reservedUnknownCostUsd > 0);
+    assert.equal(
+      recovered.state.interruptedAttempts[0].reservedCostUsd,
+      recovered.state.reservedUnknownCostUsd
+    );
+    assert.equal(replacementCalls, 0);
+  } finally {
+    fs.rmSync(interruptedRoot, { recursive: true, force: true });
   }
 
   const cliSource = fs.readFileSync(
@@ -301,6 +379,14 @@ async function main(): Promise<void> {
     candidateCaps: receipt.candidateCaps,
     plannedValidTrialCeiling: receipt.plannedValidTrialCeiling,
     providerAttemptCeiling: receipt.providerAttemptCeiling,
+    auditProviderMaxRetries: receipt.auditProviderMaxRetries,
+    sdkAutomaticRetriesDisabled: receipt.sdkAutomaticRetriesDisabled,
+    interruptedAttemptCostReservation:
+      receipt.interruptedAttemptCostReservation,
+    usageLessAttemptCostReservation:
+      receipt.usageLessAttemptCostReservation,
+    headroomDiagnosticsAffectQualification:
+      receipt.headroomDiagnosticsAffectQualification,
     operationalCostCeilingUsd: receipt.operationalCostCeilingUsd,
     providerCallsMade: receipt.providerCallsMade,
     mockedQualifiedCalls: calls,
@@ -314,6 +400,11 @@ async function main(): Promise<void> {
       "untracked-runtime-input-rejected",
       "32k-64k-envelope-bound",
       "120-valid-360-attempt-boundary-bound",
+      "sdk-automatic-retries-disabled-and-bound",
+      "provider-declared-cap-censoring-bound",
+      "interrupted-attempt-cost-reservation-bound",
+      "usage-less-attempt-cost-reservation-bound",
+      "headroom-diagnostics-remain-non-selective",
       "22-usd-operational-ceiling-bound",
       "predeclaration-cost-freeze-operational-evidence-hashed",
       "provider-credentials-stripped-from-offline-verifier",
@@ -326,6 +417,7 @@ async function main(): Promise<void> {
       "attempt-artifacts-and-state-persisted",
       "controller-state-excludes-semantic-correctness-and-raw-response",
       "completed-resume-makes-zero-new-provider-calls",
+      "interrupted-resume-reserves-cost-before-replacement",
       "provider-capable-dynamic-import-after-all-cli-guards",
     ],
   }, null, 2));
@@ -344,6 +436,9 @@ function validOutcome(
     reasoningOutputTokens: 350,
     totalTokens: 2000,
     structureValid: true,
+    capUsageMatchedConfiguredLimit: null,
+    outputUtilizationRatio: 500 / cap,
+    reasoningUtilizationRatio: 350 / cap,
     estimatedCostUsd: 0,
     actualModel: "gpt-5.6-luna",
     responseId: "resp_offline_audit",
@@ -354,7 +449,7 @@ function validOutcome(
     decision,
     artifact: {
       executorVersion:
-        "p6-3-v3-rsem-reliability-audit-executor-v1",
+        "p6-3-v3-rsem-reliability-audit-executor-v2",
       v3PromptVersion: "p6-3-v3-rsem-fixed-environment-v1",
       v3OutputInstructionsSha256:
         "301aa3b5741c120cf1d749bbde76affa9fd73838097bb8fd4c27310abdbf4323",
