@@ -1,7 +1,7 @@
 {
-  "schemaVersion": "p6-3-v3-rsem-reliability-audit-manifest-v1",
-  "specVersion": "p6-3-v3-rsem-reliability-audit-spec-v1",
-  "status": "pre-live-reliability-audit-freeze",
+  "schemaVersion": "p6-3-v3-rsem-reliability-audit-manifest-v2",
+  "specVersion": "p6-3-v3-rsem-reliability-audit-spec-v2",
+  "status": "pre-live-reliability-audit-freeze-v2",
   "runClass": "reliability-audit",
   "purpose": "provider-envelope-reliability-only",
   "scientificPoolingAllowed": false,
@@ -11,11 +11,12 @@
     "model": "gpt-5.6-luna",
     "reasoningEffort": "high",
     "requestTimeoutMs": 180000,
-    "providerMaxRetries": 2,
+    "providerMaxRetries": 0,
     "serviceTier": "default",
     "promptCacheMode": "implicit",
     "storeResponses": false,
-    "executionMode": "sync"
+    "executionMode": "sync",
+    "historicalScientificProviderMaxRetries": 2
   },
   "candidateCaps": [
     32000,
@@ -46,13 +47,16 @@
     "budgetCensoringMonotonicityAssumed": false
   },
   "decisionRules": {
-    "accept": "zero-exact-cap-censoring-in-60-valid-balanced-trials",
-    "reject": "first-exact-cap-censoring-rejects-current-candidate",
+    "accept": "zero-provider-declared-max-output-token-censoring-in-60-valid-balanced-trials",
+    "reject": "first-provider-declared-max-output-token-censoring-rejects-current-candidate",
     "after32000Reject": "advance-to-64000",
     "after64000Reject": "needs-design-audit-no-128k-auto-escalation",
     "nonCapInfrastructure": "needs-audit-human-adjudication-before-replacement",
     "protocolInvalid": "needs-audit-no-cap-inference",
-    "semanticSelectionInputsAllowed": false
+    "semanticSelectionInputsAllowed": false,
+    "capCensoringPredicate": "response-status-not-completed-and-incomplete-reason-max_output_tokens",
+    "outputTokenEqualityIsDiagnosticOnly": true,
+    "headroomDiagnosticsAffectQualification": false
   },
   "attemptPolicy": {
     "maxAttemptsPerPlannedTrial": 3,
@@ -68,7 +72,22 @@
     "controlEnvelopeCostUsd": 21.276,
     "accumulatedEstimatedCostCeilingUsd": 22,
     "costCeilingRule": "ceil-control-envelope-to-next-whole-usd",
-    "action": "needs-audit-before-call-if-projected-attempt-crosses-ceiling"
+    "action": "needs-audit-before-call-if-projected-attempt-crosses-ceiling",
+    "interruptedAttemptPolicy": "reserve-candidate-specific-projected-worst-case-cost-until-run-end",
+    "costControlTotal": "accumulatedEstimatedCostUsd + reservedUnknownCostUsd"
   },
-  "liveExecutionAuthorized": false
+  "liveExecutionAuthorized": false,
+  "instrumentationAmendments": {
+    "sdkAutomaticRetriesDisabled": true,
+    "rationale": "one controller attempt must map to one SDK provider attempt so non-cap infrastructure events remain observable",
+    "scientificProviderRetryContractUnchanged": true
+  },
+  "headroomDiagnostics": {
+    "selectionUse": "none",
+    "reportedForValidTrials": [
+      "maxOutputUtilizationRatio",
+      "p95OutputUtilizationRatio",
+      "maxReasoningUtilizationRatio"
+    ]
+  }
 }
