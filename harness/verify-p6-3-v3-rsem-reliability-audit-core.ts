@@ -188,7 +188,10 @@ assert.deepEqual(
   "audit request body must equal the frozen v3 Rsem request body with max_output_tokens as the only candidate-varying provider-envelope field");
 
 async function verifyExecutor(): Promise<void> {
-  let observedClientOptions: { timeout: number; maxRetries: number } | null = null;
+  const observedClientOptions: Array<{
+    timeout: number;
+    maxRetries: number;
+  }> = [];
   const completed = await executeP63V3RSemReliabilityAuditAttempt(
     {
       contextFiles: { "src/a.ts": "export const a = 1;\n" },
@@ -197,7 +200,7 @@ async function verifyExecutor(): Promise<void> {
       maxOutputTokens: 32000,
     },
     (options) => {
-      observedClientOptions = options;
+      observedClientOptions.push(options);
       return {
         responses: {
           create: async () => completedResponse(probes),
@@ -208,9 +211,10 @@ async function verifyExecutor(): Promise<void> {
   assert.equal(completed.decision.disposition, "valid-audit-trial");
   assert.equal(completed.decision.structureValid, true);
   assert.equal(completed.decision.configuredMaxOutputTokens, 32000);
-  assert.equal(observedClientOptions?.maxRetries, 0);
+  assert.equal(observedClientOptions.length, 1);
+  assert.equal(observedClientOptions[0].maxRetries, 0);
   assert.equal(
-    observedClientOptions?.timeout,
+    observedClientOptions[0].timeout,
     P6_3_RSEM_PROVIDER_CONTRACT.requestTimeoutMs
   );
   assert.equal((completed.decision as any).booleanCorrect, undefined);
