@@ -9,7 +9,7 @@ import {
 import { P6_3_RSEM_PROVIDER_CONTRACT } from "./p6-3-rsem-protocol-parity";
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_SPEC_VERSION =
-  "p6-3-v3-rsem-reliability-audit-spec-v1" as const;
+  "p6-3-v3-rsem-reliability-audit-spec-v2" as const;
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_RUN_CLASS =
   "reliability-audit" as const;
 
@@ -25,6 +25,7 @@ export const P6_3_V3_RSEM_RELIABILITY_AUDIT_VALID_TRIALS_PER_CANDIDATE = 60 as c
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_ATTEMPTS_PER_TRIAL = 3 as const;
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_VALID_TRIALS = 120 as const;
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_PROVIDER_ATTEMPTS = 360 as const;
+export const P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES = 0 as const;
 
 // Operational evidence only. These values never enter scientific Rsem scoring.
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_PLANNING_MAX_INPUT_TOKENS = 6000 as const;
@@ -43,7 +44,8 @@ export const P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT = Object.freeze({
     model: P6_3_RSEM_PROVIDER_CONTRACT.model,
     reasoningEffort: P6_3_RSEM_PROVIDER_CONTRACT.reasoningEffort,
     requestTimeoutMs: P6_3_RSEM_PROVIDER_CONTRACT.requestTimeoutMs,
-    providerMaxRetries: P6_3_RSEM_PROVIDER_CONTRACT.providerMaxRetries,
+    providerMaxRetries: P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
+    historicalScientificProviderMaxRetries: P6_3_RSEM_PROVIDER_CONTRACT.providerMaxRetries,
     serviceTier: P6_3_RSEM_PROVIDER_CONTRACT.serviceTier,
     promptCacheMode: P6_3_RSEM_PROVIDER_CONTRACT.promptCacheMode,
     storeResponses: P6_3_RSEM_PROVIDER_CONTRACT.storeResponses,
@@ -59,12 +61,20 @@ export const P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT = Object.freeze({
   maxProviderAttempts: P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_PROVIDER_ATTEMPTS,
   executionScheduleVersion: P6_3_EXECUTION_PROTOCOL_VERSION,
   armLabels: Object.freeze(["B0", "B1", "B2", "B3", "B4", "AF"] as const),
-  acceptanceRule: "zero-exact-cap-censoring-in-60-valid-balanced-trials",
-  rejectionRule: "first-exact-cap-censoring-rejects-current-candidate",
+  acceptanceRule: "zero-provider-declared-max-output-token-censoring-in-60-valid-balanced-trials",
+  rejectionRule: "first-provider-declared-max-output-token-censoring-rejects-current-candidate",
   hardCapFailureAction: "needs-design-audit-no-128k-auto-escalation",
   nonCapInfrastructureAction: "needs-audit-human-adjudication-before-replacement",
   protocolInvalidAction: "needs-audit-no-cap-inference",
   semanticSelectionInputsAllowed: false,
+  instrumentationAmendments: Object.freeze({
+    sdkAutomaticRetriesDisabled: true,
+    rationale:
+      "make-one-controller-attempt-map-to-one-sdk-provider-attempt-and-surface-non-cap-infrastructure-events",
+    capCensoringUsesProviderIncompleteReason: true,
+    outputTokenEqualityIsDiagnosticOnly: true,
+  }),
+  headroomDiagnosticsAffectQualification: false,
   operationalCost: Object.freeze({
     planningMaxInputTokensPerAttempt:
       P6_3_V3_RSEM_RELIABILITY_AUDIT_PLANNING_MAX_INPUT_TOKENS,
@@ -111,6 +121,9 @@ export interface P63V3RSemReliabilityDecisionRecord {
   readonly reasoningOutputTokens: number;
   readonly totalTokens: number;
   readonly structureValid: boolean | null;
+  readonly capUsageMatchedConfiguredLimit: boolean | null;
+  readonly outputUtilizationRatio: number | null;
+  readonly reasoningUtilizationRatio: number | null;
   readonly estimatedCostUsd: number | null;
   readonly failureReason: string | null;
 }
@@ -119,7 +132,10 @@ export interface P63V3RSemReliabilityCandidateSummary {
   readonly candidateCap: P63V3RSemReliabilityAuditCandidateCap;
   readonly status: "incomplete" | "qualified" | "rejected" | "needs-audit";
   readonly validTrialCount: number;
-  readonly exactCapCensoringCount: number;
+  readonly capCensoringCount: number;
+  readonly maxOutputUtilizationRatio: number | null;
+  readonly p95OutputUtilizationRatio: number | null;
+  readonly maxReasoningUtilizationRatio: number | null;
   readonly nonCapInfrastructureAttemptCount: number;
   readonly protocolInvalidAttemptCount: number;
 }
@@ -185,7 +201,7 @@ export function summarizeP63V3RSemReliabilityCandidate(
   candidateCap: P63V3RSemReliabilityAuditCandidateCap
 ): P63V3RSemReliabilityCandidateSummary {
   const candidate = records.filter((record) => record.candidateCap === candidateCap);
-  const exactCapCensoringCount = candidate.filter(
+  const capCensoringCount = candidate.filter(
     (record) => record.disposition === "cap-censored"
   ).length;
   const protocolInvalidAttemptCount = candidate.filter(
@@ -194,14 +210,23 @@ export function summarizeP63V3RSemReliabilityCandidate(
   const nonCapInfrastructureAttemptCount = candidate.filter(
     (record) => record.disposition === "non-cap-infrastructure"
   ).length;
+  const validRecords = candidate.filter(
+    (record) => record.disposition === "valid-audit-trial"
+  );
   const validTrialCount = new Set(
-    candidate
-      .filter((record) => record.disposition === "valid-audit-trial")
-      .map((record) => record.sequence)
+    validRecords.map((record) => record.sequence)
   ).size;
+  const outputUtilizations = validRecords
+    .map((record) => record.outputUtilizationRatio)
+    .filter((value): value is number => value !== null)
+    .sort((a, b) => a - b);
+  const reasoningUtilizations = validRecords
+    .map((record) => record.reasoningUtilizationRatio)
+    .filter((value): value is number => value !== null)
+    .sort((a, b) => a - b);
 
   let status: P63V3RSemReliabilityCandidateSummary["status"] = "incomplete";
-  if (exactCapCensoringCount > 0) status = "rejected";
+  if (capCensoringCount > 0) status = "rejected";
   else if (protocolInvalidAttemptCount > 0) status = "needs-audit";
   else if (
     validTrialCount ===
@@ -212,10 +237,36 @@ export function summarizeP63V3RSemReliabilityCandidate(
     candidateCap,
     status,
     validTrialCount,
-    exactCapCensoringCount,
+    capCensoringCount,
     nonCapInfrastructureAttemptCount,
     protocolInvalidAttemptCount,
+    maxOutputUtilizationRatio:
+      outputUtilizations.length > 0
+        ? outputUtilizations[outputUtilizations.length - 1]
+        : null,
+    p95OutputUtilizationRatio:
+      outputUtilizations.length > 0
+        ? percentileNearestRank(outputUtilizations, 0.95)
+        : null,
+    maxReasoningUtilizationRatio:
+      reasoningUtilizations.length > 0
+        ? reasoningUtilizations[reasoningUtilizations.length - 1]
+        : null,
   });
+}
+
+function percentileNearestRank(
+  sortedAscending: readonly number[],
+  probability: number
+): number {
+  if (sortedAscending.length === 0) {
+    throw new Error("percentile requires at least one value");
+  }
+  const rank = Math.max(
+    1,
+    Math.ceil(probability * sortedAscending.length)
+  );
+  return sortedAscending[Math.min(sortedAscending.length - 1, rank - 1)];
 }
 
 export function projectedP63V3RSemReliabilityAttemptCostUsd(
