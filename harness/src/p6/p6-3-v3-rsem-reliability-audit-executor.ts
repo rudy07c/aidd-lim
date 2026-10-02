@@ -23,10 +23,10 @@ import {
   P6_3_V3_RSEM_OUTPUT_INSTRUCTIONS_SHA256,
   P6_3_V3_RSEM_PROMPT_VERSION,
 } from "./p6-3-v3-rsem-executor";
-import type {
-  P63V3RSemReliabilityAuditCandidateCap,
-  P63V3RSemReliabilityAuditDisposition,
+import {
   P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
+  type P63V3RSemReliabilityAuditCandidateCap,
+  type P63V3RSemReliabilityAuditDisposition,
 } from "./p6-3-v3-rsem-reliability-audit-spec";
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_EXECUTOR_VERSION =
@@ -58,6 +58,9 @@ export interface P63V3RSemReliabilityAuditExecutorDecision {
   readonly reasoningOutputTokens: number;
   readonly totalTokens: number;
   readonly structureValid: boolean | null;
+  readonly capUsageMatchedConfiguredLimit: boolean | null;
+  readonly outputUtilizationRatio: number | null;
+  readonly reasoningUtilizationRatio: number | null;
   readonly estimatedCostUsd: number | null;
   readonly actualModel: string | null;
   readonly responseId: string | null;
