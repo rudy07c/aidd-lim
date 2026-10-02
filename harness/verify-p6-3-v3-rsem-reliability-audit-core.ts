@@ -123,6 +123,14 @@ assert.equal(frozen.instrumentationAmendments.sdkAutomaticRetriesDisabled, true)
 assert.equal(frozen.decisionRules.outputTokenEqualityIsDiagnosticOnly, true);
 assert.equal(frozen.decisionRules.headroomDiagnosticsAffectQualification, false);
 assert.equal(
+  frozen.operationalCost.unknownUsageAttemptPolicy,
+  "reserve-candidate-specific-projected-worst-case-cost"
+);
+assert.equal(
+  frozen.operationalCost.interruptedAttemptPolicy,
+  "reserve-candidate-specific-projected-worst-case-cost"
+);
+assert.equal(
   frozen.operationalCost.accumulatedEstimatedCostCeilingUsd,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD
 );
@@ -426,6 +434,34 @@ async function verifyController(): Promise<void> {
       prepared,
       authorization,
     });
+    await executeP63V3ControlledRSemReliabilityAudit({
+      state,
+      prepared,
+      authorization,
+      executor: {
+        execute: async (cell) =>
+          fakeOutcome(
+            cell.candidateCap,
+            "non-cap-infrastructure",
+            0,
+            null
+          ),
+      },
+      persistence: memoryPersistence(),
+    });
+    const expectedReserved =
+      projectedP63V3RSemReliabilityAttemptCostUsd(32000);
+    assert.equal(state.status, "needs-audit");
+    assert.equal(state.reservedUnknownCostUsd, expectedReserved);
+    assert.equal(state.attempts[0].reservedCostUsd, expectedReserved);
+    assert.equal(state.attempts[0].estimatedCostUsd, null);
+  }
+
+  {
+    const state = createP63V3RSemReliabilityAuditState({
+      prepared,
+      authorization,
+    });
     state.inFlight = {
       sequence: 0,
       attempt: 1,
@@ -487,7 +523,8 @@ function fakeOutcome(
     | "valid-audit-trial"
     | "cap-censored"
     | "non-cap-infrastructure",
-  outputTokensOverride?: number
+  outputTokensOverride?: number,
+  estimatedCostUsdOverride?: number | null
 ): P63V3RSemReliabilityAuditExecutorOutcome {
   const outputTokens =
     outputTokensOverride ??
@@ -508,7 +545,10 @@ function fakeOutcome(
       disposition === "cap-censored" ? outputTokens === cap : null,
     outputUtilizationRatio: outputTokens / cap,
     reasoningUtilizationRatio: Math.min(outputTokens, 900) / cap,
-    estimatedCostUsd: 0,
+    estimatedCostUsd:
+      estimatedCostUsdOverride === undefined
+        ? 0
+        : estimatedCostUsdOverride,
     actualModel: "gpt-5.6-luna",
     responseId: "resp_fixture",
     providerErrorCode: null,
@@ -655,6 +695,7 @@ async function main(): Promise<void> {
       "64k-reject-to-needs-design-audit",
       "human-adjudicated-non-cap-replacement",
       "pre-call-operational-cost-stop",
+      "usage-less-attempt-worst-case-cost-reservation",
       "interrupted-call-worst-case-cost-reservation",
       "non-selective-headroom-diagnostics",
       "semantic-firewall",
