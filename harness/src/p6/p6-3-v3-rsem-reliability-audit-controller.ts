@@ -63,6 +63,7 @@ export interface P63V3RSemReliabilityAuditAdjudication {
 export interface P63V3RSemReliabilityAuditAttemptRecord
   extends P63V3RSemReliabilityDecisionRecord {
   readonly artifactPath: string | null;
+  readonly reservedCostUsd: number;
   adjudication: P63V3RSemReliabilityAuditAdjudication | null;
   readonly startedAt: string;
   readonly finishedAt: string;
@@ -298,6 +299,8 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
       estimatedCostUsd: decision.estimatedCostUsd,
       failureReason: decision.failureReason,
       artifactPath,
+      reservedCostUsd:
+        decision.estimatedCostUsd === null ? projected : 0,
       adjudication: null,
       startedAt,
       finishedAt,
@@ -310,6 +313,8 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
       decision.estimatedCostUsd >= 0
     ) {
       state.accumulatedEstimatedCostUsd += decision.estimatedCostUsd;
+    } else {
+      state.reservedUnknownCostUsd += projected;
     }
     touch(state);
 
@@ -373,7 +378,7 @@ export async function executeP63V3ControlledRSemReliabilityAudit(args: {
         sequence: cell.sequence,
         attempt: record.attempt,
         reason:
-          "64000-token candidate hit exact-cap censoring; 128000 auto-escalation is prohibited",
+          "64000-token candidate returned provider-declared max_output_tokens censoring; 128000 auto-escalation is prohibited",
       }, false);
       await persistence.persistState(state);
       break;
