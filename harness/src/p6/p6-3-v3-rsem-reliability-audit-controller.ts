@@ -496,6 +496,14 @@ export function applyP63V3RSemReliabilityAuditAdjudication(args: {
   touch(args.state);
 }
 
+export function assertP63V3RSemReliabilityAuditResumeCompatible(args: {
+  state: Readonly<P63V3RSemReliabilityAuditState>;
+  prepared: Readonly<P63V3PreparedRSemReliabilityAudit>;
+  authorization: P63V3RSemReliabilityAuditAuthorizationToken;
+}): void {
+  assertStateCompatible(args.state, args.prepared, args.authorization);
+}
+
 export function recoverInterruptedP63V3RSemReliabilityAuditState(
   state: P63V3RSemReliabilityAuditState
 ): void {
