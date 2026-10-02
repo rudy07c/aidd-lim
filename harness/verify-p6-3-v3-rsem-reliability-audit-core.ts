@@ -7,8 +7,18 @@ import {
   buildGenerationZeroFixedEnvironment,
 } from "./src/context/generation-zero-fixed-environment";
 import {
+  buildP63RSemPromptP62Compatible,
+  buildP63RSemSchemaP62Compatible,
+  P6_3_RSEM_OUTPUT_INSTRUCTIONS,
   P6_3_RSEM_PROVIDER_CONTRACT,
+  P6_3_RSEM_SCHEMA_VERSION,
 } from "./src/p6/p6-3-rsem-protocol-parity";
+import {
+  buildOpenAIStructuredResponseRequestBody,
+} from "./src/agent-backend/openai/shared";
+import {
+  buildP63V3RSemRequestBody,
+} from "./src/p6/p6-3-v3-rsem-executor";
 import {
   P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD,
@@ -117,6 +127,38 @@ assert.equal(request.text.format.strict, true);
 assert.equal(Object.keys(request.text.format.schema.properties).length, 12);
 assert(request.input[0].content.includes("FIXED ENVIRONMENT SPECIFICATION"));
 assert(request.input[0].content.includes("REPOSITORY FILES:"));
+
+const historicalAtAuditCap = buildOpenAIStructuredResponseRequestBody({
+  options: {
+    model: P6_3_RSEM_PROVIDER_CONTRACT.model,
+    reasoningEffort: P6_3_RSEM_PROVIDER_CONTRACT.reasoningEffort,
+    maxOutputTokens: 32000,
+    storeResponses: P6_3_RSEM_PROVIDER_CONTRACT.storeResponses,
+    serviceTier: P6_3_RSEM_PROVIDER_CONTRACT.serviceTier,
+    promptCacheMode: P6_3_RSEM_PROVIDER_CONTRACT.promptCacheMode,
+  },
+  responseInput: [{
+    role: "user",
+    content: buildP63RSemPromptP62Compatible(
+      { "src/a.ts": "export const a = 1;\n" },
+      probes
+    ),
+  }],
+  outputSpec: {
+    instructions: P6_3_RSEM_OUTPUT_INSTRUCTIONS,
+    schemaName: P6_3_RSEM_SCHEMA_VERSION.replace(/-/g, "_"),
+    schema: buildP63RSemSchemaP62Compatible(probes),
+  },
+});
+const expectedV3AtAuditCap = buildP63V3RSemRequestBody(
+  historicalAtAuditCap,
+  fixedEnvironment
+);
+assert.deepEqual(
+  request,
+  expectedV3AtAuditCap,
+  "audit request must equal the frozen v3 Rsem request with max_output_tokens as the only provider-envelope change"
+);
 
 async function verifyExecutor(): Promise<void> {
   const completed = await executeP63V3RSemReliabilityAuditAttempt(
@@ -504,6 +546,7 @@ function verifySemanticFirewall(): void {
     ),
     "utf8"
   );
+  assert(!executorSource.includes("GeneratedProbe"));
   assert(!executorSource.includes("scoreProbes"));
   assert(!executorSource.includes("correctAnswer"));
   assert(!executorSource.includes("booleanCorrect"));
