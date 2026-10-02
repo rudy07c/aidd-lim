@@ -115,6 +115,7 @@ export interface P63V3RSemReliabilityAuditFinalPreLiveReceipt {
   readonly auditProviderMaxRetries: 0;
   readonly sdkAutomaticRetriesDisabled: true;
   readonly interruptedAttemptCostReservation: true;
+  readonly usageLessAttemptCostReservation: true;
   readonly headroomDiagnosticsAffectQualification: false;
   readonly operationalCostCeilingUsd: 22;
   readonly preflightPassed: true;
@@ -172,6 +173,12 @@ export function runP63V3RSemReliabilityAuditFinalPreLiveGate(
     P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES !== 0 ||
     P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT
       .headroomDiagnosticsAffectQualification !== false ||
+    P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT.operationalCost
+      .unknownUsageAttemptPolicy !==
+      "reserve-candidate-specific-projected-worst-case-cost" ||
+    P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT.operationalCost
+      .interruptedAttemptPolicy !==
+      "reserve-candidate-specific-projected-worst-case-cost" ||
     P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD !== 22
   ) {
     throw new Error("Rsem reliability audit final pre-live frozen envelope drifted");
@@ -257,6 +264,7 @@ export function runP63V3RSemReliabilityAuditFinalPreLiveGate(
           P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
         sdkAutomaticRetriesDisabled: true,
         interruptedAttemptCostReservation: true,
+        usageLessAttemptCostReservation: true,
         headroomDiagnosticsAffectQualification: false,
         operationalCostCeilingUsd:
           P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD,
@@ -308,6 +316,7 @@ export function assertP63V3RSemReliabilityAuditFinalPreLiveGatePassToken(
     receipt.auditProviderMaxRetries !== 0 ||
     receipt.sdkAutomaticRetriesDisabled !== true ||
     receipt.interruptedAttemptCostReservation !== true ||
+    receipt.usageLessAttemptCostReservation !== true ||
     receipt.headroomDiagnosticsAffectQualification !== false ||
     receipt.operationalCostCeilingUsd !== 22 ||
     receipt.paidLiveAuthorizationRequired !== true ||
