@@ -1,0 +1,152 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-6",
+    "taskType": "local",
+    "repeat": 1,
+    "modifiedPaths": [
+      "src/fen/recover.ts",
+      "src/fen/rules.ts",
+      "src/protocol_adapter.ts"
+    ],
+    "workingNote": "Fen の recoverFen は dor のときだけ不変更新で pex に戻るよう実装し、protocol の operation dispatch に追加した。既存の Fen 進行操作も型安全な world 更新として維持し、失敗時は既存プロトコルの success:false 形式で返す。",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 809,
+      "output": 7833,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 6732,
+      "total": 8642
+    },
+    "estimatedCostUsd": 0.009561400000000001,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "protocol-contract",
+    "failureReason": "visible:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m52\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m52\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m  \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m52\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m52\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m  \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m64\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功、advanceZef2の前提)\n    \u001b[7m  \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m64\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功、advanceZef2の前提)\n    \u001b[7m  \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m91\u001b[0m:\u001b[93m28\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m91\u001b[0m   expect(() => advanceFen1(w)).toThrow();\n    \u001b[7m  \u001b[0m \u001b[91m                           ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m97\u001b[0m:\u001b[93m26\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m97\u001b[0m   const w2 = advanceFen1(w);\n    \u001b[7m  \u001b[0m \u001b[91m                         ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m107\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m107\u001b[0m   w = advanceFen1(w);  // fen: pex\n    \u001b[7m   \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m107\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m107\u001b[0m   w = advanceFen1(w);  // fen: pex\n    \u001b[7m   \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m108\u001b[0m:\u001b[93m28\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m108\u001b[0m   expect(() => advanceFen2(w)).toThrow(); // zef still nim\n    \u001b[7m   \u001b[0m \u001b[91m                           ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m118\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m118\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m   \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m118\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m118\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m   \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m119\u001b[0m:\u001b[93m26\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m119\u001b[0m   const w2 = advanceFen2(w);\n    \u001b[7m   \u001b[0m \u001b[91m                         ~\u001b[0m\n | hidden:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m32\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m32\u001b[0m   advanceFen1,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m33\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m33\u001b[0m   advanceFen2,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n | task-specific:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m32\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m32\u001b[0m   advanceFen1,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m33\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m33\u001b[0m   advanceFen2,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n",
+    "executionStatus": "ok",
+    "protocolContractViolated": true,
+    "visible": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m52\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m52\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m  \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m52\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m52\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m  \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m64\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功、advanceZef2の前提)\n    \u001b[7m  \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m64\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m64\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功、advanceZef2の前提)\n    \u001b[7m  \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m91\u001b[0m:\u001b[93m28\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m91\u001b[0m   expect(() => advanceFen1(w)).toThrow();\n    \u001b[7m  \u001b[0m \u001b[91m                           ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m97\u001b[0m:\u001b[93m26\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m97\u001b[0m   const w2 = advanceFen1(w);\n    \u001b[7m  \u001b[0m \u001b[91m                         ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m107\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m107\u001b[0m   w = advanceFen1(w);  // fen: pex\n    \u001b[7m   \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m107\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m107\u001b[0m   w = advanceFen1(w);  // fen: pex\n    \u001b[7m   \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m108\u001b[0m:\u001b[93m28\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m108\u001b[0m   expect(() => advanceFen2(w)).toThrow(); // zef still nim\n    \u001b[7m   \u001b[0m \u001b[91m                           ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m118\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2739: \u001b[0mType 'FenWorld' is missing the following properties from type 'WorldState': vok, zef, tal, osk\n\n    \u001b[7m118\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m   \u001b[0m \u001b[91m  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m118\u001b[0m:\u001b[93m19\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m118\u001b[0m   w = advanceFen1(w);   // fen: pex (osk=pexなので成功)\n    \u001b[7m   \u001b[0m \u001b[91m                  ~\u001b[0m\n    \u001b[96mrepository/tests/rules.visible.test.ts\u001b[0m:\u001b[93m119\u001b[0m:\u001b[93m26\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2345: \u001b[0mArgument of type 'WorldState' is not assignable to parameter of type 'FenWorld'.\n      Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m119\u001b[0m   const w2 = advanceFen2(w);\n    \u001b[7m   \u001b[0m \u001b[91m                         ~\u001b[0m\n"
+        }
+      ]
+    },
+    "hidden": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m32\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m32\u001b[0m   advanceFen1,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m33\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m33\u001b[0m   advanceFen2,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "taskSpecific": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m32\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m32\u001b[0m   advanceFen1,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m33\u001b[0m:\u001b[93m3\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2322: \u001b[0mType '<T extends FenWorld>(world: T) => T' is not assignable to type 'Operation'.\n      Types of parameters 'world' and 'state' are incompatible.\n        Type 'WorldState' is not assignable to type 'FenWorld'.\n          Index signature for type 'string' is missing in type 'WorldState'.\n\n    \u001b[7m33\u001b[0m   advanceFen2,\n    \u001b[7m  \u001b[0m \u001b[91m  ~~~~~~~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/fen/recover.ts\",\"content\":\"import type { FenState } from \\\"./state\\\";\\n\\ntype FenWorld = {\\n  fen: FenState;\\n};\\n\\n/** Move Fen back one stage, but only after it has reached dor. */\\nexport function recoverFen<T extends FenWorld>(world: T): T {\\n  if (world.fen !== \\\"dor\\\") {\\n    throw new Error(\\\"recoverFen requires Fen to be 'dor'\\\");\\n  }\\n\\n  return { ...world, fen: \\\"pex\\\" } as T;\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { createInitialWorld } from \\\"./world\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { recoverFen } from \\\"./fen/recover\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\n\\ntype WorldStateHandle = ReturnType<typeof createInitialWorld>;\\ntype Operation = (state: WorldStateHandle) => WorldStateHandle;\\n\\nexport interface WorldProtocol {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(\\n    state: WorldStateHandle,\\n    entityDisplayName: string\\n  ): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nconst operations: Record<string, Operation> = {\\n  advanceVok1,\\n  advanceVok2,\\n  advanceZef1,\\n  advanceZef2,\\n  advanceTal1,\\n  advanceOsk1,\\n  advanceFen1,\\n  advanceFen2,\\n  recoverFen,\\n};\\n\\nfunction errorMessage(error: unknown): string {\\n  return error instanceof Error ? error.message : String(error);\\n}\\n\\nexport const protocol: WorldProtocol = {\\n  reset: createInitialWorld,\\n\\n  applyOperation(state, operationDisplayName) {\\n    const operation = operations[operationDisplayName];\\n    if (!operation) {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    try {\\n      return { success: true, newState: operation(state) };\\n    } catch (error) {\\n      return { success: false, error: errorMessage(error) };\\n    }\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    const entityKey = entityDisplayName.trim().toLowerCase();\\n    const value = (state as unknown as Record<string, unknown>)[entityKey];\\n    return typeof value === \\\"string\\\" ? value : \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return {\\n      ...((state as unknown) as Record<string, string>),\\n    };\\n  },\\n};\\n\"},{\"path\":\"src/fen/rules.ts\",\"content\":\"import type { FenState } from \\\"./state\\\";\\n\\ntype FenWorld = {\\n  fen: FenState;\\n  [key: string]: unknown;\\n};\\n\\nexport function advanceFen1<T extends FenWorld>(world: T): T {\\n  if (world.fen !== \\\"nim\\\") {\\n    throw new Error(\\\"Fen must be 'nim' to advance with advanceFen1\\\");\\n  }\\n\\n  return { ...world, fen: \\\"pex\\\" } as T;\\n}\\n\\nexport function advanceFen2<T extends FenWorld>(world: T): T {\\n  if (world.fen !== \\\"pex\\\") {\\n    throw new Error(\\\"Fen must be 'pex' to advance with advanceFen2\\\");\\n  }\\n\\n  return { ...world, fen: \\\"dor\\\" } as T;\\n}\\n\\nexport function recoverFen<T extends FenWorld>(world: T): T {\\n  if (world.fen !== \\\"dor\\\") {\\n    throw new Error(\\\"Fen must be 'dor' to recover with recoverFen\\\");\\n  }\\n\\n  return { ...world, fen: \\\"pex\\\" } as T;\\n}\\n\"}],\"workingNote\":\"Fen の recoverFen は dor のときだけ不変更新で pex に戻るよう実装し、protocol の operation dispatch に追加した。既存の Fen 進行操作も型安全な world 更新として維持し、失敗時は既存プロトコルの success:false 形式で返す。\"}",
+    "modifiedFiles": {
+      "src/fen/recover.ts": "import type { FenState } from \"./state\";\n\ntype FenWorld = {\n  fen: FenState;\n};\n\n/** Move Fen back one stage, but only after it has reached dor. */\nexport function recoverFen<T extends FenWorld>(world: T): T {\n  if (world.fen !== \"dor\") {\n    throw new Error(\"recoverFen requires Fen to be 'dor'\");\n  }\n\n  return { ...world, fen: \"pex\" } as T;\n}\n",
+      "src/protocol_adapter.ts": "import { createInitialWorld } from \"./world\";\nimport { advanceFen1, advanceFen2 } from \"./fen/rules\";\nimport { recoverFen } from \"./fen/recover\";\nimport { advanceOsk1 } from \"./osk/rules\";\nimport { advanceTal1 } from \"./tal/rules\";\nimport { advanceVok1, advanceVok2 } from \"./vok/rules\";\nimport { advanceZef1, advanceZef2 } from \"./zef/rules\";\n\ntype WorldStateHandle = ReturnType<typeof createInitialWorld>;\ntype Operation = (state: WorldStateHandle) => WorldStateHandle;\n\nexport interface WorldProtocol {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\n}\n\nconst operations: Record<string, Operation> = {\n  advanceVok1,\n  advanceVok2,\n  advanceZef1,\n  advanceZef2,\n  advanceTal1,\n  advanceOsk1,\n  advanceFen1,\n  advanceFen2,\n  recoverFen,\n};\n\nfunction errorMessage(error: unknown): string {\n  return error instanceof Error ? error.message : String(error);\n}\n\nexport const protocol: WorldProtocol = {\n  reset: createInitialWorld,\n\n  applyOperation(state, operationDisplayName) {\n    const operation = operations[operationDisplayName];\n    if (!operation) {\n      return {\n        success: false,\n        error: `Unknown operation: ${operationDisplayName}`,\n      };\n    }\n\n    try {\n      return { success: true, newState: operation(state) };\n    } catch (error) {\n      return { success: false, error: errorMessage(error) };\n    }\n  },\n\n  getEntityState(state, entityDisplayName) {\n    const entityKey = entityDisplayName.trim().toLowerCase();\n    const value = (state as unknown as Record<string, unknown>)[entityKey];\n    return typeof value === \"string\" ? value : \"unknown\";\n  },\n\n  toAbstractSnapshot(state) {\n    return {\n      ...((state as unknown) as Record<string, string>),\n    };\n  },\n};\n",
+      "src/fen/rules.ts": "import type { FenState } from \"./state\";\n\ntype FenWorld = {\n  fen: FenState;\n  [key: string]: unknown;\n};\n\nexport function advanceFen1<T extends FenWorld>(world: T): T {\n  if (world.fen !== \"nim\") {\n    throw new Error(\"Fen must be 'nim' to advance with advanceFen1\");\n  }\n\n  return { ...world, fen: \"pex\" } as T;\n}\n\nexport function advanceFen2<T extends FenWorld>(world: T): T {\n  if (world.fen !== \"pex\") {\n    throw new Error(\"Fen must be 'pex' to advance with advanceFen2\");\n  }\n\n  return { ...world, fen: \"dor\" } as T;\n}\n\nexport function recoverFen<T extends FenWorld>(world: T): T {\n  if (world.fen !== \"dor\") {\n    throw new Error(\"Fen must be 'dor' to recover with recoverFen\");\n  }\n\n  return { ...world, fen: \"pex\" } as T;\n}\n"
+    },
+    "explicitWorkingNote": "Fen の recoverFen は dor のときだけ不変更新で pex に戻るよう実装し、protocol の operation dispatch に追加した。既存の Fen 進行操作も型安全な world 更新として維持し、失敗時は既存プロトコルの success:false 形式で返す。",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_04b460c011cae9f8016abf3db5eaa487d0a897374dbaf09c7c",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 809,
+      "output": 7833,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 6732,
+      "total": 8642
+    },
+    "estimatedCostUsd": 0.009561400000000001,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

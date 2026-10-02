@@ -1,0 +1,23 @@
+[
+  {
+    "sequence": 793,
+    "attempt": 1,
+    "reviewer": "operator",
+    "reason": "OpenAI response was incomplete because max_output_tokens was reached. The attempt returned no usable scientific response: responseStatus=incomplete, failureReason=max_output_tokens, rawResponse empty, output=8000, reasoningOutput=8000 at the frozen Rsem maxOutputTokens=8000. Adjudicated infrastructure-invalid under the predeclared Rsem failure semantics.",
+    "finalDisposition": "infrastructure-invalid"
+  },
+  {
+    "sequence": 793,
+    "attempt": 2,
+    "reviewer": "operator",
+    "reason": "OpenAI response was incomplete because max_output_tokens was reached. The attempt returned no usable scientific response: responseStatus=incomplete, failureReason=max_output_tokens, rawResponse empty, output=8000, reasoningOutput=8000 at the frozen Rsem maxOutputTokens=8000. Adjudicated infrastructure-invalid under the predeclared Rsem failure semantics.",
+    "finalDisposition": "infrastructure-invalid"
+  },
+  {
+    "sequence": 793,
+    "attempt": 3,
+    "reviewer": "operator",
+    "reason": "OpenAI response was incomplete because max_output_tokens was reached. The attempt returned no usable scientific response: responseStatus=incomplete, failureReason=max_output_tokens, rawResponse empty, output=8000, reasoningOutput=8000 at the frozen Rsem maxOutputTokens=8000. This was the third infrastructure-invalid attempt for the logical cell.",
+    "finalDisposition": "infrastructure-invalid"
+  }
+]

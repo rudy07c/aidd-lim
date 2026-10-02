@@ -1,0 +1,135 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-crosscut-1",
+    "taskType": "cross_cutting",
+    "repeat": 2,
+    "modifiedPaths": [
+      "src/kindleBoth/rules.ts",
+      "src/protocol_adapter.ts"
+    ],
+    "workingNote": "Added the kindleBoth operation to the protocol and isolated its atomic precondition checks: both Zef and Tal must be nim before either is changed. Existing operations, entity lookup, snapshot conversion, and the fixed protocol method signatures remain available.",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 902,
+      "output": 4907,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 3808,
+      "total": 5809
+    },
+    "estimatedCostUsd": 0.006068799999999999,
+    "passed": true,
+    "validity": "valid",
+    "failureCategory": null,
+    "failureReason": null,
+    "executionStatus": "ok",
+    "protocolContractViolated": false,
+    "visible": {
+      "passed": true,
+      "numPassed": 13,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "hidden": {
+      "passed": true,
+      "numPassed": 22,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "taskSpecific": {
+      "passed": true,
+      "numPassed": 3,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "failureDomain": "none",
+    "semanticFailure": false,
+    "protocolFailure": false,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "none",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { createInitialWorld, WorldState } from \\\"./world\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\n\\nexport interface WorldProtocol<WorldStateHandle = WorldState> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nfunction kindleBoth(world: WorldState): WorldState {\\n  // Validate both preconditions before constructing a new state, so the\\n  // operation is atomic when one of the entities cannot advance.\\n  if (world.zef !== \\\"nim\\\") {\\n    throw new Error(\\\"kindleBoth: Zef must be in state 'nim'\\\");\\n  }\\n  if (world.tal !== \\\"nim\\\") {\\n    throw new Error(\\\"kindleBoth: Tal must be in state 'nim'\\\");\\n  }\\n  return { ...world, zef: \\\"pex\\\", tal: \\\"pex\\\" };\\n}\\n\\nfunction apply(world: WorldState, operationDisplayName: string): WorldState {\\n  switch (operationDisplayName) {\\n    case \\\"advanceFen1\\\":\\n      return advanceFen1(world);\\n    case \\\"advanceFen2\\\":\\n      return advanceFen2(world);\\n    case \\\"advanceOsk1\\\":\\n      return advanceOsk1(world);\\n    case \\\"advanceTal1\\\":\\n      return advanceTal1(world);\\n    case \\\"advanceVok1\\\":\\n      return advanceVok1(world);\\n    case \\\"advanceVok2\\\":\\n      return advanceVok2(world);\\n    case \\\"advanceZef1\\\":\\n      return advanceZef1(world);\\n    case \\\"advanceZef2\\\":\\n      return advanceZef2(world);\\n    case \\\"kindleBoth\\\":\\n      return kindleBoth(world);\\n    default:\\n      throw new Error(`Unknown operation: ${operationDisplayName}`);\\n  }\\n}\\n\\nexport const protocol: WorldProtocol = {\\n  reset(): WorldState {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(state, operationDisplayName) {\\n    try {\\n      return { success: true, newState: apply(state, operationDisplayName) };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    switch (entityDisplayName) {\\n      case \\\"Fen\\\":\\n        return state.fen;\\n      case \\\"Osk\\\":\\n        return state.osk;\\n      case \\\"Tal\\\":\\n        return state.tal;\\n      case \\\"Vok\\\":\\n        return state.vok;\\n      case \\\"Zef\\\":\\n        return state.zef;\\n      default:\\n        throw new Error(`Unknown entity: ${entityDisplayName}`);\\n    }\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return {\\n      Fen: state.fen,\\n      Osk: state.osk,\\n      Tal: state.tal,\\n      Vok: state.vok,\\n      Zef: state.zef,\\n    };\\n  },\\n};\\n\"},{\"path\":\"src/kindleBoth/rules.ts\",\"content\":\"import { WorldState } from \\\"../world\\\";\\n\\n/**\\n * kindleBoth: advance Zef and Tal from nim to pex atomically.\\n */\\nexport function kindleBoth(world: WorldState): WorldState {\\n  if (world.zef !== \\\"nim\\\") {\\n    throw new Error(\\\"kindleBoth: Zef must be in state 'nim'\\\");\\n  }\\n  if (world.tal !== \\\"nim\\\") {\\n    throw new Error(\\\"kindleBoth: Tal must be in state 'nim'\\\");\\n  }\\n  return { ...world, zef: \\\"pex\\\", tal: \\\"pex\\\" };\\n}\\n\"}],\"workingNote\":\"Added the kindleBoth operation to the protocol and isolated its atomic precondition checks: both Zef and Tal must be nim before either is changed. Existing operations, entity lookup, snapshot conversion, and the fixed protocol method signatures remain available.\"}",
+    "modifiedFiles": {
+      "src/protocol_adapter.ts": "import { createInitialWorld, WorldState } from \"./world\";\nimport { advanceFen1, advanceFen2 } from \"./fen/rules\";\nimport { advanceOsk1 } from \"./osk/rules\";\nimport { advanceTal1 } from \"./tal/rules\";\nimport { advanceVok1, advanceVok2 } from \"./vok/rules\";\nimport { advanceZef1, advanceZef2 } from \"./zef/rules\";\n\nexport interface WorldProtocol<WorldStateHandle = WorldState> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\n}\n\nfunction kindleBoth(world: WorldState): WorldState {\n  // Validate both preconditions before constructing a new state, so the\n  // operation is atomic when one of the entities cannot advance.\n  if (world.zef !== \"nim\") {\n    throw new Error(\"kindleBoth: Zef must be in state 'nim'\");\n  }\n  if (world.tal !== \"nim\") {\n    throw new Error(\"kindleBoth: Tal must be in state 'nim'\");\n  }\n  return { ...world, zef: \"pex\", tal: \"pex\" };\n}\n\nfunction apply(world: WorldState, operationDisplayName: string): WorldState {\n  switch (operationDisplayName) {\n    case \"advanceFen1\":\n      return advanceFen1(world);\n    case \"advanceFen2\":\n      return advanceFen2(world);\n    case \"advanceOsk1\":\n      return advanceOsk1(world);\n    case \"advanceTal1\":\n      return advanceTal1(world);\n    case \"advanceVok1\":\n      return advanceVok1(world);\n    case \"advanceVok2\":\n      return advanceVok2(world);\n    case \"advanceZef1\":\n      return advanceZef1(world);\n    case \"advanceZef2\":\n      return advanceZef2(world);\n    case \"kindleBoth\":\n      return kindleBoth(world);\n    default:\n      throw new Error(`Unknown operation: ${operationDisplayName}`);\n  }\n}\n\nexport const protocol: WorldProtocol = {\n  reset(): WorldState {\n    return createInitialWorld();\n  },\n\n  applyOperation(state, operationDisplayName) {\n    try {\n      return { success: true, newState: apply(state, operationDisplayName) };\n    } catch (error) {\n      return {\n        success: false,\n        error: error instanceof Error ? error.message : String(error),\n      };\n    }\n  },\n\n  getEntityState(state, entityDisplayName) {\n    switch (entityDisplayName) {\n      case \"Fen\":\n        return state.fen;\n      case \"Osk\":\n        return state.osk;\n      case \"Tal\":\n        return state.tal;\n      case \"Vok\":\n        return state.vok;\n      case \"Zef\":\n        return state.zef;\n      default:\n        throw new Error(`Unknown entity: ${entityDisplayName}`);\n    }\n  },\n\n  toAbstractSnapshot(state) {\n    return {\n      Fen: state.fen,\n      Osk: state.osk,\n      Tal: state.tal,\n      Vok: state.vok,\n      Zef: state.zef,\n    };\n  },\n};\n",
+      "src/kindleBoth/rules.ts": "import { WorldState } from \"../world\";\n\n/**\n * kindleBoth: advance Zef and Tal from nim to pex atomically.\n */\nexport function kindleBoth(world: WorldState): WorldState {\n  if (world.zef !== \"nim\") {\n    throw new Error(\"kindleBoth: Zef must be in state 'nim'\");\n  }\n  if (world.tal !== \"nim\") {\n    throw new Error(\"kindleBoth: Tal must be in state 'nim'\");\n  }\n  return { ...world, zef: \"pex\", tal: \"pex\" };\n}\n"
+    },
+    "explicitWorkingNote": "Added the kindleBoth operation to the protocol and isolated its atomic precondition checks: both Zef and Tal must be nim before either is changed. Existing operations, entity lookup, snapshot conversion, and the fixed protocol method signatures remain available.",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_04e12030393111c4016abf0d56147087d0b93db2589a182061",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 902,
+      "output": 4907,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 3808,
+      "total": 5809
+    },
+    "estimatedCostUsd": 0.006068799999999999,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

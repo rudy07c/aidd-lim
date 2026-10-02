@@ -1,0 +1,115 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-4",
+    "taskType": "local",
+    "repeat": 10,
+    "modifiedPaths": [],
+    "workingNote": null,
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 499,
+      "output": 4457,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 3451,
+      "total": 4956
+    },
+    "estimatedCostUsd": 0.005448199999999999,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "output-parse",
+    "failureReason": "Duplicate modified file path: src/protocol_adapter.ts",
+    "executionStatus": "output-parse-failure",
+    "protocolContractViolated": null,
+    "visible": null,
+    "hidden": null,
+    "taskSpecific": null,
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/protocol_adapter.ts\",\"content\":\"interface WorldProtocol<WorldStateHandle> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\ntype WorldState = Record<string, string>;\\n\\nconst initialState = (): WorldState => ({ Vok: \\\"pex\\\" });\\n\\nexport const protocol: WorldProtocol<WorldState> = {\\n  reset(): WorldState {\\n    return initialState();\\n  },\\n\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldState } | { success: false; error: string } {\\n    if (operationDisplayName === \\\"advanceVok\\\") {\\n      if (state.Vok !== \\\"pex\\\") {\\n        return { success: false, error: \\\"Vok must be in pex to advance\\\" };\\n      }\\n      return { success: true, newState: { ...state, Vok: \\\"dor\\\" } };\\n    }\\n\\n    if (operationDisplayName === \\\"recoverVok\\\") {\\n      if (state.Vok !== \\\"dor\\\") {\\n        return { success: false, error: \\\"Vok must be in dor to recover\\\" };\\n      }\\n      return { success: true, newState: { ...state, Vok: \\\"pex\\\" } };\\n    }\\n\\n    return { success: false, error: `Unknown operation: ${operationDisplayName}` };\\n  },\\n\\n  getEntityState(state: WorldState, entityDisplayName: string): string {\\n    return state[entityDisplayName] ?? \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\\n    return { ...state };\\n  },\\n};\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"interface WorldProtocol<WorldStateHandle> {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\ntype WorldState = Record<string, string>;\\n\\nconst initialState = (): WorldState => ({ Vok: \\\"pex\\\" });\\n\\nexport const protocol: WorldProtocol<WorldState> = {\\n  reset(): WorldState {\\n    return initialState();\\n  },\\n\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldState } | { success: false; error: string } {\\n    if (operationDisplayName === \\\"advanceVok\\\") {\\n      if (state.Vok !== \\\"pex\\\") {\\n        return { success: false, error: \\\"Vok must be in pex to advance\\\" };\\n      }\\n      return { success: true, newState: { ...state, Vok: \\\"dor\\\" } };\\n    }\\n\\n    if (operationDisplayName === \\\"recoverVok\\\") {\\n      if (state.Vok !== \\\"dor\\\") {\\n        return { success: false, error: \\\"Vok must be in dor to recover\\\" };\\n      }\\n      return { success: true, newState: { ...state, Vok: \\\"pex\\\" } };\\n    }\\n\\n    return { success: false, error: `Unknown operation: ${operationDisplayName}` };\\n  },\\n\\n  getEntityState(state: WorldState, entityDisplayName: string): string {\\n    return state[entityDisplayName] ?? \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\\n    return { ...state };\\n  },\\n};\\n\"}],\"workingNote\":\"Added recoverVok with a guarded dor→pex transition and immutable state updates. The protocol surface remains unchanged; recoverVok fails unless Vok is currently dor.\"}",
+    "modifiedFiles": {},
+    "explicitWorkingNote": null,
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_02b9d69ae480177e016abf30f7058087d0b4730ecfec89cba0",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 499,
+      "output": 4457,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 3451,
+      "total": 4956
+    },
+    "estimatedCostUsd": 0.005448199999999999,
+    "executionStatus": "output-parse-failure",
+    "error": {
+      "category": "output-parse",
+      "message": "Duplicate modified file path: src/protocol_adapter.ts",
+      "retryable": false
+    }
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

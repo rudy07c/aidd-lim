@@ -1,0 +1,263 @@
+{
+  "schemaVersion": "p6-3-v3-final-prelive-receipt-v2-hardening",
+  "gateVersion": "p6-3-v3-final-prelive-gate-v2-hardening",
+  "checkoutGitSha": "c6b078dae6a9f8536b9dd283e06ccb4384850d47",
+  "calibrationOnly": true,
+  "confirmatoryStage1AEligible": false,
+  "totalLogicalCells": 864,
+  "predeclarationVersion": "p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance",
+  "finalSelectorVersion": "p6-3-v3-category-proportional-interleave-final-v1",
+  "liveControllerVersion": "p6-3-v3-live-controller-v2-validity",
+  "resultFinalizerVersion": "p6-3-v3-result-finalizer-v1",
+  "preflightPassed": true,
+  "exactCleanCheckoutVerified": true,
+  "runtimeConsumedUntrackedFilesVerified": true,
+  "runtimeEnvironment": {
+    "version": "p6-3-v3-runtime-environment-v2-openai-node-engine",
+    "nodeVersion": "v22.21.1",
+    "openaiSdkVersion": "7.10.0",
+    "openaiSdkNodeEngine": ">=22.0.0",
+    "packageLockSha256": "c009bcf89646eea3a23d308f55bd3bda99aa5217789490fa8c65f9b8b2ba0206"
+  },
+  "paidLiveAuthorizationRequired": true,
+  "liveAuthorized": false,
+  "providerCallsMade": false,
+  "verifiers": [
+    {
+      "script": "verify-package-version.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-fixed-protocol-spec.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-generation-zero-fixed-environment.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-m-executor.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-rsem-executor.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-run-start.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-selector-structural-acceptance.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-final-selector.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-calibration-predeclaration.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-calibration-runner.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-live-controller.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-validity-propagation.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-v3-result-finalizer.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-mutation-protocol-parity.ts",
+      "status": "pass"
+    },
+    {
+      "script": "verify-p6-3-rsem-protocol-parity.ts",
+      "status": "pass"
+    }
+  ],
+  "sourceEvidence": [
+    {
+      "path": "harness/package-lock.json",
+      "sha256": "c009bcf89646eea3a23d308f55bd3bda99aa5217789490fa8c65f9b8b2ba0206"
+    },
+    {
+      "path": "harness/src/agent-backend/package-version.ts",
+      "sha256": "bbba5dc92dcf6513fb7c78194d7a2f8f6d7b675189e7b3af85018a6612c22052"
+    },
+    {
+      "path": "harness/src/context/fixed-world-protocol-spec.ts",
+      "sha256": "3c0d8c7aa0b650bb5d565777d5bd323ee3a26f469701ae0417d4b9426c2a4dfa"
+    },
+    {
+      "path": "harness/src/context/generation-zero-fixed-environment.ts",
+      "sha256": "0e6bf6d95012d69e01af758251a83c93ba73cb3268aba326d356fd8de155ce23"
+    },
+    {
+      "path": "harness/src/context/fixed-environment-runtime.ts",
+      "sha256": "093a9ecdaa785c2275881f862eb7e3f83c712ea7410b5cdeca0e9aef9e079dc2"
+    },
+    {
+      "path": "harness/src/context/p6-3-v3-selector-structural-acceptance.ts",
+      "sha256": "ce2aec6ce03afa911d353a985651304594b197e778699741713a068d167935e5"
+    },
+    {
+      "path": "harness/src/context/p6-3-v3-final-static-exposure-selector.ts",
+      "sha256": "c8de22d04a3dc5770ac9f0882097ad15aa9520584eaccce7db0b35abcf573ed5"
+    },
+    {
+      "path": "harness/src/context/p6-3-v3-static-exposure-runtime.ts",
+      "sha256": "3478e5b8556317ea7b089d8b487389605df9f7049580fad89322b3b5c9d16298"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-m-executor.ts",
+      "sha256": "d12901523e115ba4e2c1569b300605f14a67a8204d717d7c99d21f37be8f88a4"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-rsem-executor.ts",
+      "sha256": "4824b3265f18614db3f22f6558f385f204b7fff0de9362acdd77f512fc072399"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-run-start.ts",
+      "sha256": "828c7d401d4dea44ab359cfbb78fd57b7e28e02f559dc9657cdf5d0cf374d218"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-calibration-predeclaration.ts",
+      "sha256": "5e1d7f5f8103a0555021b523d988398519ac1afa20e34fccf72ed0bf2d23ffe0"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-calibration-runner.ts",
+      "sha256": "270649317ee0bf42c6b9b1be5cae477a2e4daf2ad85353a0f0583cf7036e097d"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-scientific-validity.ts",
+      "sha256": "411eacc76b436886fe9cd2549c627893a69d0b2c0c3c1d1e78295b2e0c0110db"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-live-controller.ts",
+      "sha256": "87f764272de8d733439a125aa97c927ec84b6b7c6355fd3edc49e50631eb08a1"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-result-finalizer.ts",
+      "sha256": "0fa94b07607a07db682ba0569652a802ea9ed784876088b697e1adc5c66d5cec"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-runtime-environment.ts",
+      "sha256": "aee47b7f672df9d148f8caa57deda96fe07c18d7e24401da1de171edc0d27163"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-final-prelive-gate.ts",
+      "sha256": "65c458a16ab4ae3ac32dc497ff3eefcf9e3bf4c90a1571d0f932f67d2939da16"
+    },
+    {
+      "path": "harness/src/p6/p6-3-v3-live-entrypoint.ts",
+      "sha256": "8891a41737a59b7cb2383b691612a3751d7bb225d1390f3288c5d99a68ffd507"
+    },
+    {
+      "path": "harness/p6-3-v3-finalize.ts",
+      "sha256": "cde7b50d80cfd01378abb095eb74a4eec1bab654d4b364529fc0c68669f23784"
+    },
+    {
+      "path": "harness/p6-3-v3-calibration.ts",
+      "sha256": "b955efd4afe542ae8fab1191464abb9c8989de161e18a4b3820ca3f233e17306"
+    }
+  ],
+  "frozenEvidence": [
+    {
+      "path": "harness/frozen/p6-3-mutation-protocol-parity.json",
+      "sha256": "fb5c87779390204ad2555ee9390ef5ebe27884a01a983ba16833e00541e4a840"
+    },
+    {
+      "path": "harness/frozen/p6-3-rsem-protocol-parity.json",
+      "sha256": "134e742db585ca3d196016567a61bb8d8cd3a6e0ca66918befd85be5f9aa1e96"
+    }
+  ],
+  "inputEvidence": [
+    {
+      "path": "synthetic-world/ground_truth.json",
+      "sha256": "28840940107efbcfd5f76e17ba664fd884a6174e607c339ef6841ee7abd35feb"
+    },
+    {
+      "path": "synthetic-world/naming_schemes.json",
+      "sha256": "045a3c953f031f41813615ff30b7eacb6f8112e03f33af5c60265a962fba8fa5"
+    },
+    {
+      "path": "synthetic-world/heldout_tasks.json",
+      "sha256": "e187f54e866a653412b948efc42ebe864cd73d308ccf81fdd63e6853589b25e5"
+    },
+    {
+      "path": "calibration/fixtures/probe-bank-stage1.json",
+      "sha256": "6769325cf50055dc6f3545a5c2156632ce4f5cd13d8d138949ad109cf8548a3f"
+    }
+  ],
+  "verifierEvidence": [
+    {
+      "path": "harness/verify-package-version.ts",
+      "sha256": "49b05466de2120a65e9d57240d97c813266f816c7aa6c082c059b36aff89ba77"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-fixed-protocol-spec.ts",
+      "sha256": "ddd8aff3dd39db686e22beb726746b137adb38b941e77d4914e45ff7d1849b6c"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-generation-zero-fixed-environment.ts",
+      "sha256": "c668e54fbfad84267e31e494cb728ec2d5ee00adca59d1add756539b30a8d17a"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-m-executor.ts",
+      "sha256": "266eff661a78095fe1a66b2ea1a8d88d146c4b76f4e65d6347754bf86134650b"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-rsem-executor.ts",
+      "sha256": "dbf0550f8b914e29c151867f38869995cc60521509bc35af33b6d7c169bd31e9"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-run-start.ts",
+      "sha256": "bf4ab1bff98cacc6c1b4c1755b23a6e8f3e292afefb92a4f7f4b1d06e79cea28"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-selector-structural-acceptance.ts",
+      "sha256": "062575e21cbc6b7bc9cd864e59e8708237974f2b17599f006741d1a2257052eb"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-final-selector.ts",
+      "sha256": "4edea55d5efaf4e3fbbe7843f461e2258d6b31d47f7717a5ab7ad0dc36550445"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-calibration-predeclaration.ts",
+      "sha256": "84a6b20db4f9c3d213c512e79bf1b3d088d7918065cf854ca84140e1c42f0801"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-calibration-runner.ts",
+      "sha256": "629d8ce47420a60cad26844371b8ed78666e705a554b5d098552d4f805e5d757"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-live-controller.ts",
+      "sha256": "a7b124ef5694c09ffd6329432bec99ab27f4bf719b425a5c9ec61f0e5e4d34e3"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-validity-propagation.ts",
+      "sha256": "32e8acd62bf5bf90859ae1633121ef2e91dc3d84519cc8ed7754e280f67154ab"
+    },
+    {
+      "path": "harness/verify-p6-3-v3-result-finalizer.ts",
+      "sha256": "b067ec97542284db61e9572dbfe1e200358867e03f02edd00c6b653da6dff093"
+    },
+    {
+      "path": "harness/verify-p6-3-mutation-protocol-parity.ts",
+      "sha256": "4315ddd0f886c309a50489619afc4dbcbb44d28d391709b7d6a890c8b41e27d4"
+    },
+    {
+      "path": "harness/verify-p6-3-rsem-protocol-parity.ts",
+      "sha256": "e10f356d7f59c669ed8fdbbbbafe3f98f91877269ea86746023f7ce8e19b4a6a"
+    }
+  ]
+}

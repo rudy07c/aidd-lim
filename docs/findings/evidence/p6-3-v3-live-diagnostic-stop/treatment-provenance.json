@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "p6-3-v3-calibration-treatment-provenance-v2-m-reliability",
+  "runnerVersion": "p6-3-v3-calibration-runner-v2-m-reliability",
+  "predeclarationVersion": "p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance",
+  "executionProtocolVersion": "p6-3-execution-protocol-v1",
+  "staticExposureRuntimeVersion": "p6-3-v3-static-exposure-runtime-v1",
+  "finalSelectorVersion": "p6-3-v3-category-proportional-interleave-final-v1",
+  "runStartWiringVersion": "p6-3-v3-run-start-wiring-v1",
+  "mExecutorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "mExecutionReliabilityVersion": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+  "mReliabilitySourceVersion": "p6-3-v2-execution-parameters-v1",
+  "mProviderMaxOutputTokens": 14000,
+  "rsemExecutorVersion": "p6-3-v3-rsem-executor-v1",
+  "fixedEnvironmentIdentity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+  "planHash": "9d3a3f92d6e169e10600e3caa01fecaed7efb7ee8383e9700abe24bb19b8b932",
+  "logicalCellCount": 864,
+  "budgets": {
+    "B0": 0,
+    "B1": 505,
+    "B2": 1011,
+    "B3": 2023,
+    "B4": 3034,
+    "AF": 4046
+  },
+  "repeatCount": 12,
+  "primaryMTaskIds": [
+    "T-local-2",
+    "T-crosscut-1",
+    "T-delayed-1",
+    "T-local-3",
+    "T-local-4",
+    "T-local-5",
+    "T-local-6",
+    "T-local-7",
+    "T-crosscut-3",
+    "T-crosscut-4",
+    "T-delayed-2"
+  ],
+  "rsemNamingSchemeId": "A-obfuscated",
+  "rsemBooleanProbeCount": 12,
+  "liveAuthorized": false
+}

@@ -1,0 +1,145 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-delayed-2",
+    "taskType": "delayed_dependency",
+    "repeat": 6,
+    "modifiedPaths": [
+      "src/protocol_adapter.ts",
+      "src/tal/rules.ts"
+    ],
+    "workingNote": "Added the atomic advanceTalOsk rule and registered its display name in protocol.applyOperation. The rule validates both Tal and Osk before producing a new state, so a failed precondition cannot partially advance either entity.",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 768,
+      "output": 3467,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 2588,
+      "total": 4235
+    },
+    "estimatedCostUsd": 0.004314,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "protocol-contract",
+    "failureReason": "hidden:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m15\u001b[0m:\u001b[93m7\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2741: \u001b[0mProperty 'zef' is missing in type '{ fen: \"nim\"; osk: \"nim\"; tal: \"nim\"; vok: \"nim\"; }' but required in type 'WorldState'.\n\n    \u001b[7m15\u001b[0m const initialState: WorldState = {\n    \u001b[7m  \u001b[0m \u001b[91m      ~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mrepository/src/world.ts\u001b[0m:\u001b[93m14\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m14\u001b[0m   zef: ZefState;\n        \u001b[7m  \u001b[0m \u001b[96m  ~~~\u001b[0m\n        'zef' is declared here.\n | task-specific:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m15\u001b[0m:\u001b[93m7\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2741: \u001b[0mProperty 'zef' is missing in type '{ fen: \"nim\"; osk: \"nim\"; tal: \"nim\"; vok: \"nim\"; }' but required in type 'WorldState'.\n\n    \u001b[7m15\u001b[0m const initialState: WorldState = {\n    \u001b[7m  \u001b[0m \u001b[91m      ~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mrepository/src/world.ts\u001b[0m:\u001b[93m14\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m14\u001b[0m   zef: ZefState;\n        \u001b[7m  \u001b[0m \u001b[96m  ~~~\u001b[0m\n        'zef' is declared here.\n",
+    "executionStatus": "ok",
+    "protocolContractViolated": true,
+    "visible": {
+      "passed": true,
+      "numPassed": 13,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "hidden": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m15\u001b[0m:\u001b[93m7\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2741: \u001b[0mProperty 'zef' is missing in type '{ fen: \"nim\"; osk: \"nim\"; tal: \"nim\"; vok: \"nim\"; }' but required in type 'WorldState'.\n\n    \u001b[7m15\u001b[0m const initialState: WorldState = {\n    \u001b[7m  \u001b[0m \u001b[91m      ~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mrepository/src/world.ts\u001b[0m:\u001b[93m14\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m14\u001b[0m   zef: ZefState;\n        \u001b[7m  \u001b[0m \u001b[96m  ~~~\u001b[0m\n        'zef' is declared here.\n"
+        }
+      ]
+    },
+    "taskSpecific": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mrepository/src/protocol_adapter.ts\u001b[0m:\u001b[93m15\u001b[0m:\u001b[93m7\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2741: \u001b[0mProperty 'zef' is missing in type '{ fen: \"nim\"; osk: \"nim\"; tal: \"nim\"; vok: \"nim\"; }' but required in type 'WorldState'.\n\n    \u001b[7m15\u001b[0m const initialState: WorldState = {\n    \u001b[7m  \u001b[0m \u001b[91m      ~~~~~~~~~~~~\u001b[0m\n\n      \u001b[96mrepository/src/world.ts\u001b[0m:\u001b[93m14\u001b[0m:\u001b[93m3\u001b[0m\n        \u001b[7m14\u001b[0m   zef: ZefState;\n        \u001b[7m  \u001b[0m \u001b[96m  ~~~\u001b[0m\n        'zef' is declared here.\n"
+        }
+      ]
+    },
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/tal/rules.ts\",\"content\":\"import { WorldState } from \\\"../world\\\";\\n\\n/**\\n * advanceTal1 (= O5): Tal: nim -> pex, no preconditions\\n */\\nexport function advanceTal1(world: WorldState): WorldState {\\n  if (world.tal !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceTal1: Tal must be in state 'nim'\\\");\\n  }\\n  return { ...world, tal: \\\"pex\\\" };\\n}\\n\\n/**\\n * advanceTalOsk: Tal and Osk: nim -> pex atomically.\\n */\\nexport function advanceTalOsk(world: WorldState): WorldState {\\n  if (world.tal !== \\\"nim\\\" || world.osk !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceTalOsk: Tal and Osk must both be in state 'nim'\\\");\\n  }\\n  return { ...world, tal: \\\"pex\\\", osk: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1, advanceTalOsk } from \\\"./tal/rules\\\";\\nimport { WorldState } from \\\"./world\\\";\\n\\nexport interface WorldProtocol {\\n  reset(): WorldState;\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldState } | { success: false; error: string };\\n  getEntityState(state: WorldState, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldState): Record<string, string>;\\n}\\n\\nconst initialState: WorldState = {\\n  fen: \\\"nim\\\",\\n  osk: \\\"nim\\\",\\n  tal: \\\"nim\\\",\\n  vok: \\\"nim\\\",\\n};\\n\\nexport const protocol: WorldProtocol = {\\n  reset(): WorldState {\\n    return { ...initialState };\\n  },\\n\\n  applyOperation(state, operationDisplayName) {\\n    try {\\n      let newState: WorldState;\\n      switch (operationDisplayName) {\\n        case \\\"advanceOsk1\\\":\\n          newState = advanceOsk1(state);\\n          break;\\n        case \\\"advanceTal1\\\":\\n          newState = advanceTal1(state);\\n          break;\\n        case \\\"advanceTalOsk\\\":\\n          newState = advanceTalOsk(state);\\n          break;\\n        default:\\n          return {\\n            success: false,\\n            error: `Unknown operation: ${operationDisplayName}`,\\n          };\\n      }\\n      return { success: true, newState };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    switch (entityDisplayName) {\\n      case \\\"Fen\\\":\\n        return state.fen;\\n      case \\\"Osk\\\":\\n        return state.osk;\\n      case \\\"Tal\\\":\\n        return state.tal;\\n      case \\\"Vok\\\":\\n        return state.vok;\\n      default:\\n        throw new Error(`Unknown entity: ${entityDisplayName}`);\\n    }\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return {\\n      Fen: state.fen,\\n      Osk: state.osk,\\n      Tal: state.tal,\\n      Vok: state.vok,\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"Added the atomic advanceTalOsk rule and registered its display name in protocol.applyOperation. The rule validates both Tal and Osk before producing a new state, so a failed precondition cannot partially advance either entity.\"}",
+    "modifiedFiles": {
+      "src/tal/rules.ts": "import { WorldState } from \"../world\";\n\n/**\n * advanceTal1 (= O5): Tal: nim -> pex, no preconditions\n */\nexport function advanceTal1(world: WorldState): WorldState {\n  if (world.tal !== \"nim\") {\n    throw new Error(\"advanceTal1: Tal must be in state 'nim'\");\n  }\n  return { ...world, tal: \"pex\" };\n}\n\n/**\n * advanceTalOsk: Tal and Osk: nim -> pex atomically.\n */\nexport function advanceTalOsk(world: WorldState): WorldState {\n  if (world.tal !== \"nim\" || world.osk !== \"nim\") {\n    throw new Error(\"advanceTalOsk: Tal and Osk must both be in state 'nim'\");\n  }\n  return { ...world, tal: \"pex\", osk: \"pex\" };\n}\n",
+      "src/protocol_adapter.ts": "import { advanceOsk1 } from \"./osk/rules\";\nimport { advanceTal1, advanceTalOsk } from \"./tal/rules\";\nimport { WorldState } from \"./world\";\n\nexport interface WorldProtocol {\n  reset(): WorldState;\n  applyOperation(\n    state: WorldState,\n    operationDisplayName: string\n  ): { success: true; newState: WorldState } | { success: false; error: string };\n  getEntityState(state: WorldState, entityDisplayName: string): string;\n  toAbstractSnapshot(state: WorldState): Record<string, string>;\n}\n\nconst initialState: WorldState = {\n  fen: \"nim\",\n  osk: \"nim\",\n  tal: \"nim\",\n  vok: \"nim\",\n};\n\nexport const protocol: WorldProtocol = {\n  reset(): WorldState {\n    return { ...initialState };\n  },\n\n  applyOperation(state, operationDisplayName) {\n    try {\n      let newState: WorldState;\n      switch (operationDisplayName) {\n        case \"advanceOsk1\":\n          newState = advanceOsk1(state);\n          break;\n        case \"advanceTal1\":\n          newState = advanceTal1(state);\n          break;\n        case \"advanceTalOsk\":\n          newState = advanceTalOsk(state);\n          break;\n        default:\n          return {\n            success: false,\n            error: `Unknown operation: ${operationDisplayName}`,\n          };\n      }\n      return { success: true, newState };\n    } catch (error) {\n      return {\n        success: false,\n        error: error instanceof Error ? error.message : String(error),\n      };\n    }\n  },\n\n  getEntityState(state, entityDisplayName) {\n    switch (entityDisplayName) {\n      case \"Fen\":\n        return state.fen;\n      case \"Osk\":\n        return state.osk;\n      case \"Tal\":\n        return state.tal;\n      case \"Vok\":\n        return state.vok;\n      default:\n        throw new Error(`Unknown entity: ${entityDisplayName}`);\n    }\n  },\n\n  toAbstractSnapshot(state) {\n    return {\n      Fen: state.fen,\n      Osk: state.osk,\n      Tal: state.tal,\n      Vok: state.vok,\n    };\n  },\n};\n"
+    },
+    "explicitWorkingNote": "Added the atomic advanceTalOsk rule and registered its display name in protocol.applyOperation. The rule validates both Tal and Osk before producing a new state, so a failed precondition cannot partially advance either entity.",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0dab351a30afd17f016abf6b8baba087d096f9e47faf80e407",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 768,
+      "output": 3467,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 2588,
+      "total": 4235
+    },
+    "estimatedCostUsd": 0.004314,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

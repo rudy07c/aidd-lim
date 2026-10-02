@@ -1,0 +1,115 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-delayed-2",
+    "taskType": "delayed_dependency",
+    "repeat": 1,
+    "modifiedPaths": [],
+    "workingNote": null,
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 2305,
+      "output": 3668,
+      "cachedInput": 0,
+      "cacheWriteInput": 2302,
+      "reasoningOutput": 1726,
+      "total": 5973
+    },
+    "estimatedCostUsd": 0.0049777,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "output-parse",
+    "failureReason": "Duplicate modified file path: src/protocol_adapter.ts",
+    "executionStatus": "output-parse-failure",
+    "protocolContractViolated": null,
+    "visible": null,
+    "hidden": null,
+    "taskSpecific": null,
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/tal/rules.ts\",\"content\":\"import { WorldState } from \\\"../world\\\";\\n\\n/**\\n * advanceTal1 (= O5): Tal: nim -> pex, no preconditions\\n */\\nexport function advanceTal1(world: WorldState): WorldState {\\n  if (world.tal !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceTal1: Tal must be in state 'nim'\\\");\\n  }\\n  return { ...world, tal: \\\"pex\\\" };\\n}\\n\\n/**\\n * advanceTalOsk: Tal and Osk: nim -> pex atomically.\\n */\\nexport function advanceTalOsk(world: WorldState): WorldState {\\n  if (world.tal !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceTalOsk: Tal must be in state 'nim'\\\");\\n  }\\n  if (world.osk !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceTalOsk: Osk must be in state 'nim'\\\");\\n  }\\n  return { ...world, tal: \\\"pex\\\", osk: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"// protocol_adapter.ts\\n//\\n// これは「文化的に継承されるartifact」ではなく、実験世界の固定された\\n// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。\\n// H(G) は internal な rules.ts / entity module 構造を一切知らず、\\n// このファイルがexportする関数だけを呼ぶ。\\n//\\n// worker AIは、内部構造（vok/zef/tal/fen/osk ディレクトリ、rules.ts の分割方法等）を\\n// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する\\n// エクスポート名・振る舞いだけは保持しなければならない\\n// （Generation 0で確定した固定契約）。\\n\\nimport { WorldProtocol, OperationResult } from \\\"../../schema\\\";\\nimport { WorldState, createInitialWorld } from \\\"./world\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\nimport { advanceTal1, advanceTalOsk } from \\\"./tal/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\n\\n// displayName -> 内部操作の対応表。この対応表自体は世代を経て\\n// リファクタされてよい（新operationの追加や、内部関数の再編を含む）。\\n// ただし各displayNameのキー文字列（\\\"advanceVok1\\\"等）はcontractの一部として固定。\\nconst operationTable: Record<string, (w: WorldState) => WorldState> = {\\n  advanceVok1,\\n  advanceVok2,\\n  advanceZef1,\\n  advanceZef2,\\n  advanceTal1,\\n  advanceTalOsk,\\n  advanceOsk1,\\n  advanceFen1,\\n  advanceFen2,\\n};\\n\\n// entity display name -> WorldStateのプロパティ名\\nconst entityFieldTable: Record<string, keyof WorldState> = {\\n  Vok: \\\"vok\\\",\\n  Zef: \\\"zef\\\",\\n  Tal: \\\"tal\\\",\\n  Fen: \\\"fen\\\",\\n  Osk: \\\"osk\\\",\\n};\\n\\nexport const protocol: WorldProtocol = {\\n  reset(): WorldState {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string,\\n  ): OperationResult {\\n    const operation = operationTable[operationDisplayName];\\n    if (!operation) {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    try {\\n      return { success: true, newState: operation(state) };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state: WorldState, entityDisplayName: string): string {\\n    const field = entityFieldTable[entityDisplayName];\\n    return field ? state[field] : \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\\n    return {\\n      Vok: state.vok,\\n      Zef: state.zef,\\n      Tal: state.tal,\\n      Fen: state.fen,\\n      Osk: state.osk,\\n    };\\n  },\\n};\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"// protocol_adapter.ts\\n//\\n// これは「文化的に継承されるartifact」ではなく、実験世界の固定された\\n// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。\\n// H(G) は internal な rules.ts / entity module 構造を一切知らず、\\n// このファイルがexportする関数だけを呼ぶ。\\n//\\n// worker AIは、内部構造（vok/zef/tal/fen/osk ディレクトリ、rules.ts の分割方法等）を\\n// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する\\n// エクスポート名・振る舞いだけは保持しなければならない\\n// （Generation 0で確定した固定契約）。\\n\\nimport { WorldProtocol, OperationResult } from \\\"../../schema\\\";\\nimport { WorldState, createInitialWorld } from \\\"./world\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\nimport { advanceTal1, advanceTalOsk } from \\\"./tal/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\n\\nconst operationTable: Record<string, (w: WorldState) => WorldState> = {\\n  advanceVok1,\\n  advanceVok2,\\n  advanceZef1,\\n  advanceZef2,\\n  advanceTal1,\\n  advanceTalOsk,\\n  advanceOsk1,\\n  advanceFen1,\\n  advanceFen2,\\n};\\n\\nconst entityFieldTable: Record<string, keyof WorldState> = {\\n  Vok: \\\"vok\\\",\\n  Zef: \\\"zef\\\",\\n  Tal: \\\"tal\\\",\\n  Fen: \\\"fen\\\",\\n  Osk: \\\"osk\\\",\\n};\\n\\nexport const protocol: WorldProtocol = {\\n  reset(): WorldState {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(\\n    state: WorldState,\\n    operationDisplayName: string,\\n  ): OperationResult {\\n    const operation = operationTable[operationDisplayName];\\n    if (!operation) {\\n      return {\\n        success: false,\\n        error: `Unknown operation: ${operationDisplayName}`,\\n      };\\n    }\\n\\n    try {\\n      return { success: true, newState: operation(state) };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state: WorldState, entityDisplayName: string): string {\\n    const field = entityFieldTable[entityDisplayName];\\n    return field ? state[field] : \\\"unknown\\\";\\n  },\\n\\n  toAbstractSnapshot(state: WorldState): Record<string, string> {\\n    return {\\n      Vok: state.vok,\\n      Zef: state.zef,\\n      Tal: state.tal,\\n      Fen: state.fen,\\n      Osk: state.osk,\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"Added atomic advanceTalOsk validation and transition, then registered it in the protocol operation table. Both entities are checked before creating the updated immutable world state; existing protocol methods and operation error handling remain unchanged.\"}",
+    "modifiedFiles": {},
+    "explicitWorkingNote": null,
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_02f286606b6e28b4016abf682e645487d0aca29b0fa0dc1f6b",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 2305,
+      "output": 3668,
+      "cachedInput": 0,
+      "cacheWriteInput": 2302,
+      "reasoningOutput": 1726,
+      "total": 5973
+    },
+    "estimatedCostUsd": 0.0049777,
+    "executionStatus": "output-parse-failure",
+    "error": {
+      "category": "output-parse",
+      "message": "Duplicate modified file path: src/protocol_adapter.ts",
+      "retryable": false
+    }
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

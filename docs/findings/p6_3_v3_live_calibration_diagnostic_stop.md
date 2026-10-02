@@ -254,6 +254,16 @@ The main finding from this run is therefore not a dose-response result. It is th
 
 ## Evidence boundary
 
-The raw live run currently remains under the local run directory named above. This report records the observed run state and diagnostic interpretation but does not itself archive the complete local run payload into `docs/findings/evidence/`.
+The original raw live run remains under the local run directory named above and is not committed to the repository.
 
-If the raw run is later promoted into repository evidence, its state, attempt artifacts, receipts, adjudications, and checksums should be preserved immutably and linked from this report.
+A diagnostic repository evidence archive has now been promoted at:
+
+`evidence/p6-3-v3-live-diagnostic-stop/`
+
+The archive preserves the 804-file diagnostic payload required to reconstruct and audit the fail-close stop boundary: all 796 recorded attempts, the three sequence-793 adjudication requests, the consolidated adjudication record, fixed-environment receipt, final pre-live receipt, controller state, and treatment provenance.
+
+Machine-local absolute paths were sanitized in 94 text files before repository promotion. The sanitization changes only repository/scorer path representations and does not intentionally alter scientific observations, scores, treatment assignments, provider results, adjudications, or controller state.
+
+`RAW_SHA256SUMS` records the pre-sanitization fingerprints of the 804 payload files. `SHA256SUMS` records the fingerprints of the same 804 payload files after sanitization and is the integrity manifest for the repository copy.
+
+Promotion of this archive does not change the scientific status of the run: P6-3 v3 remains incomplete diagnostic evidence and is not a completed calibration or a valid M/Rsem co-gate result.

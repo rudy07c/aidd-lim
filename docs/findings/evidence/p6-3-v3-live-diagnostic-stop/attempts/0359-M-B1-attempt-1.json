@@ -1,0 +1,167 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-4",
+    "taskType": "local",
+    "repeat": 12,
+    "modifiedPaths": [
+      "src/fen/rules.ts",
+      "src/osk/rules.ts",
+      "src/protocol_adapter.ts",
+      "src/tal/rules.ts",
+      "src/tal/state.ts",
+      "src/vok/rules.ts",
+      "src/world.ts",
+      "src/zef/rules.ts",
+      "src/zef/state.ts"
+    ],
+    "workingNote": "Added recoverVok with the invariant that only Vok=“dor” can transition to “pex”. Registered it in protocol.applyOperation while preserving immutable world handles and the required protocol surface; included the supporting world/rule modules needed by the repository snapshot.",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 811,
+      "output": 7052,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 5178,
+      "total": 7863
+    },
+    "estimatedCostUsd": 0.0086246,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "protocol-contract",
+    "failureReason": "visible:advanceZef1: fails if Tal is not 'pex':Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (<SCORING_TMP>/repository/tests/rules.visible.test.ts:26:32)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34) | visible:advanceFen1: fails if Osk is not 'pex':Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (<SCORING_TMP>/repository/tests/rules.visible.test.ts:91:32)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34) | visible:advanceFen2: fails if Zef is not 'pex':Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (<SCORING_TMP>/repository/tests/rules.visible.test.ts:108:32)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34) | hidden:[suite] undefined:  ● Test suite failed to run\n\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m13\u001b[0m:\u001b[93m10\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../repository/src/world\"' has no exported member 'WorldState'.\n\n    \u001b[7m13\u001b[0m import { WorldState } from \"../repository/src/world\";\n    \u001b[7m  \u001b[0m \u001b[91m         ~~~~~~~~~~\u001b[0m\n",
+    "executionStatus": "ok",
+    "protocolContractViolated": true,
+    "visible": {
+      "passed": false,
+      "numPassed": 10,
+      "numFailed": 3,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "advanceZef1: fails if Tal is not 'pex'",
+          "error": "Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (<SCORING_TMP>/repository/tests/rules.visible.test.ts:26:32)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+        },
+        {
+          "testName": "advanceFen1: fails if Osk is not 'pex'",
+          "error": "Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (<SCORING_TMP>/repository/tests/rules.visible.test.ts:91:32)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+        },
+        {
+          "testName": "advanceFen2: fails if Zef is not 'pex'",
+          "error": "Error: expect(received).toThrow()\n\nReceived function did not throw\n    at Object.<anonymous> (<SCORING_TMP>/repository/tests/rules.visible.test.ts:108:32)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+        }
+      ]
+    },
+    "hidden": {
+      "passed": false,
+      "numPassed": 0,
+      "numFailed": 1,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "[suite] undefined",
+          "error": "  ● Test suite failed to run\n\n    \u001b[96mhidden_regression_tests/H_G.test.ts\u001b[0m:\u001b[93m13\u001b[0m:\u001b[93m10\u001b[0m - \u001b[91merror\u001b[0m\u001b[90m TS2305: \u001b[0mModule '\"../repository/src/world\"' has no exported member 'WorldState'.\n\n    \u001b[7m13\u001b[0m import { WorldState } from \"../repository/src/world\";\n    \u001b[7m  \u001b[0m \u001b[91m         ~~~~~~~~~~\u001b[0m\n"
+        }
+      ]
+    },
+    "taskSpecific": {
+      "passed": true,
+      "numPassed": 3,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/zef/state.ts\",\"content\":\"export type ZefState = \\\"nim\\\" | \\\"pex\\\" | \\\"dor\\\";\\n\"},{\"path\":\"src/tal/state.ts\",\"content\":\"export type TalState = \\\"nim\\\" | \\\"pex\\\";\\n\"},{\"path\":\"src/world.ts\",\"content\":\"import type { FenState } from \\\"./fen/state\\\";\\nimport type { OskState } from \\\"./osk/state\\\";\\nimport type { VokState } from \\\"./vok/state\\\";\\nimport type { ZefState } from \\\"./zef/state\\\";\\nimport type { TalState } from \\\"./tal/state\\\";\\n\\nexport interface World {\\n  fen: FenState;\\n  osk: OskState;\\n  vok: VokState;\\n  zef: ZefState;\\n  tal: TalState;\\n}\\n\\nexport function createInitialWorld(): World {\\n  return {\\n    fen: \\\"nim\\\",\\n    osk: \\\"nim\\\",\\n    vok: \\\"nim\\\",\\n    zef: \\\"nim\\\",\\n    tal: \\\"nim\\\",\\n  };\\n}\\n\"},{\"path\":\"src/vok/rules.ts\",\"content\":\"import type { VokState } from \\\"./state\\\";\\nimport type { World } from \\\"../world\\\";\\n\\nfunction replaceVok(world: World, vok: VokState): World {\\n  return { ...world, vok };\\n}\\n\\nexport function advanceVok1(world: World): World {\\n  if (world.vok !== \\\"nim\\\") {\\n    throw new Error(\\\"Vok must be nim to advance with advanceVok1\\\");\\n  }\\n  return replaceVok(world, \\\"pex\\\");\\n}\\n\\nexport function advanceVok2(world: World): World {\\n  if (world.zef !== \\\"pex\\\") {\\n    throw new Error(\\\"Zef must be pex to advance Vok\\\");\\n  }\\n  if (world.vok !== \\\"pex\\\") {\\n    throw new Error(\\\"Vok must be pex to advance with advanceVok2\\\");\\n  }\\n  return replaceVok(world, \\\"dor\\\");\\n}\\n\\n/** Move Vok back one state after it has reached dor. */\\nexport function recoverVok(world: World): World {\\n  if (world.vok !== \\\"dor\\\") {\\n    throw new Error(\\\"Vok must be dor to recover\\\");\\n  }\\n  return replaceVok(world, \\\"pex\\\");\\n}\\n\"},{\"path\":\"src/zef/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nexport function advanceZef1(world: World): World {\\n  if (world.zef !== \\\"nim\\\") {\\n    throw new Error(\\\"Zef must be nim to advance with advanceZef1\\\");\\n  }\\n  return { ...world, zef: \\\"pex\\\" };\\n}\\n\\nexport function advanceZef2(world: World): World {\\n  if (world.zef !== \\\"pex\\\") {\\n    throw new Error(\\\"Zef must be pex to advance with advanceZef2\\\");\\n  }\\n  if (world.fen !== \\\"pex\\\") {\\n    throw new Error(\\\"Fen must be pex to advance Zef\\\");\\n  }\\n  return { ...world, zef: \\\"dor\\\" };\\n}\\n\"},{\"path\":\"src/tal/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nexport function advanceTal1(world: World): World {\\n  if (world.tal !== \\\"nim\\\") {\\n    throw new Error(\\\"Tal must be nim to advance with advanceTal1\\\");\\n  }\\n  return { ...world, tal: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/osk/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nexport function advanceOsk1(world: World): World {\\n  if (world.osk !== \\\"nim\\\") {\\n    throw new Error(\\\"Osk must be nim to advance with advanceOsk1\\\");\\n  }\\n  return { ...world, osk: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/fen/rules.ts\",\"content\":\"import type { World } from \\\"../world\\\";\\n\\nexport function advanceFen1(world: World): World {\\n  if (world.fen !== \\\"nim\\\") {\\n    throw new Error(\\\"Fen must be nim to advance with advanceFen1\\\");\\n  }\\n  return { ...world, fen: \\\"pex\\\" };\\n}\\n\\nexport function advanceFen2(world: World): World {\\n  if (world.fen !== \\\"pex\\\") {\\n    throw new Error(\\\"Fen must be pex to advance with advanceFen2\\\");\\n  }\\n  return { ...world, fen: \\\"dor\\\" };\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"import { createInitialWorld, type World } from \\\"./world\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceVok1, advanceVok2, recoverVok } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2 } from \\\"./zef/rules\\\";\\n\\nexport type WorldStateHandle = World;\\n\\nexport interface WorldProtocol {\\n  reset(): WorldStateHandle;\\n  applyOperation(\\n    state: WorldStateHandle,\\n    operationDisplayName: string\\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\\n}\\n\\nfunction apply(state: World, operation: string): World {\\n  switch (operation) {\\n    case \\\"advanceFen1\\\":\\n      return advanceFen1(state);\\n    case \\\"advanceFen2\\\":\\n      return advanceFen2(state);\\n    case \\\"advanceOsk1\\\":\\n      return advanceOsk1(state);\\n    case \\\"advanceTal1\\\":\\n      return advanceTal1(state);\\n    case \\\"advanceVok1\\\":\\n      return advanceVok1(state);\\n    case \\\"advanceVok2\\\":\\n      return advanceVok2(state);\\n    case \\\"recoverVok\\\":\\n      return recoverVok(state);\\n    case \\\"advanceZef1\\\":\\n      return advanceZef1(state);\\n    case \\\"advanceZef2\\\":\\n      return advanceZef2(state);\\n    default:\\n      throw new Error(`Unknown operation: ${operation}`);\\n  }\\n}\\n\\nexport const protocol: WorldProtocol = {\\n  reset: createInitialWorld,\\n\\n  applyOperation(state, operationDisplayName) {\\n    try {\\n      return {\\n        success: true,\\n        newState: apply(state, operationDisplayName),\\n      };\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    switch (entityDisplayName.toLowerCase()) {\\n      case \\\"fen\\\":\\n        return state.fen;\\n      case \\\"osk\\\":\\n        return state.osk;\\n      case \\\"tal\\\":\\n        return state.tal;\\n      case \\\"vok\\\":\\n        return state.vok;\\n      case \\\"zef\\\":\\n        return state.zef;\\n      default:\\n        return \\\"unknown\\\";\\n    }\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    return {\\n      Fen: state.fen,\\n      Osk: state.osk,\\n      Tal: state.tal,\\n      Vok: state.vok,\\n      Zef: state.zef,\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"Added recoverVok with the invariant that only Vok=“dor” can transition to “pex”. Registered it in protocol.applyOperation while preserving immutable world handles and the required protocol surface; included the supporting world/rule modules needed by the repository snapshot.\"}",
+    "modifiedFiles": {
+      "src/zef/state.ts": "export type ZefState = \"nim\" | \"pex\" | \"dor\";\n",
+      "src/tal/state.ts": "export type TalState = \"nim\" | \"pex\";\n",
+      "src/world.ts": "import type { FenState } from \"./fen/state\";\nimport type { OskState } from \"./osk/state\";\nimport type { VokState } from \"./vok/state\";\nimport type { ZefState } from \"./zef/state\";\nimport type { TalState } from \"./tal/state\";\n\nexport interface World {\n  fen: FenState;\n  osk: OskState;\n  vok: VokState;\n  zef: ZefState;\n  tal: TalState;\n}\n\nexport function createInitialWorld(): World {\n  return {\n    fen: \"nim\",\n    osk: \"nim\",\n    vok: \"nim\",\n    zef: \"nim\",\n    tal: \"nim\",\n  };\n}\n",
+      "src/vok/rules.ts": "import type { VokState } from \"./state\";\nimport type { World } from \"../world\";\n\nfunction replaceVok(world: World, vok: VokState): World {\n  return { ...world, vok };\n}\n\nexport function advanceVok1(world: World): World {\n  if (world.vok !== \"nim\") {\n    throw new Error(\"Vok must be nim to advance with advanceVok1\");\n  }\n  return replaceVok(world, \"pex\");\n}\n\nexport function advanceVok2(world: World): World {\n  if (world.zef !== \"pex\") {\n    throw new Error(\"Zef must be pex to advance Vok\");\n  }\n  if (world.vok !== \"pex\") {\n    throw new Error(\"Vok must be pex to advance with advanceVok2\");\n  }\n  return replaceVok(world, \"dor\");\n}\n\n/** Move Vok back one state after it has reached dor. */\nexport function recoverVok(world: World): World {\n  if (world.vok !== \"dor\") {\n    throw new Error(\"Vok must be dor to recover\");\n  }\n  return replaceVok(world, \"pex\");\n}\n",
+      "src/zef/rules.ts": "import type { World } from \"../world\";\n\nexport function advanceZef1(world: World): World {\n  if (world.zef !== \"nim\") {\n    throw new Error(\"Zef must be nim to advance with advanceZef1\");\n  }\n  return { ...world, zef: \"pex\" };\n}\n\nexport function advanceZef2(world: World): World {\n  if (world.zef !== \"pex\") {\n    throw new Error(\"Zef must be pex to advance with advanceZef2\");\n  }\n  if (world.fen !== \"pex\") {\n    throw new Error(\"Fen must be pex to advance Zef\");\n  }\n  return { ...world, zef: \"dor\" };\n}\n",
+      "src/tal/rules.ts": "import type { World } from \"../world\";\n\nexport function advanceTal1(world: World): World {\n  if (world.tal !== \"nim\") {\n    throw new Error(\"Tal must be nim to advance with advanceTal1\");\n  }\n  return { ...world, tal: \"pex\" };\n}\n",
+      "src/osk/rules.ts": "import type { World } from \"../world\";\n\nexport function advanceOsk1(world: World): World {\n  if (world.osk !== \"nim\") {\n    throw new Error(\"Osk must be nim to advance with advanceOsk1\");\n  }\n  return { ...world, osk: \"pex\" };\n}\n",
+      "src/fen/rules.ts": "import type { World } from \"../world\";\n\nexport function advanceFen1(world: World): World {\n  if (world.fen !== \"nim\") {\n    throw new Error(\"Fen must be nim to advance with advanceFen1\");\n  }\n  return { ...world, fen: \"pex\" };\n}\n\nexport function advanceFen2(world: World): World {\n  if (world.fen !== \"pex\") {\n    throw new Error(\"Fen must be pex to advance with advanceFen2\");\n  }\n  return { ...world, fen: \"dor\" };\n}\n",
+      "src/protocol_adapter.ts": "import { createInitialWorld, type World } from \"./world\";\nimport { advanceFen1, advanceFen2 } from \"./fen/rules\";\nimport { advanceOsk1 } from \"./osk/rules\";\nimport { advanceTal1 } from \"./tal/rules\";\nimport { advanceVok1, advanceVok2, recoverVok } from \"./vok/rules\";\nimport { advanceZef1, advanceZef2 } from \"./zef/rules\";\n\nexport type WorldStateHandle = World;\n\nexport interface WorldProtocol {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(state: WorldStateHandle, entityDisplayName: string): string;\n  toAbstractSnapshot(state: WorldStateHandle): Record<string, string>;\n}\n\nfunction apply(state: World, operation: string): World {\n  switch (operation) {\n    case \"advanceFen1\":\n      return advanceFen1(state);\n    case \"advanceFen2\":\n      return advanceFen2(state);\n    case \"advanceOsk1\":\n      return advanceOsk1(state);\n    case \"advanceTal1\":\n      return advanceTal1(state);\n    case \"advanceVok1\":\n      return advanceVok1(state);\n    case \"advanceVok2\":\n      return advanceVok2(state);\n    case \"recoverVok\":\n      return recoverVok(state);\n    case \"advanceZef1\":\n      return advanceZef1(state);\n    case \"advanceZef2\":\n      return advanceZef2(state);\n    default:\n      throw new Error(`Unknown operation: ${operation}`);\n  }\n}\n\nexport const protocol: WorldProtocol = {\n  reset: createInitialWorld,\n\n  applyOperation(state, operationDisplayName) {\n    try {\n      return {\n        success: true,\n        newState: apply(state, operationDisplayName),\n      };\n    } catch (error) {\n      return {\n        success: false,\n        error: error instanceof Error ? error.message : String(error),\n      };\n    }\n  },\n\n  getEntityState(state, entityDisplayName) {\n    switch (entityDisplayName.toLowerCase()) {\n      case \"fen\":\n        return state.fen;\n      case \"osk\":\n        return state.osk;\n      case \"tal\":\n        return state.tal;\n      case \"vok\":\n        return state.vok;\n      case \"zef\":\n        return state.zef;\n      default:\n        return \"unknown\";\n    }\n  },\n\n  toAbstractSnapshot(state) {\n    return {\n      Fen: state.fen,\n      Osk: state.osk,\n      Tal: state.tal,\n      Vok: state.vok,\n      Zef: state.zef,\n    };\n  },\n};\n"
+    },
+    "explicitWorkingNote": "Added recoverVok with the invariant that only Vok=“dor” can transition to “pex”. Registered it in protocol.applyOperation while preserving immutable world handles and the required protocol surface; included the supporting world/rule modules needed by the repository snapshot.",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_05626ad111a4a143016abf32c6d9cc87d08b1ae2d6291cbaae",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 811,
+      "output": 7052,
+      "cachedInput": 0,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 5178,
+      "total": 7863
+    },
+    "estimatedCostUsd": 0.0086246,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

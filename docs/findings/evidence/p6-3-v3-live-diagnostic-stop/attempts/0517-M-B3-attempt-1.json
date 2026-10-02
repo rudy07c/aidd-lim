@@ -1,0 +1,142 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-7",
+    "taskType": "local",
+    "repeat": 3,
+    "modifiedPaths": [
+      "src/vok/rules.ts"
+    ],
+    "workingNote": "Added fullResetVok with an explicit dor precondition and an immutable state transition that changes only Vok to nim. The rule is exported from the Vok rules module; protocol registration still needs to expose the operation.",
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 2389,
+      "output": 696,
+      "cachedInput": 2386,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 180,
+      "total": 3085
+    },
+    "estimatedCostUsd": 0.0008835199999999999,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "test-failure",
+    "failureReason": "task-specific:T-local-7: fullResetVok fullResetVok: Vok dor→nim:Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (<SCORING_TMP>/task_specific_tests/task.test.ts:28:24)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34) | task-specific:T-local-7: fullResetVok fullResetVok: Zef and Tal states are unchanged:Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (<SCORING_TMP>/task_specific_tests/task.test.ts:62:24)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)",
+    "executionStatus": "ok",
+    "protocolContractViolated": false,
+    "visible": {
+      "passed": true,
+      "numPassed": 13,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "hidden": {
+      "passed": true,
+      "numPassed": 22,
+      "numFailed": 0,
+      "executionError": null,
+      "failedCases": []
+    },
+    "taskSpecific": {
+      "passed": false,
+      "numPassed": 1,
+      "numFailed": 2,
+      "executionError": null,
+      "failedCases": [
+        {
+          "testName": "T-local-7: fullResetVok fullResetVok: Vok dor→nim",
+          "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (<SCORING_TMP>/task_specific_tests/task.test.ts:28:24)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+        },
+        {
+          "testName": "T-local-7: fullResetVok fullResetVok: Zef and Tal states are unchanged",
+          "error": "Error: expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false\n    at Object.<anonymous> (<SCORING_TMP>/task_specific_tests/task.test.ts:62:24)\n    at Promise.then.completed (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at _runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:121:9)\n    at run (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (<REPO_ROOT>/synthetic-world/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (<REPO_ROOT>/synthetic-world/node_modules/jest-runner/build/runTest.js:444:34)"
+        }
+      ]
+    },
+    "failureDomain": "semantic",
+    "semanticFailure": true,
+    "protocolFailure": false,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "semantic",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/vok/rules.ts\",\"content\":\"import { WorldState } from \\\"../world\\\";\\n\\n/**\\n * advanceVok1 (= O1): Vok: nim -> pex, no preconditions\\n */\\nexport function advanceVok1(world: WorldState): WorldState {\\n  if (world.vok !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceVok1: Vok must be in state 'nim'\\\");\\n  }\\n  return { ...world, vok: \\\"pex\\\" };\\n}\\n\\n/**\\n * advanceVok2 (= O2): Vok: pex -> dor, requires Zef === \\\"pex\\\" AND Osk === \\\"pex\\\"\\n * (D1: O2 depends on E2)\\n * (D2: O2 depends on E5 — Invariant I4: Vok=dor → Osk=pex, explicit cross-chain)\\n */\\nexport function advanceVok2(world: WorldState): WorldState {\\n  if (world.vok !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceVok2: Vok must be in state 'pex'\\\");\\n  }\\n  if (world.zef !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceVok2: requires Zef to be 'pex'\\\");\\n  }\\n  if (world.osk !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceVok2: requires Osk to be 'pex'\\\");\\n  }\\n  return { ...world, vok: \\\"dor\\\" };\\n}\\n\\n/**\\n * fullResetVok: Vok: dor -> nim.\\n * This operation only resets Vok; all other entity states are preserved.\\n */\\nexport function fullResetVok(world: WorldState): WorldState {\\n  if (world.vok !== \\\"dor\\\") {\\n    throw new Error(\\\"fullResetVok: Vok must be in state 'dor'\\\");\\n  }\\n  return { ...world, vok: \\\"nim\\\" };\\n}\\n\"}],\"workingNote\":\"Added fullResetVok with an explicit dor precondition and an immutable state transition that changes only Vok to nim. The rule is exported from the Vok rules module; protocol registration still needs to expose the operation.\"}",
+    "modifiedFiles": {
+      "src/vok/rules.ts": "import { WorldState } from \"../world\";\n\n/**\n * advanceVok1 (= O1): Vok: nim -> pex, no preconditions\n */\nexport function advanceVok1(world: WorldState): WorldState {\n  if (world.vok !== \"nim\") {\n    throw new Error(\"advanceVok1: Vok must be in state 'nim'\");\n  }\n  return { ...world, vok: \"pex\" };\n}\n\n/**\n * advanceVok2 (= O2): Vok: pex -> dor, requires Zef === \"pex\" AND Osk === \"pex\"\n * (D1: O2 depends on E2)\n * (D2: O2 depends on E5 — Invariant I4: Vok=dor → Osk=pex, explicit cross-chain)\n */\nexport function advanceVok2(world: WorldState): WorldState {\n  if (world.vok !== \"pex\") {\n    throw new Error(\"advanceVok2: Vok must be in state 'pex'\");\n  }\n  if (world.zef !== \"pex\") {\n    throw new Error(\"advanceVok2: requires Zef to be 'pex'\");\n  }\n  if (world.osk !== \"pex\") {\n    throw new Error(\"advanceVok2: requires Osk to be 'pex'\");\n  }\n  return { ...world, vok: \"dor\" };\n}\n\n/**\n * fullResetVok: Vok: dor -> nim.\n * This operation only resets Vok; all other entity states are preserved.\n */\nexport function fullResetVok(world: WorldState): WorldState {\n  if (world.vok !== \"dor\") {\n    throw new Error(\"fullResetVok: Vok must be in state 'dor'\");\n  }\n  return { ...world, vok: \"nim\" };\n}\n"
+    },
+    "explicitWorkingNote": "Added fullResetVok with an explicit dor precondition and an immutable state transition that changes only Vok to nim. The rule is exported from the Vok rules module; protocol registration still needs to expose the operation.",
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_0d07eaa551ea5381016abf48a4fb5487d0a39d68d4653776ee",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 2389,
+      "output": 696,
+      "cachedInput": 2386,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 180,
+      "total": 3085
+    },
+    "estimatedCostUsd": 0.0008835199999999999,
+    "executionStatus": "ok",
+    "error": null
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}

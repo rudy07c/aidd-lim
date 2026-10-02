@@ -1,0 +1,115 @@
+{
+  "executorVersion": "p6-3-v3-m-executor-v2-v2-reliability-envelope",
+  "executionReliability": {
+    "version": "p6-3-v3-m-execution-reliability-v1-inherit-v2",
+    "inheritedFrom": "p6-3-v2-execution-parameters-v1",
+    "providerContract": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "maxToolRounds": 0
+    }
+  },
+  "result": {
+    "taskId": "T-local-5",
+    "taskType": "local",
+    "repeat": 12,
+    "modifiedPaths": [],
+    "workingNote": null,
+    "actualModel": "gpt-5.6-luna",
+    "usage": {
+      "input": 1294,
+      "output": 9841,
+      "cachedInput": 1291,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 7473,
+      "total": 11135
+    },
+    "estimatedCostUsd": 0.011835619999999998,
+    "passed": false,
+    "validity": "valid",
+    "failureCategory": "output-parse",
+    "failureReason": "Duplicate modified file path: src/protocol_adapter.ts",
+    "executionStatus": "output-parse-failure",
+    "protocolContractViolated": null,
+    "visible": null,
+    "hidden": null,
+    "taskSpecific": null,
+    "failureDomain": "protocol",
+    "semanticFailure": false,
+    "protocolFailure": true,
+    "systemFailure": false,
+    "infrastructureFailure": false,
+    "rawFailureDomain": "protocol",
+    "adjudication": null,
+    "role": "primary"
+  },
+  "agent": {
+    "rawResponse": "{\"modifiedFiles\":[{\"path\":\"src/zef/rules.ts\",\"content\":\"import { WorldState } from \\\"../world\\\";\\n\\n/**\\n * advanceZef1 (= O3): Zef: nim -> pex, requires Tal === \\\"pex\\\"\\n * (D2: O3 depends on E3)\\n *\\n * このpreconditionが、Invariant I1（Vok=dor ならば Tal=pex）を\\n * \\\"distributed\\\" に成立させる根拠の一部である。advanceVok2自体はTalを\\n * 一切参照しないが、advanceVok2の前提であるZef=pexへ到達するには\\n * 必ずこのpreconditionを経由するため、結果としてTal=pexが連鎖的に\\n * 保証される（Talは後退しないため、一度pexになれば恒久的に成立する）。\\n */\\nexport function advanceZef1(world: WorldState): WorldState {\\n  if (world.zef !== \\\"nim\\\") {\\n    throw new Error(\\\"advanceZef1: Zef must be in state 'nim'\\\");\\n  }\\n  if (world.tal !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceZef1: Tal must be in state 'pex'\\\");\\n  }\\n  return { ...world, zef: \\\"pex\\\" };\\n}\\n\\n/**\\n * advanceZef2: Zef: pex -> dor.\\n */\\nexport function advanceZef2(world: WorldState): WorldState {\\n  if (world.zef !== \\\"pex\\\") {\\n    throw new Error(\\\"advanceZef2: Zef must be in state 'pex'\\\");\\n  }\\n  return { ...world, zef: \\\"dor\\\" };\\n}\\n\\n/**\\n * recoverZef: Zef: dor -> pex.\\n */\\nexport function recoverZef(world: WorldState): WorldState {\\n  if (world.zef !== \\\"dor\\\") {\\n    throw new Error(\\\"recoverZef: Zef must be in state 'dor'\\\");\\n  }\\n  return { ...world, zef: \\\"pex\\\" };\\n}\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"// protocol_adapter.ts\\n//\\n// これは「文化的に継承されるartifact」ではなく、実験世界の固定された\\n// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。\\n// H(G) は internal な rules.ts / entity module 構造を一切知らず、\\n// このファイルがexportする関数だけを呼ぶ。\\n//\\n// worker AIは、内部構造（vok/zef/tal/fen/osk ディレクトリ、rules.ts の分割方法等）を\\n// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する\\n// エクスポート名・振る舞いだけは保持しなければならない\\n// （Generation 0で確定した固定契約）。\\n\\nimport { WorldProtocol } from \\\"../../schema\\\";\\nimport { WorldState, createInitialWorld } from \\\"./world\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2, recoverZef } from \\\"./zef/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\n\\nexport const protocol: WorldProtocol = {\\n  reset() {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(state, operationDisplayName) {\\n    const world = state as WorldState;\\n    let newState: WorldState;\\n\\n    try {\\n      switch (operationDisplayName) {\\n        case \\\"advanceVok1\\\":\\n          newState = advanceVok1(world);\\n          break;\\n        case \\\"advanceVok2\\\":\\n          newState = advanceVok2(world);\\n          break;\\n        case \\\"advanceZef1\\\":\\n          newState = advanceZef1(world);\\n          break;\\n        case \\\"advanceZef2\\\":\\n          newState = advanceZef2(world);\\n          break;\\n        case \\\"recoverZef\\\":\\n          newState = recoverZef(world);\\n          break;\\n        case \\\"advanceTal1\\\":\\n          newState = advanceTal1(world);\\n          break;\\n        case \\\"advanceFen1\\\":\\n          newState = advanceFen1(world);\\n          break;\\n        case \\\"advanceFen2\\\":\\n          newState = advanceFen2(world);\\n          break;\\n        case \\\"advanceOsk1\\\":\\n          newState = advanceOsk1(world);\\n          break;\\n        default:\\n          return {\\n            success: false,\\n            error: `Unknown operation: ${operationDisplayName}`,\\n          };\\n      }\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n\\n    return { success: true, newState };\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    const world = state as WorldState;\\n    switch (entityDisplayName) {\\n      case \\\"Vok\\\":\\n        return world.vok;\\n      case \\\"Zef\\\":\\n        return world.zef;\\n      case \\\"Tal\\\":\\n        return world.tal;\\n      case \\\"Fen\\\":\\n        return world.fen;\\n      case \\\"Osk\\\":\\n        return world.osk;\\n      default:\\n        throw new Error(`Unknown entity: ${entityDisplayName}`);\\n    }\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    const world = state as WorldState;\\n    return {\\n      Vok: world.vok,\\n      Zef: world.zef,\\n      Tal: world.tal,\\n      Fen: world.fen,\\n      Osk: world.osk,\\n    };\\n  },\\n};\\n\"},{\"path\":\"src/protocol_adapter.ts\",\"content\":\"// protocol_adapter.ts\\n//\\n// これは「文化的に継承されるartifact」ではなく、実験世界の固定された\\n// 外部境界条件である（schema.ts の WorldProtocol コメント参照）。\\n// H(G) は internal な rules.ts / entity module 構造を一切知らず、\\n// このファイルがexportする関数だけを呼ぶ。\\n//\\n// worker AIは、内部構造（vok/zef/tal/fen/osk ディレクトリ、rules.ts の分割方法等）を\\n// 自由にリファクタしてよいが、この protocol_adapter.ts が定義する\\n// エクスポート名・振る舞いだけは保持しなければならない\\n// （Generation 0で確定した固定契約）。\\n\\nimport { WorldProtocol } from \\\"../../schema\\\";\\nimport { WorldState, createInitialWorld } from \\\"./world\\\";\\nimport { advanceVok1, advanceVok2 } from \\\"./vok/rules\\\";\\nimport { advanceZef1, advanceZef2, recoverZef } from \\\"./zef/rules\\\";\\nimport { advanceTal1 } from \\\"./tal/rules\\\";\\nimport { advanceFen1, advanceFen2 } from \\\"./fen/rules\\\";\\nimport { advanceOsk1 } from \\\"./osk/rules\\\";\\n\\nexport const protocol: WorldProtocol = {\\n  reset() {\\n    return createInitialWorld();\\n  },\\n\\n  applyOperation(state, operationDisplayName) {\\n    const world = state as WorldState;\\n    let newState: WorldState;\\n\\n    try {\\n      switch (operationDisplayName) {\\n        case \\\"advanceVok1\\\":\\n          newState = advanceVok1(world);\\n          break;\\n        case \\\"advanceVok2\\\":\\n          newState = advanceVok2(world);\\n          break;\\n        case \\\"advanceZef1\\\":\\n          newState = advanceZef1(world);\\n          break;\\n        case \\\"advanceZef2\\\":\\n          newState = advanceZef2(world);\\n          break;\\n        case \\\"recoverZef\\\":\\n          newState = recoverZef(world);\\n          break;\\n        case \\\"advanceTal1\\\":\\n          newState = advanceTal1(world);\\n          break;\\n        case \\\"advanceFen1\\\":\\n          newState = advanceFen1(world);\\n          break;\\n        case \\\"advanceFen2\\\":\\n          newState = advanceFen2(world);\\n          break;\\n        case \\\"advanceOsk1\\\":\\n          newState = advanceOsk1(world);\\n          break;\\n        default:\\n          return {\\n            success: false,\\n            error: `Unknown operation: ${operationDisplayName}`,\\n          };\\n      }\\n    } catch (error) {\\n      return {\\n        success: false,\\n        error: error instanceof Error ? error.message : String(error),\\n      };\\n    }\\n\\n    return { success: true, newState };\\n  },\\n\\n  getEntityState(state, entityDisplayName) {\\n    const world = state as WorldState;\\n    switch (entityDisplayName) {\\n      case \\\"Vok\\\":\\n        return world.vok;\\n      case \\\"Zef\\\":\\n        return world.zef;\\n      case \\\"Tal\\\":\\n        return world.tal;\\n      case \\\"Fen\\\":\\n        return world.fen;\\n      case \\\"Osk\\\":\\n        return world.osk;\\n      default:\\n        throw new Error(`Unknown entity: ${entityDisplayName}`);\\n    }\\n  },\\n\\n  toAbstractSnapshot(state) {\\n    const world = state as WorldState;\\n    return {\\n      Vok: world.vok,\\n      Zef: world.zef,\\n      Tal: world.tal,\\n      Fen: world.fen,\\n      Osk: world.osk,\\n    };\\n  },\\n};\\n\"}],\"workingNote\":\"Added the guarded Zef transition dor -> pex and registered recoverZef in the protocol dispatcher. Existing transitions remain immutable and invalid states continue to produce failed operation results.\"}",
+    "modifiedFiles": {},
+    "explicitWorkingNote": null,
+    "modelProvenance": {
+      "provider": "openai",
+      "requestedModel": "gpt-5.6-luna",
+      "actualModel": "gpt-5.6-luna",
+      "responseId": "resp_019221c29c506856016abf3d06113c87d083ae21c1dd5e2ceb",
+      "responseStatus": "completed",
+      "endpoint": "responses",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 14000,
+      "structuredOutput": true,
+      "storeResponses": false,
+      "requestedServiceTier": "default",
+      "actualServiceTier": "default",
+      "promptCacheMode": "implicit",
+      "promptVersion": "stage1-worker-v3-fixed-environment-v1",
+      "promptHash": "bea1c2a6a95be6dabf72872e54ce3e8fee400c4b9e0205a17b484836a8c3f0cd",
+      "schemaVersion": "repository-mutation-v2",
+      "schemaHash": "27a144e12453d0422f3ce274684feb1818f894fe25217b33071416f6db8dcaa3",
+      "pricingMode": "sync",
+      "continuationState": "none",
+      "incompleteReason": null,
+      "refusal": null,
+      "providerErrorCode": null,
+      "sdkVersion": "7.10.0",
+      "retryPolicy": {
+        "maxRetries": 2,
+        "timeoutMs": 180000
+      }
+    },
+    "tokenUsage": {
+      "input": 1294,
+      "output": 9841,
+      "cachedInput": 1291,
+      "cacheWriteInput": 0,
+      "reasoningOutput": 7473,
+      "total": 11135
+    },
+    "estimatedCostUsd": 0.011835619999999998,
+    "executionStatus": "output-parse-failure",
+    "error": {
+      "category": "output-parse",
+      "message": "Duplicate modified file path: src/protocol_adapter.ts",
+      "retryable": false
+    }
+  },
+  "fixedEnvironment": {
+    "schemaVersion": "p6-3-v3-fixed-environment-binding-v1",
+    "identity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "policyVersion": "world-protocol-surface-v1",
+    "sourceKind": "generation-zero",
+    "sourceRepositorySha256": "9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47",
+    "surfaceSpecVersion": "p6-3-v3-world-protocol-external-spec-v1",
+    "surfaceSpecSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleText": "FIXED WORLD PROTOCOL CONTRACT (environment specification; not repository evidence)\n\nsrc/protocol_adapter.ts must export an object named protocol with this public surface:\n\ninterface FixedWorldProtocol<WorldStateHandle> {\n  reset(): WorldStateHandle;\n  applyOperation(\n    state: WorldStateHandle,\n    operationDisplayName: string\n  ): { success: true; newState: WorldStateHandle } | { success: false; error: string };\n  getEntityState(\n    state: WorldStateHandle,\n    entityDisplayName: string\n  ): string;\n  toAbstractSnapshot(\n    state: WorldStateHandle\n  ): Record<string, string>;\n}\n\nPreserve this public surface exactly. Internal repository structure and implementation may change.",
+    "modelVisibleSha256": "d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "modelVisibleTokens": 147,
+    "tokenCountMethod": "js-tiktoken:o200k_base:v1"
+  },
+  "runnerError": null
+}
