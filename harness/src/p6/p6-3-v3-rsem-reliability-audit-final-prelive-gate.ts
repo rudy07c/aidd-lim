@@ -14,6 +14,7 @@ import {
   P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_PROVIDER_ATTEMPTS,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_VALID_TRIALS,
+  P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
   P6_3_V3_RSEM_RELIABILITY_AUDIT_SPEC_VERSION,
   buildP63V3RSemReliabilityAuditPlan,
 } from "./p6-3-v3-rsem-reliability-audit-spec";
@@ -28,9 +29,9 @@ import {
 } from "./p6-3-v3-rsem-reliability-audit-controller";
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_FINAL_PRELIVE_GATE_VERSION =
-  "p6-3-v3-rsem-reliability-audit-final-prelive-gate-v1" as const;
+  "p6-3-v3-rsem-reliability-audit-final-prelive-gate-v2" as const;
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_FINAL_PRELIVE_RECEIPT_SCHEMA =
-  "p6-3-v3-rsem-reliability-audit-final-prelive-receipt-v1" as const;
+  "p6-3-v3-rsem-reliability-audit-final-prelive-receipt-v2" as const;
 
 const FINAL_PRELIVE_PASS_BRAND: unique symbol = Symbol(
   "p6-3-v3-rsem-reliability-audit-final-prelive-pass"
@@ -43,6 +44,7 @@ export const P6_3_V3_RSEM_RELIABILITY_AUDIT_FINAL_PRELIVE_VERIFIER_SCRIPTS =
 
 export const P6_3_V3_RSEM_RELIABILITY_AUDIT_FINAL_SOURCE_FILES =
   Object.freeze([
+    "harness/package.json",
     "harness/package-lock.json",
     "harness/src/agent-backend/openai/shared.ts",
     "harness/src/context/fixed-environment-runtime.ts",
@@ -110,6 +112,10 @@ export interface P63V3RSemReliabilityAuditFinalPreLiveReceipt {
   readonly hardAuditCap: 64000;
   readonly plannedValidTrialCeiling: 120;
   readonly providerAttemptCeiling: 360;
+  readonly auditProviderMaxRetries: 0;
+  readonly sdkAutomaticRetriesDisabled: true;
+  readonly interruptedAttemptCostReservation: true;
+  readonly headroomDiagnosticsAffectQualification: false;
   readonly operationalCostCeilingUsd: 22;
   readonly preflightPassed: true;
   readonly exactCleanCheckoutVerified: true;
@@ -163,6 +169,9 @@ export function runP63V3RSemReliabilityAuditFinalPreLiveGate(
     P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT.candidateCaps[1] !== 64000 ||
     P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT.hardAuditCap !== 64000 ||
     P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_PROVIDER_ATTEMPTS !== 360 ||
+    P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES !== 0 ||
+    P6_3_V3_RSEM_RELIABILITY_AUDIT_CONTRACT
+      .headroomDiagnosticsAffectQualification !== false ||
     P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD !== 22
   ) {
     throw new Error("Rsem reliability audit final pre-live frozen envelope drifted");
@@ -244,6 +253,11 @@ export function runP63V3RSemReliabilityAuditFinalPreLiveGate(
           P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_VALID_TRIALS,
         providerAttemptCeiling:
           P6_3_V3_RSEM_RELIABILITY_AUDIT_MAX_PROVIDER_ATTEMPTS,
+        auditProviderMaxRetries:
+          P6_3_V3_RSEM_RELIABILITY_AUDIT_PROVIDER_MAX_RETRIES,
+        sdkAutomaticRetriesDisabled: true,
+        interruptedAttemptCostReservation: true,
+        headroomDiagnosticsAffectQualification: false,
         operationalCostCeilingUsd:
           P6_3_V3_RSEM_RELIABILITY_AUDIT_COST_CEILING_USD,
         preflightPassed: true,
@@ -291,6 +305,10 @@ export function assertP63V3RSemReliabilityAuditFinalPreLiveGatePassToken(
     receipt.hardAuditCap !== 64000 ||
     receipt.plannedValidTrialCeiling !== 120 ||
     receipt.providerAttemptCeiling !== 360 ||
+    receipt.auditProviderMaxRetries !== 0 ||
+    receipt.sdkAutomaticRetriesDisabled !== true ||
+    receipt.interruptedAttemptCostReservation !== true ||
+    receipt.headroomDiagnosticsAffectQualification !== false ||
     receipt.operationalCostCeilingUsd !== 22 ||
     receipt.paidLiveAuthorizationRequired !== true ||
     receipt.liveAuthorized !== false ||
