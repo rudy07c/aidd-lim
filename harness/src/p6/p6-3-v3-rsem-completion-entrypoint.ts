@@ -143,6 +143,10 @@ export async function runP63V3RSemCompletionEntrypoint(
       environment,
       checkoutGitSha:
         receipt.checkoutGitSha,
+      executionMode:
+        args.testDependencies?.executor
+          ? "offline-verifier"
+          : "provider-scientific",
       prepared,
     });
 
