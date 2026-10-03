@@ -65,6 +65,24 @@ async function main(): Promise<void> {
   );
   assert.equal(treatmentProvenance.planHash, prepared.planHash);
   assert.equal(treatmentProvenance.liveAuthorized, false);
+  assert.equal("executeMCell" in prepared.runStart, false);
+
+  await assert.rejects(
+    () =>
+      prepareP63V3RSemCompletionRun({
+        generationZeroRepositoryFiles: repositoryFiles,
+        persistence: {
+          persistRunFixedEnvironmentProvenance() {},
+          persistRSemCompletionTreatmentProvenance() {},
+        },
+        runStartDependencies: {
+          executeRSemCell: async () => {
+            throw new Error("must never be callable");
+          },
+        } as any,
+      }),
+    /forbids executor overrides/
+  );
 
   const exposure = buildP63V3RSemCompletionCellExposure({
     cell: prepared.plan[1],
@@ -173,6 +191,8 @@ async function main(): Promise<void> {
       "canonical-v3-sequences-792-863",
       "frozen-plan-hash",
       "fixed-environment-identity-equals-inherited-source",
+      "completion-context-does-not-expose-M-execution",
+      "completion-executor-overrides-fail-closed",
       "scientific-provider-cap-amended-8000-to-32000-only-at-request-boundary",
       "scientific-sdk-retry-contract-preserved",
       "completion-artifact-provenance-normalized-to-32000",
