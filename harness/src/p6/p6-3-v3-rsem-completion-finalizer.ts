@@ -192,14 +192,6 @@ export function finalizeP63V3RSemCompletion(args: {
     args.freshRSemState,
     plan
   );
-  const attemptArtifacts =
-    validateFreshRSemAttemptArtifacts({
-      runDir: args.freshRSemRunDir,
-      state: args.freshRSemState,
-    });
-  const attemptArtifactsSha256 =
-    sha256Text(stableJson(attemptArtifacts));
-
   const invalidCommitted =
     args.freshRSemState.attempts.filter(
       (attempt) =>
@@ -218,6 +210,14 @@ export function finalizeP63V3RSemCompletion(args: {
       );
     }
   }
+
+  const attemptArtifacts =
+    validateFreshRSemAttemptArtifacts({
+      runDir: args.freshRSemRunDir,
+      state: args.freshRSemState,
+    });
+  const attemptArtifactsSha256 =
+    sha256Text(stableJson(attemptArtifacts));
 
   const validRSem =
     args.freshRSemState.attempts.filter(
