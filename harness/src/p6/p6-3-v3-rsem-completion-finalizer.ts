@@ -112,6 +112,7 @@ export interface P63V3RSemCompletionFinalizationResult {
       readonly planHash: string;
       readonly provenanceHash: string;
       readonly fixedEnvironmentIdentity: string;
+      readonly executionMode: "provider-scientific";
       readonly authorizationDigest: string;
     };
     readonly combinedEvidenceSemanticSha256: string;
@@ -275,6 +276,7 @@ export function finalizeP63V3RSemCompletion(args: {
         fixedEnvironmentIdentity:
           args.freshRSemState
             .fixedEnvironmentIdentity,
+        executionMode: "provider-scientific",
         authorizationDigest:
           args.freshRSemState.authorizationDigest,
       },
@@ -369,7 +371,8 @@ function assertFreshRSemTerminalState(
     state.runClass !==
       "scientific-calibration-completion" ||
     state.calibrationOnly !== true ||
-    state.confirmatoryStage1AEligible !== false
+    state.confirmatoryStage1AEligible !== false ||
+    state.executionMode !== "provider-scientific"
   ) {
     throw new Error(
       "P6-3 v3 split finalization refused: fresh Rsem state/controller provenance mismatch"
