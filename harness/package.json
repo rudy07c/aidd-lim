@@ -77,7 +77,8 @@
     "verify:heldout-invariant-coverage": "ts-node verify-heldout-invariant-coverage.ts",
     "verify:p6-3-v3-rsem-reliability-audit": "ts-node verify-p6-3-v3-rsem-reliability-audit-core.ts",
     "verify:p6-3-v3-rsem-reliability-audit-final-prelive": "ts-node verify-p6-3-v3-rsem-reliability-audit-final-prelive-gate.ts",
-    "p6:rsem-reliability-audit": "ts-node p6-3-v3-rsem-reliability-audit.ts"
+    "p6:rsem-reliability-audit": "ts-node p6-3-v3-rsem-reliability-audit.ts",
+    "verify:p6-3-v3-rsem-completion-predeclaration": "ts-node verify-p6-3-v3-rsem-completion-predeclaration.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
