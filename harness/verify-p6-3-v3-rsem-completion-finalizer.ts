@@ -222,8 +222,31 @@ async function main(): Promise<void> {
     /checkoutGitSha is malformed/
   );
 
+  const firstStateArtifactPath = path.join(
+    runDir,
+    state.attempts[0].artifactPath!
+  );
+  const firstStateArtifactOriginal =
+    fs.readFileSync(
+      firstStateArtifactPath,
+      "utf8"
+    );
+
   const missingScore = clone(state) as any;
   missingScore.attempts[0].semanticScore = null;
+  const missingScoreArtifact =
+    JSON.parse(firstStateArtifactOriginal) as any;
+  missingScoreArtifact.result.booleanAccuracy =
+    null;
+  fs.writeFileSync(
+    firstStateArtifactPath,
+    JSON.stringify(
+      missingScoreArtifact,
+      null,
+      2
+    ) + "\n",
+    "utf8"
+  );
   assert.throws(
     () =>
       finalizeP63V3RSemCompletion({
@@ -233,9 +256,26 @@ async function main(): Promise<void> {
       }),
     /lacks a protocol-valid semantic score/
   );
+  fs.writeFileSync(
+    firstStateArtifactPath,
+    firstStateArtifactOriginal,
+    "utf8"
+  );
 
   const denominatorDrift = clone(state) as any;
   denominatorDrift.attempts[0].diagnosticSummary.booleanTotal = 11;
+  const denominatorArtifact =
+    JSON.parse(firstStateArtifactOriginal) as any;
+  denominatorArtifact.result.booleanTotal = 11;
+  fs.writeFileSync(
+    firstStateArtifactPath,
+    JSON.stringify(
+      denominatorArtifact,
+      null,
+      2
+    ) + "\n",
+    "utf8"
+  );
   assert.throws(
     () =>
       finalizeP63V3RSemCompletion({
@@ -244,6 +284,11 @@ async function main(): Promise<void> {
         freshRSemState: denominatorDrift,
       }),
     /probe denominator\/count drift/
+  );
+  fs.writeFileSync(
+    firstStateArtifactPath,
+    firstStateArtifactOriginal,
+    "utf8"
   );
 
   const duplicateValid = clone(state) as any;
