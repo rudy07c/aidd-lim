@@ -85,7 +85,9 @@
     "verify:p6-3-v3-rsem-completion-final-prelive": "ts-node verify-p6-3-v3-rsem-completion-final-prelive.ts",
     "verify:p6-3-v3-rsem-completion-entrypoint": "ts-node verify-p6-3-v3-rsem-completion-entrypoint.ts",
     "p6:rsem-completion-v3": "ts-node p6-3-v3-rsem-completion.ts",
-    "p6:finalize-rsem-completion-v3": "ts-node p6-3-v3-rsem-completion-finalize.ts"
+    "p6:finalize-rsem-completion-v3": "ts-node p6-3-v3-rsem-completion-finalize.ts",
+    "p6:audit-v3-m-evaluator-boundary": "ts-node analyze-p6-3-v3-m-evaluator-boundary.ts",
+    "verify:p6-3-v3-m-evaluator-boundary": "ts-node verify-p6-3-v3-m-evaluator-boundary.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
