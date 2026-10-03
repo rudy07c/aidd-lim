@@ -126,6 +126,7 @@ export interface P63V3RSemCompletionState {
   readonly runClass: "scientific-calibration-completion";
   readonly calibrationOnly: true;
   readonly confirmatoryStage1AEligible: false;
+  status: P63V3RSemCompletionStatus;
   readonly checkoutGitSha: string;
   readonly planHash: string;
   readonly provenanceHash: string;
@@ -263,6 +264,7 @@ export function createP63V3RSemCompletionState(args: {
     runClass: "scientific-calibration-completion",
     calibrationOnly: true,
     confirmatoryStage1AEligible: false,
+    status: "running",
     checkoutGitSha: args.authorization.checkoutGitSha,
     planHash: args.prepared.planHash,
     provenanceHash: args.authorization.provenanceHash,
