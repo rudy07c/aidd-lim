@@ -85,10 +85,21 @@ export interface P63V3RSemCompletionPersistence
   ): void | Promise<void>;
 }
 
+export type P63V3RSemCompletionRunStartContext = Readonly<
+  Pick<
+    P63V3RunStartContext,
+    "fixedEnvironment" | "provenance" | "executeRSemCell"
+  >
+>;
+
+export type P63V3RSemCompletionRunStartDependencies = Readonly<
+  Pick<P63V3RunStartDependencies, "buildFixedEnvironment">
+>;
+
 export interface P63V3PreparedRSemCompletionRun {
   readonly plan: readonly P63V3RSemCompletionCell[];
   readonly planHash: string;
-  readonly runStart: Readonly<P63V3RunStartContext>;
+  readonly runStart: P63V3RSemCompletionRunStartContext;
   readonly provenance:
     Readonly<P63V3RSemCompletionTreatmentProvenance>;
 }
@@ -96,7 +107,7 @@ export interface P63V3PreparedRSemCompletionRun {
 export async function prepareP63V3RSemCompletionRun(args: {
   generationZeroRepositoryFiles: Readonly<Record<string, string>>;
   persistence: P63V3RSemCompletionPersistence;
-  runStartDependencies?: P63V3RunStartDependencies;
+  runStartDependencies?: P63V3RSemCompletionRunStartDependencies;
 }): Promise<Readonly<P63V3PreparedRSemCompletionRun>> {
   if (P6_3_V3_RSEM_COMPLETION_PREDECLARATION.liveAuthorization !== false) {
     throw new Error(
@@ -116,18 +127,34 @@ export async function prepareP63V3RSemCompletionRun(args: {
     );
   }
 
-  const dependencies: P63V3RunStartDependencies = {
-    ...(args.runStartDependencies ?? {}),
-    executeRSemCell:
-      args.runStartDependencies?.executeRSemCell ??
-      executeP63V3RSemCompletionCell,
-  };
-  const runStart = await initializeP63V3RunStart({
+  const rawDependencies =
+    args.runStartDependencies as Record<string, unknown> | undefined;
+  if (
+    rawDependencies &&
+    ("executeRSemCell" in rawDependencies ||
+      "executeMCell" in rawDependencies)
+  ) {
+    throw new Error(
+      "P6-3 v3 Rsem completion forbids executor overrides; the 32k completion executor is mandatory and M execution is disabled"
+    );
+  }
+
+  const fullRunStart = await initializeP63V3RunStart({
     generationZeroRepositoryFiles:
       args.generationZeroRepositoryFiles,
     persistence: args.persistence,
-    dependencies,
+    dependencies: {
+      buildFixedEnvironment:
+        args.runStartDependencies?.buildFixedEnvironment,
+      executeRSemCell: executeP63V3RSemCompletionCell,
+    },
   });
+  const runStart: P63V3RSemCompletionRunStartContext =
+    Object.freeze({
+      fixedEnvironment: fullRunStart.fixedEnvironment,
+      provenance: fullRunStart.provenance,
+      executeRSemCell: fullRunStart.executeRSemCell,
+    });
   if (
     runStart.provenance.fixedEnvironmentIdentity !==
     P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY
