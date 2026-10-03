@@ -1,4 +1,6 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
+import * as path from "path";
 import {
   P6_3_V3_ARTIFACT_BUDGETS,
   P6_3_V3_CALIBRATION_PREDECLARATION,
@@ -31,12 +33,17 @@ import {
   p63V3RSemCompletionTreatmentProvenanceHash,
 } from "./p6-3-v3-rsem-completion-runner";
 import {
+  P6_3_V3_RSEM_COMPLETION_EXECUTOR_VERSION,
+} from "./p6-3-v3-rsem-completion-executor";
+import {
   P6_3_V3_RSEM_COMPLETION_COMBINED_LOGICAL_CELLS,
   P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY,
   P6_3_V3_RSEM_COMPLETION_FRESH_RSEM_LOGICAL_CELLS,
   P6_3_V3_RSEM_COMPLETION_INHERITED_M_LOGICAL_CELLS,
   P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
   P6_3_V3_RSEM_COMPLETION_PREDECLARATION,
+  P6_3_V3_RSEM_COMPLETION_PREDECLARATION_VERSION,
+  P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT,
   P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
 } from "./p6-3-v3-rsem-completion-predeclaration";
 
@@ -67,6 +74,11 @@ export interface P63V3RSemCompletionRSemRepeatSummary {
   readonly correct: number;
   readonly total: number;
   readonly mean: number;
+}
+
+export interface P63V3RSemCompletionAttemptArtifactEvidence {
+  readonly path: string;
+  readonly sha256: string;
 }
 
 export interface P63V3RSemCompletionArmSummary {
@@ -119,6 +131,9 @@ export interface P63V3RSemCompletionFinalizationResult {
       readonly fixedEnvironmentIdentity: string;
       readonly executionMode: "provider-scientific";
       readonly authorizationDigest: string;
+      readonly attemptArtifactsSha256: string;
+      readonly attemptArtifacts:
+        readonly P63V3RSemCompletionAttemptArtifactEvidence[];
     };
     readonly combinedEvidenceSemanticSha256: string;
   };
@@ -162,6 +177,7 @@ export interface P63V3RSemCompletionFinalizationResult {
 
 export function finalizeP63V3RSemCompletion(args: {
   repoRoot: string;
+  freshRSemRunDir: string;
   freshRSemState:
     Readonly<P63V3RSemCompletionState>;
 }): Readonly<P63V3RSemCompletionFinalizationResult> {
@@ -176,6 +192,13 @@ export function finalizeP63V3RSemCompletion(args: {
     args.freshRSemState,
     plan
   );
+  const attemptArtifacts =
+    validateFreshRSemAttemptArtifacts({
+      runDir: args.freshRSemRunDir,
+      state: args.freshRSemState,
+    });
+  const attemptArtifactsSha256 =
+    sha256Text(stableJson(attemptArtifacts));
 
   const invalidCommitted =
     args.freshRSemState.attempts.filter(
@@ -241,6 +264,8 @@ export function finalizeP63V3RSemCompletion(args: {
           inheritedM.mEvidenceSemanticSha256,
         freshRSemStateSemanticSha256:
           freshStateSemanticSha256,
+        freshRSemAttemptArtifactsSha256:
+          attemptArtifactsSha256,
       })
     );
 
@@ -284,6 +309,8 @@ export function finalizeP63V3RSemCompletion(args: {
         executionMode: "provider-scientific",
         authorizationDigest:
           args.freshRSemState.authorizationDigest,
+        attemptArtifactsSha256,
+        attemptArtifacts,
       },
       combinedEvidenceSemanticSha256,
     },
@@ -606,6 +633,191 @@ function assertFreshRSemJournalIntegrity(
       );
     }
   }
+}
+
+function validateFreshRSemAttemptArtifacts(args: {
+  runDir: string;
+  state: Readonly<P63V3RSemCompletionState>;
+}): readonly P63V3RSemCompletionAttemptArtifactEvidence[] {
+  const runDir = path.resolve(args.runDir);
+  if (
+    !fs.existsSync(runDir) ||
+    !fs.statSync(runDir).isDirectory()
+  ) {
+    throw new Error(
+      `P6-3 v3 split finalization refused: fresh Rsem run directory does not exist: ${runDir}`
+    );
+  }
+
+  const evidence: P63V3RSemCompletionAttemptArtifactEvidence[] = [];
+  for (const attempt of args.state.attempts) {
+    const artifactPath = attempt.artifactPath;
+    if (!artifactPath) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: committed fresh Rsem sequence ${attempt.collectionSequence} attempt ${attempt.attempt} has no artifact path`
+      );
+    }
+    if (path.isAbsolute(artifactPath)) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact path must be run-relative: ${artifactPath}`
+      );
+    }
+    const absolute = path.resolve(runDir, artifactPath);
+    const relative = path.relative(runDir, absolute);
+    if (
+      relative === "" ||
+      relative.startsWith("..") ||
+      path.isAbsolute(relative)
+    ) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact escapes run directory: ${artifactPath}`
+      );
+    }
+    if (
+      !fs.existsSync(absolute) ||
+      !fs.statSync(absolute).isFile()
+    ) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact missing: ${artifactPath}`
+      );
+    }
+
+    const bytes = fs.readFileSync(absolute);
+    let artifact: Record<string, any>;
+    try {
+      const parsed = JSON.parse(
+        bytes.toString("utf8")
+      ) as unknown;
+      if (
+        !parsed ||
+        typeof parsed !== "object" ||
+        Array.isArray(parsed)
+      ) {
+        throw new Error("not an object");
+      }
+      artifact = parsed as Record<string, any>;
+    } catch (error) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact is not valid JSON object (${artifactPath}): ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    assertAttemptArtifactMatchesState(
+      artifact,
+      attempt,
+      artifactPath
+    );
+    evidence.push(
+      Object.freeze({
+        path: relative
+          .split(path.sep)
+          .join("/"),
+        sha256: crypto
+          .createHash("sha256")
+          .update(bytes)
+          .digest("hex"),
+      })
+    );
+  }
+
+  return Object.freeze(
+    evidence.sort((left, right) =>
+      left.path.localeCompare(right.path)
+    )
+  );
+}
+
+function assertAttemptArtifactMatchesState(
+  artifact: Record<string, any>,
+  attempt: Readonly<P63V3RSemCompletionAttemptRecord>,
+  artifactPath: string
+): void {
+  if (
+    artifact.executorVersion !==
+      P6_3_V3_RSEM_COMPLETION_EXECUTOR_VERSION ||
+    artifact.completionPredeclarationVersion !==
+      P6_3_V3_RSEM_COMPLETION_PREDECLARATION_VERSION ||
+    stableJson(artifact.providerContract) !==
+      stableJson(
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT
+      ) ||
+    artifact.fixedEnvironment?.identity !==
+      P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY
+  ) {
+    throw new Error(
+      `P6-3 v3 split finalization refused: attempt artifact provenance mismatch: ${artifactPath}`
+    );
+  }
+
+  const result = artifact.result;
+  if (!result || typeof result !== "object") {
+    throw new Error(
+      `P6-3 v3 split finalization refused: attempt artifact result missing: ${artifactPath}`
+    );
+  }
+  if (
+    result.repeat !== attempt.repeat ||
+    result.validity !== attempt.rawValidity ||
+    result.executionStatus !==
+      attempt.executionStatus ||
+    result.failureDomain !==
+      attempt.rawFailureDomain ||
+    result.protocolValid !==
+      attempt.protocolValid ||
+    result.failureReason !==
+      attempt.failureReason ||
+    !sameNullableNumber(
+      result.booleanAccuracy,
+      attempt.semanticScore
+    ) ||
+    !sameNullableNumber(
+      result.estimatedCostUsd,
+      attempt.estimatedCostUsd
+    ) ||
+    result.booleanCorrect !==
+      attempt.diagnosticSummary.booleanCorrect ||
+    result.booleanTotal !==
+      attempt.diagnosticSummary.booleanTotal
+  ) {
+    throw new Error(
+      `P6-3 v3 split finalization refused: attempt artifact/state outcome mismatch: ${artifactPath}`
+    );
+  }
+
+  const modelProvenance =
+    result.modelProvenance;
+  if (
+    !modelProvenance ||
+    typeof modelProvenance !== "object" ||
+    modelProvenance.requestedModel !==
+      P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.model ||
+    modelProvenance.reasoningEffort !==
+      P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.reasoningEffort ||
+    modelProvenance.maxOutputTokens !==
+      P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.maxOutputTokens ||
+    modelProvenance.requestTimeoutMs !==
+      P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.requestTimeoutMs ||
+    modelProvenance.maxRetries !==
+      P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.providerMaxRetries
+  ) {
+    throw new Error(
+      `P6-3 v3 split finalization refused: attempt artifact provider provenance mismatch: ${artifactPath}`
+    );
+  }
+}
+
+function sameNullableNumber(
+  left: unknown,
+  right: number | null
+): boolean {
+  if (left === null || right === null) {
+    return left === right;
+  }
+  return (
+    typeof left === "number" &&
+    Number.isFinite(left) &&
+    nearlyEqual(left, right)
+  );
 }
 
 function exactlyOneValidRSemPerCollectionSequence(
