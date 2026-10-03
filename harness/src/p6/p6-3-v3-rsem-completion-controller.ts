@@ -616,6 +616,14 @@ export function applyP63V3RSemCompletionAdjudication(args: {
   const reason = requireText(request.reason, "reason");
   if (
     state.auditFlag.kind ===
+      "max-infrastructure-attempts-exhausted"
+  ) {
+    throw new Error(
+      "Fresh Rsem completion attempt ceiling is exhausted; further adjudication cannot authorize another provider attempt"
+    );
+  }
+  if (
+    state.auditFlag.kind ===
     "uncertain-in-flight-attempt"
   ) {
     const interrupted =
@@ -672,6 +680,21 @@ export function applyP63V3RSemCompletionAdjudication(args: {
   if (!target) {
     throw new Error(
       "Fresh Rsem completion adjudication target attempt not found"
+    );
+  }
+  if (target.adjudication) {
+    throw new Error(
+      "Fresh Rsem completion adjudication target is already adjudicated"
+    );
+  }
+  if (
+    state.auditFlag.kind !==
+      "infrastructure-adjudication-required" &&
+    state.auditFlag.kind !==
+      "unclassified-failure-domain"
+  ) {
+    throw new Error(
+      "Fresh Rsem completion active audit flag does not permit attempt adjudication"
     );
   }
   const adjudication: P63V3RSemCompletionAdjudication = {
