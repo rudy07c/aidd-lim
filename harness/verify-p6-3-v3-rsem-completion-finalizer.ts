@@ -57,6 +57,7 @@ async function main(): Promise<void> {
         [P6_3_V3_RSEM_COMPLETION_PAID_ENV]: "1",
       } as NodeJS.ProcessEnv,
       checkoutGitSha: "c".repeat(40),
+      executionMode: "provider-scientific",
       prepared,
     });
   const state = createP63V3RSemCompletionState({
