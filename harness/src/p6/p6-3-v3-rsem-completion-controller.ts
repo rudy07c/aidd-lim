@@ -224,22 +224,15 @@ export function authorizeP63V3RSemCompletionInvocation(args: {
   );
   const provenanceHash =
     p63V3RSemCompletionProvenanceHash(args.prepared);
-  const authorizationDigest = sha256(
-    stableJson({
-      controllerVersion:
-        P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION,
+  const authorizationDigest =
+    p63V3RSemCompletionAuthorizationDigest({
       checkoutGitSha,
       planHash: args.prepared.planHash,
       provenanceHash,
       fixedEnvironmentIdentity:
         args.prepared.provenance.fixedEnvironmentIdentity,
       executionMode: args.executionMode,
-      inheritedMSourceStateSha256:
-        P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
-      inheritedMSemanticSha256:
-        P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
-    })
-  );
+    });
   return Object.freeze({
     live: true,
     explicitPaidAuthorization: true,
@@ -253,6 +246,43 @@ export function authorizeP63V3RSemCompletionInvocation(args: {
     authorizationDigest,
     [AUTH_BRAND]: true as const,
   });
+}
+
+export function p63V3RSemCompletionAuthorizationDigest(args: {
+  checkoutGitSha: string;
+  planHash: string;
+  provenanceHash: string;
+  fixedEnvironmentIdentity: string;
+  executionMode: P63V3RSemCompletionExecutionMode;
+}): string {
+  const checkoutGitSha = requireSha(
+    args.checkoutGitSha,
+    "checkoutGitSha"
+  );
+  if (
+    args.executionMode !== "provider-scientific" &&
+    args.executionMode !== "offline-verifier"
+  ) {
+    throw new Error(
+      "P6-3 v3 Rsem completion authorization digest requires a valid execution mode"
+    );
+  }
+  return sha256(
+    stableJson({
+      controllerVersion:
+        P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION,
+      checkoutGitSha,
+      planHash: args.planHash,
+      provenanceHash: args.provenanceHash,
+      fixedEnvironmentIdentity:
+        args.fixedEnvironmentIdentity,
+      executionMode: args.executionMode,
+      inheritedMSourceStateSha256:
+        P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
+      inheritedMSemanticSha256:
+        P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
+    })
+  );
 }
 
 export function createP63V3RSemCompletionState(args: {
@@ -829,10 +859,8 @@ function assertAuthorizationCompatible(
       "P6-3 v3 Rsem completion authorization drifted"
     );
   }
-  const expectedDigest = sha256(
-    stableJson({
-      controllerVersion:
-        P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION,
+  const expectedDigest =
+    p63V3RSemCompletionAuthorizationDigest({
       checkoutGitSha:
         authorization.checkoutGitSha,
       planHash: authorization.planHash,
@@ -841,12 +869,7 @@ function assertAuthorizationCompatible(
         authorization.fixedEnvironmentIdentity,
       executionMode:
         authorization.executionMode,
-      inheritedMSourceStateSha256:
-        P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
-      inheritedMSemanticSha256:
-        P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
-    })
-  );
+    });
   if (
     authorization.authorizationDigest !==
     expectedDigest
