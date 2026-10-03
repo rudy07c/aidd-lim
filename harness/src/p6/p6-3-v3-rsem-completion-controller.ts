@@ -30,6 +30,8 @@ export const P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION =
   "p6-3-v3-rsem-completion-controller-v1" as const;
 export const P6_3_V3_RSEM_COMPLETION_STATE_SCHEMA =
   "p6-3-v3-rsem-completion-state-v1" as const;
+export const P6_3_V3_RSEM_COMPLETION_ATTEMPT_ARTIFACT_SCHEMA =
+  "p6-3-v3-rsem-completion-attempt-artifact-v1" as const;
 export const P6_3_V3_RSEM_COMPLETION_PAID_FLAG =
   "--authorize-paid-live=P6-3-v3-rsem-completion" as const;
 export const P6_3_V3_RSEM_COMPLETION_PAID_ENV =
@@ -170,6 +172,54 @@ export interface P63V3RSemCompletionExecutor {
     cell: Readonly<P63V3RSemCompletionCell>,
     attempt: number
   ): Promise<P63CellOutcome>;
+}
+
+export interface P63V3RSemCompletionAttemptArtifactEnvelope {
+  readonly schemaVersion:
+    typeof P6_3_V3_RSEM_COMPLETION_ATTEMPT_ARTIFACT_SCHEMA;
+  readonly identity: {
+    readonly collectionSequence: number;
+    readonly canonicalV3Sequence: number;
+    readonly repeat: number;
+    readonly armLabel: string;
+    readonly armKind: "EL" | "AF";
+    readonly budgetTokens: number | "full";
+    readonly attempt: number;
+  };
+  readonly payload: unknown;
+}
+
+export function buildP63V3RSemCompletionAttemptArtifact(
+  cell: Readonly<P63V3RSemCompletionCell>,
+  attempt: number,
+  payload: unknown
+): Readonly<P63V3RSemCompletionAttemptArtifactEnvelope> {
+  if (
+    !Number.isInteger(attempt) ||
+    attempt < 1 ||
+    attempt >
+      P6_3_V3_RSEM_COMPLETION_MAX_SCIENTIFIC_ATTEMPTS_PER_CELL
+  ) {
+    throw new Error(
+      "P6-3 v3 Rsem completion attempt artifact requires a valid attempt number"
+    );
+  }
+  return Object.freeze({
+    schemaVersion:
+      P6_3_V3_RSEM_COMPLETION_ATTEMPT_ARTIFACT_SCHEMA,
+    identity: Object.freeze({
+      collectionSequence:
+        cell.collectionSequence,
+      canonicalV3Sequence:
+        cell.canonicalV3Sequence,
+      repeat: cell.repeat,
+      armLabel: cell.armLabel,
+      armKind: cell.armKind,
+      budgetTokens: cell.budgetTokens,
+      attempt,
+    }),
+    payload,
+  });
 }
 
 export interface P63V3RSemCompletionPersistence {
