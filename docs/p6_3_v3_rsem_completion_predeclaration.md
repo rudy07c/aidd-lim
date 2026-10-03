@@ -1,8 +1,8 @@
 # P6-3 v3 Rsem completion predeclaration
 
-**Status:** provider-free completion-design freeze; paid scientific Rsem recollection is not authorized by this document  
-**Treatment:** unchanged P6-3 v3 context/treatment  
-**Analysis unit:** inherited frozen M + fresh Rsem  
+**Status:** provider-free completion-design freeze; paid scientific Rsem recollection is not authorized by this document
+**Treatment:** unchanged P6-3 v3 context/treatment
+**Analysis unit:** inherited frozen M + fresh Rsem
 **Run class:** `scientific-calibration-completion`
 
 ## 1. Why a split completion is being used
