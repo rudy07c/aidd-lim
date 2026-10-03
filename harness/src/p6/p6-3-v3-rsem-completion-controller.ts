@@ -812,10 +812,12 @@ function assertAuthorizationCompatible(
     );
   }
   assertPreparedSelfConsistent(prepared);
+  const provenanceHash =
+    p63V3RSemCompletionProvenanceHash(prepared);
   if (
     authorization.planHash !== prepared.planHash ||
     authorization.provenanceHash !==
-      p63V3RSemCompletionProvenanceHash(prepared) ||
+      provenanceHash ||
     authorization.fixedEnvironmentIdentity !==
       prepared.provenance.fixedEnvironmentIdentity ||
     (authorization.executionMode !==
@@ -825,6 +827,32 @@ function assertAuthorizationCompatible(
   ) {
     throw new Error(
       "P6-3 v3 Rsem completion authorization drifted"
+    );
+  }
+  const expectedDigest = sha256(
+    stableJson({
+      controllerVersion:
+        P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION,
+      checkoutGitSha:
+        authorization.checkoutGitSha,
+      planHash: authorization.planHash,
+      provenanceHash,
+      fixedEnvironmentIdentity:
+        authorization.fixedEnvironmentIdentity,
+      executionMode:
+        authorization.executionMode,
+      inheritedMSourceStateSha256:
+        P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
+      inheritedMSemanticSha256:
+        P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
+    })
+  );
+  if (
+    authorization.authorizationDigest !==
+    expectedDigest
+  ) {
+    throw new Error(
+      "P6-3 v3 Rsem completion authorization digest mismatch"
     );
   }
 }
