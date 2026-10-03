@@ -93,6 +93,12 @@ The canonical Rsem identities are exactly the Rsem cells from the frozen v3 864-
 
 For the new collection they receive an independent collection sequence 0..71 while retaining their canonical v3 identity.
 
+The complete 72-cell collection plan is frozen by SHA-256:
+
+```text
+b3ae8664f97ef93f7d0811c477a0737f6755a7a206f110e5914c15fab9ba2550
+```
+
 No Rsem observation from the stopped v3 run is reused, including the one valid Rsem observation at original sequence 792.
 
 No reliability-audit response is reused.
