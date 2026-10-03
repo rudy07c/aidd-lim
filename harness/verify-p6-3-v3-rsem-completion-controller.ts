@@ -220,6 +220,24 @@ async function main(): Promise<void> {
       },
     });
     assert.equal(exhausted.status, "needs-audit");
+    if (attempt === 1) {
+      await assert.rejects(
+        async () => {
+          applyP63V3RSemCompletionAdjudication({
+            state: exhausted,
+            prepared,
+            request: {
+              collectionSequence: 0,
+              attempt,
+              reviewer: "offline-verifier",
+              reason: "must not promote missing scientific output",
+              finalDisposition: "scientific-failure",
+            },
+          });
+        },
+        /may only be adjudicated infrastructure-invalid/
+      );
+    }
     applyP63V3RSemCompletionAdjudication({
       state: exhausted,
       prepared,
@@ -296,6 +314,7 @@ async function main(): Promise<void> {
       "resume-provenance-drift-fails-closed",
       "in-flight-attempt-is-never-blindly-replayed",
       "explicit-infrastructure-adjudication-required-before-replacement",
+      "infrastructure-invalid-output-cannot-be-promoted-to-scientific-evidence",
       "three-attempt-ceiling-prevents-attempt-four",
       "provider-free-controller-verification",
     ],
