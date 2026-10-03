@@ -210,8 +210,20 @@ export function buildMFailureBoundaryAuditReport(repoRoot: string): MFailureBoun
     if (!row.artifactPath) {
       throw new Error(`M sequence ${row.sequence} is missing artifactPath`);
     }
-    const artifactPath = resolveRepoContainedPath(repoRoot, row.artifactPath);
-    const bytes = fs.readFileSync(artifactPath, "utf8");
+    const committedFallback = path.join(
+      "docs",
+      "findings",
+      "evidence",
+      "p6-3-v3-live-diagnostic-stop",
+      "attempts",
+      `${String(row.sequence).padStart(4, "0")}-M-${row.armLabel}-attempt-${row.attempt}.json`
+    );
+    const resolved = resolveCommittedAttemptArtifact(
+      repoRoot,
+      row.artifactPath,
+      committedFallback
+    );
+    const bytes = fs.readFileSync(resolved.absolutePath, "utf8");
     const artifact = JSON.parse(bytes) as unknown;
     return classifyMArtifactForBoundaryAudit({
       row: {
@@ -224,7 +236,7 @@ export function buildMFailureBoundaryAuditReport(repoRoot: string): MFailureBoun
         effectiveFailureDomain: row.effectiveFailureDomain,
       },
       artifact,
-      artifactPath: row.artifactPath,
+      artifactPath: resolved.relativePath,
     });
   });
 
@@ -333,21 +345,41 @@ function readSuite(value: unknown): SuiteDigestLike {
   };
 }
 
-function resolveRepoContainedPath(repoRoot: string, relativePath: string): string {
+function resolveCommittedAttemptArtifact(
+  repoRoot: string,
+  recordedPath: string,
+  committedFallback: string
+): { absolutePath: string; relativePath: string } {
   const root = fs.realpathSync(repoRoot);
-  const candidate = path.resolve(root, relativePath);
   const prefix = root.endsWith(path.sep) ? root : root + path.sep;
-  if (!candidate.startsWith(prefix)) {
-    throw new Error(`Artifact path escaped repository root: ${relativePath}`);
+  const candidates: string[] = [];
+
+  if (!path.isAbsolute(recordedPath)) {
+    candidates.push(recordedPath);
+  } else {
+    const normalizedRoot = path.resolve(root);
+    const normalizedRecorded = path.resolve(recordedPath);
+    if (normalizedRecorded.startsWith(prefix)) {
+      candidates.push(path.relative(normalizedRoot, normalizedRecorded));
+    }
   }
-  if (!fs.existsSync(candidate) || !fs.statSync(candidate).isFile()) {
-    throw new Error(`Artifact file missing: ${relativePath}`);
+  candidates.push(committedFallback);
+
+  for (const relativePath of [...new Set(candidates)]) {
+    const candidate = path.resolve(root, relativePath);
+    if (!candidate.startsWith(prefix)) continue;
+    if (!fs.existsSync(candidate) || !fs.statSync(candidate).isFile()) continue;
+    const real = fs.realpathSync(candidate);
+    if (!real.startsWith(prefix)) continue;
+    return {
+      absolutePath: real,
+      relativePath: path.relative(root, real).split(path.sep).join("/"),
+    };
   }
-  const real = fs.realpathSync(candidate);
-  if (!real.startsWith(prefix)) {
-    throw new Error(`Artifact realpath escaped repository root: ${relativePath}`);
-  }
-  return real;
+
+  throw new Error(
+    `Committed M attempt artifact missing. recorded=${recordedPath} fallback=${committedFallback}`
+  );
 }
 
 function emptyCounts(): Record<MFailureAuditClass, number> {
