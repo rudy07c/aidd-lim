@@ -17,6 +17,7 @@ import {
 } from "./p6-3-v3-inherited-m-evidence";
 import type { P63V3AttemptRecord } from "./p6-3-v3-live-controller";
 import {
+  P6_3_V3_RSEM_COMPLETION_ATTEMPT_ARTIFACT_SCHEMA,
   P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION,
   P6_3_V3_RSEM_COMPLETION_STATE_SCHEMA,
   p63V3RSemCompletionAuthorizationDigest,
@@ -648,6 +649,7 @@ function validateFreshRSemAttemptArtifacts(args: {
       `P6-3 v3 split finalization refused: fresh Rsem run directory does not exist: ${runDir}`
     );
   }
+  const realRunDir = fs.realpathSync(runDir);
 
   const evidence: P63V3RSemCompletionAttemptArtifactEvidence[] = [];
   for (const attempt of args.state.attempts) {
@@ -673,17 +675,39 @@ function validateFreshRSemAttemptArtifacts(args: {
         `P6-3 v3 split finalization refused: attempt artifact escapes run directory: ${artifactPath}`
       );
     }
-    if (
-      !fs.existsSync(absolute) ||
-      !fs.statSync(absolute).isFile()
-    ) {
+    if (!fs.existsSync(absolute)) {
       throw new Error(
         `P6-3 v3 split finalization refused: attempt artifact missing: ${artifactPath}`
       );
     }
+    const lstat = fs.lstatSync(absolute);
+    if (lstat.isSymbolicLink()) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact symlinks are forbidden: ${artifactPath}`
+      );
+    }
+    if (!lstat.isFile()) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact is not a regular file: ${artifactPath}`
+      );
+    }
+    const realArtifact = fs.realpathSync(absolute);
+    const realRelative = path.relative(
+      realRunDir,
+      realArtifact
+    );
+    if (
+      realRelative === "" ||
+      realRelative.startsWith("..") ||
+      path.isAbsolute(realRelative)
+    ) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact real path escapes run directory: ${artifactPath}`
+      );
+    }
 
-    const bytes = fs.readFileSync(absolute);
-    let artifact: Record<string, any>;
+    const bytes = fs.readFileSync(realArtifact);
+    let envelope: Record<string, any>;
     try {
       const parsed = JSON.parse(
         bytes.toString("utf8")
@@ -695,15 +719,48 @@ function validateFreshRSemAttemptArtifacts(args: {
       ) {
         throw new Error("not an object");
       }
-      artifact = parsed as Record<string, any>;
+      envelope = parsed as Record<string, any>;
     } catch (error) {
       throw new Error(
         `P6-3 v3 split finalization refused: attempt artifact is not valid JSON object (${artifactPath}): ${error instanceof Error ? error.message : String(error)}`
       );
     }
 
+    const identity = envelope.identity;
+    if (
+      envelope.schemaVersion !==
+        P6_3_V3_RSEM_COMPLETION_ATTEMPT_ARTIFACT_SCHEMA ||
+      !identity ||
+      typeof identity !== "object" ||
+      identity.collectionSequence !==
+        attempt.collectionSequence ||
+      identity.canonicalV3Sequence !==
+        attempt.canonicalV3Sequence ||
+      identity.repeat !== attempt.repeat ||
+      identity.armLabel !== attempt.armLabel ||
+      identity.armKind !== attempt.armKind ||
+      identity.budgetTokens !==
+        attempt.budgetTokens ||
+      identity.attempt !== attempt.attempt
+    ) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact identity mismatch: ${artifactPath}`
+      );
+    }
+
+    const artifact = envelope.payload;
+    if (
+      !artifact ||
+      typeof artifact !== "object" ||
+      Array.isArray(artifact)
+    ) {
+      throw new Error(
+        `P6-3 v3 split finalization refused: attempt artifact payload missing: ${artifactPath}`
+      );
+    }
+
     assertAttemptArtifactMatchesState(
-      artifact,
+      artifact as Record<string, any>,
       attempt,
       artifactPath
     );
