@@ -82,6 +82,8 @@ function main(): void {
   const result =
     finalizeP63V3RSemCompletion({
       repoRoot,
+      freshRSemRunDir:
+        path.dirname(args.statePath),
       freshRSemState: state,
     });
 
