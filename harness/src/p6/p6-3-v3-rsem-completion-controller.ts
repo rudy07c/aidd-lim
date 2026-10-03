@@ -44,6 +44,10 @@ export type P63V3RSemCompletionStatus =
   | "needs-audit"
   | "completed";
 
+export type P63V3RSemCompletionExecutionMode =
+  | "provider-scientific"
+  | "offline-verifier";
+
 export type P63V3RSemCompletionAdjudicationDisposition =
   | "scientific-failure"
   | "protocol-failure"
@@ -126,6 +130,7 @@ export interface P63V3RSemCompletionState {
   readonly runClass: "scientific-calibration-completion";
   readonly calibrationOnly: true;
   readonly confirmatoryStage1AEligible: false;
+  readonly executionMode: P63V3RSemCompletionExecutionMode;
   status: P63V3RSemCompletionStatus;
   readonly checkoutGitSha: string;
   readonly planHash: string;
@@ -155,6 +160,7 @@ export type P63V3RSemCompletionAuthorizationToken = Readonly<{
   readonly planHash: string;
   readonly provenanceHash: string;
   readonly fixedEnvironmentIdentity: string;
+  readonly executionMode: P63V3RSemCompletionExecutionMode;
   readonly authorizationDigest: string;
   [AUTH_BRAND]: true;
 }>;
@@ -192,6 +198,7 @@ export function authorizeP63V3RSemCompletionInvocation(args: {
   paidAuthorization: boolean;
   environment?: NodeJS.ProcessEnv;
   checkoutGitSha: string;
+  executionMode: P63V3RSemCompletionExecutionMode;
   prepared: Readonly<P63V3PreparedRSemCompletionRun>;
 }): P63V3RSemCompletionAuthorizationToken {
   if (!args.live) {
@@ -226,6 +233,7 @@ export function authorizeP63V3RSemCompletionInvocation(args: {
       provenanceHash,
       fixedEnvironmentIdentity:
         args.prepared.provenance.fixedEnvironmentIdentity,
+      executionMode: args.executionMode,
       inheritedMSourceStateSha256:
         P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
       inheritedMSemanticSha256:
@@ -241,6 +249,7 @@ export function authorizeP63V3RSemCompletionInvocation(args: {
     provenanceHash,
     fixedEnvironmentIdentity:
       args.prepared.provenance.fixedEnvironmentIdentity,
+    executionMode: args.executionMode,
     authorizationDigest,
     [AUTH_BRAND]: true as const,
   });
@@ -264,6 +273,8 @@ export function createP63V3RSemCompletionState(args: {
     runClass: "scientific-calibration-completion",
     calibrationOnly: true,
     confirmatoryStage1AEligible: false,
+    executionMode:
+      args.authorization.executionMode,
     status: "running",
     checkoutGitSha: args.authorization.checkoutGitSha,
     planHash: args.prepared.planHash,
@@ -319,6 +330,8 @@ export function assertP63V3RSemCompletionResumeCompatible(args: {
       authorization.provenanceHash ||
     state.fixedEnvironmentIdentity !==
       prepared.provenance.fixedEnvironmentIdentity ||
+    state.executionMode !==
+      authorization.executionMode ||
     state.inheritedMSourceStateSha256 !==
       P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256 ||
     state.inheritedMSemanticSha256 !==
@@ -804,7 +817,11 @@ function assertAuthorizationCompatible(
     authorization.provenanceHash !==
       p63V3RSemCompletionProvenanceHash(prepared) ||
     authorization.fixedEnvironmentIdentity !==
-      prepared.provenance.fixedEnvironmentIdentity
+      prepared.provenance.fixedEnvironmentIdentity ||
+    (authorization.executionMode !==
+      "provider-scientific" &&
+      authorization.executionMode !==
+        "offline-verifier")
   ) {
     throw new Error(
       "P6-3 v3 Rsem completion authorization drifted"
