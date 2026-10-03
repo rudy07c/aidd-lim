@@ -1,4 +1,5 @@
 import assert from "assert";
+import * as fs from "fs";
 import * as path from "path";
 import {
   P6_3_RSEM_PROVIDER_CONTRACT,
@@ -25,9 +26,44 @@ import {
 } from "./src/p6/p6-3-v3-rsem-completion-predeclaration";
 
 const repoRoot = path.resolve(__dirname, "..");
+const frozen = JSON.parse(
+  fs.readFileSync(
+    path.join(
+      __dirname,
+      "frozen",
+      "p6-3-v3-rsem-completion.json"
+    ),
+    "utf8"
+  )
+);
 const inherited = loadP63V3InheritedMEvidence(repoRoot);
 const plan = buildP63V3RSemCompletionPlan();
 const planHash = p63V3RSemCompletionPlanHash(plan);
+
+assert.equal(
+  frozen.schemaVersion,
+  "p6-3-v3-rsem-completion-manifest-v1"
+);
+assert.equal(
+  frozen.status,
+  "provider-free-completion-design-freeze"
+);
+assert.equal(frozen.runClass, "scientific-calibration-completion");
+assert.equal(frozen.inheritedM.sourceStateSha256, inherited.sourceStateSha256);
+assert.equal(
+  frozen.inheritedM.mEvidenceSemanticSha256,
+  inherited.mEvidenceSemanticSha256
+);
+assert.equal(frozen.freshRSem.planSha256, planHash);
+assert.equal(frozen.freshRSem.provider.maxOutputTokens, 32000);
+assert.equal(frozen.freshRSem.provider.providerMaxRetries, 2);
+assert.equal(frozen.freshRSem.stoppedRunRSemReuseAllowed, false);
+assert.equal(frozen.freshRSem.reliabilityAuditPoolingAllowed, false);
+assert.equal(frozen.combinedAnalysis.mLogicalCells, 792);
+assert.equal(frozen.combinedAnalysis.rsemLogicalCells, 72);
+assert.equal(frozen.combinedAnalysis.logicalCells, 864);
+assert.equal(frozen.combinedAnalysis.singleRuntimeInvocationClaimed, false);
+assert.equal(frozen.liveExecutionAuthorized, false);
 
 assert.equal(
   inherited.sourceStateSha256,
