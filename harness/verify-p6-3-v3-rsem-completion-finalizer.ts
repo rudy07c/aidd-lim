@@ -157,6 +157,39 @@ async function main(): Promise<void> {
     /plan hash differs/
   );
 
+  const provenanceHashTamper = clone(state) as any;
+  provenanceHashTamper.provenanceHash = "e".repeat(64);
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemState: provenanceHashTamper,
+      }),
+    /treatment provenance hash mismatch/
+  );
+
+  const authorizationDigestTamper = clone(state) as any;
+  authorizationDigestTamper.authorizationDigest = "f".repeat(64);
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemState: authorizationDigestTamper,
+      }),
+    /authorization digest mismatch/
+  );
+
+  const checkoutShaTamper = clone(state) as any;
+  checkoutShaTamper.checkoutGitSha = "not-a-sha";
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemState: checkoutShaTamper,
+      }),
+    /checkoutGitSha is malformed/
+  );
+
   const missingScore = clone(state) as any;
   missingScore.attempts[0].semanticScore = null;
   assert.throws(
@@ -246,6 +279,9 @@ async function main(): Promise<void> {
       "repository-promoted-inherited-M-is-the-only-M-source",
       "fresh-Rsem-state-must-be-terminal-completed-and-audit-free",
       "fresh-Rsem-plan-hash-and-E-fixed-binding-are-exact",
+      "fresh-Rsem-treatment-provenance-hash-is-recomputed",
+      "fresh-Rsem-authorization-digest-is-recomputed",
+      "fresh-Rsem-checkout-sha-is-validated",
       "exactly-one-valid-fresh-Rsem-observation-per-collection-sequence",
       "fresh-Rsem-canonical-sequence-mapping-is-verified",
       "M-132-per-arm",
