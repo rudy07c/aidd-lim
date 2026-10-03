@@ -54,6 +54,7 @@ async function main(): Promise<void> {
         [P6_3_V3_RSEM_COMPLETION_PAID_ENV]: "1",
       } as NodeJS.ProcessEnv,
       checkoutGitSha: "a".repeat(40),
+      executionMode: "offline-verifier",
       prepared,
     });
 
