@@ -267,3 +267,35 @@ Machine-local absolute paths were sanitized in 94 text files before repository p
 `RAW_SHA256SUMS` records the pre-sanitization fingerprints of the 804 payload files. `SHA256SUMS` records the fingerprints of the same 804 payload files after sanitization and is the integrity manifest for the repository copy.
 
 Promotion of this archive does not change the scientific status of the run: P6-3 v3 remains incomplete diagnostic evidence and is not a completed calibration or a valid M/Rsem co-gate result.
+## Follow-up after the diagnostic stop
+
+The reliability-only path identified above as **Option C** was subsequently executed under a separately predeclared audit contract before any new scientific Rsem collection.
+
+That audit qualified:
+
+```text
+Rsem maxOutputTokens = 32000
+60 / 60 valid balanced trials
+provider-declared max_output_tokens censoring = 0
+```
+
+The result is recorded in:
+
+`docs/findings/p6_3_v3_rsem_reliability_audit.md`
+
+The audit observations remain non-scientific and are not pooled into P6-3 primary estimates.
+
+After the audit, the project moved to the explicit split-provenance form of **Option B** rather than resuming this stopped state or rerunning the completed M family. The new completion design is frozen in:
+
+`docs/p6_3_v3_rsem_completion_predeclaration.md`
+
+Its analysis boundary is:
+
+```text
+inherited M from this diagnostic run: 792 / 792
+fresh Rsem under the qualified 32k envelope: 72 / 72 required
+stopped-run Rsem reused: 0
+reliability-audit calls reused: 0
+```
+
+This follow-up does not change the status of the run documented above. The original P6-3 v3 run remains an incomplete, fail-closed scientific calibration and immutable diagnostic source evidence.
