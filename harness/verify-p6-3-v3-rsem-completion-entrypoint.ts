@@ -141,6 +141,8 @@ async function main(): Promise<void> {
       () =>
         finalizeP63V3RSemCompletion({
           repoRoot,
+          freshRSemRunDir:
+            path.dirname(statePath),
           freshRSemState: resumed.state,
         }),
       /provenance mismatch/
