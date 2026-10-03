@@ -10,6 +10,7 @@ import {
 } from "./src/p6/p6-3-v3-calibration-predeclaration";
 import {
   authorizeP63V3RSemCompletionInvocation,
+  buildP63V3RSemCompletionAttemptArtifact,
   createP63V3RSemCompletionState,
   executeP63V3ControlledRSemCompletion,
   P6_3_V3_RSEM_COMPLETION_PAID_ENV,
@@ -96,7 +97,15 @@ async function main(): Promise<void> {
           `attempts/${cell.collectionSequence}-${attempt}.json`;
         fs.writeFileSync(
           path.join(runDir, relative),
-          JSON.stringify(payload, null, 2) + "\n",
+          JSON.stringify(
+            buildP63V3RSemCompletionAttemptArtifact(
+              cell,
+              attempt,
+              payload
+            ),
+            null,
+            2
+          ) + "\n",
           "utf8"
         );
         return relative;
@@ -236,7 +245,7 @@ async function main(): Promise<void> {
   missingScore.attempts[0].semanticScore = null;
   const missingScoreArtifact =
     JSON.parse(firstStateArtifactOriginal) as any;
-  missingScoreArtifact.result.booleanAccuracy =
+  missingScoreArtifact.payload.result.booleanAccuracy =
     null;
   fs.writeFileSync(
     firstStateArtifactPath,
@@ -266,7 +275,7 @@ async function main(): Promise<void> {
   denominatorDrift.attempts[0].diagnosticSummary.booleanTotal = 11;
   const denominatorArtifact =
     JSON.parse(firstStateArtifactOriginal) as any;
-  denominatorArtifact.result.booleanTotal = 11;
+  denominatorArtifact.payload.result.booleanTotal = 11;
   fs.writeFileSync(
     firstStateArtifactPath,
     JSON.stringify(
@@ -383,7 +392,7 @@ async function main(): Promise<void> {
   const tamperedArtifact = JSON.parse(
     originalArtifact
   ) as any;
-  tamperedArtifact.result.booleanCorrect += 1;
+  tamperedArtifact.payload.result.booleanCorrect += 1;
   fs.writeFileSync(
     firstArtifactPath,
     JSON.stringify(tamperedArtifact, null, 2) + "\n",
@@ -403,6 +412,69 @@ async function main(): Promise<void> {
     originalArtifact,
     "utf8"
   );
+
+  const identityTamperArtifact = JSON.parse(
+    originalArtifact
+  ) as any;
+  identityTamperArtifact.identity.armLabel =
+    identityTamperArtifact.identity.armLabel === "AF"
+      ? "B0"
+      : "AF";
+  fs.writeFileSync(
+    firstArtifactPath,
+    JSON.stringify(
+      identityTamperArtifact,
+      null,
+      2
+    ) + "\n",
+    "utf8"
+  );
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemRunDir: runDir,
+        freshRSemState: state,
+      }),
+    /attempt artifact identity mismatch/
+  );
+  fs.writeFileSync(
+    firstArtifactPath,
+    originalArtifact,
+    "utf8"
+  );
+
+  const symlinkState = clone(state) as any;
+  const symlinkRelative =
+    "attempts/symlink-escape.json";
+  const symlinkPath = path.join(
+    runDir,
+    symlinkRelative
+  );
+  const outsidePath =
+    `${runDir}-outside-artifact.json`;
+  fs.writeFileSync(
+    outsidePath,
+    originalArtifact,
+    "utf8"
+  );
+  fs.symlinkSync(
+    outsidePath,
+    symlinkPath
+  );
+  symlinkState.attempts[0].artifactPath =
+    symlinkRelative;
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemRunDir: runDir,
+        freshRSemState: symlinkState,
+      }),
+    /attempt artifact symlinks are forbidden/
+  );
+  fs.unlinkSync(symlinkPath);
+  fs.unlinkSync(outsidePath);
 
   const escapeState = clone(state) as any;
   escapeState.attempts[0].artifactPath =
@@ -470,6 +542,8 @@ async function main(): Promise<void> {
       "attempt-artifact-missing-fails-closed",
       "attempt-artifact-invalid-json-fails-closed",
       "attempt-artifact-state-mismatch-fails-closed",
+      "attempt-artifact-identity-mismatch-fails-closed",
+      "attempt-artifact-symlink-fails-closed",
       "attempt-artifact-path-traversal-fails-closed",
       "attempt-artifact-set-is-hash-bound-into-result",
       "frozen-v3-conjunctive-co-gate-is-reused",
