@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "p6-3-v3-rsem-completion-manifest-v1",
+  "status": "provider-free-completion-design-freeze",
+  "runClass": "scientific-calibration-completion",
+  "calibrationOnly": true,
+  "confirmatoryStage1AEligible": false,
+  "treatment": {
+    "version": "p6-3-v3-calibration-predeclaration-v2-m-reliability-inheritance",
+    "contextDefinition": "E_fixed union Exposure_artifact(B_expose, S_select)",
+    "artifactBudgets": {
+      "B0": 0,
+      "B1": 505,
+      "B2": 1011,
+      "B3": 2023,
+      "B4": 3034,
+      "AF": 4046
+    },
+    "deltaM": 0.09090909090909091,
+    "deltaR": 0.08333333333333333,
+    "selectionRule": "conjunctive-interior-co-gate",
+    "tieBreak": "minimum-B_expose"
+  },
+  "inheritedM": {
+    "sourceStatePath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/state.json",
+    "sourceStateSha256": "13efea9b8cc00598e5341595344f125f2c1b6b08feef22384098be19a092b627",
+    "sourceCheckoutGitSha": "c6b078dae6a9f8536b9dd283e06ccb4384850d47",
+    "sourcePlanHash": "9d3a3f92d6e169e10600e3caa01fecaed7efb7ee8383e9700abe24bb19b8b932",
+    "sourceTreatmentProvenanceHash": "bd66dc16fde82faad539778a51652061656b752f67bc8f929e42b9fbadc62d11",
+    "fixedEnvironmentIdentity": "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b",
+    "mEvidenceSemanticSha256": "eceeef0cf2f561f1b1b5f953668f80446dcdf44fca04568169f927a2e25a9f8c",
+    "logicalCells": 792,
+    "requiredSequenceRange": [0, 791],
+    "requireExactlyOneValidObservationPerSequence": true,
+    "requireNoInfrastructureInvalidMAttempts": true,
+    "scientificOutcomeUse": "primary-M-endpoint"
+  },
+  "freshRSem": {
+    "logicalCells": 72,
+    "collectionSequenceRange": [0, 71],
+    "canonicalV3SequenceRange": [792, 863],
+    "planVersion": "p6-3-v3-rsem-completion-plan-v1",
+    "planSha256": "b3ae8664f97ef93f7d0811c477a0737f6755a7a206f110e5914c15fab9ba2550",
+    "repeatCount": 12,
+    "armLabels": ["B0", "B1", "B2", "B3", "B4", "AF"],
+    "namingSchemeId": "A-obfuscated",
+    "booleanProbeCount": 12,
+    "provider": {
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "high",
+      "maxOutputTokens": 32000,
+      "requestTimeoutMs": 180000,
+      "providerMaxRetries": 2,
+      "serviceTier": "default",
+      "promptCacheMode": "implicit",
+      "storeResponses": false,
+      "executionMode": "sync"
+    },
+    "maxScientificAttemptsPerLogicalCell": 3,
+    "fixedEnvironmentIdentityMustEqualInheritedSource": true,
+    "stoppedRunRSemReuseAllowed": false,
+    "reliabilityAuditPoolingAllowed": false
+  },
+  "reliabilityQualification": {
+    "findingPath": "docs/findings/p6_3_v3_rsem_reliability_audit.md",
+    "qualifiedMaxOutputTokens": 32000,
+    "validTrials": 60,
+    "capCensoringCount": 0,
+    "nonCapInfrastructureAttemptCount": 0,
+    "protocolInvalidAttemptCount": 0,
+    "interruptedAttempts": 0,
+    "externalArchiveFile": "p6-3-v3-rsem-reliability-audit-2026-10-03T00-35-14-051Z.tar.gz",
+    "externalArchiveSha256": "15871172b675d6079909cee15ea2e226759a6a9ba7950a123dbbea44f5dc4817"
+  },
+  "combinedAnalysis": {
+    "logicalCells": 864,
+    "mLogicalCells": 792,
+    "rsemLogicalCells": 72,
+    "historicalV2PrimaryEstimatePooling": false,
+    "stoppedV3RSemPooling": false,
+    "reliabilityAuditPooling": false,
+    "singleRuntimeInvocationClaimed": false
+  },
+  "liveExecutionAuthorized": false
+}
