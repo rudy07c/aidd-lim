@@ -10,6 +10,7 @@ import {
 import {
   applyP63V3RSemCompletionAdjudication,
   assertP63V3RSemCompletionResumeCompatible,
+  buildP63V3RSemCompletionAttemptArtifact,
   authorizeP63V3RSemCompletionInvocation,
   createP63V3RSemCompletionState,
   executeP63V3ControlledRSemCompletion,
@@ -431,7 +432,14 @@ function createControllerPersistence(
           `P6-3 v3 Rsem completion attempt artifact already exists: ${target}`
         );
       }
-      writeJsonAtomic(target, payload);
+      writeJsonAtomic(
+        target,
+        buildP63V3RSemCompletionAttemptArtifact(
+          cell,
+          attempt,
+          payload
+        )
+      );
       return path
         .relative(runDir, target)
         .split(path.sep)
