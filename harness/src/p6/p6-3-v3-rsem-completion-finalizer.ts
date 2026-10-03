@@ -17,6 +17,7 @@ import type { P63V3AttemptRecord } from "./p6-3-v3-live-controller";
 import {
   P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION,
   P6_3_V3_RSEM_COMPLETION_STATE_SCHEMA,
+  p63V3RSemCompletionAuthorizationDigest,
   type P63V3RSemCompletionAttemptRecord,
   type P63V3RSemCompletionState,
 } from "./p6-3-v3-rsem-completion-controller";
@@ -25,6 +26,10 @@ import {
   p63V3RSemCompletionPlanHash,
   type P63V3RSemCompletionCell,
 } from "./p6-3-v3-rsem-completion-plan";
+import {
+  buildP63V3RSemCompletionTreatmentProvenance,
+  p63V3RSemCompletionTreatmentProvenanceHash,
+} from "./p6-3-v3-rsem-completion-runner";
 import {
   P6_3_V3_RSEM_COMPLETION_COMBINED_LOGICAL_CELLS,
   P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY,
@@ -391,12 +396,60 @@ function assertFreshRSemTerminalState(
       "P6-3 v3 split finalization refused: fresh Rsem collection is not terminally completed and audit-free"
     );
   }
+  const canonicalPlanHash =
+    p63V3RSemCompletionPlanHash(plan);
   if (
-    state.planHash !==
-      p63V3RSemCompletionPlanHash(plan)
+    state.planHash !== canonicalPlanHash
   ) {
     throw new Error(
       "P6-3 v3 split finalization refused: fresh Rsem plan hash differs from frozen completion plan"
+    );
+  }
+  const canonicalProvenance =
+    buildP63V3RSemCompletionTreatmentProvenance({
+      fixedEnvironmentIdentity:
+        P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY,
+      planHash: canonicalPlanHash,
+    });
+  const expectedProvenanceHash =
+    p63V3RSemCompletionTreatmentProvenanceHash(
+      canonicalProvenance
+    );
+  if (
+    state.provenanceHash !==
+      expectedProvenanceHash
+  ) {
+    throw new Error(
+      "P6-3 v3 split finalization refused: fresh Rsem treatment provenance hash mismatch"
+    );
+  }
+  if (
+    !/^[0-9a-f]{40}$/i.test(
+      state.checkoutGitSha
+    )
+  ) {
+    throw new Error(
+      "P6-3 v3 split finalization refused: fresh Rsem checkoutGitSha is malformed"
+    );
+  }
+  const expectedAuthorizationDigest =
+    p63V3RSemCompletionAuthorizationDigest({
+      checkoutGitSha:
+        state.checkoutGitSha,
+      planHash: canonicalPlanHash,
+      provenanceHash:
+        expectedProvenanceHash,
+      fixedEnvironmentIdentity:
+        P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY,
+      executionMode:
+        "provider-scientific",
+    });
+  if (
+    state.authorizationDigest !==
+      expectedAuthorizationDigest
+  ) {
+    throw new Error(
+      "P6-3 v3 split finalization refused: fresh Rsem authorization digest mismatch"
     );
   }
   if (
@@ -410,17 +463,6 @@ function assertFreshRSemTerminalState(
     throw new Error(
       "P6-3 v3 split finalization refused: inherited-M/fixed-environment binding drift"
     );
-  }
-  for (const [label, value] of [
-    ["checkoutGitSha", state.checkoutGitSha],
-    ["provenanceHash", state.provenanceHash],
-    ["authorizationDigest", state.authorizationDigest],
-  ] as const) {
-    if (!value || typeof value !== "string") {
-      throw new Error(
-        `P6-3 v3 split finalization refused: missing fresh Rsem ${label}`
-      );
-    }
   }
   for (const interrupted of state.interruptedAttempts) {
     if (
