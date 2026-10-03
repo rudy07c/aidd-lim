@@ -1,4 +1,6 @@
 import assert from "assert";
+import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import {
   loadDirRecursive,
@@ -17,6 +19,14 @@ import {
   P6_3_V3_RSEM_COMPLETION_FINALIZER_VERSION,
   P6_3_V3_RSEM_COMPLETION_RESULT_SCHEMA,
 } from "./src/p6/p6-3-v3-rsem-completion-finalizer";
+import {
+  P6_3_V3_RSEM_COMPLETION_EXECUTOR_VERSION,
+} from "./src/p6/p6-3-v3-rsem-completion-executor";
+import {
+  P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY,
+  P6_3_V3_RSEM_COMPLETION_PREDECLARATION_VERSION,
+  P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT,
+} from "./src/p6/p6-3-v3-rsem-completion-predeclaration";
 import type {
   P63V3RSemCompletionCell,
 } from "./src/p6/p6-3-v3-rsem-completion-plan";
@@ -64,6 +74,16 @@ async function main(): Promise<void> {
     prepared,
     authorization,
   });
+  const runDir = fs.mkdtempSync(
+    path.join(
+      os.tmpdir(),
+      "p6-3-v3-rsem-completion-finalizer-"
+    )
+  );
+  fs.mkdirSync(
+    path.join(runDir, "attempts"),
+    { recursive: true }
+  );
 
   await executeP63V3ControlledRSemCompletion({
     state,
@@ -71,8 +91,15 @@ async function main(): Promise<void> {
     authorization,
     persistence: {
       persistState() {},
-      persistAttemptArtifact(cell, attempt) {
-        return `attempts/${cell.collectionSequence}-${attempt}.json`;
+      persistAttemptArtifact(cell, attempt, payload) {
+        const relative =
+          `attempts/${cell.collectionSequence}-${attempt}.json`;
+        fs.writeFileSync(
+          path.join(runDir, relative),
+          JSON.stringify(payload, null, 2) + "\n",
+          "utf8"
+        );
+        return relative;
       },
     },
     executor: {
@@ -85,6 +112,7 @@ async function main(): Promise<void> {
 
   const result = finalizeP63V3RSemCompletion({
     repoRoot,
+    freshRSemRunDir: runDir,
     freshRSemState: state,
   });
 
@@ -152,6 +180,7 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: planHashTamper,
       }),
     /plan hash differs/
@@ -163,6 +192,7 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: provenanceHashTamper,
       }),
     /treatment provenance hash mismatch/
@@ -174,6 +204,7 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: authorizationDigestTamper,
       }),
     /authorization digest mismatch/
@@ -185,6 +216,7 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: checkoutShaTamper,
       }),
     /checkoutGitSha is malformed/
@@ -196,6 +228,7 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: missingScore,
       }),
     /lacks a protocol-valid semantic score/
@@ -207,6 +240,7 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: denominatorDrift,
       }),
     /probe denominator\/count drift/
@@ -222,6 +256,7 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: duplicateValid,
       }),
     /exactly one valid observation|attempt journal/
@@ -249,9 +284,101 @@ async function main(): Promise<void> {
     () =>
       finalizeP63V3RSemCompletion({
         repoRoot,
+        freshRSemRunDir: runDir,
         freshRSemState: invalidUnadjudicated,
       }),
     /infrastructure-invalid without completed adjudication/
+  );
+
+  const firstArtifactPath = path.join(
+    runDir,
+    state.attempts[0].artifactPath!
+  );
+  const originalArtifact = fs.readFileSync(
+    firstArtifactPath,
+    "utf8"
+  );
+
+  fs.unlinkSync(firstArtifactPath);
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemRunDir: runDir,
+        freshRSemState: state,
+      }),
+    /attempt artifact missing/
+  );
+  fs.writeFileSync(
+    firstArtifactPath,
+    originalArtifact,
+    "utf8"
+  );
+
+  fs.writeFileSync(
+    firstArtifactPath,
+    "{not-json",
+    "utf8"
+  );
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemRunDir: runDir,
+        freshRSemState: state,
+      }),
+    /attempt artifact is not valid JSON object/
+  );
+  fs.writeFileSync(
+    firstArtifactPath,
+    originalArtifact,
+    "utf8"
+  );
+
+  const tamperedArtifact = JSON.parse(
+    originalArtifact
+  ) as any;
+  tamperedArtifact.result.booleanCorrect += 1;
+  fs.writeFileSync(
+    firstArtifactPath,
+    JSON.stringify(tamperedArtifact, null, 2) + "\n",
+    "utf8"
+  );
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemRunDir: runDir,
+        freshRSemState: state,
+      }),
+    /attempt artifact\/state outcome mismatch/
+  );
+  fs.writeFileSync(
+    firstArtifactPath,
+    originalArtifact,
+    "utf8"
+  );
+
+  const escapeState = clone(state) as any;
+  escapeState.attempts[0].artifactPath =
+    "../outside.json";
+  assert.throws(
+    () =>
+      finalizeP63V3RSemCompletion({
+        repoRoot,
+        freshRSemRunDir: runDir,
+        freshRSemState: escapeState,
+      }),
+    /escapes run directory/
+  );
+
+  assert.equal(
+    result.source.freshRSem.attemptArtifacts.length,
+    72
+  );
+  assert.match(
+    result.source.freshRSem.attemptArtifactsSha256,
+    /^[0-9a-f]{64}$/
   );
 
   console.log(JSON.stringify({
@@ -275,6 +402,10 @@ async function main(): Promise<void> {
       ])
     ),
     selection: result.selection,
+    attemptArtifactsSha256:
+      result.source.freshRSem.attemptArtifactsSha256,
+    attemptArtifactCount:
+      result.source.freshRSem.attemptArtifacts.length,
     verified: [
       "repository-promoted-inherited-M-is-the-only-M-source",
       "fresh-Rsem-state-must-be-terminal-completed-and-audit-free",
@@ -291,10 +422,19 @@ async function main(): Promise<void> {
       "Rsem-denominator-drift-fails-closed",
       "duplicate-valid-observation-fails-closed",
       "unadjudicated-infrastructure-invalid-attempt-fails-closed",
+      "attempt-artifact-missing-fails-closed",
+      "attempt-artifact-invalid-json-fails-closed",
+      "attempt-artifact-state-mismatch-fails-closed",
+      "attempt-artifact-path-traversal-fails-closed",
+      "attempt-artifact-set-is-hash-bound-into-result",
       "frozen-v3-conjunctive-co-gate-is-reused",
       "no-stopped-v3-Rsem-or-reliability-audit-pooling-input-exists",
     ],
   }, null, 2));
+  fs.rmSync(runDir, {
+    recursive: true,
+    force: true,
+  });
 }
 
 function scientificOutcome(
@@ -325,8 +465,40 @@ function scientificOutcome(
       booleanTotal: total,
     },
     artifactPayload: {
+      executorVersion:
+        P6_3_V3_RSEM_COMPLETION_EXECUTOR_VERSION,
+      completionPredeclarationVersion:
+        P6_3_V3_RSEM_COMPLETION_PREDECLARATION_VERSION,
+      providerContract: {
+        ...P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT,
+      },
+      fixedEnvironment: {
+        identity:
+          P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY,
+      },
       result: {
+        repeat: cell.repeat,
+        executionStatus: "ok",
         validity: "valid",
+        failureDomain: "none",
+        protocolValid: true,
+        failureReason: null,
+        booleanCorrect: correct,
+        booleanTotal: total,
+        booleanAccuracy: correct / total,
+        estimatedCostUsd: 0.01,
+        modelProvenance: {
+          requestedModel:
+            P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.model,
+          reasoningEffort:
+            P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.reasoningEffort,
+          maxOutputTokens:
+            P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.maxOutputTokens,
+          requestTimeoutMs:
+            P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.requestTimeoutMs,
+          maxRetries:
+            P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.providerMaxRetries,
+        },
       },
     },
   };
