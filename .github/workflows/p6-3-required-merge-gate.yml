@@ -81,6 +81,11 @@ jobs:
         working-directory: harness
         run: npm run verify:p6-3-v3-rsem-completion-predeclaration
 
+      - name: Verify P6-3 v3 Rsem completion runtime
+        if: steps.changes.outputs.code == 'true'
+        working-directory: harness
+        run: npm run verify:p6-3-v3-rsem-completion-runtime
+
       - name: Verify canonical Step-5 artifacts exist
         shell: bash
         run: |
