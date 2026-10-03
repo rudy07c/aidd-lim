@@ -22,6 +22,8 @@ export const P6_3_V3_RSEM_COMPLETION_SOURCE_TREATMENT_PROVENANCE_HASH =
 export const P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY =
   "world-protocol-surface-v1:9f8d38e1bb47b4cdd2d5f017e2df05551cf13e0b60a4e4a3c922e07ecfd3bb47:p6-3-v3-world-protocol-external-spec-v1:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b:d1dda51bdaf12a86f3df7e174460f355b518f960062f4d68a8e0e56aa8ef921b" as const;
 
+export const P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256 =
+  "eceeef0cf2f561f1b1b5f953668f80446dcdf44fca04568169f927a2e25a9f8c" as const;
 export const P6_3_V3_RSEM_COMPLETION_INHERITED_M_LOGICAL_CELLS = 792 as const;
 export const P6_3_V3_RSEM_COMPLETION_FRESH_RSEM_LOGICAL_CELLS = 72 as const;
 export const P6_3_V3_RSEM_COMPLETION_COMBINED_LOGICAL_CELLS = 864 as const;
@@ -61,6 +63,8 @@ export const P6_3_V3_RSEM_COMPLETION_PREDECLARATION = Object.freeze({
       P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY,
     expectedLogicalCells:
       P6_3_V3_RSEM_COMPLETION_INHERITED_M_LOGICAL_CELLS,
+    mEvidenceSemanticSha256:
+      P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
     requiredMeasurement: "M",
     requiredSequenceRange: Object.freeze([0, 791] as const),
     requireExactlyOneValidObservationPerSequence: true,
