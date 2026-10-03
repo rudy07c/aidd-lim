@@ -87,6 +87,7 @@ jobs:
         run: |
           npm run verify:p6-3-v3-rsem-completion-runtime
           npm run verify:p6-3-v3-rsem-completion-controller
+          npm run verify:p6-3-v3-rsem-completion-finalizer
 
       - name: Verify canonical Step-5 artifacts exist
         shell: bash
