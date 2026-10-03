@@ -41,10 +41,6 @@ import {
 import {
   P6_3_V3_RSEM_COMPLETION_FINALIZER_VERSION,
 } from "./p6-3-v3-rsem-completion-finalizer";
-import {
-  P6_3_V3_RSEM_COMPLETION_ENTRYPOINT_VERSION,
-} from "./p6-3-v3-rsem-completion-entrypoint";
-
 export const P6_3_V3_RSEM_COMPLETION_FINAL_PRELIVE_GATE_VERSION =
   "p6-3-v3-rsem-completion-final-prelive-gate-v1" as const;
 export const P6_3_V3_RSEM_COMPLETION_FINAL_PRELIVE_RECEIPT_SCHEMA =
@@ -65,7 +61,6 @@ export const P6_3_V3_RSEM_COMPLETION_FINAL_PRELIVE_VERIFIER_SCRIPTS =
     "verify-p6-3-v3-rsem-completion-runtime.ts",
     "verify-p6-3-v3-rsem-completion-controller.ts",
     "verify-p6-3-v3-rsem-completion-finalizer.ts",
-    "verify-p6-3-v3-rsem-completion-entrypoint.ts",
   ] as const);
 
 export const P6_3_V3_RSEM_COMPLETION_FINAL_SOURCE_FILES =
@@ -142,8 +137,6 @@ export interface P63V3RSemCompletionFinalPreLiveReceipt {
     typeof P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION;
   readonly finalizerVersion:
     typeof P6_3_V3_RSEM_COMPLETION_FINALIZER_VERSION;
-  readonly entrypointVersion:
-    typeof P6_3_V3_RSEM_COMPLETION_ENTRYPOINT_VERSION;
   readonly preflightPassed: true;
   readonly exactCleanCheckoutVerified: true;
   readonly runtimeConsumedUntrackedFilesVerified: true;
@@ -332,8 +325,6 @@ export function runP63V3RSemCompletionFinalPreLiveGate(
           P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION,
         finalizerVersion:
           P6_3_V3_RSEM_COMPLETION_FINALIZER_VERSION,
-        entrypointVersion:
-          P6_3_V3_RSEM_COMPLETION_ENTRYPOINT_VERSION,
         preflightPassed: true,
         exactCleanCheckoutVerified: true,
         runtimeConsumedUntrackedFilesVerified:
@@ -403,8 +394,6 @@ export function assertP63V3RSemCompletionFinalPreLiveGatePassToken(
       P6_3_V3_RSEM_COMPLETION_CONTROLLER_VERSION ||
     receipt.finalizerVersion !==
       P6_3_V3_RSEM_COMPLETION_FINALIZER_VERSION ||
-    receipt.entrypointVersion !==
-      P6_3_V3_RSEM_COMPLETION_ENTRYPOINT_VERSION ||
     receipt.preflightPassed !== true ||
     receipt.exactCleanCheckoutVerified !==
       true ||
