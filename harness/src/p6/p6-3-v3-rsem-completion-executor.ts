@@ -109,10 +109,24 @@ export async function executeP63V3RSemCompletionCell(
         P6_3_V3_RSEM_COMPLETION_EXECUTOR_VERSION,
       completionPredeclarationVersion:
         P6_3_V3_RSEM_COMPLETION_PREDECLARATION_VERSION,
+      providerModel:
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.model,
+      providerReasoningEffort:
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.reasoningEffort,
       providerMaxOutputTokens:
         P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.maxOutputTokens,
+      providerRequestTimeoutMs:
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.requestTimeoutMs,
       providerMaxRetries:
         P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.providerMaxRetries,
+      providerServiceTier:
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.serviceTier,
+      providerPromptCacheMode:
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.promptCacheMode,
+      providerStoreResponses:
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.storeResponses,
+      providerExecutionMode:
+        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.executionMode,
     },
     artifactPayload: {
       ...artifact,
