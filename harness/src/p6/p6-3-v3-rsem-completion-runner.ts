@@ -104,6 +104,76 @@ export interface P63V3PreparedRSemCompletionRun {
     Readonly<P63V3RSemCompletionTreatmentProvenance>;
 }
 
+export function buildP63V3RSemCompletionTreatmentProvenance(args: {
+  fixedEnvironmentIdentity: string;
+  planHash: string;
+}): Readonly<P63V3RSemCompletionTreatmentProvenance> {
+  if (
+    args.fixedEnvironmentIdentity !==
+    P6_3_V3_RSEM_COMPLETION_FIXED_ENVIRONMENT_IDENTITY
+  ) {
+    throw new Error(
+      "P6-3 v3 Rsem completion provenance fixed-environment identity drift"
+    );
+  }
+  if (
+    args.planHash !==
+    P6_3_V3_RSEM_COMPLETION_FRESH_RSEM_PLAN_SHA256
+  ) {
+    throw new Error(
+      "P6-3 v3 Rsem completion provenance plan hash drift"
+    );
+  }
+  return Object.freeze({
+    schemaVersion:
+      P6_3_V3_RSEM_COMPLETION_PROVENANCE_SCHEMA,
+    runnerVersion:
+      P6_3_V3_RSEM_COMPLETION_RUNNER_VERSION,
+    predeclarationVersion:
+      P6_3_V3_RSEM_COMPLETION_PREDECLARATION_VERSION,
+    planVersion:
+      P6_3_V3_RSEM_COMPLETION_PLAN_VERSION,
+    runStartWiringVersion:
+      P6_3_V3_RUN_START_WIRING_VERSION,
+    staticExposureRuntimeVersion:
+      P6_3_V3_STATIC_EXPOSURE_RUNTIME_VERSION,
+    finalSelectorVersion:
+      P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION,
+    executorVersion:
+      P6_3_V3_RSEM_COMPLETION_EXECUTOR_VERSION,
+    runClass: "scientific-calibration-completion",
+    calibrationOnly: true,
+    confirmatoryStage1AEligible: false,
+    fixedEnvironmentIdentity:
+      args.fixedEnvironmentIdentity,
+    planHash: args.planHash,
+    freshRSemLogicalCells:
+      P6_3_V3_RSEM_COMPLETION_FRESH_RSEM_LOGICAL_CELLS,
+    canonicalV3SequenceRange: Object.freeze(
+      [792, 863] as const
+    ),
+    inheritedMLogicalCells:
+      P6_3_V3_RSEM_COMPLETION_INHERITED_M_LOGICAL_CELLS,
+    inheritedMSourceStateSha256:
+      P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
+    inheritedMSemanticSha256:
+      P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
+    providerMaxOutputTokens:
+      P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.maxOutputTokens,
+    providerMaxRetries:
+      P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.providerMaxRetries,
+    stoppedRunRSemReuseAllowed: false,
+    reliabilityAuditPoolingAllowed: false,
+    liveAuthorized: false,
+  });
+}
+
+export function p63V3RSemCompletionTreatmentProvenanceHash(
+  provenance: Readonly<P63V3RSemCompletionTreatmentProvenance>
+): string {
+  return sha256(stableJson(provenance));
+}
+
 export async function prepareP63V3RSemCompletionRun(args: {
   generationZeroRepositoryFiles: Readonly<Record<string, string>>;
   persistence: P63V3RSemCompletionPersistence;
@@ -164,48 +234,11 @@ export async function prepareP63V3RSemCompletionRun(args: {
     );
   }
 
-  const provenance:
-    Readonly<P63V3RSemCompletionTreatmentProvenance> =
-    Object.freeze({
-      schemaVersion:
-        P6_3_V3_RSEM_COMPLETION_PROVENANCE_SCHEMA,
-      runnerVersion:
-        P6_3_V3_RSEM_COMPLETION_RUNNER_VERSION,
-      predeclarationVersion:
-        P6_3_V3_RSEM_COMPLETION_PREDECLARATION_VERSION,
-      planVersion:
-        P6_3_V3_RSEM_COMPLETION_PLAN_VERSION,
-      runStartWiringVersion:
-        P6_3_V3_RUN_START_WIRING_VERSION,
-      staticExposureRuntimeVersion:
-        P6_3_V3_STATIC_EXPOSURE_RUNTIME_VERSION,
-      finalSelectorVersion:
-        P6_3_V3_FINAL_STATIC_EXPOSURE_POLICY_VERSION,
-      executorVersion:
-        P6_3_V3_RSEM_COMPLETION_EXECUTOR_VERSION,
-      runClass: "scientific-calibration-completion",
-      calibrationOnly: true,
-      confirmatoryStage1AEligible: false,
+  const provenance =
+    buildP63V3RSemCompletionTreatmentProvenance({
       fixedEnvironmentIdentity:
         runStart.provenance.fixedEnvironmentIdentity,
       planHash,
-      freshRSemLogicalCells: plan.length,
-      canonicalV3SequenceRange: Object.freeze(
-        [792, 863] as const
-      ),
-      inheritedMLogicalCells:
-        P6_3_V3_RSEM_COMPLETION_INHERITED_M_LOGICAL_CELLS,
-      inheritedMSourceStateSha256:
-        P6_3_V3_RSEM_COMPLETION_SOURCE_STATE_SHA256,
-      inheritedMSemanticSha256:
-        P6_3_V3_RSEM_COMPLETION_INHERITED_M_SEMANTIC_SHA256,
-      providerMaxOutputTokens:
-        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.maxOutputTokens,
-      providerMaxRetries:
-        P6_3_V3_RSEM_COMPLETION_PROVIDER_CONTRACT.providerMaxRetries,
-      stoppedRunRSemReuseAllowed: false,
-      reliabilityAuditPoolingAllowed: false,
-      liveAuthorized: false,
     });
   await args.persistence.persistRSemCompletionTreatmentProvenance(
     provenance
@@ -259,7 +292,9 @@ export function buildP63V3RSemCompletionCellExposure(args: {
 export function p63V3RSemCompletionProvenanceHash(
   prepared: Readonly<P63V3PreparedRSemCompletionRun>
 ): string {
-  return sha256(stableJson(prepared.provenance));
+  return p63V3RSemCompletionTreatmentProvenanceHash(
+    prepared.provenance
+  );
 }
 
 function stableJson(value: unknown): string {
