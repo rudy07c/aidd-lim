@@ -699,6 +699,17 @@ export function applyP63V3RSemCompletionAdjudication(args: {
       "Fresh Rsem completion active audit flag does not permit attempt adjudication"
     );
   }
+  if (
+    state.auditFlag.kind ===
+      "infrastructure-adjudication-required" &&
+    request.finalDisposition !==
+      "infrastructure-invalid"
+  ) {
+    throw new Error(
+      "Fresh Rsem completion infrastructure-invalid outcomes may only be adjudicated infrastructure-invalid; missing scientific output cannot be promoted to semantic/protocol evidence"
+    );
+  }
+
   const adjudication: P63V3RSemCompletionAdjudication = {
     reviewer,
     reason,
