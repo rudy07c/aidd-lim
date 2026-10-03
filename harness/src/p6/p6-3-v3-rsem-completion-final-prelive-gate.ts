@@ -65,14 +65,21 @@ export const P6_3_V3_RSEM_COMPLETION_FINAL_PRELIVE_VERIFIER_SCRIPTS =
 
 export const P6_3_V3_RSEM_COMPLETION_FINAL_SOURCE_FILES =
   Object.freeze([
+    "harness/package.json",
     "harness/package-lock.json",
+    "harness/p6-af-baseline-live.ts",
     "harness/src/agent-backend/package-version.ts",
+    "harness/src/agent-backend/openai/shared.ts",
     "harness/src/context/fixed-world-protocol-spec.ts",
     "harness/src/context/generation-zero-fixed-environment.ts",
     "harness/src/context/fixed-environment-runtime.ts",
     "harness/src/context/p6-3-v3-final-static-exposure-selector.ts",
     "harness/src/context/p6-3-v3-static-exposure-runtime.ts",
+    "harness/src/p6/p6-3-execution-protocol.ts",
     "harness/src/p6/p6-3-rsem-protocol-parity.ts",
+    "harness/src/p6/p6-3-v3-calibration-predeclaration.ts",
+    "harness/src/p6/p6-3-v3-calibration-runner.ts",
+    "harness/src/p6/p6-3-v3-scientific-validity.ts",
     "harness/src/p6/p6-3-v3-rsem-executor.ts",
     "harness/src/p6/p6-3-v3-run-start.ts",
     "harness/src/p6/p6-3-v3-inherited-m-evidence.ts",
@@ -87,6 +94,9 @@ export const P6_3_V3_RSEM_COMPLETION_FINAL_SOURCE_FILES =
     "harness/src/p6/p6-3-v3-runtime-environment.ts",
     "harness/p6-3-v3-rsem-completion.ts",
     "harness/p6-3-v3-rsem-completion-finalize.ts",
+    "calibration/src/probe-generator.ts",
+    "calibration/src/probe-scorer.ts",
+    "calibration/src/stage1-probes.ts",
   ] as const);
 
 export const P6_3_V3_RSEM_COMPLETION_FINAL_FROZEN_EVIDENCE_FILES =
