@@ -79,7 +79,8 @@
     "verify:p6-3-v3-rsem-reliability-audit-final-prelive": "ts-node verify-p6-3-v3-rsem-reliability-audit-final-prelive-gate.ts",
     "p6:rsem-reliability-audit": "ts-node p6-3-v3-rsem-reliability-audit.ts",
     "verify:p6-3-v3-rsem-completion-predeclaration": "ts-node verify-p6-3-v3-rsem-completion-predeclaration.ts",
-    "verify:p6-3-v3-rsem-completion-runtime": "ts-node verify-p6-3-v3-rsem-completion-runtime.ts"
+    "verify:p6-3-v3-rsem-completion-runtime": "ts-node verify-p6-3-v3-rsem-completion-runtime.ts",
+    "verify:p6-3-v3-rsem-completion-controller": "ts-node verify-p6-3-v3-rsem-completion-controller.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
