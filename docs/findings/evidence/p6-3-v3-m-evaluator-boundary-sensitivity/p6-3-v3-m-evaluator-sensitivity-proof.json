@@ -1,0 +1,256 @@
+{
+  "schemaVersion": "p6-3-v3-m-corrected-evaluator-sensitivity-v1",
+  "analysisClass": "post-hoc-design-audit-sensitivity",
+  "primaryEvidenceMutated": false,
+  "providerCallsMade": false,
+  "evaluator": {
+    "version": "p6-3-v3-m-corrected-evaluator-opaque-handle-v1",
+    "originalHiddenEvaluatorSha256": "d7a65407a654fbe4c51abf91f7ecd7e3bffd2691b771648bd0ee0f46e0053459",
+    "correctedHiddenEvaluatorSha256": "562599825ecec2fc1ab2c2eadfd98a13e7ff255313c31f5c94689066a21d9e05",
+    "transformation": [
+      "remove direct repository/src/world WorldState import",
+      "derive opaque WorldStateHandle as ReturnType<typeof protocol.reset>",
+      "replace helper concrete WorldState annotations with opaque handle",
+      "preserve all H(G) describe/test bodies byte-identically"
+    ]
+  },
+  "scope": "proof",
+  "selectedSequences": [
+    1,
+    3,
+    5,
+    7,
+    8,
+    9,
+    12,
+    13,
+    23,
+    27
+  ],
+  "rows": [
+    {
+      "sequence": 1,
+      "taskId": "T-local-2",
+      "repeat": 1,
+      "armLabel": "B1",
+      "originalClassification": "PASS",
+      "originalPassed": true,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": false,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0001-M-B1-attempt-1.json"
+    },
+    {
+      "sequence": 3,
+      "taskId": "T-local-2",
+      "repeat": 1,
+      "armLabel": "B3",
+      "originalClassification": "C_EVALUATOR_INTERNAL_TYPE_COUPLING",
+      "originalPassed": false,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": true,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0003-M-B3-attempt-1.json"
+    },
+    {
+      "sequence": 5,
+      "taskId": "T-local-2",
+      "repeat": 1,
+      "armLabel": "AF",
+      "originalClassification": "PASS",
+      "originalPassed": true,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": false,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0005-M-AF-attempt-1.json"
+    },
+    {
+      "sequence": 7,
+      "taskId": "T-local-2",
+      "repeat": 2,
+      "armLabel": "B2",
+      "originalClassification": "C_EVALUATOR_INTERNAL_TYPE_COUPLING",
+      "originalPassed": false,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": true,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0007-M-B2-attempt-1.json"
+    },
+    {
+      "sequence": 8,
+      "taskId": "T-local-2",
+      "repeat": 2,
+      "armLabel": "B3",
+      "originalClassification": "C_EVALUATOR_INTERNAL_TYPE_COUPLING",
+      "originalPassed": false,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": true,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0008-M-B3-attempt-1.json"
+    },
+    {
+      "sequence": 9,
+      "taskId": "T-local-2",
+      "repeat": 2,
+      "armLabel": "B4",
+      "originalClassification": "A_CANDIDATE_FAILURE_EVIDENCE",
+      "originalPassed": false,
+      "correctedPassed": false,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": false,
+      "correctedProtocolContractViolated": false,
+      "changed": false,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0009-M-B4-attempt-1.json"
+    },
+    {
+      "sequence": 12,
+      "taskId": "T-local-2",
+      "repeat": 3,
+      "armLabel": "B2",
+      "originalClassification": "C_EVALUATOR_INTERNAL_TYPE_COUPLING",
+      "originalPassed": false,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": true,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0012-M-B2-attempt-1.json"
+    },
+    {
+      "sequence": 13,
+      "taskId": "T-local-2",
+      "repeat": 3,
+      "armLabel": "B3",
+      "originalClassification": "C_EVALUATOR_INTERNAL_TYPE_COUPLING",
+      "originalPassed": false,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": true,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0013-M-B3-attempt-1.json"
+    },
+    {
+      "sequence": 23,
+      "taskId": "T-local-2",
+      "repeat": 4,
+      "armLabel": "B2",
+      "originalClassification": "C_EVALUATOR_INTERNAL_TYPE_COUPLING",
+      "originalPassed": false,
+      "correctedPassed": true,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": true,
+      "correctedTaskSpecificPassed": true,
+      "correctedProtocolContractViolated": false,
+      "changed": true,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0023-M-B2-attempt-1.json"
+    },
+    {
+      "sequence": 27,
+      "taskId": "T-local-2",
+      "repeat": 5,
+      "armLabel": "B1",
+      "originalClassification": "B_FIXED_PROTOCOL_VIOLATION",
+      "originalPassed": false,
+      "correctedPassed": false,
+      "correctedVisiblePassed": true,
+      "correctedHiddenPassed": false,
+      "correctedTaskSpecificPassed": false,
+      "correctedProtocolContractViolated": true,
+      "changed": false,
+      "artifactPath": "docs/findings/evidence/p6-3-v3-live-diagnostic-stop/attempts/0027-M-B1-attempt-1.json"
+    }
+  ],
+  "summary": {
+    "total": 10,
+    "originalPasses": 2,
+    "correctedPasses": 8,
+    "changedToPass": 6,
+    "changedToFail": 0,
+    "byOriginalClass": {
+      "A_CANDIDATE_FAILURE_EVIDENCE": {
+        "total": 1,
+        "originalPasses": 0,
+        "correctedPasses": 0,
+        "changedToPass": 0,
+        "changedToFail": 0
+      },
+      "B_FIXED_PROTOCOL_VIOLATION": {
+        "total": 1,
+        "originalPasses": 0,
+        "correctedPasses": 0,
+        "changedToPass": 0,
+        "changedToFail": 0
+      },
+      "C_EVALUATOR_INTERNAL_TYPE_COUPLING": {
+        "total": 6,
+        "originalPasses": 0,
+        "correctedPasses": 6,
+        "changedToPass": 6,
+        "changedToFail": 0
+      },
+      "PASS": {
+        "total": 2,
+        "originalPasses": 2,
+        "correctedPasses": 2,
+        "changedToPass": 0,
+        "changedToFail": 0
+      }
+    },
+    "byArm": {
+      "AF": {
+        "total": 1,
+        "originalPasses": 1,
+        "correctedPasses": 1,
+        "changedToPass": 0,
+        "changedToFail": 0
+      },
+      "B1": {
+        "total": 2,
+        "originalPasses": 1,
+        "correctedPasses": 1,
+        "changedToPass": 0,
+        "changedToFail": 0
+      },
+      "B2": {
+        "total": 3,
+        "originalPasses": 0,
+        "correctedPasses": 3,
+        "changedToPass": 3,
+        "changedToFail": 0
+      },
+      "B3": {
+        "total": 3,
+        "originalPasses": 0,
+        "correctedPasses": 3,
+        "changedToPass": 3,
+        "changedToFail": 0
+      },
+      "B4": {
+        "total": 1,
+        "originalPasses": 0,
+        "correctedPasses": 0,
+        "changedToPass": 0,
+        "changedToFail": 0
+      }
+    }
+  }
+}

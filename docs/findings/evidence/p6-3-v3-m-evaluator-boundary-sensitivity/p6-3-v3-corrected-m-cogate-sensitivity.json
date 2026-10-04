@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "p6-3-v3-corrected-m-cogate-sensitivity-v1",
+  "analysisClass": "post-hoc-design-audit-sensitivity",
+  "primaryResultReplaced": false,
+  "confirmatoryClaim": false,
+  "stage1AEffectClaim": false,
+  "providerCallsMade": false,
+  "sources": {
+    "correctedMSensitivityPath": "/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/runs/p6-3-v3-m-evaluator-sensitivity-full.json",
+    "splitProvenancePath": "/Users/imahoriitsuki/Documents/study/aidd_ilm/aidd-ilm/runs/p6-3-v3-rsem-completion-2026-10-03T12-08-05-640Z/split-provenance-result.json"
+  },
+  "frozenRuleReusedUnchanged": {
+    "deltaM": 0.09090909090909091,
+    "deltaR": 0.08333333333333333,
+    "selectorFunction": "selectP63V3ArtifactBudget",
+    "tieBreak": "smallest-qualifying-interior-budget"
+  },
+  "aggregates": [
+    {
+      "label": "B0",
+      "mRate": 0,
+      "rsemRate": 0.5277777777777778
+    },
+    {
+      "label": "B1",
+      "mRate": 0.5606060606060606,
+      "rsemRate": 0.5972222222222222
+    },
+    {
+      "label": "B2",
+      "mRate": 0.7348484848484849,
+      "rsemRate": 0.6805555555555556
+    },
+    {
+      "label": "B3",
+      "mRate": 0.6212121212121212,
+      "rsemRate": 0.9097222222222222
+    },
+    {
+      "label": "B4",
+      "mRate": 0.7196969696969697,
+      "rsemRate": 0.9305555555555556
+    },
+    {
+      "label": "AF",
+      "mRate": 0.8787878787878788,
+      "rsemRate": 0.9305555555555556
+    }
+  ],
+  "diagnostics": [
+    {
+      "arm": "B1",
+      "budget": 505,
+      "correctedM": 0.5606060606060606,
+      "rsem": 0.5972222222222222,
+      "margins": {
+        "mAboveB0": 0.5606060606060606,
+        "mBelowAF": 0.31818181818181823,
+        "rsemAboveB0": 0.06944444444444442,
+        "rsemBelowAF": 0.33333333333333337
+      },
+      "guards": {
+        "mAboveB0": true,
+        "mBelowAF": true,
+        "rsemAboveB0": false,
+        "rsemBelowAF": true
+      }
+    },
+    {
+      "arm": "B2",
+      "budget": 1011,
+      "correctedM": 0.7348484848484849,
+      "rsem": 0.6805555555555556,
+      "margins": {
+        "mAboveB0": 0.7348484848484849,
+        "mBelowAF": 0.14393939393939392,
+        "rsemAboveB0": 0.1527777777777778,
+        "rsemBelowAF": 0.25
+      },
+      "guards": {
+        "mAboveB0": true,
+        "mBelowAF": true,
+        "rsemAboveB0": true,
+        "rsemBelowAF": true
+      }
+    },
+    {
+      "arm": "B3",
+      "budget": 2023,
+      "correctedM": 0.6212121212121212,
+      "rsem": 0.9097222222222222,
+      "margins": {
+        "mAboveB0": 0.6212121212121212,
+        "mBelowAF": 0.25757575757575757,
+        "rsemAboveB0": 0.3819444444444444,
+        "rsemBelowAF": 0.02083333333333337
+      },
+      "guards": {
+        "mAboveB0": true,
+        "mBelowAF": true,
+        "rsemAboveB0": true,
+        "rsemBelowAF": false
+      }
+    },
+    {
+      "arm": "B4",
+      "budget": 3034,
+      "correctedM": 0.7196969696969697,
+      "rsem": 0.9305555555555556,
+      "margins": {
+        "mAboveB0": 0.7196969696969697,
+        "mBelowAF": 0.15909090909090906,
+        "rsemAboveB0": 0.4027777777777778,
+        "rsemBelowAF": 0
+      },
+      "guards": {
+        "mAboveB0": true,
+        "mBelowAF": true,
+        "rsemAboveB0": true,
+        "rsemBelowAF": false
+      }
+    }
+  ],
+  "sensitivitySelection": {
+    "status": "selected",
+    "qualifyingInteriorArms": [
+      "B2"
+    ],
+    "selectedArm": "B2",
+    "selectedBExpose": 1011,
+    "reason": "CONJUNCTIVE_INTERIOR_BUDGET_SELECTED"
+  },
+  "interpretation": "Post-hoc sensitivity only. The frozen primary result remains needs-design-audit and is not replaced by this selection."
+}
