@@ -15,7 +15,7 @@ function row(passed: boolean) {
   };
 }
 
-function baseArtifact() {
+function baseArtifact(): { result: Record<string, any>; agent: Record<string, any> } {
   return {
     result: {
       passed: false,
