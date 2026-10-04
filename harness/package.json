@@ -89,7 +89,9 @@
     "p6:audit-v3-m-evaluator-boundary": "ts-node analyze-p6-3-v3-m-evaluator-boundary.ts",
     "verify:p6-3-v3-m-evaluator-boundary": "ts-node verify-p6-3-v3-m-evaluator-boundary.ts",
     "verify:p6-3-v3-m-evaluator-sensitivity": "ts-node verify-p6-3-v3-m-evaluator-sensitivity.ts",
-    "p6:sensitivity-v3-m-evaluator": "ts-node p6-3-v3-m-evaluator-sensitivity.ts"
+    "p6:sensitivity-v3-m-evaluator": "ts-node p6-3-v3-m-evaluator-sensitivity.ts",
+    "p6:analyze-v3-corrected-m-cogate-sensitivity": "ts-node analyze-p6-3-v3-corrected-m-cogate-sensitivity.ts",
+    "verify:p6-3-v3-corrected-m-cogate-sensitivity": "ts-node verify-p6-3-v3-corrected-m-cogate-sensitivity.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
